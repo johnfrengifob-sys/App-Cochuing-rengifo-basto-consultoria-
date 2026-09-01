@@ -133,12 +133,14 @@ export const CompanyFooter: React.FC<CompanyFooterProps> = ({
 
         <div className="pt-6 border-t border-gray-200/60 dark:border-neutral-800/80 flex flex-col sm:flex-row items-center justify-between gap-3 text-[11px] font-light text-gray-500 dark:text-neutral-400">
           <div>
-            &copy; 2026 {COMPANY_INFO.fullName}. Todos los derechos reservados. Dirección: {COMPANY_INFO.address} Cel {COMPANY_INFO.phone}
+            &copy; 2026 {COMPANY_INFO.fullName}. Todos los derechos reservados.
           </div>
           <div className="flex items-center gap-3">
             <span>Bogotá, Colombia</span>
             <span>&bull;</span>
-            <span>ICF Code of Ethics</span>
+            <span>ICF Level 1</span>
+            <span>&bull;</span>
+            <span>Confidencialidad Ontológica</span>
           </div>
         </div>
       </div>

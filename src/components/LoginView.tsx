@@ -10,7 +10,12 @@ import {
   ScanFace,
   KeyRound,
   Fingerprint,
+  MapPin,
+  Phone,
+  Mail,
+  MessageSquare,
 } from 'lucide-react';
+import { COMPANY_INFO } from '../services/store';
 
 interface LoginViewProps {
   onLogin: (user: User) => void;
@@ -53,8 +58,8 @@ export const LoginView: React.FC<LoginViewProps> = ({
           <BrandLogo layout="hero" className="hover:opacity-95 transition-opacity" />
         </div>
 
-        <p className="text-xs sm:text-sm font-light text-gray-500 dark:text-neutral-400 max-w-lg mx-auto leading-relaxed mb-4">
-          Acompañamiento directivo de alta fidelidad, integración de la sabiduría emocional y rediseño de conversaciones profundas.
+        <p className="text-sm sm:text-base font-normal tracking-wide text-gray-600 dark:text-neutral-300 max-w-lg mx-auto leading-relaxed mb-4">
+          Acompañamiento ontológico profesional
         </p>
       </div>
 
@@ -203,14 +208,84 @@ export const LoginView: React.FC<LoginViewProps> = ({
         />
       )}
 
-      {/* Footer */}
-      <footer className="w-full max-w-5xl flex flex-col sm:flex-row justify-between items-center gap-4 text-xs font-light text-gray-400 dark:text-neutral-500 pt-8 border-t border-gray-100 dark:border-neutral-800">
-        <div className="text-center sm:text-left">
-          © 2026 Rengifo Basto Consultoría Ontológica. Todos los derechos reservados. Dirección: Crr 20bis # 65a-22 Cel 3234642257
+      {/* Bottom Information & Footer */}
+      <footer className="w-full max-w-4xl flex flex-col items-center gap-6 pt-6 pb-2 border-t border-gray-100 dark:border-neutral-800 text-center">
+        {/* Dedicated Contact Information Block */}
+        <div className="w-full bg-gray-50/80 dark:bg-neutral-900/60 border border-gray-200/70 dark:border-neutral-800/80 rounded-2xl p-4 sm:p-5 shadow-2xs">
+          <div className="text-[11px] font-semibold uppercase tracking-wider text-gray-500 dark:text-neutral-400 mb-3">
+            Información de Contacto & Sede
+          </div>
+          
+          <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-3 text-xs text-gray-600 dark:text-neutral-300">
+            {/* Dirección */}
+            <div className="inline-flex items-center gap-2">
+              <span className="w-6 h-6 rounded-full bg-white dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 flex items-center justify-center shrink-0 shadow-2xs">
+                <MapPin className="w-3.5 h-3.5 text-black dark:text-white" />
+              </span>
+              <span className="font-light">
+                <strong className="font-medium text-black dark:text-white">Dirección:</strong> {COMPANY_INFO.address}, Bogotá, Colombia
+              </span>
+            </div>
+
+            {/* Teléfono / WhatsApp */}
+            <div className="inline-flex items-center gap-2">
+              <span className="w-6 h-6 rounded-full bg-white dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 flex items-center justify-center shrink-0 shadow-2xs">
+                <Phone className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+              </span>
+              <span className="font-light">
+                <strong className="font-medium text-black dark:text-white">Celular:</strong>{' '}
+                <a
+                  href={`tel:${COMPANY_INFO.phone}`}
+                  className="hover:underline font-mono text-black dark:text-white font-medium"
+                >
+                  {COMPANY_INFO.phone}
+                </a>
+              </span>
+              <a
+                href={COMPANY_INFO.whatsappUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800/60 text-[11px] text-emerald-700 dark:text-emerald-400 font-medium hover:bg-emerald-100 dark:hover:bg-emerald-900/50 transition-colors"
+                title="Escribir por WhatsApp"
+              >
+                <MessageSquare className="w-3 h-3" />
+                <span>WhatsApp</span>
+              </a>
+            </div>
+
+            {/* Correo Electrónico */}
+            <div className="inline-flex items-center gap-2">
+              <span className="w-6 h-6 rounded-full bg-white dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 flex items-center justify-center shrink-0 shadow-2xs">
+                <Mail className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+              </span>
+              <span className="font-light">
+                <strong className="font-medium text-black dark:text-white">Correo:</strong>{' '}
+                <a
+                  href={`mailto:${COMPANY_INFO.email}`}
+                  className="hover:underline text-gray-600 dark:text-neutral-300"
+                >
+                  {COMPANY_INFO.email}
+                </a>
+              </span>
+            </div>
+          </div>
         </div>
-        <div className="flex items-center gap-6 shrink-0">
-          <span>Privacidad & Confidencialidad</span>
-          <span>ICF level 1</span>
+
+        {/* Dedicated Copyright & Legal Block */}
+        <div className="flex flex-col items-center gap-2 text-xs font-light text-gray-500 dark:text-neutral-400">
+          <div className="font-medium text-gray-700 dark:text-neutral-300">
+            © 2026 Rengifo Basto Consultoría Ontológica. Todos los derechos reservados.
+          </div>
+          <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-4 text-[11px] text-gray-400 dark:text-neutral-500">
+            <span className="flex items-center gap-1">
+              <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
+              ICF Level 1 Accredited
+            </span>
+            <span>•</span>
+            <span>Privacidad & Confidencialidad Profesional</span>
+            <span>•</span>
+            <span>Coherencia & Transformación Ontológica</span>
+          </div>
         </div>
       </footer>
     </div>

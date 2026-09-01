@@ -1,4 +1,5 @@
 import React from 'react';
+import brandLogoImg from '../assets/images/regenerated_image_1788288733292.png';
 
 interface BrandLogoProps {
   variant?: 'auto' | 'dark' | 'light';
@@ -100,100 +101,19 @@ export const BrandLogo: React.FC<BrandLogoProps> = ({
     return (
       <div
         onClick={onClick}
-        className={`inline-flex flex-col items-center justify-center select-none ${textPrimary} ${className} ${
+        className={`inline-flex flex-col items-center justify-center select-none ${className} ${
           onClick ? 'cursor-pointer' : ''
         }`}
         title="Rengifo Basto Consultoría Ontológica"
       >
-        <svg
-          viewBox="0 0 580 240"
-          className="w-full max-w-md sm:max-w-lg h-auto overflow-visible drop-shadow-xs"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <g className={textPrimary}>
-            {/* 1. Upper Left Loop & Top Crest of 'R' */}
-            <path
-              d="M 120 118 C 95 116, 60 102, 54 76 C 48 50, 72 32, 102 24 C 132 16, 168 22, 192 34"
-              stroke="currentColor"
-              strokeWidth="3.2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-
-            {/* 2. Main Slanted Spine and Grand Lower-Left Flourish Loop */}
-            <path
-              d="M 192 34 C 182 62, 166 106, 144 150 C 130 178, 108 206, 78 206 C 50 206, 32 184, 32 152 C 32 118, 62 86, 102 68 C 120 60, 138 58, 154 62"
-              stroke="currentColor"
-              strokeWidth="4"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-
-            {/* 3. Upper Right Bowl of 'R' */}
-            <path
-              d="M 192 34 C 218 36, 246 48, 246 76 C 246 102, 220 118, 172 118"
-              stroke="currentColor"
-              strokeWidth="3.8"
-              strokeLinecap="round"
-            />
-
-            {/* 4. Lower Right Flourish Leg Swooping Underneath Text */}
-            <path
-              d="M 172 118 C 184 136, 204 172, 222 196 C 238 216, 258 226, 282 224 C 304 222, 322 208, 336 186 C 342 176, 346 166, 348 158"
-              stroke="currentColor"
-              strokeWidth="3.4"
-              strokeLinecap="round"
-            />
-
-            {/* 5. Terminal Finial Accents */}
-            <circle cx="54" cy="76" r="1.8" fill="currentColor" />
-            <circle cx="348" cy="158" r="1.8" fill="currentColor" />
-
-            {/* 6. Primary Wordmark: "engifo Basto" */}
-            <text
-              x="208"
-              y="114"
-              fill="currentColor"
-              style={{
-                fontFamily:
-                  '"Playfair Display", "Didot", "Bodoni Moda", "Cormorant Garamond", Georgia, serif',
-                fontSize: '56px',
-                fontWeight: 400,
-                letterSpacing: '-0.015em',
-              }}
-            >
-              engifo Basto
-            </text>
-
-            {/* 7. Subtitle: "Consultoría Ontológica" */}
-            <text
-              x="212"
-              y="156"
-              fill="currentColor"
-              style={{
-                fontFamily:
-                  '"Playfair Display", "Didot", "Bodoni Moda", "Cormorant Garamond", Georgia, serif',
-                fontSize: '24px',
-                fontWeight: 400,
-                letterSpacing: '0.025em',
-              }}
-            >
-              Consultoría Ontológica
-            </text>
-
-            {/* 8. Dedicated Underline for "Consultoría Ontológica" */}
-            <line
-              x1="212"
-              y1="166"
-              x2="466"
-              y2="166"
-              stroke="currentColor"
-              strokeWidth="1.2"
-              strokeOpacity="0.8"
-            />
-          </g>
-        </svg>
+        <div className="relative flex items-center justify-center w-full max-w-[360px] sm:max-w-[420px] px-2 py-1">
+          <img
+            src={brandLogoImg}
+            alt="Rengifo Basto Consultoría Ontológica"
+            referrerPolicy="no-referrer"
+            className="w-full h-auto object-contain mix-blend-multiply dark:invert dark:brightness-200 transition-all duration-300 select-none pointer-events-none drop-shadow-xs"
+          />
+        </div>
       </div>
     );
   }

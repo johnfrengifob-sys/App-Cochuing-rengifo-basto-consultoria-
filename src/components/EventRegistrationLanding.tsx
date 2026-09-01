@@ -27,7 +27,11 @@ import {
   EyeOff,
   Database,
   CloudCheck,
+  MapPin,
+  Phone,
+  Mail,
 } from 'lucide-react';
+import { COMPANY_INFO } from '../services/store';
 
 interface EventRegistrationLandingProps {
   onEnterPlatform: (user?: User) => void;
@@ -612,14 +616,36 @@ export const EventRegistrationLanding: React.FC<EventRegistrationLandingProps> =
         )}
       </main>
 
-      {/* Subtle Footer */}
-      <footer className="w-full border-t border-gray-100 dark:border-neutral-800 py-6 text-center text-xs font-light text-gray-400 dark:text-neutral-500">
-        <div className="max-w-6xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
-          <span>© 2026 Rengifo Basto Consultoría Ontológica. Todos los derechos reservados. Dirección: Crr 20bis # 65a-22 Cel 3234642257</span>
-          <span className="flex items-center gap-1">
-            <CloudCheck className="w-3.5 h-3.5 text-black dark:text-white" />
-            Infraestructura Privada Google Cloud & Gemini Enterprise
-          </span>
+      {/* Subtle Centered Footer */}
+      <footer className="w-full border-t border-gray-100 dark:border-neutral-800 py-8 px-4 text-center text-xs font-light text-gray-400 dark:text-neutral-500">
+        <div className="max-w-4xl mx-auto flex flex-col items-center gap-5">
+          {/* Contact Strip */}
+          <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs text-gray-600 dark:text-neutral-300">
+            <span className="inline-flex items-center gap-1.5">
+              <MapPin className="w-3.5 h-3.5 text-black dark:text-white" />
+              <span>{COMPANY_INFO.address}, Bogotá, Colombia</span>
+            </span>
+            <span>•</span>
+            <span className="inline-flex items-center gap-1.5">
+              <Phone className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+              <span>Cel: {COMPANY_INFO.phone}</span>
+            </span>
+            <span>•</span>
+            <span className="inline-flex items-center gap-1.5">
+              <Mail className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+              <span>{COMPANY_INFO.email}</span>
+            </span>
+          </div>
+
+          {/* Copyright Line */}
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-2 text-gray-500 dark:text-neutral-400 text-xs">
+            <span>© 2026 Rengifo Basto Consultoría Ontológica. Todos los derechos reservados.</span>
+            <span className="hidden sm:inline">•</span>
+            <span className="flex items-center gap-1 text-[11px] text-gray-400 dark:text-neutral-500">
+              <CloudCheck className="w-3.5 h-3.5 text-black dark:text-white" />
+              Infraestructura Privada Google Cloud & Gemini Enterprise
+            </span>
+          </div>
         </div>
       </footer>
     </div>
