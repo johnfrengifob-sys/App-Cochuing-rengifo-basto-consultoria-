@@ -61,15 +61,45 @@ export interface FormSubmission {
   submittedAt: string; // ISO string
 }
 
+export interface LevelReinforcementPack {
+  title: string;
+  subtitle: string;
+  summary: string;
+  audioGuideTitle: string;
+  audioDuration: string;
+  audioScript: string;
+  keyPractices: string[];
+  selfCareProtocol: string;
+  reflectiveQuestions: string[];
+}
+
 export interface ProgramNodeInfo {
   step: number; // 1 to 6
-  weekLabel: string; // "Semana 1-2", "Semana 3-4", etc.
+  weekLabel: string; // "Semanas 1-2", "Semanas 3-4", etc.
   level: 'Nivel I' | 'Nivel II' | 'Nivel III';
   levelTitle: string;
   sessionTitle: string;
   objective: string;
+  tangibleOutcomes: string[];
   keyQuestion: string;
   levelPrompt: string;
+  methodology: {
+    linguistic: string;
+    somatic: string;
+    emotional: string;
+  };
+  dailyMicroPractice: {
+    title: string;
+    description: string;
+    frequency: string;
+  };
+  reinforcementPack: LevelReinforcementPack;
+  studyMaterials: {
+    title: string;
+    type: 'Guía de Trabajo' | 'Ficha de Ejercicio' | 'Matriz de Diagnóstico' | 'Protocolo Somático';
+    pages: string;
+    description: string;
+  }[];
 }
 
 export type PulseFlag = 'Green' | 'Yellow' | 'Red';
@@ -81,8 +111,8 @@ export interface AIInsight {
   sessionStep?: number;
   linguisticBarriers: string[];
   limitingBeliefs: string[];
-  emotionalWisdom: string; // Análisis basado en Norberto Levý
-  pulseFlag: PulseFlag; // Indicador de estado: Green, Yellow, Red (único elemento con color en la UI)
+  emotionalWisdom: string; // Síntesis Ontológica & Sabiduría Emocional
+  pulseFlag: PulseFlag; // Indicador de estado: Green, Yellow, Red
   generatedAt: string;
   webhookStatus?: 'sent' | 'fallback' | 'pending';
 }

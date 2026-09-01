@@ -37,7 +37,7 @@ export const LoginView: React.FC<LoginViewProps> = ({
         </span>
 
         <div className="flex items-center gap-4">
-          <span className="hidden sm:inline">Norberto Levý Framework</span>
+          <span className="hidden sm:inline">Coherencia & Transformación Ontológica</span>
           <ThemeToggle variant="pill" showLabel />
         </div>
       </div>
@@ -187,7 +187,7 @@ export const LoginView: React.FC<LoginViewProps> = ({
         </div>
         <div className="flex items-center gap-6">
           <span>Privacidad & Confidencialidad</span>
-          <span>Ética ICF & FICOP</span>
+          <span>ICF level 1</span>
         </div>
       </footer>
     </div>

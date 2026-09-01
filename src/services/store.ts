@@ -32,11 +32,58 @@ export const PROGRAM_NODES: ProgramNodeInfo[] = [
     levelTitle: 'Fundamentos & Transparencia',
     sessionTitle: 'Mapeo de la Transparencia y Quiebres Inconscientes',
     objective:
-      'Identificar la transparencia cotidiana, los automatismos operativos y los quiebres no declarados en el ámbito profesional y personal.',
+      'Identificar la transparencia cotidiana, los automatismos operativos y los quiebres no declarados en el ámbito profesional y personal para recuperar el poder de acción reflexiva.',
+    tangibleOutcomes: [
+      'Identificación precisa de las fugas de energía y automatismos en la rutina ejecutiva.',
+      'Mapeo estructurado de quiebres ocultos y acuerdos tácitos no consensuados.',
+      'Recuperación de la capacidad de pausar y observar antes de reaccionar compulsivamente.',
+    ],
     keyQuestion:
       '¿En qué áreas de tu vida estás operando en piloto automático tolerando costos ocultos?',
     levelPrompt:
-      'Registra los límites que has omitido declarar y los acuerdos tácitos que están drenando tu energía.',
+      'Registra los límites que has omitido declarar y los acuerdos tácitos que están drenando tu energía vital y directiva.',
+    methodology: {
+      linguistic: 'Diferenciación entre el fluir transparente y la declaración de quiebre como interrupción deliberada.',
+      somatic: 'Calibración de la tensión muscular postural al momento de asumir compromisos automáticos.',
+      emotional: 'Reconocimiento de la resignación y la sobrecarga como señales tempranas de falta de límites.',
+    },
+    dailyMicroPractice: {
+      title: 'Pausa de Coherencia y Mapeo en 3 Tiempos',
+      description: '3 veces al día, detente 90 segundos. Inhala profundo, escanea tu cuerpo y pregúntate: "¿Estoy operando por convicción o por inercia automática?" Anota cualquier quiebre no declarado.',
+      frequency: 'Diaria (3 veces al día: 9:00 AM, 2:00 PM, 6:00 PM)',
+    },
+    reinforcementPack: {
+      title: 'Kit de Auto-Observación y Transparencia Consciente',
+      subtitle: 'Protocolo para desarticular la inercia reactiva y fundar el nuevo observador',
+      summary: 'La transparencia es el flujo de la vida donde actuamos sin pensar. Cuando surge un obstáculo, aparece el quiebre. Si no lo declaramos, se convierte en sufrimiento crónico. Este refuerzo te entrega las herramientas para nombrar el quiebre con serenidad y certeza.',
+      audioGuideTitle: 'Centramiento Somático y Despertar de la Transparencia',
+      audioDuration: '8:45 min',
+      audioScript: 'Cierra los ojos y trae tu atención al peso de tu cuerpo sobre el asiento. Inhala en 4 tiempos, sostén en 2 y exhala lentamente en 6. Observa el flujo de pensamientos sin apegarte. Nombra el quiebre principal que hoy te inquieta. Dale la bienvenida sin juzgarlo. Es la puerta hacia tu transformación.',
+      keyPractices: [
+        'Bitácora de Quiebres: Registra cada interrupción en tu flujo diario sin buscar soluciones inmediatas, sólo observando.',
+        'La Pregunta de Soberanía: "¿Desde qué necesidad no dicha estoy aceptando este compromiso?"',
+        'Protocolo de Higiene Lingüística: Evita frases absolutistas como "tengo que" y sustitúyelas por "elijo".',
+      ],
+      selfCareProtocol: 'Cuando sientas saturación inmediata, no respondas correos ni tomes decisiones. Bebe un vaso de agua, realiza 5 respiraciones conscientes y declara una pausa de 15 minutos.',
+      reflectiveQuestions: [
+        '¿A qué le estás diciendo "sí" cuando en realidad tu cuerpo te está pidiendo un rotundo "no"?',
+        '¿Qué conversación difícil has estado posponiendo bajo la excusa de no tener tiempo?',
+      ],
+    },
+    studyMaterials: [
+      {
+        title: 'Matriz de Mapeo de Transparencia y Quiebres',
+        type: 'Matriz de Diagnóstico',
+        pages: '4 páginas',
+        description: 'Plantilla de auto-evaluación para auditar los 5 dominios vitales y detectar costos invisibles.',
+      },
+      {
+        title: 'Guía de Práctica: La Pausa como Intervención Ontológica',
+        type: 'Guía de Trabajo',
+        pages: '6 páginas',
+        description: 'Manual de micro-intervenciones de 2 minutos para el día a día directivo.',
+      },
+    ],
   },
   {
     step: 2,
@@ -45,11 +92,58 @@ export const PROGRAM_NODES: ProgramNodeInfo[] = [
     levelTitle: 'Fundamentos & Transparencia',
     sessionTitle: 'Fronteras, Declaraciones y Límites No Dichos',
     objective:
-      'Dominar el poder del "Basta" y del "No" ontológico como actos fundacionales de soberanía personal y dignidad relacional.',
+      'Dominar el poder del "Basta" y del "No" ontológico como actos fundacionales de soberanía personal, cuidado del valor propio y dignidad en todas las relaciones.',
+    tangibleOutcomes: [
+      'Proclamación asertiva de límites claros sin culpa ni justificaciones excesivas.',
+      'Erradicación del patrón de complacencia sistemática y sobre-adaptación.',
+      'Diseño de conversaciones de frontera con colaboradores, clientes y entorno personal.',
+    ],
     keyQuestion:
       '¿Qué conversación difícil has postergado y qué límite no dicho necesitas proclamar con firmeza?',
     levelPrompt:
-      'Describe la conversación postergada y el "No" que requieres declarar para proteger tu bienestar.',
+      'Describe la conversación postergada y el "No" que requieres declarar para proteger tu dignidad, foco y bienestar integral.',
+    methodology: {
+      linguistic: 'Actos del habla declarativos: La declaración del "No", del "Basta" y del "Ignoro" como actos de poder.',
+      somatic: 'Arraigo en planta de pies y apertura torácica para sostener la firmeza sin rigidez hostil.',
+      emotional: 'Transformación de la culpa en auto-reparación y validación de las propias necesidades.',
+    },
+    dailyMicroPractice: {
+      title: 'El Escudo de Soberanía Relacional',
+      description: 'Antes de responder a cualquier petición demandante, toma una pausa de 5 segundos y responde: "Déjame revisarlo y te confirmo a las X horas". Elimina el sí automático.',
+      frequency: 'Cada vez que recibas una petición imprevista',
+    },
+    reinforcementPack: {
+      title: 'Protocolo de Declaraciones Fundamentales y Soberanía',
+      subtitle: 'Guía práctica para emitir el "Basta" ontológico con elegancia y contundencia',
+      summary: 'El límite no es un muro de agresión, sino el guardián de la calidad de tus vínculos. Quien no puede decir "No", tampoco puede comprometer un "Sí" genuino e impecable.',
+      audioGuideTitle: 'Meditación Guiada: El Poder del Basta y Arraigo Corporal',
+      audioDuration: '10:15 min',
+      audioScript: 'Ponte de pie con los pies bien apoyados en el suelo. Siente la solidez de tu columna. Lleva tus manos al abdomen. Con cada exhalación, siente cómo afirmas tu territorio personal. Repite internamente: "Mi tiempo y mi energía son sagrados. Tengo derecho a poner límites claros y dignos".',
+      keyPractices: [
+        'Estructura de Declaración Limpia: "Agradezco la oportunidad, sin embargo, en este momento no es viable para mí".',
+        'Desmantelamiento de la Justificación: Practica decir "No" sin dar más de una frase explicativa.',
+        'Auditoría Semanal de Acuerdos: Revisa los viernes qué compromisos asumiste y ajusta las expectativas.',
+      ],
+      selfCareProtocol: 'Si experimentas culpa tras poner un límite, recuérdate que la culpa es solo el eco de una creencia antigua de complacencia, no una verdad moral.',
+      reflectiveQuestions: [
+        '¿Qué precio estás pagando en tu salud por no atreverte a decepcionar temporalmente a los demás?',
+        '¿Cómo cambiaría tu liderazgo si comunicaras tus límites con total calma y sin miedo al rechazo?',
+      ],
+    },
+    studyMaterials: [
+      {
+        title: 'Plantilla: Guion para Conversaciones Difíciles y Límites',
+        type: 'Ficha de Ejercicio',
+        pages: '3 páginas',
+        description: 'Estructuras lingüísticas paso a paso para comunicar desacuerdos y límites sin confrontación destructiva.',
+      },
+      {
+        title: 'Manual de Declaraciones Fundamentales de Vida',
+        type: 'Guía de Trabajo',
+        pages: '8 páginas',
+        description: 'Estudio de las 6 declaraciones básicas del lenguaje generativo y su impacto relacional.',
+      },
+    ],
   },
   {
     step: 3,
@@ -58,11 +152,58 @@ export const PROGRAM_NODES: ProgramNodeInfo[] = [
     levelTitle: 'Corporalidad & Reencuadre',
     sessionTitle: 'Somatización, Mandatos y Sabiduría de las Emociones',
     objective:
-      'Decodificar los mensajes somáticos en el cuerpo aplicando el marco de Norberto Levý (miedo como prudencia, culpa como auto-reparación, exigencia como límite).',
+      'Decodificar los mensajes somáticos en el cuerpo reconociendo la sabiduría intrínseca de cada emoción (el miedo como prudencia, la culpa como auto-reparación y la exigencia como límite adaptativo).',
+    tangibleOutcomes: [
+      'Capacidad para escuchar el síntoma corporal como un mensajero inteligente antes de que somatice en enfermedad.',
+      'Transformación de la autoexigencia tiránica en auto-asistencia y excelencia compasiva.',
+      'Gestión de estados emocionales densos desde la aceptación y el rediseño corporal.',
+    ],
     keyQuestion:
       '¿Qué emoción tiene una fuerte presencia en tu cuerpo hoy y qué señal adaptativa busca comunicarte?',
     levelPrompt:
-      'Conecta con la sensación física exacta y decodifica el mensaje profundo de tu cuerpo sin juzgarlo.',
+      'Conecta con la sensación física exacta y decodifica el mensaje profundo de tu cuerpo sin juzgarlo ni intentar reprimirlo.',
+    methodology: {
+      linguistic: 'Reencuadre de mandatos introyectados ("debo ser perfecto", "no puedo fallar") a acuerdos de auto-cuidado.',
+      somatic: 'Liberación de la tensión en mandíbula, diafragma y hombros mediante micro-movimientos somáticos.',
+      emotional: 'Decodificación de la intención positiva de las emociones descalificadas.',
+    },
+    dailyMicroPractice: {
+      title: 'Escaneo Somático de Liberación Maxilar y Torácica',
+      description: 'Al inicio y final del día, realiza 3 minutos de respiración diafragmática mientras sueltas conscientemente la mandíbula y relajas los hombros hacia atrás.',
+      frequency: '2 veces al día (mañana y noche)',
+    },
+    reinforcementPack: {
+      title: 'Protocolo de Auto-asistencia y Desactivación de la Autoexigencia',
+      subtitle: 'Cómo convertir al crítico interno en un aliado de discernimiento compasivo',
+      summary: 'Las emociones no son fallas de carácter ni enemigos a vencer; son sistemas de alerta que nos informan sobre la relación entre nuestros recursos y nuestros desafíos. Aprender a escucharlas disuelve la tensión crónica.',
+      audioGuideTitle: 'Audio-Inmersión: Decodificación Somática del Miedo y la Tensión',
+      audioDuration: '12:30 min',
+      audioScript: 'Lleva una mano a tu pecho y otra a tu abdomen. Respira suavemente. Ubica el nudo o tensión que más te pesa hoy. Pregúntale en silencio: "¿Qué valor estás intentando proteger? ¿Qué necesitas que yo atienda ahora mismo?" Escucha sin resistirte.',
+      keyPractices: [
+        'Diálogo de Auto-asistencia: Cuando surja la autocrítica, pregúntate: "¿Le hablaría así a alguien a quien amo profundamente?"',
+        'Protocolo de Emergencia Emocional: 4 tiempos de inhalación, retención 4 tiempos, exhalación 4 tiempos, pausa vacía 4 tiempos (Box Breathing).',
+        'Reencuadre del Miedo: Reconoce el miedo como un recordatorio de prepararte mejor, no como una señal de incapacidad.',
+      ],
+      selfCareProtocol: 'Si la autoexigencia te abruma, escribe en un papel todas las exigencias y clasifícalas en: "Imprescindibles hoy" y "Exigencias ideales que puedo reprogramar con dignidad".',
+      reflectiveQuestions: [
+        '¿Qué emoción has estado intentando ignorar y qué costo corporal has tenido que asumir por ello?',
+        '¿Cómo sería tu desempeño si sustituyeras el látigo de la culpa por la guía del aprendizaje continuo?',
+      ],
+    },
+    studyMaterials: [
+      {
+        title: 'Protocolo Somático: Mapeo de Estados Emocionales en el Cuerpo',
+        type: 'Protocolo Somático',
+        pages: '5 páginas',
+        description: 'Guía visual para ubicar y liberar tensiones en diafragma, trapecios y plexo solar.',
+      },
+      {
+        title: 'Compendio: La Inteligencia Adaptativa de las Emociones',
+        type: 'Guía de Trabajo',
+        pages: '7 páginas',
+        description: 'Análisis detallado de la función protectora del miedo, la rabia, la culpa y la tristeza.',
+      },
+    ],
   },
   {
     step: 4,
@@ -71,11 +212,58 @@ export const PROGRAM_NODES: ProgramNodeInfo[] = [
     levelTitle: 'Corporalidad & Reencuadre',
     sessionTitle: 'Reencuadre de Juicios, Reclamos y Promesas',
     objective:
-      'Fundamentar juicios maestros destructivos y transformar la queja estéril en reclamos ontológicos de coordinación de acciones.',
+      'Fundamentar juicios maestros limitantes y transformar la queja estéril en reclamos ontológicos y pedidos orientados a la coordinación de acciones impecables.',
+    tangibleOutcomes: [
+      'Eliminación de la queja pasiva y sustitución por pedidos estructurados con condiciones de satisfacción.',
+      'Fundamentación rigurosa de juicios sobre uno mismo y sobre los demás.',
+      'Cierre de ciclos de resentimiento y reconstrucción de la confianza relacional.',
+    ],
     keyQuestion:
       '¿Qué juicio automático sobre ti o tu equipo estás tratando erróneamente como un hecho absoluto?',
     levelPrompt:
-      'Distingue las afirmaciones comprobables de tus interpretaciones subjetivas y diseña un pedido impecable.',
+      'Distingue las afirmaciones comprobables de tus interpretaciones subjetivas y diseña un pedido impecable para destrabar la situación.',
+    methodology: {
+      linguistic: 'Los 5 pasos para fundamentar un juicio: Propósito, Estándar, Dominio de acción, Afirmaciones fácticas y Juicio contrario.',
+      somatic: 'Postura de apertura y flexibilidad somática para abandonar el apego a la razón absoluta.',
+      emotional: 'Tránsito del resentimiento a la aceptación activa y la paz relacional.',
+    },
+    dailyMicroPractice: {
+      title: 'El Filtro de los 5 Fundamentos',
+      description: 'Cada vez que te descubras emitiendo un juicio descalificador ("Este proyecto no funcionará", "Nunca me toman en cuenta"), escribe 3 hechos comprobables que lo sustenten y 3 que lo contradigan.',
+      frequency: 'Diaria (ante cualquier juicio limitante)',
+    },
+    reinforcementPack: {
+      title: 'Manual de Conversaciones Impecables y Coordinación de Acciones',
+      subtitle: 'La anatomía del pedido, la oferta, la promesa y el reclamo productivo',
+      summary: 'Gran parte de los conflictos humanos provienen de asumir que nuestros juicios son hechos reales. Cuando aprendemos a fundamentarlos y a formular pedidos impecables, las relaciones se vuelven fluidas y de alto rendimiento.',
+      audioGuideTitle: 'Reflexión Guiada: De la Queja Improductiva al Reclamo con Dignidad',
+      audioDuration: '9:15 min',
+      audioScript: 'Inhala profundamente y trae a tu mente una situación donde sientas frustración con otra persona. Nota si hay una queja en tu mente. Transfórmala en un pedido claro: ¿Quién? ¿Qué acción específica? ¿En qué plazo de tiempo? ¿Bajo qué condiciones de satisfacción?',
+      keyPractices: [
+        'Estructura del Pedido Impecable: Yo te pido a ti X, para la fecha Y, con el estándar Z. ¿Aceptas, declinas o contraofertas?',
+        'Protocolo de Reclamo Productivo: Hablar desde el compromiso compartido, no desde la inculpación moral.',
+        'Auditoría de Promesas: Mantener un registro de lo prometido para cuidar la identidad pública de confiabilidad.',
+      ],
+      selfCareProtocol: 'Si notas rencor acumulado por una promesa rota, agenda una conversación de reclamo estructurado antes de que se convierta en resentimiento tóxico.',
+      reflectiveQuestions: [
+        '¿A quién le debes una disculpa o una renegociación de promesa que está dañando tu credibilidad?',
+        '¿Qué juicio sobre ti mismo te ha mantenido en una zona de juego menor a tu verdadero potencial?',
+      ],
+    },
+    studyMaterials: [
+      {
+        title: 'Matriz de Fundamentación de Juicios Maestros',
+        type: 'Matriz de Diagnóstico',
+        pages: '4 páginas',
+        description: 'Herramienta para auditar los juicios automáticos de insuficiencia y transformarlos en motores de acción.',
+      },
+      {
+        title: 'Guía Práctica: El Arte del Pedido, la Oferta y la Promesa Impecable',
+        type: 'Guía de Trabajo',
+        pages: '6 páginas',
+        description: 'Protocolos de comunicación directiva de alta efectividad.',
+      },
+    ],
   },
   {
     step: 5,
@@ -84,11 +272,58 @@ export const PROGRAM_NODES: ProgramNodeInfo[] = [
     levelTitle: 'Dirección & Trascendencia',
     sessionTitle: 'Diseño de Conversaciones de Futuro y Posibilidad',
     objective:
-      'Proyectar escenarios de certeza interna, construyendo ofertas irresistibles y relaciones de confianza generativa.',
+      'Proyectar escenarios de certeza interna, construyendo ofertas irresistibles y relaciones basadas en la confianza generativa y la soberanía ontológica.',
+    tangibleOutcomes: [
+      'Declaración clara de una nueva visión de futuro desprendida del miedo y la necesidad de aprobación.',
+      'Diseño de ofertas profesionales y personales de alto valor percibido.',
+      'Liderazgo generativo con capacidad para abrir posibilidades donde antes solo se percibían bloqueos.',
+    ],
     keyQuestion:
       '¿Qué nueva identidad pública y profesional estás declarando para los próximos trimestres?',
     levelPrompt:
       'Escribe la visión de futuro que ahora te convoca, desprendida de la necesidad de complacer o controlar.',
+    methodology: {
+      linguistic: 'Declaraciones de visión, promesa de futuro y diseño de ofertas de valor transformacional.',
+      somatic: 'Disposición corporal de avance, centramiento y presencia expansiva.',
+      emotional: 'Entusiasmo sereno, ambición ética y gratitud generativa.',
+    },
+    dailyMicroPractice: {
+      title: 'Visualización de Futuro y Enraizamiento de Posibilidad',
+      description: 'Dedica los primeros 5 minutos de cada mañana a visualizar tu estado de ser ideal en tus conversaciones clave del día, sintiendo la certeza en tu cuerpo antes de interactuar.',
+      frequency: 'Diaria (primeros 5 minutos del día)',
+    },
+    reinforcementPack: {
+      title: 'Manifiesto de Identidad Pública y Diseño de Ofertas de Futuro',
+      subtitle: 'Cómo proyectar autoridad serena y construir redes de confianza mutua',
+      summary: 'El futuro no es un lugar hacia el que vamos, es una realidad que creamos en el presente a través de nuestras conversaciones, compromisos y declaraciones.',
+      audioGuideTitle: 'Audio-Proyección: Anclaje de Certeza y Visión de Trascendencia',
+      audioDuration: '11:00 min',
+      audioScript: 'Respira conectando con tu centro. Siente tu cuerpo como un canal de coherencia. Visualízate liderando tus proyectos con total tranquilidad y convicción. Todo lo que necesitas para sostener tu visión ya está operando en tu nuevo observador.',
+      keyPractices: [
+        'Diseño de la Oferta Personal: Definir en una frase cuál es el valor diferencial irrepetible que aportas.',
+        'Mapa de Conversaciones Clave: Identificar las 3 conversaciones estratégicas que abrirán tu próximo nivel de éxito.',
+        'Desafío de la Posibilidad: Ante un problema aparentemente irresoluble, preguntar: "¿Qué conversación aún no ha ocurrido aquí?"',
+      ],
+      selfCareProtocol: 'Protege tu visión de la opinión no constructiva de observadores reactivos. Elige cuidadosamente tus círculos de confianza.',
+      reflectiveQuestions: [
+        '¿Qué estás dispuesto a soltar definitivamente para convertirte en la persona que tu visión requiere?',
+        '¿Cuál es la oferta más valiosa que puedes hacer hoy a tu entorno profesional y personal?',
+      ],
+    },
+    studyMaterials: [
+      {
+        title: 'Lienzo de Diseño de Identidad Pública y Oferta Única',
+        type: 'Ficha de Ejercicio',
+        pages: '4 páginas',
+        description: 'Plantilla estructurada para redactar tu propuesta de valor y presencia ejecutiva.',
+      },
+      {
+        title: 'Cuaderno: Conversaciones de Futuro y Arquitectura de Posibilidad',
+        type: 'Guía de Trabajo',
+        pages: '8 páginas',
+        description: 'Técnicas avanzadas de indagación apreciativa y diseño ontológico de proyectos.',
+      },
+    ],
   },
   {
     step: 6,
@@ -97,11 +332,58 @@ export const PROGRAM_NODES: ProgramNodeInfo[] = [
     levelTitle: 'Dirección & Trascendencia',
     sessionTitle: 'Integración Ontológica y Compromisos Innegociables',
     objective:
-      'Consolidar el nuevo observador ontológico con protocolos de auto-asistencia y compromisos de vida innegociables.',
+      'Consolidar el nuevo observador ontológico con protocolos de auto-asistencia permanente, estándares innegociables y coherencia lingüística, emocional y corporal.',
+    tangibleOutcomes: [
+      'Carta de Compromisos Innegociables firmada como pacto de coherencia vital.',
+      'Protocolo personalizado de auto-coaching para afrontar quiebres futuros con autonomía total.',
+      'Consolidación del aprendizaje ontológico como una forma permanente de habitar el mundo.',
+    ],
     keyQuestion:
       '¿Cuáles son tus 3 estándares innegociables de vida y cómo sostendrás tu coherencia ontológica?',
     levelPrompt:
-      'Sella tus compromisos definitivos y los hábitos de auto-observación que garantizarán tu autonomía.',
+      'Sella tus compromisos definitivos y los hábitos de auto-observación que garantizarán tu autonomía y bienestar duradero.',
+    methodology: {
+      linguistic: 'Declaración de cierre de programa, promesas hacia uno mismo y formalización de pactos éticos.',
+      somatic: 'Integración postural global: solidez, flexibilidad, apertura y centramiento sostenible.',
+      emotional: 'Paz interna, gratitud trascendente y confianza incondicional en el propio proceso.',
+    },
+    dailyMicroPractice: {
+      title: 'El Ritual de Coherencia y Cierre Diario',
+      description: 'Al final de cada jornada, revisa tus 3 estándares innegociables. Agradece un acierto, reconoce un aprendizaje y declara el descanso como un acto sagrado de auto-cuidado.',
+      frequency: 'Diaria (antes de dormir)',
+    },
+    reinforcementPack: {
+      title: 'Compendio de Integración Ontológica y Carta de Innegociables',
+      subtitle: 'Tu manual definitivo de auto-asistencia para sostener la transformación en el tiempo',
+      summary: 'Has transitado de la inercia a la soberanía consciente. La verdadera maestría no consiste en no tener quiebres nunca más, sino en disponer de los recursos internos para regresar a tu centro cada vez más rápido y con mayor compasión.',
+      audioGuideTitle: 'Audio-Meditación Final: El Retorno al Centro y la Coherencia Viva',
+      audioDuration: '14:20 min',
+      audioScript: 'Coloca ambas manos en el centro del pecho. Siente el latido vivo y sereno de tu corazón. Has recorrido un camino de 12 semanas descubriendo la profundidad de tu lenguaje, tu cuerpo y tus emociones. Eres ahora el observador soberano de tu propia vida. Camina con certeza, habla con verdad y vive con dignidad.',
+      keyPractices: [
+        'Auditoría Mensual de Coherencia: El primer domingo de cada mes, revisa tu estado en lenguaje, emoción y cuerpo.',
+        'La Regla de los 3 Innegociables: Proteger sin excepciones el descanso, los límites claros y el espacio de reflexión.',
+        'Rediseño Continuo: Ante cualquier nuevo quiebre, aplicar inmediatamente el ciclo de los 3 dominios ontológicos.',
+      ],
+      selfCareProtocol: 'Recuerda que la transformación ontológica es una espiral ascendente. Celebra tus avances y trátate con infinita amabilidad en los días desafiantes.',
+      reflectiveQuestions: [
+        '¿Quién eres hoy comparado con la persona que inició este proceso hace 12 semanas?',
+        '¿Cuál es el legado de coherencia que eliges proyectar en cada espacio que habitas?',
+      ],
+    },
+    studyMaterials: [
+      {
+        title: 'Carta Magna de Compromisos Innegociables',
+        type: 'Ficha de Ejercicio',
+        pages: '3 páginas',
+        description: 'Documento formal para sellar los 3 estándares rectores de tu vida profesional y personal.',
+      },
+      {
+        title: 'Manual Permanente de Auto-Asistencia Ontológica',
+        type: 'Guía de Trabajo',
+        pages: '12 páginas',
+        description: 'Compendio integral de protocolos y herramientas para toda la vida.',
+      },
+    ],
   },
 ];
 
@@ -181,7 +463,7 @@ const INITIAL_PROSPECTS: Prospect[] = [
 const INITIAL_USERS: User[] = [
   {
     uid: 'coach-1',
-    name: 'John Frengifo Basto',
+    name: 'John Fredy Rengifo Basto',
     email: 'johnfrengifob@gmail.com',
     role: 'coach',
     title: 'Consultor Ontológico Senior & Master Coach',
@@ -323,7 +605,7 @@ const INITIAL_AI_INSIGHTS: AIInsight[] = [
       '"Cuidar de mí misma pone en riesgo el bienestar del colectivo"',
     ],
     emotionalWisdom:
-      'Según la sabiduría emocional de Norberto Levý, la exigencia destructiva opera como una agresión interna hacia los propios recursos reales. El enojo y la tensión en la mandíbula señalan un obstáculo percibido que no está siendo procesado como un límite legítimo, sino como una falla moral. La transformación ontológica requiere mutar el auto-reproche en discernimiento compasivo y rediseñar la conversación de pedidos.',
+      'La experiencia somática reportada evidencia una señal adaptativa que busca proteger un valor fundamental. La tensión en la mandíbula y el enojo no deben ser suprimidos sino escuchados: revelan un desbalance entre la autoexigencia idealizada y la capacidad humana disponible en este momento. La transformación ontológica requiere mutar el auto-reproche en discernimiento compasivo, rediseñando la conversación de pedidos y estableciendo límites con serenidad.',
     pulseFlag: 'Yellow',
     generatedAt: new Date(Date.now() - 1000 * 60 * 60 * 38).toISOString(),
     webhookStatus: 'sent',
@@ -342,11 +624,11 @@ const INITIAL_CRONOGRAMA_EVENTS: CronogramaEvent[] = [
     mode: 'Online (Google Meet)',
     meetUrl: 'https://meet.google.com/rbc-conversatorio-ontologico',
     description:
-      'Inmersión ontológica en vivo guiada por John Frengifo. Abordaremos el mapeo de la transparencia cotidiana, la sabiduría de las emociones según Norberto Levý y la proclamación del "Basta" como acto fundacional de dignidad relacional.',
+      'Inmersión ontológica en vivo guiada por John Fredy Rengifo Basto. Abordaremos el mapeo de la transparencia cotidiana, la decodificación adaptativa de las emociones en el cuerpo y la proclamación del "Basta" como acto fundacional de dignidad y soberanía relacional.',
     imageUrl: promotionalEventBannerImg,
     aiPromptUsed:
       'High-end minimalist luxury advertising banner for an ontological coaching masterclass event named Raiz y Balance. Clean editorial aesthetic, subtle dark and warm neutral gradients, abstract geometric zen circle and botanical leaf silhouette, soft studio lighting, modern Swiss graphic design style, 8k resolution.',
-    facilitator: 'John Frengifo Basto (Master Coach Ontológico)',
+    facilitator: 'John Fredy Rengifo Basto (Master Coach Ontológico)',
     spotsLeft: 8,
     totalSpots: 30,
     featured: true,
@@ -354,20 +636,20 @@ const INITIAL_CRONOGRAMA_EVENTS: CronogramaEvent[] = [
   },
   {
     id: 'event-masterclass-2',
-    title: 'Masterclass: La Sabiduría del Miedo y la Culpa',
-    subtitle: 'El Enfoque de Autoasistencia Psicológica de Norberto Levý',
+    title: 'Masterclass: La Sabiduría Adaptativa del Miedo y la Culpa',
+    subtitle: 'Metodología de Autoasistencia Ontológica y Reencuadre Somático',
     category: 'Masterclass Ontológica',
     date: new Date(Date.now() + 1000 * 60 * 60 * 24 * 17).toISOString(),
     displayDate: 'Jueves 18 de Septiembre',
     time: '7:00 PM - 9:00 PM (GMT-5)',
     mode: 'Online (Google Meet)',
-    meetUrl: 'https://meet.google.com/rbc-masterclass-levy',
+    meetUrl: 'https://meet.google.com/rbc-masterclass-ontologica',
     description:
-      'Sesión especializada para directivos y líderes. Cómo transformar la autocrítica destructiva y la exigencia neurótica en discernimiento compasivo y coordinación de acciones impecables.',
+      'Sesión especializada para directivos y líderes. Cómo transformar la autocrítica destructiva y la exigencia descalificadora en discernimiento compasivo, auto-asistencia y coordinación de acciones impecables.',
     imageUrl: promotionalEventBannerImg,
     aiPromptUsed:
       'Minimalist executive leadership conference banner with serene botanical shadow and zen layout.',
-    facilitator: 'John Frengifo Basto',
+    facilitator: 'John Fredy Rengifo Basto',
     spotsLeft: 14,
     totalSpots: 25,
     featured: false,
@@ -426,6 +708,7 @@ const STORAGE_KEYS = {
   CALENDAR_URL: 'rbc_calendar_url_v2',
   MATRIX_URL: 'rbc_matrix_url_v2',
   PORTAL_URL: 'rbc_portal_url_v2',
+  NEXT_LEVEL_PAYMENT_URL: 'rbc_next_level_payment_url_v2',
 };
 
 export const DEFAULT_WEBHOOK_URL =
@@ -439,6 +722,9 @@ export const DEFAULT_MAKE_PHASE2_CALENDLY_WEBHOOK =
 
 export const DEFAULT_MAKE_PHASE3_PAYMENT_WEBHOOK =
   'https://hook.us1.make.com/rbc-payment-phase3';
+
+export const DEFAULT_NEXT_LEVEL_PAYMENT_URL =
+  'https://checkout.wompi.co/l/raiz-y-balance-next-level';
 
 export const DEFAULT_CALENDAR_URL =
   'https://calendar.app.google/rbc-sesion-20min';
@@ -458,7 +744,7 @@ Para ayudarte a decodificar tus resultados y estructurar tus declaraciones de so
 🗓️ {{calendarUrl}}
 
 Un saludo,
-John Rengifo | Consultoría Ontológica`;
+John Fredy Rengifo Basto | Consultoría Ontológica`;
 
 export const DEFAULT_WELCOME_MESSAGE_TEMPLATE = `Bienvenido/a al programa ontológico de 12 semanas "Certeza, Fronteras & Dirección Personal", {{name}}.
 
@@ -469,7 +755,7 @@ Tu hoja de ruta inicia en el Nodo 1: Mapeo de la Transparencia & Decodificación
 Puedes ingresar con tu correo registrado ({{email}}) para acceder a tus bitácoras de sesión y autorregistros guiados.
 
 Un saludo,
-John Rengifo | Consultoría Ontológica`;
+John Fredy Rengifo Basto | Consultoría Ontológica`;
 
 export class OntologicalStore {
   private static load<T>(key: string, fallback: T): T {
@@ -666,7 +952,17 @@ export class OntologicalStore {
   }
 
   static getUsers(): User[] {
-    return this.load<User[]>(STORAGE_KEYS.USERS, INITIAL_USERS);
+    const rawUsers = this.load<User[]>(STORAGE_KEYS.USERS, INITIAL_USERS);
+    // Ensure coach profile is always accurately named
+    return rawUsers.map((u) => {
+      if (u.uid === 'coach-1' || u.role === 'coach') {
+        return {
+          ...u,
+          name: 'John Fredy Rengifo Basto',
+        };
+      }
+      return u;
+    });
   }
 
   static saveUsers(users: User[]): void {
@@ -802,6 +1098,54 @@ export class OntologicalStore {
     return updatedUser;
   }
 
+  static unlockNodeForClient(
+    clientId: string,
+    targetStep: number,
+    paymentStatus: PaymentStatus = 'Completado'
+  ): User | null {
+    const users = this.getUsers();
+    let updatedUser: User | null = null;
+    const updatedUsers = users.map((u) => {
+      if (u.uid === clientId) {
+        const nextProgress = Math.max(u.programProgress || 1, targetStep);
+        updatedUser = {
+          ...u,
+          programProgress: nextProgress,
+          paymentStatus: paymentStatus,
+        };
+        return updatedUser;
+      }
+      return u;
+    });
+
+    if (updatedUser) {
+      this.saveUsers(updatedUsers);
+
+      // Create scheduled session for this newly unlocked step if none exists
+      const sessions = this.getSessions();
+      const hasSessionForStep = sessions.some(
+        (s) => s.clientId === clientId && s.sessionNumber === targetStep
+      );
+
+      if (!hasSessionForStep) {
+        const nodeInfo =
+          PROGRAM_NODES.find((n) => n.step === targetStep) || PROGRAM_NODES[0];
+        const newSession: Session = {
+          id: 'sess-' + Date.now(),
+          clientId: clientId,
+          sessionNumber: targetStep,
+          date: new Date(Date.now() + 1000 * 60 * 60 * 72).toISOString(),
+          meetLink: `https://meet.google.com/rbc-${Math.random().toString(36).substring(2, 7)}`,
+          status: 'scheduled',
+          notes: `Sesión ${targetStep}: ${nodeInfo.sessionTitle}.`,
+        };
+        this.saveSessions([...sessions, newSession]);
+      }
+    }
+
+    return updatedUser;
+  }
+
   // --- SESSIONS ---
   static getSessions(): Session[] {
     return this.load<Session[]>(STORAGE_KEYS.SESSIONS, INITIAL_SESSIONS);
@@ -906,7 +1250,7 @@ export class OntologicalStore {
   }
 
   /**
-   * Generates or dispatches AI Ontological analysis based on Norberto Levý
+   * Generates or dispatches AI Ontological analysis based on the three ontological domains (Linguistic, Emotional, Somatic)
    * Calls Make.com webhook via POST with payload: { clientId, bodyEmotion, reflections }
    */
   static async triggerAIAnalysisWebhook(
@@ -957,8 +1301,8 @@ export class OntologicalStore {
         : errorMsg;
     }
 
-    // Determine ontological analysis synthesizing bodily emotion & reflections through Norberto Levý's framework
-    const analyzed = this.synthesizeLevyAnalysis(form);
+    // Determine ontological analysis synthesizing bodily emotion & reflections
+    const analyzed = this.synthesizeOntologicalAnalysis(form);
 
     const newInsight: AIInsight = {
       id: 'insight-' + Date.now(),
@@ -983,9 +1327,9 @@ export class OntologicalStore {
   }
 
   /**
-   * Synthesizes Ontological Coaching diagnosis strictly grounded in Norberto Levý's "La Sabiduría de las Emociones"
+   * Synthesizes Ontological Coaching diagnosis across linguistic, emotional, and somatic coherence
    */
-  private static synthesizeLevyAnalysis(form: FormSubmission): {
+  private static synthesizeOntologicalAnalysis(form: FormSubmission): {
     linguisticBarriers: string[];
     limitingBeliefs: string[];
     emotionalWisdom: string;
@@ -1034,8 +1378,8 @@ export class OntologicalStore {
       '"Pedir ayuda implica una renuncia a mi propia capacidad y valor"',
     ];
 
-    let levyText =
-      'A partir del modelo de Norberto Levý sobre la sabiduría de las emociones, la experiencia somática reportada evidencia una señal adaptativa que busca proteger un valor fundamental. La tensión no debe ser suprimida sino escuchada: revela un desbalance entre la autoexigencia idealizada y la capacidad humana disponible. El trabajo ontológico se orienta a transformar la autocrítica punitiva en un diálogo compasivo de auto-asistencia y rediseño conversacional.';
+    let ontologicalText =
+      'La experiencia somática reportada evidencia una señal adaptativa que busca proteger un valor fundamental. La tensión no debe ser suprimida sino escuchada: revela un desbalance entre la autoexigencia idealizada y la capacidad humana disponible. El trabajo ontológico se orienta a transformar la autocrítica punitiva en un diálogo compasivo de auto-asistencia, soberanía y rediseño conversacional.';
 
     if (
       text.includes('mandíbula') ||
@@ -1052,8 +1396,8 @@ export class OntologicalStore {
         '"La pausa es sinónimo de holgazanería o debilidad"',
         '"Debo anticiparme a todos los escenarios adversos para ser digno de confianza"',
       ];
-      levyText =
-        'Bajo la perspectiva de Norberto Levý en "La Sabiduría de las Emociones", la autoexigencia actúa como un tirano interior que castiga al ejecutante real por no alcanzar estándares irreales. El síntoma corporal (tensión maxilar y torácica) es la voz del cuerpo exigiendo un tratado de paz interno. La intervención ontológica consiste en validar la intención positiva de la exigencia mientras se erradica su método descalificador.';
+      ontologicalText =
+        'La autoexigencia detectada opera como una fuerza interna que descalifica los recursos reales disponibles por intentar alcanzar estándares ideales. El síntoma corporal (tensión maxilar y torácica) es la voz del cuerpo reclamando coherencia y balance. La intervención ontológica consiste en validar la intención positiva de excelencia mientras se erradica el método descalificador y punitivo.';
     } else if (
       text.includes('plexo') ||
       text.includes('miedo') ||
@@ -1069,14 +1413,14 @@ export class OntologicalStore {
         '"El miedo es una falla de carácter que debe ocultarse a toda costa"',
         '"Si cometo un error, quedaré excluido de la comunidad de pertenencia"',
       ];
-      levyText =
-        'Norberto Levý postula que el miedo es un mensajero de prudencia que alerta sobre una desproporción entre la magnitud del desafío y los recursos percibidos. Lejos de ser un enemigo, el miedo convoca al desarrollo de nuevas competencias conversacionales y corporales para equiparar la demanda exterior.';
+      ontologicalText =
+        'El miedo experimentado opera como un mensajero adaptativo de prudencia que alerta sobre una desproporción entre la magnitud del desafío y los recursos percibidos. Lejos de ser un enemigo a reprimir, el miedo convoca al desarrollo de nuevas competencias conversacionales y corporales para equiparar la demanda exterior con serenidad y maestría.';
     }
 
     return {
       linguisticBarriers: barriers,
       limitingBeliefs: beliefs,
-      emotionalWisdom: levyText,
+      emotionalWisdom: ontologicalText,
       pulseFlag: pulse,
     };
   }
@@ -1424,6 +1768,17 @@ export class OntologicalStore {
 
   static setPortalUrl(url: string): void {
     localStorage.setItem(STORAGE_KEYS.PORTAL_URL, url);
+  }
+
+  static getNextLevelPaymentUrl(): string {
+    return (
+      localStorage.getItem(STORAGE_KEYS.NEXT_LEVEL_PAYMENT_URL) ||
+      DEFAULT_NEXT_LEVEL_PAYMENT_URL
+    );
+  }
+
+  static setNextLevelPaymentUrl(url: string): void {
+    localStorage.setItem(STORAGE_KEYS.NEXT_LEVEL_PAYMENT_URL, url);
   }
 
   static generateWelcomeMessage(

@@ -217,7 +217,7 @@ export const PromotionalEventBanner: React.FC<PromotionalEventBannerProps> = ({
               </div>
             </div>
 
-            {/* Ontological Themes / Levý Framework Focus */}
+            {/* Ontological Themes / Transformation Ejes */}
             <div className="space-y-1.5">
               <span className="text-[10px] font-semibold text-gray-400 dark:text-neutral-500 uppercase tracking-wider block">
                 Ejes de Trabajo en Vivo

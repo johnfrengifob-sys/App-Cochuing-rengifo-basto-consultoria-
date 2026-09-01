@@ -85,7 +85,7 @@ export const WebhookConfigModal: React.FC<WebhookConfigModalProps> = ({
     OntologicalStore.getPortalUrl()
   );
 
-  // Phase 4 (AI Levý) Config State
+  // Phase 4 (AI Ontological Coherence) Config State
   const [aiWebhookUrl, setAiWebhookUrl] = useState(() =>
     OntologicalStore.getWebhookUrl()
   );
@@ -987,17 +987,17 @@ export const WebhookConfigModal: React.FC<WebhookConfigModalProps> = ({
         )}
 
         {/* ========================================================================= */}
-        {/* TAB 4: FASE 4 DIAGNOSTICO IA (LEVY FRAMEWORK & ICF) */}
+        {/* TAB 4: FASE 4 DIAGNOSTICO IA (COHERENCIA ONTOLÓGICA & ICF) */}
         {/* ========================================================================= */}
         {activeTab === 'phase4_ai' && (
           <div className="space-y-6 max-h-[65vh] overflow-y-auto pr-1">
             <div className="p-4 bg-[#F9F9F9] dark:bg-[#202024] rounded-2xl border border-gray-100 dark:border-neutral-800 text-xs space-y-2">
               <div className="font-semibold text-black dark:text-white flex items-center gap-2">
                 <Sparkles className="w-3.5 h-3.5 text-black dark:text-white" />
-                Diagnóstico Ontológico (Norberto Levý & Competencias ICF)
+                Diagnóstico & Coherencia Ontológica (Dominios Somático, Emocional y Lingüístico)
               </div>
               <p className="text-xs font-light text-gray-600 dark:text-neutral-400 leading-relaxed">
-                Cuando el Coach genera el diagnóstico en el Panel de Clientes, se transmite el informe y la decodificación somática para evaluación en Make.com o procesamiento local según el modelo de Sabiduría de las Emociones y los 8 estándares ICF.
+                Cuando el Coach o el Cliente genera el diagnóstico en la plataforma, se procesa la decodificación somática, los juicios y los quiebres para evaluación y síntesis de coherencia ontológica según los estándares de consultoría transformacional y competencias ICF.
               </p>
             </div>
 

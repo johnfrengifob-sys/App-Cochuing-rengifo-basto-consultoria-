@@ -12,6 +12,7 @@ import {
   EventRegistration,
 } from '../types';
 import { OntologicalStore, DEFAULT_WEBHOOK_URL, PROGRAM_NODES } from '../services/store';
+import { PDFGenerator } from '../utils/pdfGenerator';
 import { LiquidGlassButton } from './LiquidGlassButton';
 import { PulseBadge } from './PulseBadge';
 import { WebhookConfigModal } from './WebhookConfigModal';
@@ -49,6 +50,8 @@ import {
   Ticket,
   CheckCheck,
   Link2,
+  Download,
+  FileDown,
 } from 'lucide-react';
 
 interface CoachDashboardProps {
@@ -276,7 +279,7 @@ export const CoachDashboard: React.FC<CoachDashboardProps> = ({
       } else {
         setGenerationFeedback({
           type: 'info',
-          message: `Análisis Ontológico generado localmente (Norberto Levý Framework). Webhook placeholder despachado (${
+          message: `Análisis Ontológico generado localmente (Coherencia Somática, Emocional y Lingüística). Webhook placeholder despachado (${
             result.error || 'Listo para recibir URL productiva'
           }).`,
           payloadPreview: payloadString,
@@ -366,19 +369,19 @@ export const CoachDashboard: React.FC<CoachDashboardProps> = ({
           </div>
 
           {/* Master View Switcher */}
-          <div className="flex items-center gap-1.5 p-1 bg-white dark:bg-[#202024] rounded-full border border-gray-200/80 dark:border-neutral-700 shadow-xs self-start sm:self-auto">
+          <div className="flex items-center gap-1 p-1 bg-white dark:bg-[#1E1E22] rounded-2xl sm:rounded-full border border-gray-200/80 dark:border-neutral-700 shadow-2xs self-stretch sm:self-auto overflow-x-auto">
             <button
               onClick={() => setActiveMainTab('crm')}
-              className={`px-4 py-1.5 rounded-full text-xs font-medium transition-all cursor-pointer flex items-center gap-2 ${
+              className={`px-3.5 py-1.5 rounded-xl sm:rounded-full text-xs font-medium transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap shrink-0 ${
                 activeMainTab === 'crm'
                   ? 'bg-black dark:bg-white text-white dark:text-black shadow-xs'
-                  : 'text-gray-600 dark:text-neutral-400 hover:text-black dark:hover:text-white'
+                  : 'text-gray-600 dark:text-neutral-400 hover:text-black dark:hover:text-white hover:bg-gray-100/60 dark:hover:bg-neutral-800/60'
               }`}
             >
               <Kanban className="w-3.5 h-3.5" />
-              Pipeline CRM (Raíz & Balance)
+              <span>Pipeline CRM</span>
               <span
-                className={`text-[10px] px-1.5 py-0.2 rounded-full ${
+                className={`text-[10px] px-1.5 py-0.5 rounded-full font-semibold ${
                   activeMainTab === 'crm'
                     ? 'bg-white/20 dark:bg-black/20 text-white dark:text-black'
                     : 'bg-gray-100 dark:bg-neutral-800 text-gray-600 dark:text-neutral-400'
@@ -390,16 +393,16 @@ export const CoachDashboard: React.FC<CoachDashboardProps> = ({
 
             <button
               onClick={() => setActiveMainTab('clients')}
-              className={`px-4 py-1.5 rounded-full text-xs font-medium transition-all cursor-pointer flex items-center gap-2 ${
+              className={`px-3.5 py-1.5 rounded-xl sm:rounded-full text-xs font-medium transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap shrink-0 ${
                 activeMainTab === 'clients'
                   ? 'bg-black dark:bg-white text-white dark:text-black shadow-xs'
-                  : 'text-gray-600 dark:text-neutral-400 hover:text-black dark:hover:text-white'
+                  : 'text-gray-600 dark:text-neutral-400 hover:text-black dark:hover:text-white hover:bg-gray-100/60 dark:hover:bg-neutral-800/60'
               }`}
             >
               <Users className="w-3.5 h-3.5" />
-              Clientes Ancla (Programa 1 a 1)
+              <span>Clientes Ancla</span>
               <span
-                className={`text-[10px] px-1.5 py-0.2 rounded-full ${
+                className={`text-[10px] px-1.5 py-0.5 rounded-full font-semibold ${
                   activeMainTab === 'clients'
                     ? 'bg-white/20 dark:bg-black/20 text-white dark:text-black'
                     : 'bg-gray-100 dark:bg-neutral-800 text-gray-600 dark:text-neutral-400'
@@ -411,16 +414,16 @@ export const CoachDashboard: React.FC<CoachDashboardProps> = ({
 
             <button
               onClick={() => setActiveMainTab('events')}
-              className={`px-4 py-1.5 rounded-full text-xs font-medium transition-all cursor-pointer flex items-center gap-2 ${
+              className={`px-3.5 py-1.5 rounded-xl sm:rounded-full text-xs font-medium transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap shrink-0 ${
                 activeMainTab === 'events'
                   ? 'bg-black dark:bg-white text-white dark:text-black shadow-xs'
-                  : 'text-gray-600 dark:text-neutral-400 hover:text-black dark:hover:text-white'
+                  : 'text-gray-600 dark:text-neutral-400 hover:text-black dark:hover:text-white hover:bg-gray-100/60 dark:hover:bg-neutral-800/60'
               }`}
             >
               <Calendar className="w-3.5 h-3.5" />
-              Cronograma & Eventos IA
+              <span>Cronograma & Eventos</span>
               <span
-                className={`text-[10px] px-1.5 py-0.2 rounded-full ${
+                className={`text-[10px] px-1.5 py-0.5 rounded-full font-semibold ${
                   activeMainTab === 'events'
                     ? 'bg-white/20 dark:bg-black/20 text-white dark:text-black'
                     : 'bg-gray-100 dark:bg-neutral-800 text-gray-600 dark:text-neutral-400'
@@ -453,22 +456,24 @@ export const CoachDashboard: React.FC<CoachDashboardProps> = ({
               </p>
             </div>
 
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2.5 shrink-0">
               <button
                 type="button"
                 onClick={() => setShowMakeModal(true)}
-                className="px-4 py-2.5 rounded-full border border-gray-200 dark:border-neutral-700 bg-white dark:bg-[#1A1A1E] hover:bg-[#F9F9F9] dark:hover:bg-neutral-800 text-black dark:text-white text-xs font-medium transition-all flex items-center gap-2 cursor-pointer shadow-2xs hover:border-black dark:hover:border-neutral-500"
+                className="px-3.5 py-2 rounded-xl border border-gray-200/90 dark:border-neutral-700 bg-white dark:bg-[#1A1A1E] hover:bg-gray-50 dark:hover:bg-neutral-800 text-black dark:text-white text-xs font-medium transition-all flex items-center gap-2 cursor-pointer shadow-2xs hover:border-black dark:hover:border-neutral-500 whitespace-nowrap"
               >
                 <Workflow className="w-3.5 h-3.5 text-black dark:text-white" />
-                Automatización Make (Fases 1, 2 & 3)
+                <span>Automatización Make</span>
               </button>
 
-              <LiquidGlassButton
+              <button
+                type="button"
                 onClick={() => setShowAddProspectModal(true)}
-                icon={<Plus className="w-4 h-4 stroke-[1.5]" />}
+                className="px-3.5 py-2 rounded-xl bg-black dark:bg-white text-white dark:text-black hover:bg-neutral-800 dark:hover:bg-neutral-200 text-xs font-medium transition-all flex items-center gap-1.5 cursor-pointer shadow-xs whitespace-nowrap"
               >
-                Nuevo Prospecto (WhatsApp)
-              </LiquidGlassButton>
+                <Plus className="w-3.5 h-3.5 stroke-[2]" />
+                <span>Nuevo Prospecto</span>
+              </button>
             </div>
           </div>
 
@@ -963,19 +968,21 @@ export const CoachDashboard: React.FC<CoachDashboardProps> = ({
                   </div>
 
                   {/* Actions */}
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2.5 shrink-0">
                     <button
+                      type="button"
                       onClick={() => setShowNewSessionModal(true)}
-                      className="px-4 py-2.5 rounded-full border border-gray-200 dark:border-neutral-700 text-xs font-medium text-black dark:text-white hover:bg-[#F9F9F9] dark:hover:bg-neutral-800 transition-all flex items-center gap-1.5 cursor-pointer"
+                      className="px-3.5 py-2 rounded-xl border border-gray-200/90 dark:border-neutral-700 bg-white dark:bg-[#1A1A1E] hover:bg-gray-50 dark:hover:bg-neutral-800 text-black dark:text-white text-xs font-medium transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs hover:border-black dark:hover:border-neutral-500 whitespace-nowrap"
                     >
                       <Plus className="w-3.5 h-3.5" />
-                      Agendar Sesión
+                      <span>Agendar Sesión</span>
                     </button>
 
                     <LiquidGlassButton
                       onClick={handleGenerateAIAnalysis}
                       isLoading={isGeneratingAI}
-                      icon={<Sparkles className="w-4 h-4 stroke-[1.5]" />}
+                      size="sm"
+                      icon={<Sparkles className="w-3.5 h-3.5 stroke-[1.5]" />}
                     >
                       Generar Diagnóstico IA
                     </LiquidGlassButton>
@@ -1083,7 +1090,7 @@ export const CoachDashboard: React.FC<CoachDashboardProps> = ({
                         <div>
                           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#F9F9F9] dark:bg-neutral-800 border border-gray-100 dark:border-neutral-700 text-[11px] font-medium text-gray-500 dark:text-neutral-400 uppercase tracking-widest mb-2">
                             <Brain className="w-3.5 h-3.5 text-black dark:text-white" />
-                            Diagnóstico Ontológico (Norberto Levý)
+                            Diagnóstico Ontológico Integral
                           </div>
                           <h2 className="text-xl font-semibold tracking-tight text-black dark:text-white">
                             Informe Ontológico Confidencial
@@ -1102,11 +1109,11 @@ export const CoachDashboard: React.FC<CoachDashboardProps> = ({
 
                       {latestInsight ? (
                         <div className="space-y-8">
-                          {/* Section 1: Sabiduría Emocional (Norberto Levý) */}
+                          {/* Section 1: Sabiduría Emocional & Somática */}
                           <div className="space-y-3">
                             <h3 className="text-xs font-semibold text-black dark:text-white uppercase tracking-wider flex items-center gap-2">
                               <HeartPulse className="w-4 h-4 text-black dark:text-white stroke-[1.5]" />
-                              Sabiduría Emocional (Modelo Norberto Levý)
+                              Sabiduría & Decodificación Emocional
                             </h3>
                             <div className="p-6 rounded-2xl bg-[#F9F9F9] dark:bg-[#1A1A1E] border border-gray-100/90 dark:border-neutral-800 text-xs sm:text-sm font-light text-gray-700 dark:text-neutral-300 leading-relaxed relative">
                               <Quote className="w-6 h-6 text-gray-200 dark:text-neutral-700 absolute top-4 right-4 stroke-[1]" />
@@ -1213,49 +1220,76 @@ export const CoachDashboard: React.FC<CoachDashboardProps> = ({
                         </p>
                       ) : (
                         <div className="space-y-4 max-h-[500px] overflow-y-auto pr-1">
-                          {forms.map((f, idx) => (
-                            <div
-                              key={f.id}
-                              className="p-4 rounded-2xl bg-[#F9F9F9] dark:bg-[#1A1A1E] border border-gray-100 dark:border-neutral-800 space-y-2.5 text-xs"
-                            >
-                              <div className="flex items-center justify-between text-[11px] text-gray-400 dark:text-neutral-500 font-light">
-                                <span className="font-medium text-black dark:text-white">
-                                  Sesión #{f.sessionStep || forms.length - idx} •{' '}
-                                  {f.level}
-                                </span>
-                                <span>{formatDate(f.submittedAt)}</span>
-                              </div>
+                          {forms.map((f, idx) => {
+                            const matchingNode =
+                              PROGRAM_NODES.find(
+                                (n) => n.step === (f.sessionStep || 1)
+                              ) || PROGRAM_NODES[0];
+                            const matchingInsight = insights.find(
+                              (i) => i.sessionStep === f.sessionStep
+                            );
 
-                              <div className="space-y-1">
-                                <div className="text-[10px] font-semibold text-black dark:text-white uppercase tracking-wider">
-                                  Emoción Somática:
+                            return (
+                              <div
+                                key={f.id}
+                                className="p-4 rounded-2xl bg-[#F9F9F9] dark:bg-[#1A1A1E] border border-gray-100 dark:border-neutral-800 space-y-2.5 text-xs"
+                              >
+                                <div className="flex items-center justify-between text-[11px] text-gray-400 dark:text-neutral-500 font-light">
+                                  <span className="font-medium text-black dark:text-white">
+                                    Sesión #{f.sessionStep || forms.length - idx} •{' '}
+                                    {f.level}
+                                  </span>
+                                  <div className="flex items-center gap-2">
+                                    <span>{formatDate(f.submittedAt)}</span>
+                                    <button
+                                      type="button"
+                                      onClick={() =>
+                                        PDFGenerator.generateFormSubmissionPDF(
+                                          f,
+                                          selectedClient,
+                                          matchingNode,
+                                          matchingInsight
+                                        )
+                                      }
+                                      className="p-1 rounded-md bg-white dark:bg-[#202024] border border-gray-200 dark:border-neutral-700 text-gray-600 dark:text-neutral-300 hover:text-black dark:hover:text-white transition-colors cursor-pointer"
+                                      title="Descargar registro en PDF"
+                                    >
+                                      <FileDown className="w-3.5 h-3.5" />
+                                    </button>
+                                  </div>
                                 </div>
-                                <p className="text-gray-700 dark:text-neutral-300 font-light leading-relaxed">
-                                  {f.bodyEmotion}
-                                </p>
-                              </div>
 
-                              {f.levelSpecificAnswer && (
-                                <div className="space-y-1 pt-1 border-t border-gray-200/50 dark:border-neutral-800">
+                                <div className="space-y-1">
                                   <div className="text-[10px] font-semibold text-black dark:text-white uppercase tracking-wider">
-                                    Respuesta Específica del Nivel:
+                                    Emoción Somática:
                                   </div>
                                   <p className="text-gray-700 dark:text-neutral-300 font-light leading-relaxed">
-                                    {f.levelSpecificAnswer}
+                                    {f.bodyEmotion}
                                   </p>
                                 </div>
-                              )}
 
-                              <div className="space-y-1 pt-1 border-t border-gray-200/50 dark:border-neutral-800">
-                                <div className="text-[10px] font-semibold text-black dark:text-white uppercase tracking-wider">
-                                  Reflexión / Quiebre:
+                                {f.levelSpecificAnswer && (
+                                  <div className="space-y-1 pt-1 border-t border-gray-200/50 dark:border-neutral-800">
+                                    <div className="text-[10px] font-semibold text-black dark:text-white uppercase tracking-wider">
+                                      Respuesta Específica del Nivel:
+                                    </div>
+                                    <p className="text-gray-700 dark:text-neutral-300 font-light leading-relaxed">
+                                      {f.levelSpecificAnswer}
+                                    </p>
+                                  </div>
+                                )}
+
+                                <div className="space-y-1 pt-1 border-t border-gray-200/50 dark:border-neutral-800">
+                                  <div className="text-[10px] font-semibold text-black dark:text-white uppercase tracking-wider">
+                                    Reflexión / Quiebre:
+                                  </div>
+                                  <p className="text-gray-600 dark:text-neutral-400 font-light leading-relaxed">
+                                    {f.reflections}
+                                  </p>
                                 </div>
-                                <p className="text-gray-600 dark:text-neutral-400 font-light leading-relaxed">
-                                  {f.reflections}
-                                </p>
                               </div>
-                            </div>
-                          ))}
+                            );
+                          })}
                         </div>
                       )}
                     </div>
