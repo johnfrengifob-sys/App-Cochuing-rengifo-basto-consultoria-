@@ -1,7 +1,8 @@
 import React from 'react';
 import { User } from '../types';
-import { LogOut, Sliders, Sparkles } from 'lucide-react';
+import { LogOut, Sliders, Sparkles, Globe } from 'lucide-react';
 import { ThemeToggle } from './ThemeToggle';
+import { useTranslation } from '../services/i18n';
 
 interface HeaderProps {
   currentUser: User;
@@ -20,6 +21,8 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenSettings,
   onOpenRegistrationPortal,
 }) => {
+  const { language, t } = useTranslation();
+
   return (
     <header className="sticky top-0 z-40 w-full bg-white/85 dark:bg-[#0D0D0E]/85 backdrop-blur-xl border-b border-gray-100 dark:border-neutral-800 transition-all duration-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 h-20 flex items-center justify-between">
@@ -30,10 +33,10 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
           <div>
             <h1 className="text-sm font-semibold tracking-tight text-black dark:text-white leading-none">
-              Rengifo Basto
+              {t.brandTitle}
             </h1>
             <p className="text-[11px] font-light text-gray-500 dark:text-neutral-400 tracking-wide mt-1">
-              Consultoría Ontológica
+              {t.brandSubtitle}
             </p>
           </div>
         </div>
@@ -44,19 +47,19 @@ export const Header: React.FC<HeaderProps> = ({
           {onOpenRegistrationPortal && (
             <button
               onClick={onOpenRegistrationPortal}
-              title="Abrir Portal de Pre-Inscripción de Evento"
+              title={t.registrationPortal}
               className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-black/5 dark:bg-white/5 border border-gray-200/80 dark:border-neutral-800 text-xs font-medium text-black dark:text-white hover:bg-black/10 dark:hover:bg-white/10 transition-all cursor-pointer shadow-2xs"
             >
               <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-              <span>Portal de Registro</span>
+              <span>{t.registrationPortal}</span>
             </button>
           )}
 
-          {/* Quick role switcher for testing / demonstration */}
-          {allUsers.length > 0 && onSwitchUser && (
+          {/* Quick role switcher for testing / demonstration: ONLY visible to Coach/Admin */}
+          {currentUser.role === 'coach' && allUsers.length > 0 && onSwitchUser && (
             <div className="hidden lg:flex items-center gap-1.5 p-1 bg-[#F9F9F9] dark:bg-[#18181B] rounded-full border border-gray-100 dark:border-neutral-800 text-xs">
               <span className="text-[10px] uppercase font-medium tracking-wider text-gray-400 dark:text-neutral-500 px-2.5">
-                Rol:
+                {t.adminView}
               </span>
               {allUsers.map((u) => {
                 const isActive = u.uid === currentUser.uid;
@@ -70,7 +73,7 @@ export const Header: React.FC<HeaderProps> = ({
                         : 'text-gray-600 dark:text-neutral-400 hover:text-black dark:hover:text-white'
                     }`}
                   >
-                    {u.name.split(' ')[0]} ({u.role === 'coach' ? 'Coach' : 'Cliente'})
+                    {u.name.split(' ')[0]} ({u.role === 'coach' ? (language === 'es' ? 'Coach' : 'Coach') : (language === 'es' ? 'Cliente' : 'Client')})
                   </button>
                 );
               })}
@@ -80,13 +83,17 @@ export const Header: React.FC<HeaderProps> = ({
           {/* Theme Toggle Button */}
           <ThemeToggle variant="button" />
 
+          {/* Settings & Language modal button */}
           {onOpenSettings && (
             <button
               onClick={onOpenSettings}
-              title="Configuración de Automatizaciones & Make"
-              className="p-2 sm:p-2.5 rounded-full text-gray-500 dark:text-neutral-400 hover:text-black dark:hover:text-white hover:bg-[#F9F9F9] dark:hover:bg-[#1E1E22] transition-all cursor-pointer"
+              title={t.settingsTitle}
+              className="p-2 sm:p-2.5 rounded-full text-gray-500 dark:text-neutral-400 hover:text-black dark:hover:text-white hover:bg-[#F9F9F9] dark:hover:bg-[#1E1E22] transition-all cursor-pointer flex items-center gap-1"
             >
               <Sliders className="w-4 h-4 stroke-[1.5]" />
+              <span className="text-[10px] uppercase font-bold tracking-wider px-1 text-gray-400 dark:text-neutral-500 hidden sm:inline">
+                {language.toUpperCase()}
+              </span>
             </button>
           )}
 
@@ -103,13 +110,13 @@ export const Header: React.FC<HeaderProps> = ({
                 {currentUser.name}
               </div>
               <div className="text-[11px] font-light text-gray-400 dark:text-neutral-400 capitalize">
-                {currentUser.role === 'coach' ? 'Coach Consultor' : 'Cliente'}
+                {currentUser.role === 'coach' ? t.roleCoach : t.roleClient}
               </div>
             </div>
 
             <button
               onClick={onLogout}
-              title="Cerrar Sesión"
+              title={t.logout}
               className="p-2 sm:p-2.5 rounded-full text-gray-400 dark:text-neutral-500 hover:text-black dark:hover:text-white hover:bg-gray-100 dark:hover:bg-[#1E1E22] transition-all cursor-pointer ml-0.5"
             >
               <LogOut className="w-4 h-4 stroke-[1.5]" />

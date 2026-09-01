@@ -266,10 +266,10 @@ export const PromotionalEventBanner: React.FC<PromotionalEventBannerProps> = ({
               ) : (
                 <LiquidGlassButton
                   onClick={handleRegister}
-                  className="w-full sm:w-auto px-6 py-3 text-xs"
+                  className="w-full sm:w-auto px-6 py-3 text-xs font-semibold"
                   icon={<ArrowRight className="w-3.5 h-3.5" />}
                 >
-                  Reservar Cupo en Vivo
+                  Reserva tu cupo
                 </LiquidGlassButton>
               )}
             </div>
