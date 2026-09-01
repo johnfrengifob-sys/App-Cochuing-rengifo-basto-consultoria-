@@ -484,6 +484,10 @@ const INITIAL_USERS: User[] = [
     paymentStatus: 'Completado',
     programName: 'Certeza, Fronteras & Dirección Personal',
     programFee: '$1.500.000 COP',
+    status: 'active',
+    totalInvested: '$1.500.000 COP',
+    primaryBreakdown: 'Autoexigencia y límites no dichos con directivos',
+    lastActivityAt: new Date(Date.now() - 1000 * 60 * 60 * 5).toISOString(),
   },
   {
     uid: 'client-2',
@@ -498,6 +502,10 @@ const INITIAL_USERS: User[] = [
     paymentStatus: 'Cuota 1 de 2',
     programName: 'Certeza, Fronteras & Dirección Personal',
     programFee: '$1.500.000 COP',
+    status: 'active',
+    totalInvested: '$750.000 COP',
+    primaryBreakdown: 'Gestión de la ira y reactividad con socios',
+    lastActivityAt: new Date(Date.now() - 1000 * 60 * 60 * 22).toISOString(),
   },
   {
     uid: 'client-3',
@@ -512,6 +520,64 @@ const INITIAL_USERS: User[] = [
     paymentStatus: 'Pago Único',
     programName: 'Certeza, Fronteras & Dirección Personal',
     programFee: '$1.500.000 COP',
+    status: 'active',
+    totalInvested: '$1.500.000 COP',
+    primaryBreakdown: 'Crisis de identidad directiva y propósito',
+    lastActivityAt: new Date(Date.now() - 1000 * 60 * 60 * 48).toISOString(),
+  },
+  {
+    uid: 'client-4',
+    name: 'Alejandro Morales',
+    email: 'alejandro.morales@example.com',
+    role: 'client',
+    title: 'Gerente Comercial Regional',
+    avatarUrl:
+      'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=400&q=80',
+    joinedAt: '2024-05-02',
+    programProgress: 1,
+    paymentStatus: 'Cuota 1 de 2',
+    programName: 'Certeza, Fronteras & Dirección Personal',
+    programFee: '$1.500.000 COP',
+    status: 'waiting',
+    totalInvested: '$750.000 COP',
+    primaryBreakdown: 'Trato y sanación con sus padres & lealtad invisible',
+    lastActivityAt: new Date(Date.now() - 1000 * 60 * 60 * 72).toISOString(),
+  },
+  {
+    uid: 'client-5',
+    name: 'Valentina Jaramillo',
+    email: 'valentina.j@example.com',
+    role: 'client',
+    title: 'Consultora de Estrategia & M&A',
+    avatarUrl:
+      'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80',
+    joinedAt: '2024-01-20',
+    programProgress: 6,
+    paymentStatus: 'Completado',
+    programName: 'Certeza, Fronteras & Dirección Personal',
+    programFee: '$1.500.000 COP',
+    status: 'inactive',
+    totalInvested: '$3.000.000 COP',
+    primaryBreakdown: 'Miedo al juicio externo y soberanía de decisión',
+    lastActivityAt: new Date(Date.now() - 1000 * 60 * 60 * 240).toISOString(),
+  },
+  {
+    uid: 'client-6',
+    name: 'Daniel Echeverri',
+    email: 'daniel.echeverri@example.com',
+    role: 'client',
+    title: 'CFO & Asesor Financiero',
+    avatarUrl:
+      'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=400&q=80',
+    joinedAt: '2024-06-10',
+    programProgress: 2,
+    paymentStatus: 'Pago Único',
+    programName: 'Certeza, Fronteras & Dirección Personal',
+    programFee: '$1.500.000 COP',
+    status: 'active',
+    totalInvested: '$1.500.000 COP',
+    primaryBreakdown: 'Control obsesivo y delegación con angustia',
+    lastActivityAt: new Date(Date.now() - 1000 * 60 * 60 * 12).toISOString(),
   },
 ];
 
@@ -953,7 +1019,7 @@ export class OntologicalStore {
 
   static getUsers(): User[] {
     const rawUsers = this.load<User[]>(STORAGE_KEYS.USERS, INITIAL_USERS);
-    // Ensure coach profile is always accurately named and has the latest avatar
+    // Ensure coach profile is always accurately named and has the latest avatar, and ensure clients have default status & breakdown
     return rawUsers.map((u) => {
       if (u.uid === 'coach-1' || u.role === 'coach') {
         return {
@@ -962,12 +1028,78 @@ export class OntologicalStore {
           avatarUrl: coachAvatarImg,
         };
       }
-      return u;
+      // Guarantee client defaults for status, totalInvested and primaryBreakdown
+      return {
+        ...u,
+        status: u.status || 'active',
+        totalInvested:
+          u.totalInvested ||
+          (u.paymentStatus === 'Cuota 1 de 2'
+            ? '$750.000 COP'
+            : '$1.500.000 COP'),
+        primaryBreakdown:
+          u.primaryBreakdown ||
+          (u.uid === 'client-1'
+            ? 'Autoexigencia y límites no dichos con directivos'
+            : u.uid === 'client-2'
+            ? 'Gestión de la ira y reactividad con socios'
+            : u.uid === 'client-3'
+            ? 'Crisis de identidad directiva y propósito'
+            : 'Fronteras, auto-observación y claridad directiva'),
+      };
     });
   }
 
   static saveUsers(users: User[]): void {
     this.save(STORAGE_KEYS.USERS, users);
+  }
+
+  static updateClientStatus(clientId: string, status: 'active' | 'waiting' | 'inactive'): User | null {
+    const users = this.getUsers();
+    let updatedUser: User | null = null;
+    const updatedUsers = users.map((u) => {
+      if (u.uid === clientId) {
+        updatedUser = { ...u, status, lastActivityAt: new Date().toISOString() };
+        return updatedUser;
+      }
+      return u;
+    });
+    if (updatedUser) {
+      this.saveUsers(updatedUsers);
+    }
+    return updatedUser;
+  }
+
+  static updateClientBreakdown(clientId: string, breakdown: string): User | null {
+    const users = this.getUsers();
+    let updatedUser: User | null = null;
+    const updatedUsers = users.map((u) => {
+      if (u.uid === clientId) {
+        updatedUser = { ...u, primaryBreakdown: breakdown.trim(), lastActivityAt: new Date().toISOString() };
+        return updatedUser;
+      }
+      return u;
+    });
+    if (updatedUser) {
+      this.saveUsers(updatedUsers);
+    }
+    return updatedUser;
+  }
+
+  static updateClientInvested(clientId: string, totalInvested: string): User | null {
+    const users = this.getUsers();
+    let updatedUser: User | null = null;
+    const updatedUsers = users.map((u) => {
+      if (u.uid === clientId) {
+        updatedUser = { ...u, totalInvested: totalInvested.trim(), lastActivityAt: new Date().toISOString() };
+        return updatedUser;
+      }
+      return u;
+    });
+    if (updatedUser) {
+      this.saveUsers(updatedUsers);
+    }
+    return updatedUser;
   }
 
   static getCurrentUser(): User | null {
@@ -1154,6 +1286,11 @@ export class OntologicalStore {
 
   static saveSessions(sessions: Session[]): void {
     this.save(STORAGE_KEYS.SESSIONS, sessions);
+  }
+
+  static addSession(session: Session): void {
+    const current = this.getSessions();
+    this.saveSessions([...current.filter((s) => s.id !== session.id), session]);
   }
 
   static getSessionsForClient(clientId: string): Session[] {

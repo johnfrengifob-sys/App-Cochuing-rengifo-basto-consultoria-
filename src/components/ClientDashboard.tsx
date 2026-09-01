@@ -12,6 +12,7 @@ import { LiquidGlassButton } from './LiquidGlassButton';
 import { PulseBadge } from './PulseBadge';
 import { PromotionalEventBanner } from './PromotionalEventBanner';
 import { PaymentUnlockModal } from './PaymentUnlockModal';
+import { GeminiOntologicalCopilot } from './GeminiOntologicalCopilot';
 import {
   Video,
   Calendar,
@@ -48,7 +49,7 @@ interface ClientDashboardProps {
   client: User;
 }
 
-type WorkspaceTab = 'materials' | 'reinforcement' | 'form';
+type WorkspaceTab = 'materials' | 'reinforcement' | 'form' | 'gemini';
 
 export const ClientDashboard: React.FC<ClientDashboardProps> = ({ client }) => {
   const [sessions, setSessions] = useState<Session[]>(() =>

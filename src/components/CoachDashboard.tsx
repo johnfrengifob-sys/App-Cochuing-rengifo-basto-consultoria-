@@ -7,6 +7,7 @@ import {
   Prospect,
   ProspectStatus,
   PaymentStatus,
+  ClientStatus,
   ProgramNodeInfo,
   CronogramaEvent,
   EventRegistration,
@@ -17,6 +18,12 @@ import { LiquidGlassButton } from './LiquidGlassButton';
 import { PulseBadge } from './PulseBadge';
 import { WebhookConfigModal } from './WebhookConfigModal';
 import { PromotionalEventBanner } from './PromotionalEventBanner';
+import { ClientTrafficStatusBadge } from './ClientTrafficStatusBadge';
+import { ClientDirectoryTable } from './ClientDirectoryTable';
+import { ExecutiveMetricsBar } from './ExecutiveMetricsBar';
+import { ClientWorkstationView } from './ClientWorkstationView';
+import { GoogleWorkspaceHub } from './GoogleWorkspaceHub';
+import { GeminiOntologicalCopilot } from './GeminiOntologicalCopilot';
 import {
   Users,
   Sparkles,
@@ -52,6 +59,9 @@ import {
   Link2,
   Download,
   FileDown,
+  LayoutList,
+  UserCircle2,
+  HardDrive,
 } from 'lucide-react';
 
 interface CoachDashboardProps {
@@ -67,8 +77,11 @@ export const CoachDashboard: React.FC<CoachDashboardProps> = ({
   onRefreshClients,
   onOpenRegistrationPortal,
 }) => {
-  // Navigation tabs: CRM Funnel vs Clientes Ancla vs Eventos & Cronograma
-  const [activeMainTab, setActiveMainTab] = useState<'crm' | 'clients' | 'events'>('crm');
+  // Navigation tabs: CRM Funnel vs Clientes Ancla vs Eventos & Cronograma vs Google Workspace Hub vs Gemini AI
+  const [activeMainTab, setActiveMainTab] = useState<'crm' | 'clients' | 'events' | 'workspace' | 'gemini'>('clients');
+
+  // Sub-view inside 'clients' tab: Directory (table/scale 20-30+) vs Workstation (1 on 1 session view)
+  const [clientsViewMode, setClientsViewMode] = useState<'directory' | 'workstation'>('directory');
 
   // Events & Cronograma State
   const [cronogramaEvents, setCronogramaEvents] = useState<CronogramaEvent[]>(() =>
@@ -135,13 +148,42 @@ export const CoachDashboard: React.FC<CoachDashboardProps> = ({
     (selectedClient?.programProgress || 1)
   );
 
+  // All insights across all clients for executive bar
+  const allInsights = OntologicalStore.getAIInsights();
+  const allSessions = OntologicalStore.getSessions();
+
   // Handle client selection switch
-  const handleSelectClient = (clientId: string) => {
+  const handleSelectClient = (clientId: string, openWorkstation: boolean = true) => {
     setSelectedClientId(clientId);
     setForms(OntologicalStore.getFormsForClient(clientId));
     setInsights(OntologicalStore.getInsightsForClient(clientId));
     setSessions(OntologicalStore.getSessionsForClient(clientId));
     setGenerationFeedback(null);
+    if (openWorkstation) {
+      setClientsViewMode('workstation');
+    }
+  };
+
+  // Client Mutations
+  const handleUpdateClientStatus = (clientId: string, status: ClientStatus) => {
+    OntologicalStore.updateClientStatus(clientId, status);
+    const refreshed = OntologicalStore.getUsers().filter((u) => u.role === 'client');
+    setClients(refreshed);
+    if (onRefreshClients) onRefreshClients();
+  };
+
+  const handleUpdateClientBreakdown = (clientId: string, breakdown: string) => {
+    OntologicalStore.updateClientBreakdown(clientId, breakdown);
+    const refreshed = OntologicalStore.getUsers().filter((u) => u.role === 'client');
+    setClients(refreshed);
+    if (onRefreshClients) onRefreshClients();
+  };
+
+  const handleUpdateClientInvested = (clientId: string, invested: string) => {
+    OntologicalStore.updateClientInvested(clientId, invested);
+    const refreshed = OntologicalStore.getUsers().filter((u) => u.role === 'client');
+    setClients(refreshed);
+    if (onRefreshClients) onRefreshClients();
   };
 
   const latestForm = forms[0] || null;
@@ -430,6 +472,34 @@ export const CoachDashboard: React.FC<CoachDashboardProps> = ({
                 }`}
               >
                 {cronogramaEvents.length}
+              </span>
+            </button>
+
+            <button
+              onClick={() => setActiveMainTab('workspace')}
+              className={`px-3.5 py-1.5 rounded-xl sm:rounded-full text-xs font-medium transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap shrink-0 ${
+                activeMainTab === 'workspace'
+                  ? 'bg-black dark:bg-white text-white dark:text-black shadow-xs font-semibold'
+                  : 'text-gray-600 dark:text-neutral-400 hover:text-black dark:hover:text-white hover:bg-gray-100/60 dark:hover:bg-neutral-800/60'
+              }`}
+            >
+              <HardDrive className="w-3.5 h-3.5 text-emerald-500" />
+              <span>Google Workspace Hub</span>
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            </button>
+
+            <button
+              onClick={() => setActiveMainTab('gemini')}
+              className={`px-3.5 py-1.5 rounded-xl sm:rounded-full text-xs font-medium transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap shrink-0 ${
+                activeMainTab === 'gemini'
+                  ? 'bg-black dark:bg-white text-white dark:text-black shadow-xs font-semibold'
+                  : 'text-gray-600 dark:text-neutral-400 hover:text-black dark:hover:text-white hover:bg-gray-100/60 dark:hover:bg-neutral-800/60'
+              }`}
+            >
+              <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+              <span>Gemini 3.7 Copiloto</span>
+              <span className="px-1.5 py-0.2 rounded-full bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 text-[10px] font-bold">
+                IA
               </span>
             </button>
           </div>
@@ -833,529 +903,122 @@ export const CoachDashboard: React.FC<CoachDashboardProps> = ({
         </div>
       ) : activeMainTab === 'clients' ? (
         /* ========================================================================= */
-        /* VIEW 2: CLIENTES ANCLA (PROGRAMA 1 A 1: CERTEZA, FRONTERAS & DIRECCIÓN) */
+        /* VIEW 2: CLIENTES ANCLA (DIRECTORIO GERENCIAL & FICHA DE TRABAJO 1 A 1)    */
         /* ========================================================================= */
-        <div className="flex-1 flex flex-col lg:flex-row">
-          {/* Sidebar: Lista de Clientes Activos */}
-          <aside className="w-full lg:w-80 bg-[#F9F9F9] dark:bg-[#151518] border-r border-gray-100 dark:border-neutral-800 p-6 flex flex-col justify-between shrink-0">
+        <div className="flex-1 flex flex-col p-4 sm:p-8 lg:p-10 max-w-7xl mx-auto w-full space-y-6">
+          {/* Executive KPI & Health Barometer (Visible for instant operational overview) */}
+          <ExecutiveMetricsBar
+            clients={clients}
+            prospects={prospects}
+            allInsights={allInsights}
+            sessions={allSessions}
+            onGoToClients={() => {
+              setActiveMainTab('clients');
+              setClientsViewMode('directory');
+            }}
+            onGoToCRM={() => setActiveMainTab('crm')}
+            onGoToEvents={() => setActiveMainTab('events')}
+          />
+
+          {/* View Mode Switcher Header */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-gray-100 dark:border-neutral-800">
             <div>
-              <div className="flex items-center justify-between mb-6">
-                <div>
-                  <span className="text-[10px] font-medium tracking-widest uppercase text-gray-400 dark:text-neutral-500 block">
-                    Programa Certeza
-                  </span>
-                  <h2 className="text-base font-semibold text-black dark:text-white tracking-tight mt-0.5">
-                    Clientes Activos
-                  </h2>
-                </div>
-                <span className="text-xs font-light text-gray-400 dark:text-neutral-400 bg-white dark:bg-neutral-800 px-2.5 py-1 rounded-full border border-gray-200/60 dark:border-neutral-700">
+              <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full bg-[#F5F5F7] dark:bg-neutral-800 border border-gray-200/80 dark:border-neutral-700 text-[10px] font-semibold text-gray-700 dark:text-neutral-300 uppercase tracking-wider mb-1">
+                <Users className="w-3 h-3 text-black dark:text-white" />
+                Programa Certeza, Fronteras & Dirección
+              </div>
+              <h2 className="text-xl sm:text-2xl font-light text-black dark:text-white tracking-tight">
+                {clientsViewMode === 'directory' ? (
+                  <>Directorio Central de <strong className="font-semibold">Clientes Activos ({clients.length})</strong></>
+                ) : (
+                  <>Ficha de Consulta: <strong className="font-semibold">{selectedClient?.name || 'Cliente'}</strong></>
+                )}
+              </h2>
+            </div>
+
+            {/* Toggle Modes */}
+            <div className="inline-flex items-center p-1 rounded-xl bg-[#F5F5F7] dark:bg-neutral-800 border border-gray-200/60 dark:border-neutral-700">
+              <button
+                type="button"
+                onClick={() => setClientsViewMode('directory')}
+                className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${
+                  clientsViewMode === 'directory'
+                    ? 'bg-white dark:bg-[#1A1A1E] text-black dark:text-white shadow-2xs font-semibold'
+                    : 'text-gray-500 dark:text-neutral-400 hover:text-black dark:hover:text-white'
+                }`}
+              >
+                <LayoutList className="w-3.5 h-3.5" />
+                <span>Directorio (Escala)</span>
+                <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-gray-100 dark:bg-neutral-700 text-gray-600 dark:text-neutral-300">
                   {clients.length}
                 </span>
-              </div>
+              </button>
 
-              {/* Client Navigation List */}
-              <nav className="space-y-2">
-                {clients.map((client) => {
-                  const isSelected = client.uid === selectedClientId;
-                  const clientFormsCount = OntologicalStore.getFormsForClient(
-                    client.uid
-                  ).length;
-                  const clientLatestInsight = OntologicalStore.getLatestInsightForClient(
-                    client.uid
-                  );
-                  const progress = client.programProgress || 1;
-
-                  return (
-                    <button
-                      key={client.uid}
-                      onClick={() => handleSelectClient(client.uid)}
-                      className={`w-full p-3.5 rounded-2xl text-left transition-all flex items-center gap-3.5 cursor-pointer border ${
-                        isSelected
-                          ? 'bg-white dark:bg-[#202024] border-gray-200/80 dark:border-neutral-700 shadow-xs'
-                          : 'bg-transparent border-transparent hover:bg-white/60 dark:hover:bg-neutral-800/60'
-                      }`}
-                    >
-                      <div className="relative">
-                        <img
-                          src={client.avatarUrl}
-                          alt={client.name}
-                          referrerPolicy="no-referrer"
-                          className="w-10 h-10 rounded-full object-cover shadow-xs ring-1 ring-gray-200/60 dark:ring-neutral-700"
-                        />
-                        {clientLatestInsight && (
-                          <div className="absolute -bottom-0.5 -right-0.5">
-                            <PulseBadge
-                              flag={clientLatestInsight.pulseFlag}
-                              size="sm"
-                              showLabel={false}
-                            />
-                          </div>
-                        )}
-                      </div>
-
-                      <div className="flex-1 min-w-0">
-                        <div className="text-xs font-medium text-black dark:text-white truncate tracking-tight">
-                          {client.name}
-                        </div>
-                        <div className="text-[10px] font-light text-gray-500 dark:text-neutral-400 truncate flex items-center gap-1.5 mt-0.5">
-                          <span>Nodo {progress}/6</span>
-                          <span>•</span>
-                          <span className="text-black dark:text-neutral-200 font-medium">
-                            {client.paymentStatus || 'Completado'}
-                          </span>
-                        </div>
-                      </div>
-
-                      <ChevronRight
-                        className={`w-3.5 h-3.5 transition-transform ${
-                          isSelected ? 'text-black dark:text-white translate-x-0.5' : 'text-gray-300 dark:text-neutral-600'
-                        }`}
-                      />
-                    </button>
-                  );
-                })}
-              </nav>
+              {selectedClient && (
+                <button
+                  type="button"
+                  onClick={() => setClientsViewMode('workstation')}
+                  className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${
+                    clientsViewMode === 'workstation'
+                      ? 'bg-white dark:bg-[#1A1A1E] text-black dark:text-white shadow-2xs font-semibold'
+                      : 'text-gray-500 dark:text-neutral-400 hover:text-black dark:hover:text-white'
+                  }`}
+                >
+                  <UserCircle2 className="w-3.5 h-3.5" />
+                  <span>Ficha 1 a 1 ({selectedClient.name.split(' ')[0]})</span>
+                </button>
+              )}
             </div>
+          </div>
 
-            {/* Program Info Card in Sidebar */}
-            <div className="pt-6 mt-6 border-t border-gray-200/60 dark:border-neutral-800 space-y-3">
-              <div className="bg-white dark:bg-[#1A1A1E] p-4 rounded-2xl border border-gray-100 dark:border-neutral-800 shadow-xs text-xs space-y-1.5">
-                <div className="font-semibold text-black dark:text-white flex items-center gap-1.5">
-                  <Layers className="w-3.5 h-3.5" />
-                  Estructura del Programa
-                </div>
-                <p className="text-[11px] font-light text-gray-500 dark:text-neutral-400 leading-relaxed">
-                  12 Semanas • 6 Sesiones Quincenales distribuidas en 3 Niveles ontológicos (I. Transparencia, II. Corporalidad, III. Dirección).
-                </p>
-              </div>
+          {/* Sub-View Content */}
+          {clientsViewMode === 'directory' ? (
+            <ClientDirectoryTable
+              clients={clients}
+              selectedClientId={selectedClientId}
+              onSelectClient={(clientId) => handleSelectClient(clientId, true)}
+              onQuickSelect={(clientId) => handleSelectClient(clientId, false)}
+              onUpdateStatus={handleUpdateClientStatus}
+              onUpdateBreakdown={handleUpdateClientBreakdown}
+              onUpdateInvested={handleUpdateClientInvested}
+              onOpenNewSession={(clientId) => {
+                handleSelectClient(clientId, false);
+                setShowNewSessionModal(true);
+              }}
+            />
+          ) : selectedClient ? (
+            <ClientWorkstationView
+              selectedClient={selectedClient}
+              clients={clients}
+              forms={forms}
+              insights={insights}
+              sessions={sessions}
+              isGeneratingAI={isGeneratingAI}
+              generationFeedback={generationFeedback}
+              onSelectClient={(clientId) => handleSelectClient(clientId, false)}
+              onBackToDirectory={() => setClientsViewMode('directory')}
+              onGenerateAI={handleGenerateAIAnalysis}
+              onOpenNewSession={() => setShowNewSessionModal(true)}
+              onAdvanceStep={(clientId) => handleAdvanceStep(clientId)}
+              onUpdateStatus={handleUpdateClientStatus}
+              onUpdateBreakdown={handleUpdateClientBreakdown}
+              onUpdateInvested={handleUpdateClientInvested}
+            />
+          ) : (
+            <div className="text-center py-16 bg-white dark:bg-[#151518] rounded-3xl border border-gray-100 dark:border-neutral-800">
+              <Users className="w-8 h-8 text-gray-300 dark:text-neutral-600 mx-auto mb-2" />
+              <p className="text-sm font-medium text-black dark:text-white">No hay clientes seleccionados.</p>
+              <button
+                type="button"
+                onClick={() => setClientsViewMode('directory')}
+                className="mt-3 text-xs font-medium text-black dark:text-white underline cursor-pointer"
+              >
+                Volver al Directorio
+              </button>
             </div>
-          </aside>
-
-          {/* Main Content Area: Client Roadmap & Ontological Diagnosis */}
-          <main className="flex-1 p-6 sm:p-10 lg:p-12 overflow-y-auto max-w-6xl">
-            {selectedClient ? (
-              <div className="space-y-10">
-                {/* Client Profile Header with Payment Status and Program Node */}
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-8 border-b border-gray-100 dark:border-neutral-800 gap-6">
-                  <div className="flex items-center gap-5">
-                    <img
-                      src={selectedClient.avatarUrl}
-                      alt={selectedClient.name}
-                      referrerPolicy="no-referrer"
-                      className="w-16 h-16 rounded-full object-cover shadow-sm ring-2 ring-gray-100 dark:ring-neutral-800"
-                    />
-                    <div>
-                      <div className="flex items-center gap-3">
-                        <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-black dark:text-white">
-                          {selectedClient.name}
-                        </h1>
-                        {latestInsight && (
-                          <PulseBadge flag={latestInsight.pulseFlag} size="sm" />
-                        )}
-                      </div>
-                      <div className="flex flex-wrap items-center gap-2.5 text-xs font-light text-gray-500 dark:text-neutral-400 mt-1">
-                        <span>{selectedClient.email}</span>
-                        <span>•</span>
-                        <span className="px-2 py-0.5 rounded-full bg-[#F9F9F9] dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 font-medium text-black dark:text-white">
-                          Estado de Pago: {selectedClient.paymentStatus || 'Completado'}
-                        </span>
-                        <span>•</span>
-                        <span className="text-black dark:text-white font-semibold">
-                          Nodo Actual: Sesión {selectedClient.programProgress || 1} de 6
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Actions */}
-                  <div className="flex items-center gap-2.5 shrink-0">
-                    <button
-                      type="button"
-                      onClick={() => setShowNewSessionModal(true)}
-                      className="px-3.5 py-2 rounded-xl border border-gray-200/90 dark:border-neutral-700 bg-white dark:bg-[#1A1A1E] hover:bg-gray-50 dark:hover:bg-neutral-800 text-black dark:text-white text-xs font-medium transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs hover:border-black dark:hover:border-neutral-500 whitespace-nowrap"
-                    >
-                      <Plus className="w-3.5 h-3.5" />
-                      <span>Agendar Sesión</span>
-                    </button>
-
-                    <LiquidGlassButton
-                      onClick={handleGenerateAIAnalysis}
-                      isLoading={isGeneratingAI}
-                      size="sm"
-                      icon={<Sparkles className="w-3.5 h-3.5 stroke-[1.5]" />}
-                    >
-                      Generar Diagnóstico IA
-                    </LiquidGlassButton>
-                  </div>
-                </div>
-
-                {/* 12-Week Roadmap Progression Bar for Coach */}
-                <div className="bg-[#F9F9F9] dark:bg-[#151518] rounded-3xl p-6 border border-gray-100 dark:border-neutral-800 space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <span className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 dark:text-neutral-500 block">
-                        Progreso en el Programa (12 Semanas)
-                      </span>
-                      <h3 className="text-sm font-semibold text-black dark:text-white mt-0.5">
-                        Certeza, Fronteras & Dirección Personal
-                      </h3>
-                    </div>
-                    <div className="text-right">
-                      <span className="text-xs font-semibold text-black dark:text-white">
-                        Sesión {selectedClient.programProgress || 1} de 6 (
-                        {Math.round(((selectedClient.programProgress || 1) / 6) * 100)}%)
-                      </span>
-                      <button
-                        onClick={() => handleAdvanceStep(selectedClient.uid)}
-                        className="block text-[11px] font-medium text-black dark:text-neutral-200 hover:underline mt-0.5 cursor-pointer"
-                      >
-                        Avanzar al siguiente nodo &rarr;
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Visual 6-Step Stepper */}
-                  <div className="grid grid-cols-6 gap-2 pt-2">
-                    {PROGRAM_NODES.map((node) => {
-                      const currentProgress = selectedClient.programProgress || 1;
-                      const isDone = node.step < currentProgress;
-                      const isCurrent = node.step === currentProgress;
-
-                      return (
-                        <div
-                          key={node.step}
-                          className={`p-3 rounded-2xl text-center border transition-all ${
-                            isDone
-                              ? 'bg-black dark:bg-white text-white dark:text-black border-black dark:border-white'
-                              : isCurrent
-                              ? 'bg-white dark:bg-[#202024] border-black dark:border-white shadow-xs text-black dark:text-white'
-                              : 'bg-white/40 dark:bg-neutral-800/40 border-gray-200 dark:border-neutral-800 text-gray-400 dark:text-neutral-600'
-                          }`}
-                        >
-                          <div className="text-[10px] font-medium uppercase tracking-wider">
-                            S{node.step}
-                          </div>
-                          <div className="text-[9px] font-light truncate mt-0.5">
-                            {node.level}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {/* Webhook & Generation Feedback Banner */}
-                {generationFeedback && (
-                  <div
-                    className={`p-5 rounded-3xl border transition-all text-xs ${
-                      generationFeedback.type === 'success'
-                        ? 'bg-[#F9F9F9] dark:bg-[#151518] border-black dark:border-neutral-500 text-black dark:text-white'
-                        : generationFeedback.type === 'info'
-                        ? 'bg-[#F9F9F9] dark:bg-[#151518] border-gray-200 dark:border-neutral-700 text-gray-800 dark:text-neutral-200'
-                        : 'bg-[#F9F9F9] dark:bg-[#151518] border-gray-300 dark:border-neutral-700 text-black dark:text-white'
-                    }`}
-                  >
-                    <div className="flex items-start gap-3">
-                      {generationFeedback.type === 'success' ? (
-                        <CheckCircle2 className="w-4 h-4 text-black dark:text-white shrink-0 mt-0.5" />
-                      ) : (
-                        <AlertCircle className="w-4 h-4 text-black dark:text-white shrink-0 mt-0.5" />
-                      )}
-                      <div className="flex-1 space-y-2">
-                        <p className="font-medium text-xs leading-relaxed">
-                          {generationFeedback.message}
-                        </p>
-                        {generationFeedback.payloadPreview && (
-                          <details className="text-[11px] font-mono text-gray-600 dark:text-neutral-400">
-                            <summary className="cursor-pointer font-sans font-medium text-black dark:text-white hover:underline">
-                              Ver Payload JSON transmitido
-                            </summary>
-                            <pre className="mt-2 p-3 bg-white dark:bg-[#1A1A1E] rounded-xl border border-gray-100 dark:border-neutral-800 overflow-x-auto text-[10px] leading-tight text-black dark:text-neutral-200">
-                              {generationFeedback.payloadPreview}
-                            </pre>
-                          </details>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Grid Layout: Ontological Analysis Panel (Main) & Form History (Side) */}
-                <div className="grid grid-cols-1 xl:grid-cols-12 gap-8 items-start">
-                  {/* Main Panel: Análisis Ontológico */}
-                  <div className="xl:col-span-8 space-y-6">
-                    <div className="bg-white dark:bg-[#151518] rounded-3xl p-8 sm:p-10 border border-gray-100 dark:border-neutral-800 shadow-[0_4px_24px_rgba(0,0,0,0.02)]">
-                      {/* Panel Header */}
-                      <div className="flex items-center justify-between pb-6 mb-8 border-b border-gray-100 dark:border-neutral-800">
-                        <div>
-                          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#F9F9F9] dark:bg-neutral-800 border border-gray-100 dark:border-neutral-700 text-[11px] font-medium text-gray-500 dark:text-neutral-400 uppercase tracking-widest mb-2">
-                            <Brain className="w-3.5 h-3.5 text-black dark:text-white" />
-                            Diagnóstico Ontológico Integral
-                          </div>
-                          <h2 className="text-xl font-semibold tracking-tight text-black dark:text-white">
-                            Informe Ontológico Confidencial
-                          </h2>
-                        </div>
-
-                        {latestInsight && (
-                          <div className="text-right">
-                            <PulseBadge flag={latestInsight.pulseFlag} size="md" />
-                            <span className="text-[10px] font-light text-gray-400 dark:text-neutral-500 block mt-1">
-                              Actualizado {formatDate(latestInsight.generatedAt)}
-                            </span>
-                          </div>
-                        )}
-                      </div>
-
-                      {latestInsight ? (
-                        <div className="space-y-8">
-                          {/* Section 1: Sabiduría Emocional & Somática */}
-                          <div className="space-y-3">
-                            <h3 className="text-xs font-semibold text-black dark:text-white uppercase tracking-wider flex items-center gap-2">
-                              <HeartPulse className="w-4 h-4 text-black dark:text-white stroke-[1.5]" />
-                              Sabiduría & Decodificación Emocional
-                            </h3>
-                            <div className="p-6 rounded-2xl bg-[#F9F9F9] dark:bg-[#1A1A1E] border border-gray-100/90 dark:border-neutral-800 text-xs sm:text-sm font-light text-gray-700 dark:text-neutral-300 leading-relaxed relative">
-                              <Quote className="w-6 h-6 text-gray-200 dark:text-neutral-700 absolute top-4 right-4 stroke-[1]" />
-                              <p className="pr-6">{latestInsight.emotionalWisdom}</p>
-                            </div>
-                          </div>
-
-                          {/* Section 2: Barreras Lingüísticas */}
-                          <div className="space-y-3">
-                            <h3 className="text-xs font-semibold text-black dark:text-white uppercase tracking-wider flex items-center gap-2">
-                              <FileText className="w-4 h-4 text-black dark:text-white stroke-[1.5]" />
-                              Barreras Lingüísticas & Quiebres
-                            </h3>
-                            <div className="grid grid-cols-1 gap-2.5">
-                              {latestInsight.linguisticBarriers.map(
-                                (barrier, idx) => (
-                                  <div
-                                    key={idx}
-                                    className="p-4 rounded-2xl bg-white dark:bg-[#1A1A1E] border border-gray-100 dark:border-neutral-800 flex items-start gap-3 text-xs font-light text-gray-700 dark:text-neutral-300"
-                                  >
-                                    <span className="w-5 h-5 rounded-full bg-[#F9F9F9] dark:bg-neutral-800 border border-gray-200/80 dark:border-neutral-700 flex items-center justify-center text-[10px] font-semibold text-black dark:text-white shrink-0 mt-0.5">
-                                      {idx + 1}
-                                    </span>
-                                    <span className="leading-relaxed">{barrier}</span>
-                                  </div>
-                                )
-                              )}
-                            </div>
-                          </div>
-
-                          {/* Section 3: Creencias Limitantes */}
-                          <div className="space-y-3">
-                            <h3 className="text-xs font-semibold text-black dark:text-white uppercase tracking-wider flex items-center gap-2">
-                              <Brain className="w-4 h-4 text-black dark:text-white stroke-[1.5]" />
-                              Creencias Limitantes y Mandatos
-                            </h3>
-                            <div className="grid grid-cols-1 gap-2.5">
-                              {latestInsight.limitingBeliefs.map(
-                                (belief, idx) => (
-                                  <div
-                                    key={idx}
-                                    className="p-4 rounded-2xl bg-[#F9F9F9] dark:bg-[#1A1A1E] border border-gray-100 dark:border-neutral-800 text-xs font-light text-gray-800 dark:text-neutral-200 leading-relaxed italic"
-                                  >
-                                    {belief}
-                                  </div>
-                                )
-                              )}
-                            </div>
-                          </div>
-
-                          {/* Integration Meta Footer */}
-                          <div className="pt-4 border-t border-gray-100 dark:border-neutral-800 flex flex-wrap items-center justify-between gap-3 text-[11px] font-light text-gray-400 dark:text-neutral-500">
-                            <span>
-                              Integración Webhook:{' '}
-                              <strong className="font-medium text-black dark:text-white">
-                                Make.com / Ontological AI
-                              </strong>
-                            </span>
-                            <span className="font-mono text-[10px] text-gray-400 dark:text-neutral-500 truncate max-w-xs">
-                              {DEFAULT_WEBHOOK_URL}
-                            </span>
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="text-center py-16 space-y-4">
-                          <Brain className="w-10 h-10 text-gray-300 dark:text-neutral-600 mx-auto stroke-[1]" />
-                          <div className="max-w-md mx-auto">
-                            <h3 className="text-sm font-semibold text-black dark:text-white">
-                              Sin diagnóstico ontológico generado
-                            </h3>
-                            <p className="text-xs font-light text-gray-400 dark:text-neutral-500 mt-1">
-                              Procesa las reflexiones del cliente con el marco de Norberto Levý y sincroniza con Make.com.
-                            </p>
-                          </div>
-                          <LiquidGlassButton
-                            onClick={handleGenerateAIAnalysis}
-                            isLoading={isGeneratingAI}
-                            icon={<Sparkles className="w-4 h-4 stroke-[1.5]" />}
-                          >
-                            Generar Análisis Ahora
-                          </LiquidGlassButton>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Side Column: Historial de Formularios & Sesiones */}
-                  <div className="xl:col-span-4 space-y-6">
-                    {/* Card: Historial de Formularios Post-Sesión */}
-                    <div className="bg-white dark:bg-[#151518] rounded-3xl p-6 sm:p-7 border border-gray-100 dark:border-neutral-800 shadow-[0_4px_24px_rgba(0,0,0,0.02)]">
-                      <div className="flex items-center justify-between mb-6 pb-4 border-b border-gray-100 dark:border-neutral-800">
-                        <h3 className="text-xs font-semibold text-black dark:text-white uppercase tracking-wider flex items-center gap-2">
-                          <FileText className="w-4 h-4 text-black dark:text-white stroke-[1.5]" />
-                          Formularios Enviados
-                        </h3>
-                        <span className="text-xs font-light text-gray-400 dark:text-neutral-500">
-                          {forms.length}
-                        </span>
-                      </div>
-
-                      {forms.length === 0 ? (
-                        <p className="text-xs font-light text-gray-400 dark:text-neutral-500 py-4 text-center">
-                          El cliente aún no ha enviado formularios.
-                        </p>
-                      ) : (
-                        <div className="space-y-4 max-h-[500px] overflow-y-auto pr-1">
-                          {forms.map((f, idx) => {
-                            const matchingNode =
-                              PROGRAM_NODES.find(
-                                (n) => n.step === (f.sessionStep || 1)
-                              ) || PROGRAM_NODES[0];
-                            const matchingInsight = insights.find(
-                              (i) => i.sessionStep === f.sessionStep
-                            );
-
-                            return (
-                              <div
-                                key={f.id}
-                                className="p-4 rounded-2xl bg-[#F9F9F9] dark:bg-[#1A1A1E] border border-gray-100 dark:border-neutral-800 space-y-2.5 text-xs"
-                              >
-                                <div className="flex items-center justify-between text-[11px] text-gray-400 dark:text-neutral-500 font-light">
-                                  <span className="font-medium text-black dark:text-white">
-                                    Sesión #{f.sessionStep || forms.length - idx} •{' '}
-                                    {f.level}
-                                  </span>
-                                  <div className="flex items-center gap-2">
-                                    <span>{formatDate(f.submittedAt)}</span>
-                                    <button
-                                      type="button"
-                                      onClick={() =>
-                                        PDFGenerator.generateFormSubmissionPDF(
-                                          f,
-                                          selectedClient,
-                                          matchingNode,
-                                          matchingInsight
-                                        )
-                                      }
-                                      className="p-1 rounded-md bg-white dark:bg-[#202024] border border-gray-200 dark:border-neutral-700 text-gray-600 dark:text-neutral-300 hover:text-black dark:hover:text-white transition-colors cursor-pointer"
-                                      title="Descargar registro en PDF"
-                                    >
-                                      <FileDown className="w-3.5 h-3.5" />
-                                    </button>
-                                  </div>
-                                </div>
-
-                                <div className="space-y-1">
-                                  <div className="text-[10px] font-semibold text-black dark:text-white uppercase tracking-wider">
-                                    Emoción Somática:
-                                  </div>
-                                  <p className="text-gray-700 dark:text-neutral-300 font-light leading-relaxed">
-                                    {f.bodyEmotion}
-                                  </p>
-                                </div>
-
-                                {f.levelSpecificAnswer && (
-                                  <div className="space-y-1 pt-1 border-t border-gray-200/50 dark:border-neutral-800">
-                                    <div className="text-[10px] font-semibold text-black dark:text-white uppercase tracking-wider">
-                                      Respuesta Específica del Nivel:
-                                    </div>
-                                    <p className="text-gray-700 dark:text-neutral-300 font-light leading-relaxed">
-                                      {f.levelSpecificAnswer}
-                                    </p>
-                                  </div>
-                                )}
-
-                                <div className="space-y-1 pt-1 border-t border-gray-200/50 dark:border-neutral-800">
-                                  <div className="text-[10px] font-semibold text-black dark:text-white uppercase tracking-wider">
-                                    Reflexión / Quiebre:
-                                  </div>
-                                  <p className="text-gray-600 dark:text-neutral-400 font-light leading-relaxed">
-                                    {f.reflections}
-                                  </p>
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Card: Sesiones Agendadas */}
-                    <div className="bg-[#F9F9F9] dark:bg-[#151518] rounded-3xl p-6 sm:p-7 border border-gray-100 dark:border-neutral-800 shadow-[0_4px_24px_rgba(0,0,0,0.02)] space-y-4">
-                      <div className="flex items-center justify-between pb-3 border-b border-gray-200/60 dark:border-neutral-800">
-                        <h3 className="text-xs font-semibold text-black dark:text-white uppercase tracking-wider flex items-center gap-2">
-                          <Calendar className="w-4 h-4 text-black dark:text-white stroke-[1.5]" />
-                          Sesiones del Cliente
-                        </h3>
-                        <span className="text-xs font-light text-gray-400 dark:text-neutral-500">
-                          {sessions.length}
-                        </span>
-                      </div>
-
-                      <div className="space-y-3">
-                        {sessions.map((s) => (
-                          <div
-                            key={s.id}
-                            className="p-3.5 bg-white dark:bg-[#1A1A1E] rounded-2xl border border-gray-100 dark:border-neutral-800 text-xs space-y-2"
-                          >
-                            <div className="flex items-center justify-between">
-                              <span className="font-medium text-black dark:text-white capitalize">
-                                {s.sessionNumber ? `Sesión ${s.sessionNumber}: ` : ''}
-                                {formatDate(s.date)}
-                              </span>
-                              <span
-                                className={`px-2 py-0.5 rounded-full text-[10px] uppercase tracking-wider font-medium ${
-                                  s.status === 'scheduled'
-                                    ? 'bg-black dark:bg-white text-white dark:text-black'
-                                    : 'bg-gray-100 dark:bg-neutral-800 text-gray-500 dark:text-neutral-400'
-                                }`}
-                              >
-                                {s.status === 'scheduled'
-                                  ? 'Agendada'
-                                  : 'Completada'}
-                              </span>
-                            </div>
-
-                            {s.notes && (
-                              <p className="text-[11px] font-light text-gray-500 dark:text-neutral-400">
-                                {s.notes}
-                              </p>
-                            )}
-
-                            <a
-                              href={s.meetLink}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="inline-flex items-center gap-1.5 text-xs text-black dark:text-white font-medium hover:underline pt-1"
-                            >
-                              <Video className="w-3 h-3" />
-                              Sala Google Meet <ExternalLink className="w-2.5 h-2.5" />
-                            </a>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ) : null}
-          </main>
+          )}
         </div>
-      ) : (
+      ) : activeMainTab === 'events' ? (
         /* ========================================================================= */
         /* VIEW 3: CRONOGRAMA & PUBLICIDAD IA (EVENTOS & CONVERSATORIOS)            */
         /* ========================================================================= */
@@ -1514,7 +1177,80 @@ export const CoachDashboard: React.FC<CoachDashboardProps> = ({
             </div>
           </div>
         </div>
-      )}
+      ) : activeMainTab === 'workspace' ? (
+        /* ========================================================================= */
+        /* VIEW 4: GOOGLE WORKSPACE HUB (DRIVE, SHEETS, FORMS, CALENDAR & MEET)     */
+        /* ========================================================================= */
+        <div className="flex-1 flex flex-col p-4 sm:p-8 lg:p-10 max-w-7xl mx-auto w-full space-y-6">
+          <GoogleWorkspaceHub
+            clients={clients}
+            sessions={allSessions}
+            onOpenClient={(cid) => {
+              setSelectedClientId(cid);
+              setClientsViewMode('workstation');
+              setActiveMainTab('clients');
+            }}
+          />
+        </div>
+      ) : activeMainTab === 'gemini' ? (
+        /* ========================================================================= */
+        /* VIEW 5: GOOGLE GEMINI 3.7 AI ONTOLÓGICO COPILOTO & SIMULADOR             */
+        /* ========================================================================= */
+        <div className="flex-1 flex flex-col p-4 sm:p-8 lg:p-10 max-w-7xl mx-auto w-full space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-gray-100 dark:border-neutral-800">
+            <div>
+              <span className="text-[10px] font-bold tracking-widest uppercase text-amber-600 dark:text-amber-400 block">
+                Google AI Studio • Modelo Gemini 3.7 Flash
+              </span>
+              <h2 className="text-2xl font-light text-black dark:text-white tracking-tight mt-0.5">
+                Copiloto Ontológico, Simulador de Conversaciones & Copys
+              </h2>
+              <p className="text-xs font-light text-gray-500 dark:text-neutral-400 mt-1 max-w-2xl">
+                Supervisión asistida con inteligencia artificial ontológica, role-play directivo de quiebres, redacción de publicidad y generación de diagnósticos ejecutivos.
+              </p>
+            </div>
+
+            {/* Quick client selector if coach wants to anchor context */}
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-gray-400 font-light">Cliente en Foco:</span>
+              <select
+                value={selectedClientId || ''}
+                onChange={(e) => setSelectedClientId(e.target.value || null)}
+                className="px-3 py-1.5 rounded-xl bg-white dark:bg-[#1A1A1E] border border-gray-200 dark:border-neutral-700 text-xs text-gray-900 dark:text-white font-medium focus:outline-hidden"
+              >
+                <option value="">Seleccionar cliente...</option>
+                {clients.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name} ({c.company || 'Directivo'})
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <GeminiOntologicalCopilot
+            currentClient={clients.find((c) => c.id === selectedClientId) || clients[0]}
+            userRole="coach"
+            onApplyInsightToClient={(diag) => {
+              if (selectedClientId) {
+                OntologicalStore.saveAIInsight({
+                  id: 'insight-gemini-' + Date.now(),
+                  clientId: selectedClientId,
+                  sessionId: 'session-gemini',
+                  sessionStep: 1,
+                  linguisticBarriers: diag.linguisticBarriers,
+                  somaticIndicators: diag.somaticIndicators,
+                  recommendedShift: diag.recommendedShift,
+                  powerfulQuestions: diag.powerfulQuestions,
+                  confidenceScore: diag.somaticScore,
+                  generatedAt: new Date().toISOString(),
+                });
+                onRefreshClients?.();
+              }
+            }}
+          />
+        </div>
+      ) : null}
 
       {/* ========================================================================= */}
       {/* MODAL: REGISTRAR NUEVO PROSPECTO (WHATSAPP) */}

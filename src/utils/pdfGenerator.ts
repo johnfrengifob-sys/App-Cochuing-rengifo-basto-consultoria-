@@ -1,5 +1,6 @@
 import { FormSubmission, User, ProgramNodeInfo, AIInsight } from '../types';
 import { COMPANY_INFO } from '../services/store';
+import { GoogleWorkspaceService } from '../services/googleWorkspace';
 
 export class PDFGenerator {
   /**
@@ -11,6 +12,18 @@ export class PDFGenerator {
     node: ProgramNodeInfo,
     insight?: AIInsight
   ): void {
+    const fileName = `Registro_Ontologico_Sesion_${node.step}_${client.name.replace(/\s+/g, '_')}.pdf`;
+    
+    // Automatically register and sync with Google Drive
+    try {
+      GoogleWorkspaceService.savePDFReportToDrive(fileName, 'Registro Ontológico Oficial', client, {
+        sessionStep: node.step,
+        summary: insight?.emotionalWisdom || client.primaryBreakdown,
+      });
+    } catch {
+      // ignore
+    }
+
     const formattedDate = new Date(form.submittedAt).toLocaleDateString('es-ES', {
       weekday: 'long',
       year: 'numeric',

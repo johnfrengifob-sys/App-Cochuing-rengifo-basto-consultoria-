@@ -2,6 +2,8 @@ export type UserRole = 'client' | 'coach';
 
 export type PaymentStatus = 'Pago Único' | 'Cuota 1 de 2' | 'Completado';
 
+export type ClientStatus = 'active' | 'waiting' | 'inactive';
+
 export interface User {
   uid: string;
   name: string;
@@ -15,6 +17,10 @@ export interface User {
   paymentStatus?: PaymentStatus;
   programName?: string;
   programFee?: string;
+  status?: ClientStatus; // 'active' (verde), 'waiting' (amarillo), 'inactive' (gris/rojo)
+  totalInvested?: string; // Monto total invertido en su progreso
+  primaryBreakdown?: string; // Quiebre principal sintético (ej: "Gestión de la ira", "Trato con sus padres", etc.)
+  lastActivityAt?: string;
 }
 
 export type ProspectStatus =
@@ -158,5 +164,66 @@ export interface CronogramaEvent {
   totalSpots: number;
   featured: boolean;
   status: 'upcoming' | 'live' | 'completed';
+}
+
+export interface GoogleWorkspaceConfig {
+  accountEmail: string; // rengifobastoco@gmail.com
+  isConnected: boolean;
+  accessToken?: string;
+  tokenExpiresAt?: number;
+  lastConnectedAt?: string;
+  drive: {
+    enabled: boolean;
+    rootFolderId?: string;
+    rootFolderName: string;
+    reportsFolderId?: string;
+    sheetsFolderId?: string;
+    formsFolderId?: string;
+    autoSaveReports: boolean;
+  };
+  sheets: {
+    enabled: boolean;
+    masterSpreadsheetId?: string;
+    masterSpreadsheetUrl?: string;
+    lastSyncedAt?: string;
+    autoSyncClients: boolean;
+  };
+  forms: {
+    enabled: boolean;
+    activeFormId?: string;
+    activeFormUrl?: string;
+    activeFormEditUrl?: string;
+    lastGeneratedAt?: string;
+    responsesCount?: number;
+  };
+  calendar: {
+    enabled: boolean;
+    calendarId: string;
+    lastSyncedAt?: string;
+    autoCreateMeet: boolean;
+  };
+}
+
+export interface DriveExportedFile {
+  id: string;
+  name: string;
+  mimeType: string;
+  webViewLink: string;
+  uploadedAt: string;
+  sizeFormatted?: string;
+  category: 'pdf_report' | 'client_summary' | 'sheet' | 'form';
+  clientId?: string;
+  clientName?: string;
+}
+
+export interface GoogleCalendarEventItem {
+  id: string;
+  summary: string;
+  description?: string;
+  start: { dateTime?: string; date?: string };
+  end: { dateTime?: string; date?: string };
+  htmlLink?: string;
+  hangoutLink?: string;
+  attendees?: { email: string; displayName?: string }[];
 }
 
