@@ -12,6 +12,7 @@ import {
   EventRegistration,
 } from '../types';
 import promotionalEventBannerImg from '../assets/images/proximo_evento_banner_1788270380574.jpg';
+import coachAvatarImg from '../assets/images/regenerated_image_1788287101599.jpg';
 
 export const COMPANY_INFO = {
   fullName: 'Rengifo Basto Consultoría Ontológica',
@@ -467,8 +468,7 @@ const INITIAL_USERS: User[] = [
     email: 'johnfrengifob@gmail.com',
     role: 'coach',
     title: 'Consultor Ontológico Senior & Master Coach',
-    avatarUrl:
-      'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80',
+    avatarUrl: coachAvatarImg,
     joinedAt: '2023-01-10',
   },
   {
@@ -953,12 +953,13 @@ export class OntologicalStore {
 
   static getUsers(): User[] {
     const rawUsers = this.load<User[]>(STORAGE_KEYS.USERS, INITIAL_USERS);
-    // Ensure coach profile is always accurately named
+    // Ensure coach profile is always accurately named and has the latest avatar
     return rawUsers.map((u) => {
       if (u.uid === 'coach-1' || u.role === 'coach') {
         return {
           ...u,
           name: 'John Fredy Rengifo Basto',
+          avatarUrl: coachAvatarImg,
         };
       }
       return u;

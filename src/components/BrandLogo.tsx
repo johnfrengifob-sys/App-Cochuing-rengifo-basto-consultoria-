@@ -2,8 +2,8 @@ import React from 'react';
 
 interface BrandLogoProps {
   variant?: 'auto' | 'dark' | 'light';
-  size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl' | '2xl';
-  layout?: 'full' | 'compact' | 'horizontal' | 'mark-only';
+  size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl' | '2xl' | 'hero';
+  layout?: 'full' | 'compact' | 'horizontal' | 'mark-only' | 'hero';
   showAddress?: boolean;
   showContact?: boolean;
   className?: string;
@@ -42,15 +42,17 @@ export const BrandLogo: React.FC<BrandLogoProps> = ({
       : 'currentColor';
 
   // Size configurations
-  const scaleMap = {
+  const scaleMap: Record<string, string> = {
     xs: 'h-6 text-xs',
     sm: 'h-8 text-sm',
-    md: 'h-10 text-base',
-    lg: 'h-14 text-lg',
-    xl: 'h-20 text-xl',
-    '2xl': 'h-28 text-2xl',
+    md: 'h-11 text-base',
+    lg: 'h-16 text-lg',
+    xl: 'h-24 text-xl',
+    '2xl': 'h-32 text-2xl',
+    hero: 'h-24 sm:h-28 text-3xl',
   };
 
+  // Dedicated Mark Only (The signature calligraphic flourish R)
   if (layout === 'mark-only') {
     return (
       <div
@@ -61,33 +63,136 @@ export const BrandLogo: React.FC<BrandLogoProps> = ({
         title="Rengifo Basto Consultoría Ontológica"
       >
         <svg
-          viewBox="0 0 100 120"
-          className="w-auto h-full max-h-12 overflow-visible"
+          viewBox="0 0 160 180"
+          className="w-auto h-full max-h-16 overflow-visible"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
         >
-          {/* Elegant Calligraphic Flourish Monogram 'R' */}
+          {/* Authentic Calligraphic 'R' Flourish */}
           <path
-            d="M 28 55 C 22 40, 24 22, 38 12 C 48 5, 64 6, 74 15 C 84 25, 84 40, 75 52 C 67 62, 54 66, 42 68 C 30 70, 18 78, 12 90 C 6 102, 8 116, 20 122 C 32 126, 48 120, 62 108 C 70 101, 78 90, 84 78"
+            d="M 52 82 C 38 58, 42 32, 64 18 C 80 8, 106 10, 122 24 C 138 38, 138 60, 124 78 C 110 92, 88 98, 68 102 C 48 106, 28 118, 18 136 C 8 154, 12 174, 30 182 C 50 188, 76 178, 98 160 C 112 148, 126 132, 136 114"
             stroke={strokeColor}
-            strokeWidth="2.8"
+            strokeWidth="3.2"
             strokeLinecap="round"
             strokeLinejoin="round"
           />
           <path
-            d="M 44 14 C 44 26, 43 45, 42 66 C 41 84, 40 102, 39 116"
+            d="M 72 20 C 72 40, 70 68, 68 100 C 66 126, 64 152, 62 172"
             stroke={strokeColor}
-            strokeWidth="3.2"
+            strokeWidth="4"
             strokeLinecap="round"
           />
           <path
-            d="M 42 65 C 50 65, 62 67, 72 82 C 78 92, 82 105, 88 118"
+            d="M 68 98 C 80 98, 98 102, 114 124 C 124 138, 130 156, 140 174"
             stroke={strokeColor}
-            strokeWidth="2.6"
+            strokeWidth="3"
             strokeLinecap="round"
           />
-          <circle cx="38" cy="12" r="1.5" fill={strokeColor} />
-          <circle cx="88" cy="118" r="1.2" fill={strokeColor} />
+          <circle cx="64" cy="18" r="2.2" fill={strokeColor} />
+          <circle cx="140" cy="174" r="1.8" fill={strokeColor} />
+        </svg>
+      </div>
+    );
+  }
+
+  // Hero display mode (Full transparent brand lockup centered and crisp)
+  if (layout === 'hero') {
+    return (
+      <div
+        onClick={onClick}
+        className={`inline-flex flex-col items-center justify-center select-none ${textPrimary} ${className} ${
+          onClick ? 'cursor-pointer' : ''
+        }`}
+        title="Rengifo Basto Consultoría Ontológica"
+      >
+        <svg
+          viewBox="0 0 580 240"
+          className="w-full max-w-md sm:max-w-lg h-auto overflow-visible drop-shadow-xs"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <g className={textPrimary}>
+            {/* 1. Upper Left Loop & Top Crest of 'R' */}
+            <path
+              d="M 120 118 C 95 116, 60 102, 54 76 C 48 50, 72 32, 102 24 C 132 16, 168 22, 192 34"
+              stroke="currentColor"
+              strokeWidth="3.2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+
+            {/* 2. Main Slanted Spine and Grand Lower-Left Flourish Loop */}
+            <path
+              d="M 192 34 C 182 62, 166 106, 144 150 C 130 178, 108 206, 78 206 C 50 206, 32 184, 32 152 C 32 118, 62 86, 102 68 C 120 60, 138 58, 154 62"
+              stroke="currentColor"
+              strokeWidth="4"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+
+            {/* 3. Upper Right Bowl of 'R' */}
+            <path
+              d="M 192 34 C 218 36, 246 48, 246 76 C 246 102, 220 118, 172 118"
+              stroke="currentColor"
+              strokeWidth="3.8"
+              strokeLinecap="round"
+            />
+
+            {/* 4. Lower Right Flourish Leg Swooping Underneath Text */}
+            <path
+              d="M 172 118 C 184 136, 204 172, 222 196 C 238 216, 258 226, 282 224 C 304 222, 322 208, 336 186 C 342 176, 346 166, 348 158"
+              stroke="currentColor"
+              strokeWidth="3.4"
+              strokeLinecap="round"
+            />
+
+            {/* 5. Terminal Finial Accents */}
+            <circle cx="54" cy="76" r="1.8" fill="currentColor" />
+            <circle cx="348" cy="158" r="1.8" fill="currentColor" />
+
+            {/* 6. Primary Wordmark: "engifo Basto" */}
+            <text
+              x="208"
+              y="114"
+              fill="currentColor"
+              style={{
+                fontFamily:
+                  '"Playfair Display", "Didot", "Bodoni Moda", "Cormorant Garamond", Georgia, serif',
+                fontSize: '56px',
+                fontWeight: 400,
+                letterSpacing: '-0.015em',
+              }}
+            >
+              engifo Basto
+            </text>
+
+            {/* 7. Subtitle: "Consultoría Ontológica" */}
+            <text
+              x="212"
+              y="156"
+              fill="currentColor"
+              style={{
+                fontFamily:
+                  '"Playfair Display", "Didot", "Bodoni Moda", "Cormorant Garamond", Georgia, serif',
+                fontSize: '24px',
+                fontWeight: 400,
+                letterSpacing: '0.025em',
+              }}
+            >
+              Consultoría Ontológica
+            </text>
+
+            {/* 8. Dedicated Underline for "Consultoría Ontológica" */}
+            <line
+              x1="212"
+              y1="166"
+              x2="466"
+              y2="166"
+              stroke="currentColor"
+              strokeWidth="1.2"
+              strokeOpacity="0.8"
+            />
+          </g>
         </svg>
       </div>
     );
@@ -100,83 +205,95 @@ export const BrandLogo: React.FC<BrandLogoProps> = ({
         onClick ? 'cursor-pointer' : ''
       }`}
     >
-      <div className="flex items-center gap-2.5">
+      <div className="flex items-center gap-3">
         {/* Calligraphic R + Serif Wordmark Lockup */}
         <div className="relative flex items-center">
           <svg
-            viewBox="0 0 280 110"
-            className={`${scaleMap[size] || 'h-10'} w-auto overflow-visible`}
+            viewBox="0 0 580 240"
+            className={`${scaleMap[size] || 'h-11'} w-auto overflow-visible`}
             fill="none"
             xmlns="http://www.w3.org/2000/svg"
           >
             {/* Calligraphic Flourish Signature 'R' */}
             <g className={textPrimary}>
-              {/* Main loop and ascender */}
+              {/* 1. Upper Left Loop & Top Crest of 'R' */}
               <path
-                d="M 28 48 C 20 34, 22 18, 35 10 C 44 4, 58 4, 66 12 C 75 20, 75 34, 67 44 C 60 52, 48 56, 38 58 C 26 60, 16 68, 11 78 C 5 88, 7 100, 16 105 C 27 109, 42 103, 54 93 C 62 87, 70 76, 76 66"
+                d="M 120 118 C 95 116, 60 102, 54 76 C 48 50, 72 32, 102 24 C 132 16, 168 22, 192 34"
                 stroke="currentColor"
-                strokeWidth="2.4"
+                strokeWidth="3.2"
                 strokeLinecap="round"
                 strokeLinejoin="round"
               />
-              {/* Vertical core stem with natural thick-thin calligraphy */}
-              <path
-                d="M 38 12 C 38 24, 37 42, 36 60 C 35 76, 34 92, 33 104"
-                stroke="currentColor"
-                strokeWidth="2.8"
-                strokeLinecap="round"
-              />
-              {/* Lower right leg flourish */}
-              <path
-                d="M 37 57 C 45 57, 54 60, 62 72 C 68 81, 72 92, 78 103"
-                stroke="currentColor"
-                strokeWidth="2.2"
-                strokeLinecap="round"
-              />
-              {/* Terminal accents */}
-              <circle cx="35" cy="10" r="1.3" fill="currentColor" />
-              <circle cx="78" cy="103" r="1" fill="currentColor" />
 
-              {/* Serif Lettering: "engifo Basto" */}
+              {/* 2. Main Slanted Spine and Grand Lower-Left Flourish Loop */}
+              <path
+                d="M 192 34 C 182 62, 166 106, 144 150 C 130 178, 108 206, 78 206 C 50 206, 32 184, 32 152 C 32 118, 62 86, 102 68 C 120 60, 138 58, 154 62"
+                stroke="currentColor"
+                strokeWidth="4"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+
+              {/* 3. Upper Right Bowl of 'R' */}
+              <path
+                d="M 192 34 C 218 36, 246 48, 246 76 C 246 102, 220 118, 172 118"
+                stroke="currentColor"
+                strokeWidth="3.8"
+                strokeLinecap="round"
+              />
+
+              {/* 4. Lower Right Flourish Leg Swooping Underneath Text */}
+              <path
+                d="M 172 118 C 184 136, 204 172, 222 196 C 238 216, 258 226, 282 224 C 304 222, 322 208, 336 186 C 342 176, 346 166, 348 158"
+                stroke="currentColor"
+                strokeWidth="3.4"
+                strokeLinecap="round"
+              />
+
+              {/* 5. Terminal Finial Accents */}
+              <circle cx="54" cy="76" r="1.8" fill="currentColor" />
+              <circle cx="348" cy="158" r="1.8" fill="currentColor" />
+
+              {/* 6. Primary Wordmark: "engifo Basto" */}
               <text
-                x="82"
-                y="58"
+                x="208"
+                y="114"
                 fill="currentColor"
                 style={{
                   fontFamily:
-                    '"Playfair Display", "Bodoni Moda", "Didot", "Cormorant Garamond", Georgia, serif',
-                  fontSize: '34px',
+                    '"Playfair Display", "Didot", "Bodoni Moda", "Cormorant Garamond", Georgia, serif',
+                  fontSize: '56px',
                   fontWeight: 400,
-                  letterSpacing: '-0.02em',
+                  letterSpacing: '-0.015em',
                 }}
               >
                 engifo Basto
               </text>
 
-              {/* Subtitle: "Consultoría Ontológica" */}
+              {/* 7. Subtitle: "Consultoría Ontológica" */}
               <text
-                x="84"
-                y="84"
+                x="212"
+                y="156"
                 fill="currentColor"
                 style={{
                   fontFamily:
-                    '"Playfair Display", "Bodoni Moda", "Didot", "Cormorant Garamond", Georgia, serif',
-                  fontSize: '14px',
+                    '"Playfair Display", "Didot", "Bodoni Moda", "Cormorant Garamond", Georgia, serif',
+                  fontSize: '24px',
                   fontWeight: 400,
-                  letterSpacing: '0.04em',
+                  letterSpacing: '0.025em',
                 }}
               >
                 Consultoría Ontológica
               </text>
 
-              {/* Underline beneath "Consultoría Ontológica" matching the official brand mark */}
+              {/* 8. Dedicated Underline for "Consultoría Ontológica" */}
               <line
-                x1="84"
-                y1="89"
-                x2="228"
-                y2="89"
+                x1="212"
+                y1="166"
+                x2="466"
+                y2="166"
                 stroke="currentColor"
-                strokeWidth="0.75"
+                strokeWidth="1.2"
                 strokeOpacity="0.8"
               />
             </g>
@@ -212,3 +329,4 @@ export const BrandLogo: React.FC<BrandLogoProps> = ({
     </div>
   );
 };
+

@@ -3,8 +3,8 @@ import { User } from '../types';
 import { PromotionalEventBanner } from './PromotionalEventBanner';
 import { ThemeToggle } from './ThemeToggle';
 import { AuthenticationSpace } from './AuthenticationSpace';
+import { BrandLogo } from './BrandLogo';
 import {
-  ArrowRight,
   Sparkles,
   ShieldCheck,
   ScanFace,
@@ -48,18 +48,10 @@ export const LoginView: React.FC<LoginViewProps> = ({
 
       {/* Hero Header */}
       <div className="w-full max-w-4xl mx-auto text-center flex flex-col items-center pt-2">
-        {/* Monogram emblem */}
-        <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-3xl bg-black dark:bg-white flex items-center justify-center text-white dark:text-black font-medium text-lg tracking-widest mb-5 sm:mb-6 shadow-[0_10px_30px_rgba(0,0,0,0.08)] dark:shadow-[0_10px_30px_rgba(255,255,255,0.05)] transition-colors">
-          RB
+        {/* Brand Logo - Clean transparent vector identity */}
+        <div className="w-full flex items-center justify-center mb-4 sm:mb-5 transition-all">
+          <BrandLogo layout="hero" className="hover:opacity-95 transition-opacity" />
         </div>
-
-        {/* Minimalist Title & Subtitle */}
-        <h1 className="text-3xl sm:text-4xl lg:text-5xl font-semibold tracking-tight text-black dark:text-white leading-tight max-w-2xl mb-3">
-          Rengifo Basto
-          <span className="block font-light text-gray-400 dark:text-neutral-400 text-2xl sm:text-3xl lg:text-4xl mt-1">
-            Consultoría Ontológica
-          </span>
-        </h1>
 
         <p className="text-xs sm:text-sm font-light text-gray-500 dark:text-neutral-400 max-w-lg mx-auto leading-relaxed mb-4">
           Acompañamiento directivo de alta fidelidad, integración de la sabiduría emocional y rediseño de conversaciones profundas.
@@ -213,10 +205,10 @@ export const LoginView: React.FC<LoginViewProps> = ({
 
       {/* Footer */}
       <footer className="w-full max-w-5xl flex flex-col sm:flex-row justify-between items-center gap-4 text-xs font-light text-gray-400 dark:text-neutral-500 pt-8 border-t border-gray-100 dark:border-neutral-800">
-        <div>
-          © {new Date().getFullYear()} Rengifo Basto Consultoría Ontológica. Todos los derechos reservados.
+        <div className="text-center sm:text-left">
+          © 2026 Rengifo Basto Consultoría Ontológica. Todos los derechos reservados. Dirección: Crr 20bis # 65a-22 Cel 3234642257
         </div>
-        <div className="flex items-center gap-6">
+        <div className="flex items-center gap-6 shrink-0">
           <span>Privacidad & Confidencialidad</span>
           <span>ICF level 1</span>
         </div>

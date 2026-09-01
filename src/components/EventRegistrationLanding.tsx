@@ -3,6 +3,7 @@ import { CronogramaEvent, User } from '../types';
 import { OntologicalStore } from '../services/store';
 import { LiquidGlassButton } from './LiquidGlassButton';
 import { ThemeToggle } from './ThemeToggle';
+import { BrandLogo } from './BrandLogo';
 import {
   Calendar,
   Clock,
@@ -161,17 +162,7 @@ export const EventRegistrationLanding: React.FC<EventRegistrationLandingProps> =
       <header className="w-full border-b border-gray-100 dark:border-neutral-800 bg-white/80 dark:bg-[#0D0D0E]/80 backdrop-blur-md sticky top-0 z-30">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 h-18 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-xl bg-black dark:bg-white text-white dark:text-black flex items-center justify-center font-bold text-xs tracking-wider shadow-xs">
-              RB
-            </div>
-            <div>
-              <span className="text-xs font-semibold tracking-tight text-black dark:text-white block leading-none">
-                Rengifo Basto
-              </span>
-              <span className="text-[10px] font-light text-gray-500 dark:text-neutral-400 tracking-wide">
-                Consultoría Ontológica • Portal de Pre-Inscripción
-              </span>
-            </div>
+            <BrandLogo size="sm" />
           </div>
 
           <div className="flex items-center gap-3">
@@ -624,7 +615,7 @@ export const EventRegistrationLanding: React.FC<EventRegistrationLandingProps> =
       {/* Subtle Footer */}
       <footer className="w-full border-t border-gray-100 dark:border-neutral-800 py-6 text-center text-xs font-light text-gray-400 dark:text-neutral-500">
         <div className="max-w-6xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
-          <span>© {new Date().getFullYear()} Rengifo Basto Consultoría Ontológica • ICF Code of Ethics</span>
+          <span>© 2026 Rengifo Basto Consultoría Ontológica. Todos los derechos reservados. Dirección: Crr 20bis # 65a-22 Cel 3234642257</span>
           <span className="flex items-center gap-1">
             <CloudCheck className="w-3.5 h-3.5 text-black dark:text-white" />
             Infraestructura Privada Google Cloud & Gemini Enterprise

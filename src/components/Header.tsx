@@ -2,6 +2,7 @@ import React from 'react';
 import { User } from '../types';
 import { LogOut, Sliders, Sparkles } from 'lucide-react';
 import { ThemeToggle } from './ThemeToggle';
+import { BrandLogo } from './BrandLogo';
 
 interface HeaderProps {
   currentUser: User;
@@ -25,17 +26,7 @@ export const Header: React.FC<HeaderProps> = ({
       <div className="max-w-7xl mx-auto px-4 sm:px-6 h-20 flex items-center justify-between">
         {/* Brand identity */}
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-2xl bg-black dark:bg-white text-white dark:text-black flex items-center justify-center font-semibold text-xs tracking-wider shadow-sm transition-colors">
-            RB
-          </div>
-          <div>
-            <h1 className="text-sm font-semibold tracking-tight text-black dark:text-white leading-none">
-              Rengifo Basto
-            </h1>
-            <p className="text-[11px] font-light text-gray-500 dark:text-neutral-400 tracking-wide mt-1">
-              Consultoría Ontológica
-            </p>
-          </div>
+          <BrandLogo size="sm" />
         </div>
 
         {/* User profile & actions */}
