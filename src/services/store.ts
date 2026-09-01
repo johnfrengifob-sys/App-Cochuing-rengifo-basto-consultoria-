@@ -790,37 +790,6 @@ export class OntologicalStore {
     this.save(STORAGE_KEYS.CRONOGRAMA_EVENTS, events);
   }
 
-  static addCronogramaEvent(
-    data: Omit<CronogramaEvent, 'id' | 'spotsLeft'> & { spotsLeft?: number }
-  ): CronogramaEvent {
-    const events = this.getCronogramaEvents();
-    const newEvent: CronogramaEvent = {
-      ...data,
-      id: 'event-' + Date.now(),
-      spotsLeft: data.spotsLeft !== undefined ? data.spotsLeft : data.totalSpots,
-    };
-    // If set as featured, unfeature others
-    let updated = [newEvent, ...events];
-    if (newEvent.featured) {
-      updated = updated.map((e) => ({
-        ...e,
-        featured: e.id === newEvent.id,
-      }));
-    }
-    this.saveCronogramaEvents(updated);
-    return newEvent;
-  }
-
-  static deleteCronogramaEvent(id: string): void {
-    const events = this.getCronogramaEvents();
-    const updated = events.filter((e) => e.id !== id);
-    // If the deleted event was featured, feature the first remaining
-    if (updated.length > 0 && !updated.some((e) => e.featured)) {
-      updated[0].featured = true;
-    }
-    this.saveCronogramaEvents(updated);
-  }
-
   static getUpcomingEvent(): CronogramaEvent {
     const events = this.getCronogramaEvents();
     const upcoming = events.find((e) => e.status === 'upcoming' && e.featured);

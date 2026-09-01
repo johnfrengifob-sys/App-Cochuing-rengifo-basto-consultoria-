@@ -12,7 +12,6 @@ import { LiquidGlassButton } from './LiquidGlassButton';
 import { PulseBadge } from './PulseBadge';
 import { PromotionalEventBanner } from './PromotionalEventBanner';
 import { PaymentUnlockModal } from './PaymentUnlockModal';
-import { useTranslation } from '../services/i18n';
 import {
   Video,
   Calendar,
@@ -52,7 +51,6 @@ interface ClientDashboardProps {
 type WorkspaceTab = 'materials' | 'reinforcement' | 'form';
 
 export const ClientDashboard: React.FC<ClientDashboardProps> = ({ client }) => {
-  const { language, t } = useTranslation();
   const [sessions, setSessions] = useState<Session[]>(() =>
     OntologicalStore.getSessionsForClient(client.uid)
   );
@@ -221,19 +219,19 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({ client }) => {
           <div>
             <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#F9F9F9] dark:bg-[#18181B] border border-gray-100 dark:border-neutral-800 text-xs font-light text-gray-500 dark:text-neutral-400 mb-3">
               <span className="w-1.5 h-1.5 rounded-full bg-black dark:bg-white" />
-              {language === 'es' ? 'Programa 1 a 1 • 12 Semanas' : '1-on-1 Executive Coaching • 12 Weeks'}
+              Programa 1 a 1 • 12 Semanas
             </div>
 
             <h1 className="text-3xl sm:text-4xl font-light tracking-tight text-black dark:text-white">
-              {language === 'es' ? 'Bienvenido(a),' : 'Welcome,'}{' '}
+              Bienvenido(a),{' '}
               <span className="font-semibold text-black dark:text-white">
                 {client.name}
               </span>
             </h1>
             <p className="text-sm font-light text-gray-500 dark:text-neutral-400 mt-1.5 max-w-xl leading-relaxed">
-              {language === 'es' ? 'Programa:' : 'Program:'}{' '}
+              Programa:{' '}
               <strong>
-                {client.programName || (language === 'es' ? 'Certeza, Fronteras & Dirección Personal' : 'Certainty, Boundaries & Personal Direction')}
+                {client.programName || 'Certeza, Fronteras & Dirección Personal'}
               </strong>
             </p>
           </div>
@@ -242,20 +240,20 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({ client }) => {
           <div className="flex flex-wrap items-center gap-3 self-start md:self-auto">
             <div className="px-4 py-2 rounded-2xl bg-[#F9F9F9] dark:bg-[#18181B] border border-gray-100 dark:border-neutral-800 text-xs">
               <span className="text-[10px] font-medium uppercase tracking-wider text-gray-400 dark:text-neutral-500 block">
-                {t.paymentStatus}
+                Estado del Programa
               </span>
               <span className="font-semibold text-black dark:text-white flex items-center gap-1.5 mt-0.5">
                 <CreditCard className="w-3.5 h-3.5 text-black dark:text-white" />
-                {client.paymentStatus || t.paymentCompleted}
+                {client.paymentStatus || 'Completado'}
               </span>
             </div>
 
             <div className="px-4 py-2 rounded-2xl bg-black dark:bg-white text-white dark:text-black text-xs">
               <span className="text-[10px] font-medium uppercase tracking-wider text-gray-400 dark:text-neutral-500 block">
-                {language === 'es' ? 'Avance Ontológico' : 'Ontological Progress'}
+                Avance Ontológico
               </span>
               <span className="font-semibold text-white dark:text-black mt-0.5 block">
-                {language === 'es' ? `Sesión ${currentProgress} de 6` : `Session ${currentProgress} of 6`} ({progressPercentage}%)
+                Sesión {currentProgress} de 6 ({progressPercentage}%)
               </span>
             </div>
           </div>

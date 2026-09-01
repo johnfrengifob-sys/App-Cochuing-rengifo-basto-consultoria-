@@ -7,23 +7,19 @@ import { useState, useEffect } from 'react';
 import { User } from './types';
 import { OntologicalStore } from './services/store';
 import { ThemeManager } from './services/theme';
-import { LanguageProvider, useTranslation } from './services/i18n';
 import { Header } from './components/Header';
 import { LoginView } from './components/LoginView';
 import { ClientDashboard } from './components/ClientDashboard';
 import { CoachDashboard } from './components/CoachDashboard';
-import { SettingsModal } from './components/SettingsModal';
 import { WebhookConfigModal } from './components/WebhookConfigModal';
 import { EventRegistrationLanding } from './components/EventRegistrationLanding';
 
-function AppContent() {
-  const { language } = useTranslation();
+export default function App() {
   const [allUsers, setAllUsers] = useState<User[]>(() => OntologicalStore.getUsers());
   const [currentUser, setCurrentUser] = useState<User | null>(() =>
     OntologicalStore.getCurrentUser()
   );
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [isWebhookModalOpen, setIsWebhookModalOpen] = useState(false);
   const [viewMode, setViewMode] = useState<'app' | 'register'>(() => {
     try {
       const urlParams = new URLSearchParams(window.location.search);
@@ -87,18 +83,11 @@ function AppContent() {
 
   if (!currentUser) {
     return (
-      <>
-        <LoginView
-          onLogin={handleLogin}
-          availableUsers={allUsers}
-          onNavigateToRegister={() => setViewMode('register')}
-        />
-        <SettingsModal
-          isOpen={isSettingsOpen}
-          onClose={() => setIsSettingsOpen(false)}
-          currentUser={currentUser}
-        />
-      </>
+      <LoginView
+        onLogin={handleLogin}
+        availableUsers={allUsers}
+        onNavigateToRegister={() => setViewMode('register')}
+      />
     );
   }
 
@@ -128,29 +117,11 @@ function AppContent() {
         )}
       </div>
 
-      {/* Main Settings Modal (Language & Region, Theme, Automations) */}
-      <SettingsModal
+      <WebhookConfigModal
         isOpen={isSettingsOpen}
         onClose={() => setIsSettingsOpen(false)}
-        currentUser={currentUser}
       />
-
-      {/* Dedicated Webhook / Make Automation Modal for Coach */}
-      {currentUser.role === 'coach' && (
-        <WebhookConfigModal
-          isOpen={isWebhookModalOpen}
-          onClose={() => setIsWebhookModalOpen(false)}
-        />
-      )}
     </div>
-  );
-}
-
-export default function App() {
-  return (
-    <LanguageProvider>
-      <AppContent />
-    </LanguageProvider>
   );
 }
 

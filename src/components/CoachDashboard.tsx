@@ -17,7 +17,6 @@ import { LiquidGlassButton } from './LiquidGlassButton';
 import { PulseBadge } from './PulseBadge';
 import { WebhookConfigModal } from './WebhookConfigModal';
 import { PromotionalEventBanner } from './PromotionalEventBanner';
-import { useTranslation } from '../services/i18n';
 import {
   Users,
   Sparkles,
@@ -53,7 +52,6 @@ import {
   Link2,
   Download,
   FileDown,
-  Trash2,
 } from 'lucide-react';
 
 interface CoachDashboardProps {
@@ -69,7 +67,6 @@ export const CoachDashboard: React.FC<CoachDashboardProps> = ({
   onRefreshClients,
   onOpenRegistrationPortal,
 }) => {
-  const { language, t } = useTranslation();
   // Navigation tabs: CRM Funnel vs Clientes Ancla vs Eventos & Cronograma
   const [activeMainTab, setActiveMainTab] = useState<'crm' | 'clients' | 'events'>('crm');
 
@@ -83,18 +80,6 @@ export const CoachDashboard: React.FC<CoachDashboardProps> = ({
     OntologicalStore.getEventRegistrations()
   );
   const [copiedLinkFeedback, setCopiedLinkFeedback] = useState(false);
-
-  // New Event Modal State
-  const [showAddEventModal, setShowAddEventModal] = useState(false);
-  const [newEventTitle, setNewEventTitle] = useState('');
-  const [newEventSubtitle, setNewEventSubtitle] = useState('');
-  const [newEventCategory, setNewEventCategory] = useState<'Conversatorio Quincenal' | 'Masterclass Ontológica' | 'Taller Vivencial'>('Conversatorio Quincenal');
-  const [newEventDate, setNewEventDate] = useState('');
-  const [newEventTime, setNewEventTime] = useState('07:00 PM (GMT-5)');
-  const [newEventSpots, setNewEventSpots] = useState(25);
-  const [newEventMeetUrl, setNewEventMeetUrl] = useState('https://meet.google.com/rbc-conversatorio');
-  const [newEventAiPrompt, setNewEventAiPrompt] = useState('Minimalist executive boardroom with warm ambient lighting and ontological coaching atmosphere');
-  const [newEventSetFeatured, setNewEventSetFeatured] = useState(true);
 
   // CRM State
   const [prospects, setProspects] = useState<Prospect[]>(() =>
@@ -149,36 +134,6 @@ export const CoachDashboard: React.FC<CoachDashboardProps> = ({
   const [newSessionNumber, setNewSessionNumber] = useState<number>(
     (selectedClient?.programProgress || 1)
   );
-
-  // Client Progress Export State & Handlers (PDF & CSV)
-  const [showExportModal, setShowExportModal] = useState(false);
-  const [exportSuccessFeedback, setExportSuccessFeedback] = useState<string | null>(null);
-
-  const handleExportPDF = () => {
-    if (!selectedClient) return;
-    PDFGenerator.generateClientFullProgressPDF({
-      client: selectedClient,
-      forms,
-      insights,
-      sessions,
-      nodes: PROGRAM_NODES,
-    });
-    setExportSuccessFeedback('Expediente en formato PDF generado exitosamente.');
-    setTimeout(() => setExportSuccessFeedback(null), 3500);
-  };
-
-  const handleExportCSV = () => {
-    if (!selectedClient) return;
-    PDFGenerator.generateClientProgressCSV({
-      client: selectedClient,
-      forms,
-      insights,
-      sessions,
-      nodes: PROGRAM_NODES,
-    });
-    setExportSuccessFeedback('Archivo CSV descargado exitosamente.');
-    setTimeout(() => setExportSuccessFeedback(null), 3500);
-  };
 
   // Handle client selection switch
   const handleSelectClient = (clientId: string) => {
@@ -424,7 +379,7 @@ export const CoachDashboard: React.FC<CoachDashboardProps> = ({
               }`}
             >
               <Kanban className="w-3.5 h-3.5" />
-              <span>{language === 'es' ? 'Pipeline CRM' : 'CRM Pipeline'}</span>
+              <span>Pipeline CRM</span>
               <span
                 className={`text-[10px] px-1.5 py-0.5 rounded-full font-semibold ${
                   activeMainTab === 'crm'
@@ -445,7 +400,7 @@ export const CoachDashboard: React.FC<CoachDashboardProps> = ({
               }`}
             >
               <Users className="w-3.5 h-3.5" />
-              <span>{language === 'es' ? 'Clientes Ancla' : 'Anchor Clients'}</span>
+              <span>Clientes Ancla</span>
               <span
                 className={`text-[10px] px-1.5 py-0.5 rounded-full font-semibold ${
                   activeMainTab === 'clients'
@@ -466,7 +421,7 @@ export const CoachDashboard: React.FC<CoachDashboardProps> = ({
               }`}
             >
               <Calendar className="w-3.5 h-3.5" />
-              <span>{language === 'es' ? 'Cronograma & Eventos' : 'Schedule & Events'}</span>
+              <span>Cronograma & Eventos</span>
               <span
                 className={`text-[10px] px-1.5 py-0.5 rounded-full font-semibold ${
                   activeMainTab === 'events'
@@ -1013,17 +968,7 @@ export const CoachDashboard: React.FC<CoachDashboardProps> = ({
                   </div>
 
                   {/* Actions */}
-                  <div className="flex flex-wrap items-center gap-2.5 shrink-0">
-                    <button
-                      type="button"
-                      onClick={() => setShowExportModal(true)}
-                      title="Exportar información de progreso a PDF o CSV"
-                      className="px-3.5 py-2 rounded-xl border border-gray-200/90 dark:border-neutral-700 bg-white dark:bg-[#1A1A1E] hover:bg-gray-50 dark:hover:bg-neutral-800 text-black dark:text-white text-xs font-medium transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs hover:border-black dark:hover:border-neutral-500 whitespace-nowrap"
-                    >
-                      <FileDown className="w-3.5 h-3.5 text-black dark:text-white" />
-                      <span>Exportar Progreso</span>
-                    </button>
-
+                  <div className="flex items-center gap-2.5 shrink-0">
                     <button
                       type="button"
                       onClick={() => setShowNewSessionModal(true)}
@@ -1455,34 +1400,14 @@ export const CoachDashboard: React.FC<CoachDashboardProps> = ({
 
           {/* Section: Scheduled Events in Cronograma */}
           <div className="space-y-6 pt-4">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex items-center justify-between">
               <div>
                 <h3 className="text-lg font-semibold text-black dark:text-white tracking-tight">
                   Eventos Programados en la Agenda
                 </h3>
                 <p className="text-xs font-light text-gray-500 dark:text-neutral-400">
-                  Crea nuevos conversatorios, elimina eventos caducados o selecciona cuál anunciar en el banner publicitario principal.
+                  Selecciona cuál evento debe anunciarse en el banner publicitario principal del inicio.
                 </p>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => setShowMakeModal(true)}
-                  className="px-4 py-2.5 rounded-full bg-[#F9F9F9] dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 text-black dark:text-white text-xs font-medium hover:bg-gray-100 dark:hover:bg-neutral-700 transition-all flex items-center gap-2 cursor-pointer shadow-2xs"
-                >
-                  <Workflow className="w-3.5 h-3.5 text-amber-500" />
-                  <span>Automatizaciones Make</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setShowAddEventModal(true)}
-                  className="px-5 py-2.5 rounded-full bg-black dark:bg-white text-white dark:text-black text-xs font-medium hover:opacity-90 transition-all flex items-center gap-2 cursor-pointer shadow-xs"
-                >
-                  <Plus className="w-3.5 h-3.5" />
-                  <span>Crear Nuevo Evento</span>
-                </button>
               </div>
             </div>
 
@@ -1504,34 +1429,16 @@ export const CoachDashboard: React.FC<CoachDashboardProps> = ({
                           {evt.category}
                         </span>
 
-                        <div className="flex items-center gap-2">
-                          {isFeatured ? (
-                            <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-black dark:text-white bg-black/5 dark:bg-white/10 px-2.5 py-1 rounded-full">
-                              <CheckCircle2 className="w-3.5 h-3.5 text-black dark:text-white" />
-                              Activo en Inicio
-                            </span>
-                          ) : (
-                            <span className="text-xs font-light text-gray-400 dark:text-neutral-500">
-                              En espera
-                            </span>
-                          )}
-
-                          {cronogramaEvents.length > 1 && (
-                            <button
-                              type="button"
-                              title="Eliminar Evento"
-                              onClick={() => {
-                                if (confirm(`¿Estás seguro de eliminar el evento "${evt.title}"?`)) {
-                                  OntologicalStore.deleteCronogramaEvent(evt.id);
-                                  setCronogramaEvents(OntologicalStore.getCronogramaEvents());
-                                }
-                              }}
-                              className="p-1.5 rounded-full text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-all cursor-pointer"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
-                          )}
-                        </div>
+                        {isFeatured ? (
+                          <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-black dark:text-white bg-black/5 dark:bg-white/10 px-2.5 py-1 rounded-full">
+                            <CheckCircle2 className="w-3.5 h-3.5 text-black dark:text-white" />
+                            Activo en Inicio
+                          </span>
+                        ) : (
+                          <span className="text-xs font-light text-gray-400 dark:text-neutral-500">
+                            En espera
+                          </span>
+                        )}
                       </div>
 
                       <h4 className="text-base font-semibold text-black dark:text-white tracking-tight leading-snug">
@@ -1844,332 +1751,6 @@ export const CoachDashboard: React.FC<CoachDashboardProps> = ({
           </div>
         </div>
       )}
-      {/* ========================================================================= */}
-      {/* MODAL: CREAR NUEVO EVENTO / CONVERSATORIO */}
-      {/* ========================================================================= */}
-      {showAddEventModal && (
-        <div className="fixed inset-0 z-50 bg-black/40 dark:bg-black/70 backdrop-blur-xs flex items-center justify-center p-6">
-          <div className="bg-white dark:bg-[#151518] rounded-3xl p-8 max-w-lg w-full border border-gray-100 dark:border-neutral-800 shadow-2xl animate-fade-in space-y-5 max-h-[90vh] overflow-y-auto">
-            <div>
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#F9F9F9] dark:bg-neutral-800 border border-gray-100 dark:border-neutral-700 text-[10px] font-medium text-black dark:text-white uppercase tracking-widest mb-2">
-                <Sparkles className="w-3 h-3 text-amber-500" />
-                Gestión de Agenda Ontológica
-              </div>
-              <h3 className="text-xl font-semibold text-black dark:text-white tracking-tight">
-                Crear Nuevo Evento / Conversatorio
-              </h3>
-              <p className="text-xs font-light text-gray-500 dark:text-neutral-400 mt-1">
-                El evento se publicará en el cronograma y se sincronizará con el banner publicitario generado por IA.
-              </p>
-            </div>
-
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                if (!newEventTitle || !newEventDate) return;
-                
-                const created = OntologicalStore.addCronogramaEvent({
-                  title: newEventTitle,
-                  subtitle: newEventSubtitle || 'Conversatorio ontológico directivo de alta fidelidad.',
-                  category: newEventCategory,
-                  date: new Date().toISOString(),
-                  displayDate: newEventDate,
-                  time: newEventTime,
-                  mode: 'Online (Google Meet)',
-                  description: newEventSubtitle || 'Espacio de distinciones ontológicas y rediseño de liderazgo directivo.',
-                  facilitator: 'John Fredy Rengifo • Master Coach Ontológico',
-                  totalSpots: newEventSpots,
-                  featured: newEventSetFeatured,
-                  status: 'upcoming',
-                  meetUrl: newEventMeetUrl,
-                  aiPromptUsed: newEventAiPrompt,
-                  imageUrl: 'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&w=1200&q=80',
-                });
-
-                setCronogramaEvents(OntologicalStore.getCronogramaEvents());
-                setShowAddEventModal(false);
-                setNewEventTitle('');
-                setNewEventSubtitle('');
-                setNewEventDate('');
-              }}
-              className="space-y-4"
-            >
-              <div>
-                <label className="block text-xs font-semibold text-black dark:text-white uppercase tracking-wider mb-1.5">
-                  Título del Evento
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="Ej. Conversatorio Raíz y Balance: El Costo del Liderazgo"
-                  value={newEventTitle}
-                  onChange={(e) => setNewEventTitle(e.target.value)}
-                  className="w-full px-4 py-3 rounded-2xl bg-[#F9F9F9] dark:bg-[#202024] border border-gray-200 dark:border-neutral-700 text-xs text-black dark:text-white font-light focus:outline-none focus:ring-1 focus:ring-black dark:focus:ring-white"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-black dark:text-white uppercase tracking-wider mb-1.5">
-                  Subtítulo / Propósito Ontológico
-                </label>
-                <input
-                  type="text"
-                  placeholder="Ej. Un espacio de quiebres reales, distinciones somáticas y equilibrio vital."
-                  value={newEventSubtitle}
-                  onChange={(e) => setNewEventSubtitle(e.target.value)}
-                  className="w-full px-4 py-3 rounded-2xl bg-[#F9F9F9] dark:bg-[#202024] border border-gray-200 dark:border-neutral-700 text-xs text-black dark:text-white font-light focus:outline-none focus:ring-1 focus:ring-black dark:focus:ring-white"
-                />
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-semibold text-black dark:text-white uppercase tracking-wider mb-1.5">
-                    Categoría
-                  </label>
-                  <select
-                    value={newEventCategory}
-                    onChange={(e) => setNewEventCategory(e.target.value as any)}
-                    className="w-full px-4 py-3 rounded-2xl bg-[#F9F9F9] dark:bg-[#202024] border border-gray-200 dark:border-neutral-700 text-xs text-black dark:text-white font-light focus:outline-none focus:ring-1 focus:ring-black dark:focus:ring-white"
-                  >
-                    <option value="Conversatorio Quincenal">Conversatorio Quincenal</option>
-                    <option value="Masterclass Ontológica">Masterclass Ontológica</option>
-                    <option value="Taller Vivencial">Taller Vivencial</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-black dark:text-white uppercase tracking-wider mb-1.5">
-                    Cupos Totales
-                  </label>
-                  <input
-                    type="number"
-                    min={5}
-                    max={100}
-                    value={newEventSpots}
-                    onChange={(e) => setNewEventSpots(Number(e.target.value))}
-                    className="w-full px-4 py-3 rounded-2xl bg-[#F9F9F9] dark:bg-[#202024] border border-gray-200 dark:border-neutral-700 text-xs text-black dark:text-white font-light focus:outline-none focus:ring-1 focus:ring-black dark:focus:ring-white"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-semibold text-black dark:text-white uppercase tracking-wider mb-1.5">
-                    Fecha (Texto de exhibición)
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="Ej. Jueves 18 de Mayo"
-                    value={newEventDate}
-                    onChange={(e) => setNewEventDate(e.target.value)}
-                    className="w-full px-4 py-3 rounded-2xl bg-[#F9F9F9] dark:bg-[#202024] border border-gray-200 dark:border-neutral-700 text-xs text-black dark:text-white font-light focus:outline-none focus:ring-1 focus:ring-black dark:focus:ring-white"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-black dark:text-white uppercase tracking-wider mb-1.5">
-                    Horario
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="Ej. 07:00 PM (GMT-5)"
-                    value={newEventTime}
-                    onChange={(e) => setNewEventTime(e.target.value)}
-                    className="w-full px-4 py-3 rounded-2xl bg-[#F9F9F9] dark:bg-[#202024] border border-gray-200 dark:border-neutral-700 text-xs text-black dark:text-white font-light focus:outline-none focus:ring-1 focus:ring-black dark:focus:ring-white"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-black dark:text-white uppercase tracking-wider mb-1.5">
-                  Enlace Google Meet
-                </label>
-                <input
-                  type="url"
-                  required
-                  value={newEventMeetUrl}
-                  onChange={(e) => setNewEventMeetUrl(e.target.value)}
-                  className="w-full px-4 py-3 rounded-2xl bg-[#F9F9F9] dark:bg-[#202024] border border-gray-200 dark:border-neutral-700 text-xs text-black dark:text-white font-light focus:outline-none focus:ring-1 focus:ring-black dark:focus:ring-white"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-black dark:text-white uppercase tracking-wider mb-1.5">
-                  Prompt Conceptual para Banner IA
-                </label>
-                <textarea
-                  rows={2}
-                  value={newEventAiPrompt}
-                  onChange={(e) => setNewEventAiPrompt(e.target.value)}
-                  className="w-full px-4 py-3 rounded-2xl bg-[#F9F9F9] dark:bg-[#202024] border border-gray-200 dark:border-neutral-700 text-xs text-black dark:text-white font-light focus:outline-none focus:ring-1 focus:ring-black dark:focus:ring-white resize-y"
-                />
-              </div>
-
-              <div className="flex items-center gap-2 pt-1">
-                <input
-                  type="checkbox"
-                  id="setFeaturedCheck"
-                  checked={newEventSetFeatured}
-                  onChange={(e) => setNewEventSetFeatured(e.target.checked)}
-                  className="w-4 h-4 rounded text-black focus:ring-black dark:focus:ring-white cursor-pointer"
-                />
-                <label htmlFor="setFeaturedCheck" className="text-xs font-medium text-black dark:text-white cursor-pointer">
-                  Fijar inmediatamente como evento activo en la pantalla de inicio
-                </label>
-              </div>
-
-              <div className="pt-4 flex items-center justify-end gap-3 border-t border-gray-100 dark:border-neutral-800">
-                <button
-                  type="button"
-                  onClick={() => setShowAddEventModal(false)}
-                  className="px-5 py-2.5 rounded-full text-xs font-medium text-gray-500 dark:text-neutral-400 hover:text-black dark:hover:text-white cursor-pointer"
-                >
-                  Cancelar
-                </button>
-                <LiquidGlassButton type="submit">
-                  Publicar Evento
-                </LiquidGlassButton>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* ========================================================================= */}
-      {/* MODAL: EXPORTAR PROGRESO DEL CLIENTE (PDF & CSV) */}
-      {/* ========================================================================= */}
-      {showExportModal && selectedClient && (
-        <div className="fixed inset-0 z-50 bg-black/50 dark:bg-black/80 backdrop-blur-xs flex items-center justify-center p-6">
-          <div className="bg-white dark:bg-[#151518] rounded-3xl p-8 max-w-xl w-full border border-gray-100 dark:border-neutral-800 shadow-2xl animate-fade-in space-y-6 max-h-[90vh] overflow-y-auto">
-            {/* Header */}
-            <div className="flex items-start justify-between">
-              <div>
-                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#F9F9F9] dark:bg-neutral-800 border border-gray-100 dark:border-neutral-700 text-[10px] font-semibold text-black dark:text-white uppercase tracking-widest mb-2">
-                  <FileDown className="w-3 h-3 text-emerald-500" />
-                  Exportación de Expediente Ontológico
-                </div>
-                <h3 className="text-xl font-semibold text-black dark:text-white tracking-tight">
-                  Exportar Progreso de {selectedClient.name}
-                </h3>
-                <p className="text-xs font-light text-gray-500 dark:text-neutral-400 mt-1">
-                  {selectedClient.email} • {selectedClient.programName || 'Programa Certeza (12 Semanas)'}
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setShowExportModal(false)}
-                className="p-2 rounded-full text-gray-400 hover:text-black dark:hover:text-white hover:bg-gray-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            {/* Metrics Summary Strip */}
-            <div className="grid grid-cols-3 gap-2.5 p-3.5 bg-[#F9F9F9] dark:bg-[#1C1C20] rounded-2xl border border-gray-100 dark:border-neutral-800 text-center">
-              <div>
-                <span className="text-[10px] font-medium uppercase tracking-wider text-gray-400 dark:text-neutral-500 block">
-                  Avance
-                </span>
-                <span className="text-xs font-semibold text-black dark:text-white">
-                  Nodo {selectedClient.programProgress || 1}/6 ({Math.round(((selectedClient.programProgress || 1) / 6) * 100)}%)
-                </span>
-              </div>
-              <div>
-                <span className="text-[10px] font-medium uppercase tracking-wider text-gray-400 dark:text-neutral-500 block">
-                  Quiebres
-                </span>
-                <span className="text-xs font-semibold text-black dark:text-white">
-                  {forms.length} Formularios
-                </span>
-              </div>
-              <div>
-                <span className="text-[10px] font-medium uppercase tracking-wider text-gray-400 dark:text-neutral-500 block">
-                  Diagnósticos IA
-                </span>
-                <span className="text-xs font-semibold text-black dark:text-white">
-                  {insights.length} Evaluaciones
-                </span>
-              </div>
-            </div>
-
-            {/* Feedback Alert if generated */}
-            {exportSuccessFeedback && (
-              <div className="p-3.5 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 text-xs font-medium text-emerald-800 dark:text-emerald-300 flex items-center gap-2 animate-fade-in">
-                <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
-                <span>{exportSuccessFeedback}</span>
-              </div>
-            )}
-
-            {/* Format Option Cards */}
-            <div className="space-y-3.5">
-              {/* Option 1: PDF */}
-              <div className="p-5 rounded-2xl bg-white dark:bg-[#1A1A1E] border border-gray-200/90 dark:border-neutral-700/80 shadow-2xs hover:border-black dark:hover:border-neutral-500 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div className="space-y-1 max-w-sm">
-                  <div className="flex items-center gap-2">
-                    <span className="p-1.5 rounded-lg bg-red-100 dark:bg-red-950/60 text-red-700 dark:text-red-400">
-                      <FileText className="w-4 h-4" />
-                    </span>
-                    <h4 className="text-sm font-semibold text-black dark:text-white">
-                      Expediente Ejecutivo en PDF
-                    </h4>
-                  </div>
-                  <p className="text-[11px] font-light text-gray-500 dark:text-neutral-400 leading-relaxed">
-                    Documento oficial con diseño A4 para impresión o archivado. Incluye mapa de los 6 nodos, mapeo somático, reflexiones ontológicas y acuerdos 1 a 1 firmados.
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={handleExportPDF}
-                  className="px-4 py-2.5 rounded-xl bg-black dark:bg-white text-white dark:text-black hover:bg-neutral-800 dark:hover:bg-neutral-200 text-xs font-medium transition-all flex items-center justify-center gap-2 cursor-pointer shadow-xs whitespace-nowrap"
-                >
-                  <Download className="w-3.5 h-3.5" />
-                  <span>Generar PDF</span>
-                </button>
-              </div>
-
-              {/* Option 2: CSV */}
-              <div className="p-5 rounded-2xl bg-white dark:bg-[#1A1A1E] border border-gray-200/90 dark:border-neutral-700/80 shadow-2xs hover:border-black dark:hover:border-neutral-500 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div className="space-y-1 max-w-sm">
-                  <div className="flex items-center gap-2">
-                    <span className="p-1.5 rounded-lg bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400">
-                      <Layers className="w-4 h-4" />
-                    </span>
-                    <h4 className="text-sm font-semibold text-black dark:text-white">
-                      Base de Datos Tabular en CSV
-                    </h4>
-                  </div>
-                  <p className="text-[11px] font-light text-gray-500 dark:text-neutral-400 leading-relaxed">
-                    Archivo UTF-8 compatible con Microsoft Excel, Google Sheets y Numbers. Incluye 5 bloques tabulares con registros de quiebres, sesiones y diagnósticos.
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={handleExportCSV}
-                  className="px-4 py-2.5 rounded-xl bg-[#F9F9F9] dark:bg-[#222228] border border-gray-200 dark:border-neutral-700 hover:border-black dark:hover:border-white text-black dark:text-white text-xs font-medium transition-all flex items-center justify-center gap-2 cursor-pointer shadow-2xs whitespace-nowrap"
-                >
-                  <Download className="w-3.5 h-3.5" />
-                  <span>Descargar CSV</span>
-                </button>
-              </div>
-            </div>
-
-            {/* Footer */}
-            <div className="pt-3 flex items-center justify-between border-t border-gray-100 dark:border-neutral-800 text-[11px] text-gray-400 dark:text-neutral-500">
-              <span>Metodología Certificada John Fredy Rengifo</span>
-              <button
-                type="button"
-                onClick={() => setShowExportModal(false)}
-                className="px-4 py-2 rounded-full text-xs font-medium text-gray-500 dark:text-neutral-400 hover:text-black dark:hover:text-white cursor-pointer"
-              >
-                Cerrar
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* ========================================================================= */}
       {/* MODAL: MAKE.COM CONFIGURATION & LIVE TESTER */}
       {/* ========================================================================= */}
