@@ -13,6 +13,17 @@ import {
 } from '../types';
 import promotionalEventBannerImg from '../assets/images/proximo_evento_banner_1788270380574.jpg';
 
+export const COMPANY_INFO = {
+  fullName: 'Rengifo Basto Consultoría Ontológica',
+  shortName: 'Rengifo Basto',
+  address: 'Crr 20bis # 65a-22',
+  city: 'Bogotá, Colombia',
+  phone: '3234642257',
+  formattedPhone: '+57 323 464 2257',
+  email: 'johnfrengifob@gmail.com',
+  whatsappUrl: 'https://wa.me/573234642257',
+};
+
 export const PROGRAM_NODES: ProgramNodeInfo[] = [
   {
     step: 1,
