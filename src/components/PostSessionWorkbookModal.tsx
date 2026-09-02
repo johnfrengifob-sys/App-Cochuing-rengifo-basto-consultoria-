@@ -282,11 +282,21 @@ export const PostSessionWorkbookModal: React.FC<PostSessionWorkbookModalProps> =
         {/* Modal Scrollable Body */}
         <div className="p-6 overflow-y-auto space-y-6 flex-1 text-xs">
           {savedSuccess && (
-            <div className="p-3.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-800 dark:text-emerald-300 text-xs font-medium flex items-center gap-2 animate-fade-in">
-              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-              <span>
-                Cuestionario guardado con éxito. Ya puedes descargar tu Cuaderno de Trabajo en PDF con tus respuestas integradas.
-              </span>
+            <div className="p-3.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-800 dark:text-emerald-300 text-xs font-medium flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-fade-in">
+              <div className="flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                <span>
+                  Cuestionario guardado con éxito. Ya puedes descargar tu Cuaderno de Trabajo en PDF con tus respuestas integradas.
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={handleGeneratePDF}
+                className="px-3 py-1.5 rounded-xl bg-black dark:bg-white text-white dark:text-black font-bold text-xs flex items-center gap-1.5 hover:opacity-90 transition-opacity cursor-pointer shrink-0 shadow-xs"
+              >
+                <Download className="w-3.5 h-3.5 text-emerald-400 dark:text-emerald-700" />
+                <span>Descargar Cuaderno PDF</span>
+              </button>
             </div>
           )}
 

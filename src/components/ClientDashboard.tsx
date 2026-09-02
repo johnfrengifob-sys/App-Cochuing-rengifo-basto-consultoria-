@@ -6,6 +6,7 @@ import {
   AIInsight,
   ProgramNodeInfo,
   PostSessionForm,
+  PaymentRequest,
 } from '../types';
 import { OntologicalStore, PROGRAM_NODES } from '../services/store';
 import { PDFGenerator } from '../utils/pdfGenerator';
@@ -43,8 +44,11 @@ import {
   Flame,
   FileDown,
   Edit3,
+  Banknote,
+  Smartphone,
   MessageCircle,
   Zap,
+  AlertCircle,
 } from 'lucide-react';
 
 interface ClientDashboardProps {
@@ -100,6 +104,12 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({ client }) => {
     PROGRAM_NODES[0]
   );
 
+  // Client payment requests state
+  const [clientPaymentRequests, setClientPaymentRequests] = useState<PaymentRequest[]>(() =>
+    OntologicalStore.getPaymentRequestsForClient(client.uid)
+  );
+  const pendingPayment = clientPaymentRequests.find((r) => r.status === 'pending');
+
   // 1-on-1 Session Questionnaire & Workbook Modal State (for participants)
   const [isSessionWorkbookModalOpen, setIsSessionWorkbookModalOpen] = useState(false);
   const [sessionForWorkbook, setSessionForWorkbook] = useState<Session | null>(null);
@@ -129,6 +139,7 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({ client }) => {
       setSelectedNodeStep(updatedUser.programProgress);
     }
     setSessions(OntologicalStore.getSessionsForClient(client.uid));
+    setClientPaymentRequests(OntologicalStore.getPaymentRequestsForClient(client.uid));
   };
 
   const handleSubmitForm = (e: React.FormEvent) => {
@@ -225,7 +236,7 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({ client }) => {
   ];
 
   return (
-    <div className="min-h-screen bg-white dark:bg-[#0D0D0E] text-black dark:text-neutral-100 py-10 px-4 sm:px-6 max-w-6xl mx-auto space-y-12 transition-colors duration-200">
+    <div className="min-h-screen bg-white dark:bg-[#0D0D0E] text-black dark:text-neutral-100 py-10 px-4 sm:px-6 max-w-7xl mx-auto space-y-12 transition-colors duration-200">
       {/* Personalized Greeting & Program Status Banner */}
       <section className="pt-2">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-gray-100 dark:border-neutral-800">
@@ -278,6 +289,211 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({ client }) => {
         <PromotionalEventBanner />
       </section>
 
+      {/* Pending Payment Validation Banner for Participant */}
+      {pendingPayment && (
+        <section className="p-4 sm:p-5 rounded-3xl bg-amber-50 dark:bg-amber-950/30 border border-amber-300 dark:border-amber-800/60 shadow-xs">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex items-start sm:items-center gap-3">
+              <span className="p-2 rounded-2xl bg-amber-200/80 dark:bg-amber-900/60 text-amber-900 dark:text-amber-200 shrink-0">
+                <Clock className="w-5 h-5 text-amber-700 dark:text-amber-300 animate-spin" />
+              </span>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-sm font-bold text-amber-950 dark:text-amber-100">
+                    Pago en Proceso de Validación por el Administrador
+                  </h3>
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-200 dark:bg-amber-900 text-amber-900 dark:text-amber-200 uppercase">
+                    {pendingPayment.method === 'efectivo' ? 'Efectivo en Sesión' : 'Bre-B Nu'}
+                  </span>
+                </div>
+                <p className="text-xs text-amber-900/80 dark:text-amber-300/90 font-light mt-0.5">
+                  Has registrado una solicitud de <strong>{pendingPayment.amount}</strong> para <em>{pendingPayment.concept}</em>. En cuanto el consultor John Rengifo confirme el pago en su panel de administración, tu nivel se habilitará automáticamente.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
+              <button
+                type="button"
+                onClick={() => {
+                  const targetNode = PROGRAM_NODES.find((n) => n.step === pendingPayment.targetStep) || activeNodeInfo;
+                  handleOpenPaymentForNode(targetNode);
+                }}
+                className="px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs flex items-center gap-1.5 transition-colors shadow-xs cursor-pointer"
+              >
+                <span>Ver Estado del Pago</span>
+              </button>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* SECCIÓN PRINCIPAL: CUADERNOS DE TRABAJO & CUESTIONARIOS ONTOLÓGICOS (PARA PARTICIPANTES) */}
+      <section className="p-6 sm:p-7 rounded-3xl bg-gradient-to-br from-[#FAFAFA] to-[#F4F4F5] dark:from-[#18181B] dark:to-[#121214] border border-gray-200/90 dark:border-neutral-800 shadow-xs space-y-5">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-gray-200/70 dark:border-neutral-800">
+          <div className="space-y-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-black text-white dark:bg-white dark:text-black">
+                Participantes RBC
+              </span>
+              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 flex items-center gap-1">
+                <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                Construcción de Cuadernos en PDF
+              </span>
+            </div>
+            <h2 className="text-lg sm:text-xl font-bold text-black dark:text-white flex items-center gap-2">
+              <BookOpen className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+              <span>Cuestionarios de Preguntas & Cuadernos de Trabajo</span>
+            </h2>
+            <p className="text-xs text-gray-600 dark:text-neutral-400 font-light max-w-2xl leading-relaxed">
+              Los cuestionarios de preguntas son el espacio reflexivo para construir tus cuadernos de trabajo tanto para <strong>Talleres grupales</strong> como para <strong>Sesiones individuales 1 a 1</strong>. Al responderlos, tus reflexiones, quiebres y acuerdos se integran automáticamente en tu <strong>Cuaderno de Trabajo en PDF</strong> listo para descargar.
+            </p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+          {/* Tarjeta 1: Cuaderno de Talleres */}
+          <div className="p-5 rounded-2xl bg-white dark:bg-[#1F1F23] border border-gray-200/80 dark:border-neutral-800 space-y-4 shadow-2xs flex flex-col justify-between">
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border border-blue-200/60 dark:border-blue-900/40">
+                  {activeNodeInfo.level} • Taller {activeNodeInfo.step}
+                </span>
+                {existingForm ? (
+                  <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    Cuestionario respondido
+                  </span>
+                ) : (
+                  <span className="text-[10px] font-medium text-amber-600 dark:text-amber-400 flex items-center gap-1">
+                    <AlertCircle className="w-3.5 h-3.5" />
+                    Pendiente por responder
+                  </span>
+                )}
+              </div>
+              <h3 className="font-bold text-sm text-black dark:text-white">
+                Cuaderno del Taller (Nivel Activo)
+              </h3>
+              <p className="text-xs text-gray-500 dark:text-neutral-400 font-light leading-relaxed">
+                {existingForm
+                  ? `Ya respondiste el cuestionario del Taller ${activeNodeInfo.step}. Tu Cuaderno de Trabajo contiene tus respuestas integradas y está listo para descarga.`
+                  : `Diligencia las preguntas reflexivas del Taller ${activeNodeInfo.step} para que tus respuestas se transfieran a tu Cuaderno PDF.`}
+              </p>
+            </div>
+
+            <div className="space-y-2 pt-2 border-t border-gray-100 dark:border-neutral-800">
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveTab('form');
+                  const formElement = document.getElementById('session-workspace-content');
+                  if (formElement) {
+                    formElement.scrollIntoView({ behavior: 'smooth' });
+                  }
+                }}
+                className="w-full py-2.5 px-3 rounded-xl bg-black dark:bg-white text-white dark:text-black hover:bg-neutral-800 dark:hover:bg-neutral-200 text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer shadow-2xs"
+              >
+                <FileText className="w-3.5 h-3.5 text-emerald-400 dark:text-emerald-600" />
+                <span>
+                  {existingForm
+                    ? '✍️ Editar Cuestionario del Taller'
+                    : '✍️ Diligenciar Cuestionario del Taller'}
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  if (isNodeLocked) {
+                    handleOpenPaymentForNode(activeNodeInfo);
+                  } else {
+                    PDFGenerator.generateLevelWorkbookPDF(activeNodeInfo, client, existingForm);
+                  }
+                }}
+                className="w-full py-2 px-3 rounded-xl bg-gray-50 dark:bg-[#26262B] border border-gray-200 dark:border-neutral-700 hover:bg-gray-100 dark:hover:bg-neutral-800 text-xs font-semibold text-black dark:text-white transition-colors flex items-center justify-center gap-2 cursor-pointer shadow-2xs"
+              >
+                <Download className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                <span>
+                  {existingForm
+                    ? '📄 Descargar Cuaderno de Taller (PDF)'
+                    : '📄 Descargar Cuaderno de Taller (Plantilla)'}
+                </span>
+              </button>
+            </div>
+          </div>
+
+          {/* Tarjeta 2: Cuaderno de Sesiones 1 a 1 */}
+          <div className="p-5 rounded-2xl bg-white dark:bg-[#1F1F23] border border-gray-200/80 dark:border-neutral-800 space-y-4 shadow-2xs flex flex-col justify-between">
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 border border-purple-200/60 dark:border-purple-900/40">
+                  Sesiones Individuales 1 a 1
+                </span>
+                {postSessionForms.length > 0 ? (
+                  <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    {postSessionForms.length} Cuaderno(s) generado(s)
+                  </span>
+                ) : (
+                  <span className="text-[10px] font-medium text-blue-600 dark:text-blue-400 flex items-center gap-1">
+                    <Calendar className="w-3.5 h-3.5" />
+                    Disponible para registro
+                  </span>
+                )}
+              </div>
+              <h3 className="font-bold text-sm text-black dark:text-white">
+                Cuaderno de Sesión Individual 1 a 1
+              </h3>
+              <p className="text-xs text-gray-500 dark:text-neutral-400 font-light leading-relaxed">
+                {postSessionForms.length > 0
+                  ? `Registraste reflexiones y quiebres para tu sesión 1 a 1. Puedes editar tus respuestas o descargar tu cuaderno ontológico individual en PDF.`
+                  : `Responde las 4 preguntas ontológicas de tu sesión 1 a 1 con John Fredy para estructurar tu Cuaderno de Trabajo en PDF.`}
+              </p>
+            </div>
+
+            <div className="space-y-2 pt-2 border-t border-gray-100 dark:border-neutral-800">
+              <button
+                type="button"
+                onClick={() => {
+                  setSessionForWorkbook(sessions[0] || nextSession || null);
+                  setIsSessionWorkbookModalOpen(true);
+                }}
+                className="w-full py-2.5 px-3 rounded-xl bg-black dark:bg-white text-white dark:text-black hover:bg-neutral-800 dark:hover:bg-neutral-200 text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer shadow-2xs"
+              >
+                <FileText className="w-3.5 h-3.5 text-emerald-400 dark:text-emerald-600" />
+                <span>
+                  {postSessionForms.length > 0
+                    ? '✍️ Editar Cuestionario de Sesión'
+                    : '✍️ Diligenciar Cuestionario de Sesión'}
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  if (postSessionForms.length > 0) {
+                    const latestPForm = postSessionForms[0];
+                    const assocSession = sessions.find((s) => s.id === latestPForm.sessionId) || nextSession || undefined;
+                    PDFGenerator.generateSessionWorkbookPDF(latestPForm, client, assocSession);
+                  } else {
+                    setSessionForWorkbook(sessions[0] || nextSession || null);
+                    setIsSessionWorkbookModalOpen(true);
+                  }
+                }}
+                className="w-full py-2 px-3 rounded-xl bg-gray-50 dark:bg-[#26262B] border border-gray-200 dark:border-neutral-700 hover:bg-gray-100 dark:hover:bg-neutral-800 text-xs font-semibold text-black dark:text-white transition-colors flex items-center justify-center gap-2 cursor-pointer shadow-2xs"
+              >
+                <Download className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                <span>
+                  {postSessionForms.length > 0
+                    ? '📄 Descargar Cuaderno de Sesión (PDF)'
+                    : '✍️ Llenar Cuestionario para Generar Cuaderno PDF'}
+                </span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Grid: Left Column (Next Session & Program Roadmap) / Right Column (Active Session Workspace & Materials) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         {/* LEFT COLUMN: Next Session & 12-Week Roadmap Explorer (5 Cols) */}
@@ -328,6 +544,31 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({ client }) => {
                     </LiquidGlassButton>
                   </a>
 
+                  {/* Acceso ágil al Cuaderno de la Sesión */}
+                  <div className="p-3 rounded-2xl bg-white dark:bg-[#202024] border border-gray-200/80 dark:border-neutral-800 flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <BookOpen className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                      <span className="text-xs font-semibold text-black dark:text-white truncate">
+                        Cuaderno de la Sesión
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSessionForWorkbook(nextSession);
+                        setIsSessionWorkbookModalOpen(true);
+                      }}
+                      className="text-[11px] font-bold text-emerald-700 dark:text-emerald-400 hover:underline flex items-center gap-1 cursor-pointer shrink-0"
+                    >
+                      <span>
+                        {postSessionForms.find((f) => f.sessionId === nextSession.id || f.sessionNumber === nextSession.sessionNumber)
+                          ? 'Ver / Editar'
+                          : '✍️ Diligenciar'}
+                      </span>
+                      <ChevronRight className="w-3 h-3" />
+                    </button>
+                  </div>
+
                   <a
                     href={calendarUrl}
                     target="_blank"
@@ -358,16 +599,30 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({ client }) => {
                     Selecciona tu fecha y horario en la agenda de Google Calendar con John Fredy Rengifo Basto.
                   </p>
                 </div>
-                <a
-                  href={calendarUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-black dark:bg-white text-white dark:text-black text-xs font-semibold hover:opacity-90 transition-opacity shadow-2xs"
-                >
-                  <Calendar className="w-3.5 h-3.5" />
-                  <span>Agendar Sesión 1 a 1</span>
-                  <ExternalLink className="w-3 h-3" />
-                </a>
+                <div className="flex flex-col gap-2 pt-1">
+                  <a
+                    href={calendarUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-black dark:bg-white text-white dark:text-black text-xs font-semibold hover:opacity-90 transition-opacity shadow-2xs"
+                  >
+                    <Calendar className="w-3.5 h-3.5" />
+                    <span>Agendar Sesión 1 a 1</span>
+                    <ExternalLink className="w-3 h-3" />
+                  </a>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSessionForWorkbook(sessions[0] || null);
+                      setIsSessionWorkbookModalOpen(true);
+                    }}
+                    className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-300 dark:border-emerald-800 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 text-xs font-bold text-emerald-900 dark:text-emerald-200 transition-colors cursor-pointer shadow-2xs"
+                  >
+                    <FileText className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                    <span>✍️ Diligenciar Cuestionario de Sesión</span>
+                  </button>
+                </div>
               </div>
             )}
           </div>
@@ -529,109 +784,20 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({ client }) => {
               </div>
             )}
 
-            {/* Cuaderno & Cuestionario del Taller */}
-            <div className="pt-3 border-t border-gray-100 dark:border-neutral-800 space-y-2.5">
-              <div className="flex items-center justify-between">
-                <span className="text-[10px] font-semibold text-gray-400 dark:text-neutral-500 uppercase tracking-wider block">
-                  Cuaderno & Cuestionario • Taller {activeNodeInfo.step}
-                </span>
-                {existingForm ? (
-                  <span className="text-[9px] font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded-full border border-emerald-200/80 dark:border-emerald-800/60 flex items-center gap-1">
-                    <CheckCircle2 className="w-2.5 h-2.5 text-emerald-600" />
-                    Cuestionario Listo
-                  </span>
-                ) : (
-                  <span className="text-[9px] font-medium text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/50 px-2 py-0.5 rounded-full border border-amber-200/60 dark:border-amber-800/40">
-                    Pendiente
-                  </span>
-                )}
-              </div>
-
-              {/* Botón directo para ir al formulario del cuestionario */}
+            {/* Indicador de Taller Seleccionado */}
+            <div className="pt-3 border-t border-gray-100 dark:border-neutral-800 flex items-center justify-between text-[11px] text-gray-500 dark:text-neutral-400">
+              <span>Seleccionado: <strong className="text-black dark:text-white">Taller {activeNodeInfo.step}</strong></span>
               <button
                 type="button"
                 onClick={() => {
-                  if (isNodeLocked) {
-                    handleOpenPaymentForNode(activeNodeInfo);
-                  } else {
-                    setActiveTab('form');
-                    const formElement = document.getElementById('session-workspace-content');
-                    if (formElement) {
-                      formElement.scrollIntoView({ behavior: 'smooth' });
-                    }
-                  }
+                  const el = document.getElementById('session-workspace-content');
+                  if (el) el.scrollIntoView({ behavior: 'smooth' });
                 }}
-                className="w-full py-2.5 px-3 rounded-xl bg-black dark:bg-white text-white dark:text-black hover:bg-neutral-800 dark:hover:bg-neutral-200 text-xs font-semibold flex items-center justify-center gap-2 transition-all cursor-pointer shadow-xs"
+                className="text-emerald-600 dark:text-emerald-400 hover:underline flex items-center gap-1 font-medium cursor-pointer"
               >
-                <FileText className="w-3.5 h-3.5 text-emerald-400 dark:text-emerald-700" />
-                <span>
-                  {existingForm
-                    ? 'Editar Cuestionario del Taller'
-                    : '✍️ Diligenciar Cuestionario del Taller'}
-                </span>
+                <span>Ver Espacio de Trabajo</span>
+                <ChevronRight className="w-3 h-3" />
               </button>
-
-              <div className="grid grid-cols-2 gap-2">
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (isNodeLocked) {
-                      handleOpenPaymentForNode(activeNodeInfo);
-                    } else {
-                      PDFGenerator.generateLevelWorkbookPDF(
-                        activeNodeInfo,
-                        client,
-                        existingForm
-                      );
-                    }
-                  }}
-                  className={`px-3 py-2 rounded-xl border text-[11px] font-medium flex items-center justify-center gap-1.5 transition-colors cursor-pointer ${
-                    isNodeLocked
-                      ? 'bg-amber-50/60 dark:bg-amber-950/40 border-amber-200/80 dark:border-amber-800 text-amber-800 dark:text-amber-300'
-                      : existingForm
-                      ? 'bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 border-emerald-300 dark:border-emerald-800 text-emerald-900 dark:text-emerald-200 font-semibold'
-                      : 'bg-[#F9F9F9] dark:bg-[#202024] hover:bg-gray-200/60 dark:hover:bg-neutral-800 border-gray-200/80 dark:border-neutral-700 text-black dark:text-white'
-                  }`}
-                  title={
-                    existingForm
-                      ? 'Descargar Cuaderno PDF con tus respuestas del cuestionario'
-                      : 'Descargar Cuaderno PDF'
-                  }
-                >
-                  {isNodeLocked ? (
-                    <Lock className="w-3.5 h-3.5" />
-                  ) : (
-                    <BookOpen className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-                  )}
-                  <span>{isNodeLocked ? 'Desbloquear PDF' : 'Cuaderno PDF'}</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (isNodeLocked) {
-                      handleOpenPaymentForNode(activeNodeInfo);
-                    } else {
-                      PDFGenerator.generateReinforcementPackPDF(
-                        activeNodeInfo,
-                        client
-                      );
-                    }
-                  }}
-                  className={`px-3 py-2 rounded-xl border text-[11px] font-medium flex items-center justify-center gap-1.5 transition-colors cursor-pointer ${
-                    isNodeLocked
-                      ? 'bg-amber-50/60 dark:bg-amber-950/40 border-amber-200/80 dark:border-amber-800 text-amber-800 dark:text-amber-300'
-                      : 'bg-[#F9F9F9] dark:bg-[#202024] hover:bg-gray-200/60 dark:hover:bg-neutral-800 border-gray-200/80 dark:border-neutral-700 text-black dark:text-white'
-                  }`}
-                >
-                  {isNodeLocked ? (
-                    <Lock className="w-3.5 h-3.5" />
-                  ) : (
-                    <Sparkles className="w-3.5 h-3.5" />
-                  )}
-                  {isNodeLocked ? 'Desbloquear Refuerzo' : 'Refuerzo PDF'}
-                </button>
-              </div>
             </div>
           </div>
         </div>
@@ -707,8 +873,8 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({ client }) => {
                     </button>
 
                     <a
-                      href={`https://wa.me/573158894411?text=${encodeURIComponent(
-                        `Hola John, deseo formalizar el pago de mi Próximo Nivel (${activeNodeInfo.level}: ${activeNodeInfo.sessionTitle}) en el programa Raíz y Balance.`
+                      href={`https://wa.me/573234642257?text=${encodeURIComponent(
+                        `Hola John, deseo formalizar el pago de mi Próximo Nivel (${activeNodeInfo.level}: ${activeNodeInfo.sessionTitle}) en Rengifo Basto Consultoría Ontológica.`
                       )}`}
                       target="_blank"
                       rel="noopener noreferrer"
@@ -1554,14 +1720,29 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({ client }) => {
                       })}
                     </div>
                   ) : (
-                    <div className="py-12 text-center rounded-2xl bg-white dark:bg-[#18181B] border border-gray-100 dark:border-neutral-800 space-y-2">
-                      <BookOpen className="w-10 h-10 text-gray-300 dark:text-neutral-700 mx-auto" />
-                      <h4 className="text-xs font-semibold text-black dark:text-white">
-                        Tu Cuaderno de Trabajo se generará al finalizar tu próxima sesión 1 a 1
-                      </h4>
-                      <p className="text-[11px] text-gray-400 font-light max-w-sm mx-auto">
-                        Aquí encontrarás tus reflexiones, quiebres ontológicos y el plan de acción descargable en PDF una vez finalizado el encuentro con tu Coach.
-                      </p>
+                    <div className="py-12 px-6 text-center rounded-2xl bg-white dark:bg-[#18181B] border border-gray-100 dark:border-neutral-800 space-y-4 max-w-md mx-auto">
+                      <div className="w-12 h-12 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mx-auto">
+                        <BookOpen className="w-6 h-6 stroke-[1.5]" />
+                      </div>
+                      <div className="space-y-1.5">
+                        <h4 className="text-sm font-bold text-black dark:text-white">
+                          Construye tu Cuaderno de Trabajo de Sesión 1 a 1
+                        </h4>
+                        <p className="text-xs text-gray-500 dark:text-neutral-400 font-light leading-relaxed">
+                          Diligencia el cuestionario con las 4 preguntas ontológicas tras tu sesión individual con tu Coach. Tus respuestas construirán tu Cuaderno de Trabajo en PDF descargable.
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSessionForWorkbook(sessions[0] || nextSession || null);
+                          setIsSessionWorkbookModalOpen(true);
+                        }}
+                        className="px-5 py-2.5 rounded-xl bg-black dark:bg-white text-white dark:text-black text-xs font-bold hover:bg-neutral-800 dark:hover:bg-neutral-200 transition-all cursor-pointer inline-flex items-center gap-2 shadow-xs"
+                      >
+                        <FileText className="w-3.5 h-3.5 text-emerald-400 dark:text-emerald-700" />
+                        <span>✍️ Diligenciar Cuestionario de tu Sesión</span>
+                      </button>
                     </div>
                   )}
                 </div>
@@ -1576,10 +1757,28 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({ client }) => {
       {/* Payment and Unlock Modal for Inactive Areas */}
       <PaymentUnlockModal
         isOpen={isPaymentModalOpen}
-        onClose={() => setIsPaymentModalOpen(false)}
+        onClose={() => {
+          setIsPaymentModalOpen(false);
+          setClientPaymentRequests(OntologicalStore.getPaymentRequestsForClient(client.uid));
+        }}
         node={unlockTargetNode}
         client={client}
         onUnlocked={handleNodeUnlocked}
+      />
+
+      {/* 1-on-1 Session Questionnaire & Workbook Modal for Participants */}
+      <PostSessionWorkbookModal
+        isOpen={isSessionWorkbookModalOpen}
+        onClose={() => {
+          setIsSessionWorkbookModalOpen(false);
+          setSessionForWorkbook(null);
+        }}
+        session={sessionForWorkbook}
+        client={client}
+        isParticipant={true}
+        onFormSaved={(savedForm) => {
+          setPostSessionForms(OntologicalStore.getPostSessionFormsForClient(client.uid));
+        }}
       />
     </div>
   );

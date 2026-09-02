@@ -11,6 +11,7 @@ import {
   CronogramaEvent,
   EventRegistration,
   OntologicalProgram,
+  PaymentRequest,
 } from '../types';
 import { OntologicalStore, DEFAULT_WEBHOOK_URL, PROGRAM_NODES } from '../services/store';
 import { PDFGenerator } from '../utils/pdfGenerator';
@@ -26,6 +27,7 @@ import { GoogleWorkspaceHub } from './GoogleWorkspaceHub';
 import { GeminiOntologicalCopilot } from './GeminiOntologicalCopilot';
 import { CrmPipelineManager } from './CrmPipelineManager';
 import { ProgramsAndEventsManager } from './ProgramsAndEventsManager';
+import { PaymentValidationManager } from './PaymentValidationManager';
 import {
   Users,
   Sparkles,
@@ -65,6 +67,8 @@ import {
   UserCircle2,
   HardDrive,
   BookOpen,
+  Banknote,
+  Smartphone,
 } from 'lucide-react';
 
 interface CoachDashboardProps {
@@ -80,11 +84,17 @@ export const CoachDashboard: React.FC<CoachDashboardProps> = ({
   onRefreshClients,
   onOpenRegistrationPortal,
 }) => {
-  // Navigation tabs: CRM Funnel vs Clientes Ancla vs Eventos & Cronograma vs Google Workspace Hub vs Gemini AI
-  const [activeMainTab, setActiveMainTab] = useState<'crm' | 'clients' | 'events' | 'workspace' | 'gemini'>('clients');
+  // Navigation tabs: CRM Funnel vs Clientes Ancla vs Validación de Pagos vs Eventos & Cronograma vs Google Workspace Hub vs Gemini AI
+  const [activeMainTab, setActiveMainTab] = useState<'crm' | 'clients' | 'payments' | 'events' | 'workspace' | 'gemini'>('clients');
 
   // Sub-view inside 'clients' tab: Directory (table/scale 20-30+) vs Workstation (1 on 1 session view)
   const [clientsViewMode, setClientsViewMode] = useState<'directory' | 'workstation'>('directory');
+
+  // Payment Requests (Cash & Bre-B Nu Validation)
+  const [paymentRequests, setPaymentRequests] = useState<PaymentRequest[]>(() =>
+    OntologicalStore.getPaymentRequests()
+  );
+  const pendingPaymentCount = paymentRequests.filter((r) => r.status === 'pending').length;
 
   // Events & Programs State
   const [cronogramaEvents, setCronogramaEvents] = useState<CronogramaEvent[]>(() =>
@@ -391,6 +401,27 @@ export const CoachDashboard: React.FC<CoachDashboardProps> = ({
             </button>
 
             <button
+              onClick={() => setActiveMainTab('payments')}
+              className={`px-3.5 py-1.5 rounded-xl sm:rounded-full text-xs font-medium transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap shrink-0 ${
+                activeMainTab === 'payments'
+                  ? 'bg-black dark:bg-white text-white dark:text-black shadow-xs font-semibold'
+                  : 'text-gray-600 dark:text-neutral-400 hover:text-black dark:hover:text-white hover:bg-gray-100/60 dark:hover:bg-neutral-800/60'
+              }`}
+            >
+              <Banknote className="w-3.5 h-3.5 text-amber-500" />
+              <span>Validación Pagos</span>
+              {pendingPaymentCount > 0 ? (
+                <span className="text-[10px] px-1.5 py-0.5 rounded-full font-bold bg-amber-500 text-white animate-pulse">
+                  {pendingPaymentCount}
+                </span>
+              ) : (
+                <span className="text-[10px] px-1.5 py-0.5 rounded-full font-semibold bg-gray-100 dark:bg-neutral-800 text-gray-600 dark:text-neutral-400">
+                  {paymentRequests.length}
+                </span>
+              )}
+            </button>
+
+            <button
               onClick={() => setActiveMainTab('events')}
               className={`px-3.5 py-1.5 rounded-xl sm:rounded-full text-xs font-medium transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap shrink-0 ${
                 activeMainTab === 'events'
@@ -442,6 +473,33 @@ export const CoachDashboard: React.FC<CoachDashboardProps> = ({
         </div>
       </div>
 
+      {/* PENDING PAYMENTS NOTIFICATION BANNER */}
+      {pendingPaymentCount > 0 && activeMainTab !== 'payments' && (
+        <div className="mx-4 sm:mx-10 mt-4 max-w-7xl mx-auto p-3 sm:p-4 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800/70 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs shadow-2xs">
+          <div className="flex items-center gap-2.5">
+            <span className="p-1.5 rounded-xl bg-amber-100 dark:bg-amber-900/60 text-amber-900 dark:text-amber-200 shrink-0">
+              <Clock className="w-4 h-4 text-amber-600 dark:text-amber-400 animate-spin" />
+            </span>
+            <div>
+              <span className="font-bold text-amber-900 dark:text-amber-200">
+                {pendingPaymentCount} solicitud(es) de pago en espera de validación
+              </span>
+              <span className="text-amber-800 dark:text-amber-300 font-light block sm:inline sm:ml-1">
+                (Efectivo en sesión o transferencia Bre-B Nu @ASL775).
+              </span>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => setActiveMainTab('payments')}
+            className="px-3.5 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs flex items-center justify-center gap-1.5 cursor-pointer transition-transform active:scale-98 shadow-xs shrink-0"
+          >
+            <span>Revisar y Validar Pagos</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      )}
+
       {/* ========================================================================= */}
       {/* VIEW 1: CRM ONTO-KANBAN PIPELINE (COMPACTO, AGRUPADO Y CONVERSIÓN)        */}
       {/* ========================================================================= */}
@@ -460,6 +518,24 @@ export const CoachDashboard: React.FC<CoachDashboardProps> = ({
           onOpenMakeModal={() => setShowMakeModal(true)}
           onOpenRegistrationPortal={onOpenRegistrationPortal}
         />
+      ) : activeMainTab === 'payments' ? (
+        /* ========================================================================= */
+        /* VIEW: GESTIÓN & VALIDACIÓN DE PAGOS (EFECTIVO & BRE-B NU)                  */
+        /* ========================================================================= */
+        <div className="flex-1 flex flex-col p-4 sm:p-8 lg:p-10 max-w-7xl mx-auto w-full space-y-6">
+          <PaymentValidationManager
+            requests={paymentRequests}
+            clients={clients}
+            coachName={coach.name}
+            onRequestUpdated={() => {
+              setPaymentRequests(OntologicalStore.getPaymentRequests());
+              handleRefreshClientsList();
+            }}
+            onClientUnlocked={() => {
+              handleRefreshClientsList();
+            }}
+          />
+        </div>
       ) : activeMainTab === 'clients' ? (
         /* ========================================================================= */
         /* VIEW 2: CLIENTES ANCLA (DIRECTORIO GERENCIAL & FICHA DE TRABAJO 1 A 1)    */

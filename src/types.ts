@@ -180,7 +180,9 @@ export type EventCategory =
   | 'Taller Vivencial'
   | 'Círculo de Liderazgo'
   | 'Programa de Acompañamiento'
-  | 'Seminario Ejecutivo';
+  | 'Seminario Ejecutivo'
+  | 'Primer Taller • En Vivo'
+  | 'Taller de Apertura';
 
 export interface OntologicalProgram {
   id: string;
@@ -283,5 +285,29 @@ export interface GoogleCalendarEventItem {
   htmlLink?: string;
   hangoutLink?: string;
   attendees?: { email: string; displayName?: string }[];
+}
+
+export type PaymentMethodType = 'efectivo' | 'bre_b_nu' | 'transferencia' | 'pasarela';
+export type PaymentApprovalStatus = 'pending' | 'approved' | 'rejected';
+
+export interface PaymentRequest {
+  id: string;
+  clientId: string;
+  clientName: string;
+  clientEmail: string;
+  clientPhone?: string;
+  amount: string; // ej: "$500.000 COP"
+  concept: string; // ej: "Desbloqueo Nivel II: Diseñando Conversaciones y Límites"
+  targetStep: number; // 1 to 6
+  planType: 'level' | 'full'; // Cuota nivel vs Programa Completo
+  method: PaymentMethodType;
+  proofImageUrl?: string; // Base64 de la imagen o URL
+  whatsappContacted?: boolean;
+  notes?: string;
+  status: PaymentApprovalStatus;
+  createdAt: string;
+  reviewedAt?: string;
+  reviewedBy?: string;
+  rejectionReason?: string;
 }
 

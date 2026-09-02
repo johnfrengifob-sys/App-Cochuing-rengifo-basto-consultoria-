@@ -12,6 +12,9 @@ import {
   CronogramaEvent,
   EventRegistration,
   OntologicalProgram,
+  PaymentRequest,
+  PaymentMethodType,
+  PaymentApprovalStatus,
 } from '../types';
 import promotionalEventBannerImg from '../assets/images/proximo_evento_banner_1788270380574.jpg';
 import coachAvatarImg from '../assets/images/regenerated_image_1788287101599.jpg';
@@ -25,6 +28,18 @@ export const COMPANY_INFO = {
   formattedPhone: '+57 323 464 2257',
   email: 'johnfrengifob@gmail.com',
   whatsappUrl: 'https://wa.me/573234642257',
+};
+
+export const BRE_B_NU_CONFIG = {
+  llave: '@ASL775',
+  bank: 'Nu Colombia (Nubank)',
+  network: 'Bre-B',
+  title: 'Bre-B | nu',
+  headline: 'Paga aquí. Seguro, sin costo y en segundos.',
+  subtext:
+    'Recibimos pagos a través de Llaves desde cualquier entidad financiera (Bancolombia, Nequi, Daviplata, Dale, BBVA, etc.).',
+  whatsappValidation: '+57 323 464 2257',
+  whatsappRaw: '573234642257',
 };
 
 export const PROGRAM_NODES: ProgramNodeInfo[] = [
@@ -762,11 +777,11 @@ const INITIAL_AI_INSIGHTS: AIInsight[] = [
 const INITIAL_CRONOGRAMA_EVENTS: CronogramaEvent[] = [
   {
     id: 'event-conversatorio-1',
-    title: 'Conversatorio Raíz & Balance',
-    subtitle: 'Fronteras, Límites No Dichos & Decodificación Somática',
-    category: 'Conversatorio Quincenal',
-    date: new Date(Date.now() + 1000 * 60 * 60 * 24 * 3).toISOString(), // in 3 days
-    displayDate: 'Jueves Próximo (Quincenal)',
+    title: 'Primer Taller: Conversatorio Raíz & Balance',
+    subtitle: 'Fronteras, Límites No Dichos & Decodificación Somática (Taller Experiencial 1)',
+    category: 'Primer Taller • En Vivo',
+    date: new Date(Date.now() + 1000 * 60 * 60 * 24 * 3 + 1000 * 60 * 60 * 5).toISOString(), // in ~3 days
+    displayDate: 'Jueves Próximo (En Vivo)',
     time: '7:00 PM - 8:30 PM (GMT-5)',
     mode: 'Online (Google Meet)',
     meetUrl: 'https://meet.google.com/rbc-conversatorio-ontologico',
@@ -910,6 +925,57 @@ const INITIAL_EVENT_REGISTRATIONS: EventRegistration[] = [
   },
 ];
 
+const INITIAL_PAYMENT_REQUESTS: PaymentRequest[] = [
+  {
+    id: 'pay-req-1',
+    clientId: 'client-2',
+    clientName: 'Mateo Valencia',
+    clientEmail: 'mateo.valencia@example.com',
+    clientPhone: '+57 301 654 8833',
+    amount: '$500.000 COP',
+    concept: 'Desbloqueo Nivel II: Diseñando Conversaciones y Límites (Sesión 3)',
+    targetStep: 3,
+    planType: 'level',
+    method: 'efectivo',
+    notes: 'Pago en efectivo acordado para entregar en consultorio en la sesión presencial de este jueves.',
+    status: 'pending',
+    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 4).toISOString(),
+  },
+  {
+    id: 'pay-req-2',
+    clientId: 'client-4',
+    clientName: 'Alejandro Morales',
+    clientEmail: 'alejandro.morales@example.com',
+    clientPhone: '+57 311 555 4321',
+    amount: '$500.000 COP',
+    concept: 'Desbloqueo Nivel I: Fronteras, Declaraciones y Límites (Sesión 2)',
+    targetStep: 2,
+    planType: 'level',
+    method: 'bre_b_nu',
+    whatsappContacted: true,
+    notes: 'Transferencia realizada con Bre-B Nu a la llave @ASL775. Comprobante enviado por WhatsApp al +573234642257.',
+    status: 'pending',
+    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 12).toISOString(),
+  },
+  {
+    id: 'pay-req-3',
+    clientId: 'client-1',
+    clientName: 'Sofía Restrepo',
+    clientEmail: 'sofia.restrepo@example.com',
+    clientPhone: '+57 318 200 4590',
+    amount: '$1.500.000 COP',
+    concept: 'Programa Completo Certeza Ontológica (12 Semanas)',
+    targetStep: 6,
+    planType: 'full',
+    method: 'bre_b_nu',
+    notes: 'Pago total por Bre-B Nu @ASL775 validado por administración.',
+    status: 'approved',
+    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 7).toISOString(),
+    reviewedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 6).toISOString(),
+    reviewedBy: 'John Fredy Rengifo Basto',
+  },
+];
+
 const STORAGE_KEYS = {
   USERS: 'rbc_users_v2',
   CURRENT_USER_ID: 'rbc_current_user_id_v2',
@@ -921,6 +987,7 @@ const STORAGE_KEYS = {
   AI_INSIGHTS: 'rbc_ai_insights_v2',
   CRONOGRAMA_EVENTS: 'rbc_cronograma_events_v2',
   PROGRAMS: 'rbc_programs_v2',
+  PAYMENT_REQUESTS: 'rbc_payment_requests_v2',
   WEBHOOK_URL: 'rbc_webhook_url_v2',
   MAKE_PHASE1_WEBHOOK_URL: 'rbc_make_phase1_webhook_url_v2',
   MAKE_PHASE2_CALENDLY_WEBHOOK_URL: 'rbc_make_phase2_calendly_webhook_url_v2',
@@ -955,9 +1022,9 @@ export const DEFAULT_MATRIX_URL =
   'https://drive.google.com/file/d/rbc-matriz-raiz-y-balance.pdf';
 
 export const DEFAULT_PORTAL_URL =
-  window.location.origin || 'https://raiz-y-balance.app';
+  window.location.origin || 'https://rengifobasto.com';
 
-export const DEFAULT_WHATSAPP_TEMPLATE = `Hola {{name}}, qué gusto saludarte tras el Conversatorio Raíz y Balance.
+export const DEFAULT_WHATSAPP_TEMPLATE = `Hola {{name}}, te escribo de Rengifo Basto Consultoría Ontológica tras el Conversatorio Raíz y Balance.
 
 Aquí tienes tu acceso a la Matriz Ontológica de Fronteras y Límites:
 👉 {{matrixUrl}}
@@ -966,9 +1033,9 @@ Para ayudarte a decodificar tus resultados y estructurar tus declaraciones de so
 🗓️ {{calendarUrl}}
 
 Un saludo,
-John Fredy Rengifo Basto | Consultoría Ontológica`;
+John Fredy Rengifo Basto | Rengifo Basto Consultoría Ontológica`;
 
-export const DEFAULT_WELCOME_MESSAGE_TEMPLATE = `Bienvenido/a al programa ontológico de 12 semanas "Certeza, Fronteras & Dirección Personal", {{name}}.
+export const DEFAULT_WELCOME_MESSAGE_TEMPLATE = `Bienvenido/a al programa ontológico de 12 semanas "Certeza, Fronteras & Dirección Personal" de Rengifo Basto Consultoría Ontológica, {{name}}.
 
 Hemos confirmado tu inversión ({{paymentStatus}}). Tu espacio personal de trabajo e introspección ya ha sido habilitado:
 👉 {{portalUrl}}
@@ -977,7 +1044,7 @@ Tu hoja de ruta inicia en el Nodo 1: Mapeo de la Transparencia & Decodificación
 Puedes ingresar con tu correo registrado ({{email}}) para acceder a tus bitácoras de sesión y autorregistros guiados.
 
 Un saludo,
-John Fredy Rengifo Basto | Consultoría Ontológica`;
+John Fredy Rengifo Basto | Rengifo Basto Consultoría Ontológica`;
 
 export class OntologicalStore {
   private static load<T>(key: string, fallback: T): T {
@@ -1612,11 +1679,20 @@ export class OntologicalStore {
     let updatedUser: User | null = null;
     const updatedUsers = users.map((u) => {
       if (u.uid === clientId) {
-        const nextProgress = Math.max(u.programProgress || 1, targetStep);
+        const currentProgress = u.programProgress || 1;
+        // If targetStep is greater than currentProgress, set it;
+        // if targetStep <= currentProgress, advance by at least 1 step (up to 6)
+        const resolvedStep =
+          targetStep > currentProgress
+            ? targetStep
+            : Math.min(6, currentProgress + 1);
+
+        const nextProgress = Math.min(6, Math.max(currentProgress, resolvedStep));
         updatedUser = {
           ...u,
           programProgress: nextProgress,
           paymentStatus: paymentStatus,
+          status: 'active',
         };
         return updatedUser;
       }
@@ -1627,28 +1703,202 @@ export class OntologicalStore {
       this.saveUsers(updatedUsers);
 
       // Create scheduled session for this newly unlocked step if none exists
+      const targetSessionNumber = updatedUser.programProgress || targetStep;
       const sessions = this.getSessions();
       const hasSessionForStep = sessions.some(
-        (s) => s.clientId === clientId && s.sessionNumber === targetStep
+        (s) => s.clientId === clientId && s.sessionNumber === targetSessionNumber
       );
 
       if (!hasSessionForStep) {
         const nodeInfo =
-          PROGRAM_NODES.find((n) => n.step === targetStep) || PROGRAM_NODES[0];
+          PROGRAM_NODES.find((n) => n.step === targetSessionNumber) || PROGRAM_NODES[0];
         const newSession: Session = {
           id: 'sess-' + Date.now(),
           clientId: clientId,
-          sessionNumber: targetStep,
+          sessionNumber: targetSessionNumber,
           date: new Date(Date.now() + 1000 * 60 * 60 * 72).toISOString(),
           meetLink: `https://meet.google.com/rbc-${Math.random().toString(36).substring(2, 7)}`,
           status: 'scheduled',
-          notes: `Sesión ${targetStep}: ${nodeInfo.sessionTitle}.`,
+          notes: `Sesión ${targetSessionNumber}: ${nodeInfo.sessionTitle}.`,
         };
         this.saveSessions([...sessions, newSession]);
       }
     }
 
     return updatedUser;
+  }
+
+  // --- PAYMENT REQUESTS & CASH / BRE-B VALIDATION ---
+  static getPaymentRequests(): PaymentRequest[] {
+    const list = this.load<PaymentRequest[]>(
+      STORAGE_KEYS.PAYMENT_REQUESTS,
+      INITIAL_PAYMENT_REQUESTS
+    );
+    return Array.isArray(list) ? list : INITIAL_PAYMENT_REQUESTS;
+  }
+
+  static savePaymentRequests(requests: PaymentRequest[]): void {
+    this.save(STORAGE_KEYS.PAYMENT_REQUESTS, requests);
+  }
+
+  static getPaymentRequestsForClient(clientId: string): PaymentRequest[] {
+    return this.getPaymentRequests().filter((r) => r.clientId === clientId);
+  }
+
+  static submitPaymentRequest(
+    payload: Omit<PaymentRequest, 'id' | 'createdAt' | 'status'>
+  ): PaymentRequest {
+    const requests = this.getPaymentRequests();
+    const newReq: PaymentRequest = {
+      ...payload,
+      id: 'pay-req-' + Date.now(),
+      status: 'pending',
+      createdAt: new Date().toISOString(),
+    };
+    this.savePaymentRequests([newReq, ...requests]);
+    return newReq;
+  }
+
+  static approvePaymentRequest(
+    requestId: string,
+    reviewedBy: string = 'John Fredy Rengifo Basto'
+  ): { request: PaymentRequest | null; user: User | null } {
+    const requests = this.getPaymentRequests();
+    let approvedReq: PaymentRequest | null = null;
+
+    const updatedRequests = requests.map((req) => {
+      if (req.id === requestId) {
+        approvedReq = {
+          ...req,
+          status: 'approved' as const,
+          reviewedAt: new Date().toISOString(),
+          reviewedBy,
+        };
+        return approvedReq;
+      }
+      return req;
+    });
+
+    if (!approvedReq) {
+      return { request: null, user: null };
+    }
+
+    this.savePaymentRequests(updatedRequests);
+
+    // Unlock the target node for client
+    const targetPaymentStatus: PaymentStatus =
+      approvedReq.planType === 'full' ? 'Pago Único' : 'Cuota 1 de 2';
+
+    // If full plan, unlock all 6 steps of the 12-week program; otherwise target step
+    const stepToUnlock =
+      approvedReq.planType === 'full'
+        ? 6
+        : Math.max(approvedReq.targetStep || 2, 2);
+
+    const updatedUser = this.unlockNodeForClient(
+      approvedReq.clientId,
+      stepToUnlock,
+      targetPaymentStatus
+    );
+
+    // Update invested amount
+    if (updatedUser) {
+      const currentInvestedNum = parseInt(
+        (updatedUser.totalInvested || '0').replace(/\D/g, '') || '0',
+        10
+      );
+      const addedNum = parseInt(
+        approvedReq.amount.replace(/\D/g, '') || '0',
+        10
+      );
+      const newTotal = currentInvestedNum + addedNum;
+      const formattedTotal = `$${newTotal.toLocaleString('es-CO')} COP`;
+      this.updateClientInvested(approvedReq.clientId, formattedTotal);
+      this.updateClientStatus(approvedReq.clientId, 'active');
+    }
+
+    return { request: approvedReq, user: updatedUser };
+  }
+
+  static rejectPaymentRequest(
+    requestId: string,
+    reason: string,
+    reviewedBy: string = 'John Fredy Rengifo Basto'
+  ): PaymentRequest | null {
+    const requests = this.getPaymentRequests();
+    let rejectedReq: PaymentRequest | null = null;
+
+    const updatedRequests = requests.map((req) => {
+      if (req.id === requestId) {
+        rejectedReq = {
+          ...req,
+          status: 'rejected' as const,
+          rejectionReason: reason,
+          reviewedAt: new Date().toISOString(),
+          reviewedBy,
+        };
+        return rejectedReq;
+      }
+      return req;
+    });
+
+    if (rejectedReq) {
+      this.savePaymentRequests(updatedRequests);
+    }
+    return rejectedReq;
+  }
+
+  static registerDirectCashPayment(
+    clientId: string,
+    targetStep: number,
+    planType: 'level' | 'full',
+    amount: string,
+    notes?: string,
+    reviewedBy: string = 'John Fredy Rengifo Basto'
+  ): { request: PaymentRequest; user: User | null } {
+    const client = this.getUsers().find((u) => u.uid === clientId);
+    const node = PROGRAM_NODES.find((n) => n.step === targetStep) || PROGRAM_NODES[0];
+
+    const newReq: PaymentRequest = {
+      id: 'pay-req-direct-' + Date.now(),
+      clientId,
+      clientName: client?.name || 'Participante',
+      clientEmail: client?.email || '',
+      clientPhone: client?.phone || '',
+      amount,
+      concept: `Pago en Efectivo Presencial: ${node.level} (${node.sessionTitle})`,
+      targetStep,
+      planType,
+      method: 'efectivo',
+      notes: notes || 'Pago en efectivo recibido y validado directamente en consultorio.',
+      status: 'approved',
+      createdAt: new Date().toISOString(),
+      reviewedAt: new Date().toISOString(),
+      reviewedBy,
+    };
+
+    const requests = this.getPaymentRequests();
+    this.savePaymentRequests([newReq, ...requests]);
+
+    const updatedUser = this.unlockNodeForClient(
+      clientId,
+      targetStep,
+      planType === 'full' ? 'Pago Único' : 'Cuota 1 de 2'
+    );
+
+    if (updatedUser) {
+      const currentInvestedNum = parseInt(
+        (updatedUser.totalInvested || '0').replace(/\D/g, '') || '0',
+        10
+      );
+      const addedNum = parseInt(amount.replace(/\D/g, '') || '0', 10);
+      const newTotal = currentInvestedNum + addedNum;
+      const formattedTotal = `$${newTotal.toLocaleString('es-CO')} COP`;
+      this.updateClientInvested(clientId, formattedTotal);
+      this.updateClientStatus(clientId, 'active');
+    }
+
+    return { request: newReq, user: updatedUser };
   }
 
   // --- SESSIONS ---

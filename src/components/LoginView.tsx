@@ -144,7 +144,7 @@ export const LoginView: React.FC<LoginViewProps> = ({
       </div>
 
       {/* Hero Header */}
-      <div className="w-full max-w-4xl mx-auto text-center flex flex-col items-center pt-2">
+      <div className="w-full max-w-5xl mx-auto text-center flex flex-col items-center pt-2">
         <div className="w-full flex items-center justify-center mb-3 sm:mb-4 transition-all">
           <BrandLogo layout="hero" className="hover:opacity-95 transition-opacity" />
         </div>
@@ -155,36 +155,15 @@ export const LoginView: React.FC<LoginViewProps> = ({
       </div>
 
       {/* Advertising Banner for the Next Event in the Schedule */}
-      <div className="w-full max-w-5xl mx-auto space-y-3">
+      <div className="w-full max-w-5xl mx-auto">
         <PromotionalEventBanner onRegisterInterest={onNavigateToRegister} />
-
-        {onOpenVideoConferences && (
-          <div className="flex flex-wrap items-center justify-between gap-3 px-2 py-2.5 rounded-2xl bg-[#F9F9F9] dark:bg-[#18181B] border border-gray-200/70 dark:border-neutral-800 text-xs">
-            <div className="flex items-center gap-2 text-gray-600 dark:text-neutral-400 font-light">
-              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
-              <span>
-                <strong className="text-black dark:text-white font-medium">Salas de Google Meet:</strong> Transmisiones en vivo para talleres, conversatorios y masterclasses.
-              </span>
-            </div>
-
-            <button
-              type="button"
-              onClick={onOpenVideoConferences}
-              className="px-3.5 py-1.5 rounded-xl bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/20 text-xs font-semibold text-blue-700 dark:text-blue-400 transition-colors flex items-center gap-1.5 cursor-pointer shadow-2xs"
-            >
-              <Video className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
-              <span>Ver Enlaces de Videoconferencias & Talleres</span>
-              <ChevronRight className="w-3.5 h-3.5" />
-            </button>
-          </div>
-        )}
       </div>
 
-      {/* Main Authentication Card */}
-      <div className="w-full max-w-xl mx-auto flex flex-col items-center">
-        <div className="w-full bg-[#F9F9F9] dark:bg-[#18181B] rounded-3xl p-6 sm:p-8 border border-gray-200/80 dark:border-neutral-800 shadow-[0_8px_30px_rgba(0,0,0,0.04)] text-left transition-colors">
+      {/* Main Authentication Card - Equalized in width with the banner and top modules (max-w-5xl) */}
+      <div className="w-full max-w-5xl mx-auto flex flex-col items-center">
+        <div className="w-full bg-[#F9F9F9] dark:bg-[#18181B] rounded-3xl p-6 sm:p-8 lg:p-10 border border-gray-200/80 dark:border-neutral-800 shadow-[0_8px_30px_rgba(0,0,0,0.04)] text-left transition-colors">
           {/* Segmented Tab Switcher */}
-          <div className="flex items-center p-1 bg-gray-200/70 dark:bg-neutral-800/80 rounded-2xl mb-6">
+          <div className="flex items-center p-1 bg-gray-200/70 dark:bg-neutral-800/80 rounded-2xl mb-8 max-w-md">
             <button
               type="button"
               onClick={() => {
@@ -222,264 +201,298 @@ export const LoginView: React.FC<LoginViewProps> = ({
           {/* TAB 1: PARTICIPANT ACCESS (STRICT PRIVACY BY VERIFIED EMAIL)              */}
           {/* ========================================================================= */}
           {activeTab === 'participant' ? (
-            <div className="space-y-5 animate-fade-in">
-              <div className="flex items-start justify-between gap-3">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start animate-fade-in">
+              {/* Left Column: Input Form & Verification */}
+              <div className="lg:col-span-7 space-y-5">
                 <div>
                   <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-[11px] font-medium text-emerald-700 dark:text-emerald-400 mb-2">
                     <ShieldCheck className="w-3.5 h-3.5" />
                     <span>Aislamiento de Perfil & Privacidad ICF</span>
                   </div>
-                  <h3 className="text-base font-semibold text-black dark:text-white tracking-tight">
+                  <h3 className="text-lg font-semibold text-black dark:text-white tracking-tight">
                     Ingresa con tu Correo Registrado
                   </h3>
                   <p className="text-xs text-gray-500 dark:text-neutral-400 font-light mt-1 leading-relaxed">
                     Tu acceso valida tu identidad contra el Directorio de Google Sheets. Cada participante accede de forma individual y privada a su propio espacio.
                   </p>
                 </div>
-              </div>
 
-              {/* Form Input */}
-              <form onSubmit={handleVerifyEmail} className="space-y-4 pt-1">
-                <div>
-                  <label className="block text-[11px] font-semibold uppercase tracking-wider text-black dark:text-white mb-1.5">
-                    Correo Electrónico (Registrado en Google Sheets)
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="email"
-                      required
-                      value={emailInput}
-                      onChange={(e) => {
-                        setEmailInput(e.target.value);
-                        if (authError) setAuthError(null);
-                      }}
-                      placeholder="ejemplo: sofia.restrepo@example.com"
-                      className="w-full pl-10 pr-4 py-3 rounded-2xl bg-white dark:bg-[#202024] border border-gray-200 dark:border-neutral-700 text-xs sm:text-sm text-black dark:text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white transition-all"
-                    />
-                    <Mail className="w-4 h-4 text-gray-400 dark:text-neutral-500 absolute left-3.5 top-3.5" />
+                {/* Form Input */}
+                <form onSubmit={handleVerifyEmail} className="space-y-4 pt-1">
+                  <div>
+                    <label className="block text-[11px] font-semibold uppercase tracking-wider text-black dark:text-white mb-1.5">
+                      Correo Electrónico (Registrado en Google Sheets)
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="email"
+                        required
+                        value={emailInput}
+                        onChange={(e) => {
+                          setEmailInput(e.target.value);
+                          if (authError) setAuthError(null);
+                        }}
+                        placeholder="ejemplo: sofia.restrepo@example.com"
+                        className="w-full pl-10 pr-4 py-3 rounded-2xl bg-white dark:bg-[#202024] border border-gray-200 dark:border-neutral-700 text-xs sm:text-sm text-black dark:text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white transition-all"
+                      />
+                      <Mail className="w-4 h-4 text-gray-400 dark:text-neutral-500 absolute left-3.5 top-3.5" />
+                    </div>
                   </div>
-                </div>
 
-                {/* Error Banner */}
-                {authError && (
-                  <div className="p-3.5 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 text-xs text-rose-800 dark:text-rose-300 space-y-2 animate-fade-in">
-                    <div className="flex items-start gap-2">
-                      <AlertCircle className="w-4 h-4 text-rose-600 dark:text-rose-400 shrink-0 mt-0.5" />
-                      <div className="space-y-1">
-                        <span className="font-semibold block">Acceso Restringido</span>
-                        <p className="font-light leading-relaxed">{authError}</p>
+                  {/* Error Banner */}
+                  {authError && (
+                    <div className="p-3.5 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 text-xs text-rose-800 dark:text-rose-300 space-y-2 animate-fade-in">
+                      <div className="flex items-start gap-2">
+                        <AlertCircle className="w-4 h-4 text-rose-600 dark:text-rose-400 shrink-0 mt-0.5" />
+                        <div className="space-y-1">
+                          <span className="font-semibold block">Acceso Restringido</span>
+                          <p className="font-light leading-relaxed">{authError}</p>
+                        </div>
                       </div>
+
+                      {onNavigateToRegister && (
+                        <div className="pt-2 border-t border-rose-200/60 dark:border-rose-900/40 flex items-center justify-between">
+                          <span className="text-[11px] text-rose-700 dark:text-rose-300">
+                            ¿No tienes cupo aún?
+                          </span>
+                          <button
+                            type="button"
+                            onClick={onNavigateToRegister}
+                            className="px-3 py-1 rounded-xl bg-rose-600 text-white text-[11px] font-medium hover:bg-rose-700 transition-colors flex items-center gap-1 cursor-pointer"
+                          >
+                            <Sparkles className="w-3 h-3" />
+                            <span>Inscribirme en el Taller</span>
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Primary Enter Button */}
+                  <button
+                    type="submit"
+                    disabled={isVerifying}
+                    className="w-full py-3.5 px-4 rounded-2xl bg-black dark:bg-white text-white dark:text-black text-xs sm:text-sm font-semibold hover:opacity-90 active:scale-[0.99] transition-all cursor-pointer flex items-center justify-center gap-2 shadow-xs disabled:opacity-50"
+                    id="btn-verify-participant-email"
+                  >
+                    {isVerifying ? (
+                      <>
+                        <span className="animate-spin rounded-full h-4 w-4 border-2 border-white dark:border-black border-t-transparent" />
+                        <span>Verificando en Google Sheets...</span>
+                      </>
+                    ) : (
+                      <>
+                        <UserCheck className="w-4 h-4" />
+                        <span>Ingresar a mi Espacio Personal</span>
+                        <ArrowRight className="w-4 h-4 ml-1" />
+                      </>
+                    )}
+                  </button>
+
+                  {/* Secondary Google SSO Button */}
+                  <div className="pt-2 space-y-2">
+                    <div className="flex items-center gap-2 text-[10px] text-gray-400 dark:text-neutral-500 justify-center">
+                      <span className="h-px bg-gray-200 dark:bg-neutral-800 flex-1" />
+                      <span>Autenticación federada</span>
+                      <span className="h-px bg-gray-200 dark:bg-neutral-800 flex-1" />
                     </div>
 
-                    {onNavigateToRegister && (
-                      <div className="pt-2 border-t border-rose-200/60 dark:border-rose-900/40 flex items-center justify-between">
-                        <span className="text-[11px] text-rose-700 dark:text-rose-300">
-                          ¿No tienes cupo aún?
-                        </span>
-                        <button
-                          type="button"
-                          onClick={onNavigateToRegister}
-                          className="px-3 py-1 rounded-xl bg-rose-600 text-white text-[11px] font-medium hover:bg-rose-700 transition-colors flex items-center gap-1 cursor-pointer"
-                        >
-                          <Sparkles className="w-3 h-3" />
-                          <span>Inscribirme en el Taller</span>
-                        </button>
+                    <button
+                      type="button"
+                      onClick={handleGoogleSignIn}
+                      disabled={isVerifying}
+                      className="w-full py-2.5 px-4 rounded-2xl bg-white dark:bg-[#202024] border border-gray-200 dark:border-neutral-700 text-xs font-medium text-black dark:text-white hover:bg-gray-50 dark:hover:bg-[#25252A] transition-all flex items-center justify-center gap-2 cursor-pointer"
+                    >
+                      <svg className="w-4 h-4" viewBox="0 0 24 24">
+                        <path
+                          fill="#4285F4"
+                          d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                        />
+                        <path
+                          fill="#34A853"
+                          d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                        />
+                        <path
+                          fill="#FBBC05"
+                          d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
+                        />
+                        <path
+                          fill="#EA4335"
+                          d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
+                        />
+                      </svg>
+                      <span>Continuar con Cuenta de Google</span>
+                    </button>
+                  </div>
+                </form>
+
+                {/* Verified Client Info Card preview before MFA */}
+                {verifiedClient && (
+                  <div className="p-3.5 rounded-2xl bg-white dark:bg-[#202024] border border-emerald-500/30 flex items-center justify-between animate-fade-in">
+                    <div className="flex items-center gap-3">
+                      <img
+                        src={verifiedClient.avatarUrl}
+                        alt={verifiedClient.name}
+                        referrerPolicy="no-referrer"
+                        className="w-10 h-10 rounded-full object-cover ring-2 ring-emerald-500/40"
+                      />
+                      <div>
+                        <div className="text-xs font-semibold text-black dark:text-white">
+                          {verifiedClient.name}
+                        </div>
+                        <div className="text-[11px] text-gray-500 dark:text-neutral-400">
+                          {verifiedClient.email}
+                        </div>
                       </div>
-                    )}
+                    </div>
+                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 font-medium">
+                      Autorizado
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              {/* Right Column: Demo Accounts & Security Features */}
+              <div className="lg:col-span-5 space-y-4">
+                {/* Discrete testing helper: Quick fill with existing accounts in Google Sheets */}
+                {registeredClients.length > 0 && (
+                  <div className="p-4 sm:p-5 rounded-2xl bg-white dark:bg-[#202024] border border-gray-200/80 dark:border-neutral-700/80 shadow-2xs space-y-3">
+                    <div className="flex items-center gap-1.5 text-xs font-semibold text-black dark:text-white">
+                      <FileSpreadsheet className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                      <span>Participantes de Demostración (Google Sheets):</span>
+                    </div>
+                    <p className="text-[11px] text-gray-500 dark:text-neutral-400 font-light leading-relaxed">
+                      Haz clic en cualquier perfil para autocompletar el correo y probar el ingreso inmediato con aislamiento de datos:
+                    </p>
+                    <div className="flex flex-col gap-1.5">
+                      {registeredClients.map((client) => (
+                        <button
+                          key={client.uid}
+                          type="button"
+                          onClick={() => {
+                            setEmailInput(client.email);
+                            setAuthError(null);
+                          }}
+                          className={`text-xs px-3 py-2 rounded-xl border transition-all cursor-pointer flex items-center justify-between text-left ${
+                            emailInput.toLowerCase() === client.email.toLowerCase()
+                              ? 'bg-black text-white dark:bg-white dark:text-black border-black dark:border-white shadow-xs font-semibold'
+                              : 'bg-[#F9F9F9] dark:bg-[#18181B] text-gray-700 dark:text-neutral-300 border-gray-200 dark:border-neutral-700 hover:border-gray-400 dark:hover:border-neutral-500'
+                          }`}
+                          title={`Haz clic para probar el acceso con ${client.name}`}
+                        >
+                          <div className="flex items-center gap-2 truncate">
+                            <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
+                            <span className="font-medium truncate">{client.name}</span>
+                          </div>
+                          <span className="font-mono text-[10px] opacity-75 shrink-0 ml-2">
+                            {client.email.split('@')[0]}@...
+                          </span>
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 )}
 
-                {/* Primary Enter Button */}
-                <button
-                  type="submit"
-                  disabled={isVerifying}
-                  className="w-full py-3.5 px-4 rounded-2xl bg-black dark:bg-white text-white dark:text-black text-xs sm:text-sm font-semibold hover:opacity-90 active:scale-[0.99] transition-all cursor-pointer flex items-center justify-center gap-2 shadow-xs disabled:opacity-50"
-                  id="btn-verify-participant-email"
-                >
-                  {isVerifying ? (
-                    <>
-                      <span className="animate-spin rounded-full h-4 w-4 border-2 border-white dark:border-black border-t-transparent" />
-                      <span>Verificando en Google Sheets...</span>
-                    </>
-                  ) : (
-                    <>
-                      <UserCheck className="w-4 h-4" />
-                      <span>Ingresar a mi Espacio Personal</span>
-                      <ArrowRight className="w-4 h-4 ml-1" />
-                    </>
-                  )}
-                </button>
-
-                {/* Secondary Google SSO Button */}
-                <div className="pt-2 space-y-2">
-                  <div className="flex items-center gap-2 text-[10px] text-gray-400 dark:text-neutral-500 justify-center">
-                    <span className="h-px bg-gray-200 dark:bg-neutral-800 flex-1" />
-                    <span>Autenticación federada</span>
-                    <span className="h-px bg-gray-200 dark:bg-neutral-800 flex-1" />
+                {/* Confidentiality & Platform Benefits */}
+                <div className="p-4 sm:p-5 rounded-2xl bg-emerald-50/50 dark:bg-emerald-950/20 border border-emerald-200/60 dark:border-emerald-800/40 text-xs text-gray-700 dark:text-neutral-300 space-y-2">
+                  <div className="font-semibold text-emerald-900 dark:text-emerald-300 flex items-center gap-1.5">
+                    <ShieldCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                    <span>Espacio Privado & Beneficios del Participante</span>
                   </div>
-
-                  <button
-                    type="button"
-                    onClick={handleGoogleSignIn}
-                    disabled={isVerifying}
-                    className="w-full py-2.5 px-4 rounded-2xl bg-white dark:bg-[#202024] border border-gray-200 dark:border-neutral-700 text-xs font-medium text-black dark:text-white hover:bg-gray-50 dark:hover:bg-[#25252A] transition-all flex items-center justify-center gap-2 cursor-pointer"
-                  >
-                    <svg className="w-4 h-4" viewBox="0 0 24 24">
-                      <path
-                        fill="#4285F4"
-                        d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                      />
-                      <path
-                        fill="#34A853"
-                        d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                      />
-                      <path
-                        fill="#FBBC05"
-                        d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
-                      />
-                      <path
-                        fill="#EA4335"
-                        d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
-                      />
-                    </svg>
-                    <span>Continuar con Cuenta de Google</span>
-                  </button>
+                  <ul className="text-[11px] font-light list-disc list-inside space-y-1 text-gray-600 dark:text-neutral-400">
+                    <li>Cuadernos de trabajo en PDF integrados automáticamente.</li>
+                    <li>Acceso directo a salas de Google Meet para sesiones en vivo.</li>
+                    <li>Historial reflexivo, quiebres ontológicos y metas personales.</li>
+                    <li>Acompañamiento confidencial certificado según estándares ICF.</li>
+                  </ul>
                 </div>
-              </form>
-
-              {/* Verified Client Info Card preview before MFA */}
-              {verifiedClient && (
-                <div className="p-3.5 rounded-2xl bg-white dark:bg-[#202024] border border-emerald-500/30 flex items-center justify-between animate-fade-in">
-                  <div className="flex items-center gap-3">
-                    <img
-                      src={verifiedClient.avatarUrl}
-                      alt={verifiedClient.name}
-                      referrerPolicy="no-referrer"
-                      className="w-10 h-10 rounded-full object-cover ring-2 ring-emerald-500/40"
-                    />
-                    <div>
-                      <div className="text-xs font-semibold text-black dark:text-white">
-                        {verifiedClient.name}
-                      </div>
-                      <div className="text-[11px] text-gray-500 dark:text-neutral-400">
-                        {verifiedClient.email}
-                      </div>
-                    </div>
-                  </div>
-                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 font-medium">
-                    Autorizado
-                  </span>
-                </div>
-              )}
-
-              {/* Discrete testing helper: Quick fill with existing accounts in Google Sheets */}
-              {registeredClients.length > 0 && (
-                <div className="pt-3 border-t border-gray-200/70 dark:border-neutral-800/80">
-                  <div className="flex items-center gap-1.5 text-[11px] font-medium text-gray-500 dark:text-neutral-400 mb-2">
-                    <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-                    <span>Participantes registrados en Google Sheets (Demostración):</span>
-                  </div>
-                  <div className="flex flex-wrap gap-1.5">
-                    {registeredClients.map((client) => (
-                      <button
-                        key={client.uid}
-                        type="button"
-                        onClick={() => {
-                          setEmailInput(client.email);
-                          setAuthError(null);
-                        }}
-                        className={`text-[11px] px-2.5 py-1 rounded-xl border transition-all cursor-pointer flex items-center gap-1.5 ${
-                          emailInput.toLowerCase() === client.email.toLowerCase()
-                            ? 'bg-black text-white dark:bg-white dark:text-black border-black dark:border-white shadow-2xs font-semibold'
-                            : 'bg-white dark:bg-[#202024] text-gray-700 dark:text-neutral-300 border-gray-200 dark:border-neutral-700 hover:border-gray-400 dark:hover:border-neutral-500'
-                        }`}
-                        title={`Haz clic para probar el acceso con ${client.name}`}
-                      >
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                        <span className="font-medium">{client.name.split(' ')[0]}:</span>
-                        <span className="font-mono text-[10px] opacity-75">{client.email}</span>
-                      </button>
-                    ))}
-                  </div>
-                  <p className="text-[10px] text-gray-400 dark:text-neutral-500 font-light mt-2">
-                    * Haz clic en cualquier correo registrado para autocompletar el campo y probar la autenticación estricta.
-                  </p>
-                </div>
-              )}
+              </div>
             </div>
           ) : (
             /* ========================================================================= */
             /* TAB 2: ADMINISTRATOR ACCESS (MASTER COACH JOHN FREDY RENGIFO BASTO)      */
             /* ========================================================================= */
-            <div className="space-y-5 animate-fade-in">
-              <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-[11px] font-medium text-amber-700 dark:text-amber-400">
-                <Lock className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
-                <span>Control General & Gestión de Clientes</span>
-              </div>
-
-              <div>
-                <h3 className="text-base font-semibold text-black dark:text-white tracking-tight">
-                  Acceso Exclusivo Administrador
-                </h3>
-                <p className="text-xs text-gray-500 dark:text-neutral-400 font-light mt-1 leading-relaxed">
-                  Solo el Consultor Master Coach tiene acceso al directorio de participantes, sincronización con Google Sheets, quiebres ontológicos y panel de supervisión.
-                </p>
-              </div>
-
-              {/* Coach identity card */}
-              <div className="p-4 rounded-2xl bg-white dark:bg-[#202024] border border-gray-200 dark:border-neutral-700 flex items-center gap-3.5 shadow-2xs">
-                <img
-                  src={coachUser.avatarUrl}
-                  alt={coachUser.name}
-                  referrerPolicy="no-referrer"
-                  className="w-14 h-14 rounded-2xl object-cover ring-2 ring-black/10 dark:ring-white/10"
-                />
-                <div className="flex-1 min-w-0">
-                  <div className="text-xs sm:text-sm font-semibold text-black dark:text-white truncate">
-                    {coachUser.name}
-                  </div>
-                  <div className="text-[11px] text-gray-500 dark:text-neutral-400 truncate">
-                    {coachUser.title}
-                  </div>
-                  <div className="text-[10px] font-mono text-gray-400 dark:text-neutral-500 truncate mt-0.5">
-                    {coachUser.email}
-                  </div>
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start animate-fade-in">
+              {/* Left Column: Coach Identity & Authentication */}
+              <div className="lg:col-span-7 space-y-5">
+                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-[11px] font-medium text-amber-700 dark:text-amber-400">
+                  <Lock className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
+                  <span>Control General & Gestión de Clientes</span>
                 </div>
-                <span className="px-2.5 py-1 rounded-xl bg-black dark:bg-white text-white dark:text-black text-[10px] font-semibold tracking-wider uppercase">
-                  Admin
-                </span>
-              </div>
 
-              <div className="p-3.5 rounded-2xl bg-gray-100/70 dark:bg-neutral-800/60 border border-gray-200/60 dark:border-neutral-700 text-xs text-gray-600 dark:text-neutral-300 space-y-1">
-                <div className="font-semibold text-black dark:text-white flex items-center gap-1.5">
-                  <ShieldCheck className="w-4 h-4 text-emerald-500" />
-                  <span>Facultades de Administrador:</span>
+                <div>
+                  <h3 className="text-lg font-semibold text-black dark:text-white tracking-tight">
+                    Acceso Exclusivo Administrador
+                  </h3>
+                  <p className="text-xs text-gray-500 dark:text-neutral-400 font-light mt-1 leading-relaxed">
+                    Solo el Consultor Master Coach tiene acceso al directorio de participantes, sincronización con Google Sheets, quiebres ontológicos y panel de supervisión.
+                  </p>
                 </div>
-                <ul className="text-[11px] font-light list-disc list-inside space-y-0.5 text-gray-500 dark:text-neutral-400">
-                  <li>Directorio Maestro de Clientes & CRM de Conversatorios</li>
-                  <li>Sincronización bidireccional con Google Sheets</li>
-                  <li>Supervisión pedagógica y planes de trabajo personalizados</li>
-                  <li>Configuración de webhooks en Make / Google Workspace</li>
-                </ul>
+
+                {/* Coach identity card */}
+                <div className="p-4 rounded-2xl bg-white dark:bg-[#202024] border border-gray-200 dark:border-neutral-700 flex items-center gap-3.5 shadow-2xs">
+                  <img
+                    src={coachUser.avatarUrl}
+                    alt={coachUser.name}
+                    referrerPolicy="no-referrer"
+                    className="w-14 h-14 rounded-2xl object-cover ring-2 ring-black/10 dark:ring-white/10"
+                  />
+                  <div className="flex-1 min-w-0">
+                    <div className="text-xs sm:text-sm font-semibold text-black dark:text-white truncate">
+                      {coachUser.name}
+                    </div>
+                    <div className="text-[11px] text-gray-500 dark:text-neutral-400 truncate">
+                      {coachUser.title}
+                    </div>
+                    <div className="text-[10px] font-mono text-gray-400 dark:text-neutral-500 truncate mt-0.5">
+                      {coachUser.email}
+                    </div>
+                  </div>
+                  <span className="px-2.5 py-1 rounded-xl bg-black dark:bg-white text-white dark:text-black text-[10px] font-semibold tracking-wider uppercase">
+                    Admin
+                  </span>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleAdminLogin}
+                  className="w-full py-3.5 px-4 rounded-2xl bg-black dark:bg-white text-white dark:text-black text-xs sm:text-sm font-semibold hover:opacity-90 active:scale-[0.99] transition-all cursor-pointer flex items-center justify-center gap-2 shadow-xs"
+                  id="btn-admin-login"
+                >
+                  <Fingerprint className="w-4 h-4" />
+                  <span>Autenticar como Master Coach Administrador</span>
+                  <ArrowRight className="w-4 h-4 ml-1" />
+                </button>
               </div>
 
-              <button
-                type="button"
-                onClick={handleAdminLogin}
-                className="w-full py-3.5 px-4 rounded-2xl bg-black dark:bg-white text-white dark:text-black text-xs sm:text-sm font-semibold hover:opacity-90 active:scale-[0.99] transition-all cursor-pointer flex items-center justify-center gap-2 shadow-xs"
-                id="btn-admin-login"
-              >
-                <Fingerprint className="w-4 h-4" />
-                <span>Autenticar como Master Coach Administrador</span>
-                <ArrowRight className="w-4 h-4 ml-1" />
-              </button>
+              {/* Right Column: Administrative Powers & Capacities */}
+              <div className="lg:col-span-5 space-y-4">
+                <div className="p-4 sm:p-5 rounded-2xl bg-white dark:bg-[#202024] border border-gray-200/80 dark:border-neutral-700/80 shadow-2xs space-y-2.5 text-xs text-gray-600 dark:text-neutral-300">
+                  <div className="font-semibold text-black dark:text-white flex items-center gap-1.5">
+                    <ShieldCheck className="w-4 h-4 text-emerald-500" />
+                    <span>Facultades de la Consola RBC:</span>
+                  </div>
+                  <ul className="text-[11px] font-light list-disc list-inside space-y-1.5 text-gray-500 dark:text-neutral-400">
+                    <li>Directorio Maestro de Clientes & CRM de Conversatorios</li>
+                    <li>Sincronización bidireccional con Google Sheets</li>
+                    <li>Supervisión pedagógica y planes de trabajo personalizados</li>
+                    <li>Configuración de webhooks en Make / Google Workspace</li>
+                    <li>Google Workspace Hub (Sheets, Drive, Meet, Calendar)</li>
+                    <li>Copiloto Ontológico Gemini 3.7</li>
+                  </ul>
+                </div>
+
+                <div className="p-3.5 rounded-2xl bg-amber-50/60 dark:bg-amber-950/20 border border-amber-200/60 dark:border-amber-800/40 text-[11px] text-amber-800 dark:text-amber-300">
+                  <strong>Credencial de Demostración:</strong> Acceso pre-configurado para validación integral de la plataforma de consultoría.
+                </div>
+              </div>
             </div>
           )}
 
-          <div className="mt-5 pt-4 border-t border-gray-100 dark:border-neutral-800 flex items-center justify-between text-[11px] text-gray-400 dark:text-neutral-500 font-light">
+          <div className="mt-8 pt-5 border-t border-gray-100 dark:border-neutral-800 flex flex-wrap items-center justify-between gap-3 text-[11px] text-gray-400 dark:text-neutral-500 font-light">
             <span className="flex items-center gap-1">
               <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
-              Seguridad Encriptada Google Cloud
+              Seguridad Encriptada Google Cloud & Protocolo OAuth 2.0
             </span>
             <span>Versión 2.5 • ICF Accredited</span>
           </div>
@@ -499,7 +512,7 @@ export const LoginView: React.FC<LoginViewProps> = ({
       )}
 
       {/* Bottom Information & Footer */}
-      <footer className="w-full max-w-4xl flex flex-col items-center gap-6 pt-6 pb-2 border-t border-gray-100 dark:border-neutral-800 text-center">
+      <footer className="w-full max-w-5xl flex flex-col items-center gap-6 pt-6 pb-2 border-t border-gray-100 dark:border-neutral-800 text-center">
         {/* Dedicated Contact Information Block */}
         <div className="w-full bg-gray-50/80 dark:bg-neutral-900/60 border border-gray-200/70 dark:border-neutral-800/80 rounded-2xl p-4 sm:p-5 shadow-2xs">
           <div className="text-[11px] font-semibold uppercase tracking-wider text-gray-500 dark:text-neutral-400 mb-3">
