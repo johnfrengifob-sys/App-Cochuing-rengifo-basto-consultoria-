@@ -1,5 +1,5 @@
 import { FormSubmission, User, ProgramNodeInfo, AIInsight, PostSessionForm, Session } from '../types';
-import { COMPANY_INFO } from '../services/store';
+import { COMPANY_INFO, OntologicalStore } from '../services/store';
 import { GoogleWorkspaceService } from '../services/googleWorkspace';
 
 export class PDFGenerator {
@@ -309,8 +309,17 @@ export class PDFGenerator {
 
   /**
    * Generates and triggers printable PDF view for Level Practical Workbook / Guía de Trabajo
+   * Embeds the participant's filled questionnaire responses if available
    */
-  static generateLevelWorkbookPDF(node: ProgramNodeInfo, client?: User): void {
+  static generateLevelWorkbookPDF(
+    node: ProgramNodeInfo,
+    client?: User,
+    customForm?: FormSubmission
+  ): void {
+    const form = customForm || (client ? OntologicalStore.getFormForStep(client.uid, node.step) : undefined);
+    const clientName = client?.name || (form?.clientId ? 'Participante' : '');
+    const isCompletedByParticipant = !!form;
+
     const htmlContent = `
       <!DOCTYPE html>
       <html lang="es">
@@ -450,18 +459,69 @@ export class PDFGenerator {
           <div>
             <div class="level-pill">${node.level}: ${node.levelTitle}</div>
             <h1 class="brand-title">${COMPANY_INFO.fullName}</h1>
+            <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: #6b7280; margin-top: 2px;">
+              Cuaderno de Trabajo del Taller
+            </div>
           </div>
           <div style="text-align: right; font-size: 11px; color: #4b5563;">
-            <div><strong>Cuaderno de Trabajo:</strong> Sesión ${node.step} (${node.weekLabel})</div>
-            ${client ? `<div><strong>Para:</strong> ${client.name}</div>` : ''}
+            <div><strong>Taller / Sesión:</strong> ${node.step} (${node.weekLabel})</div>
+            ${clientName ? `<div><strong>Participante:</strong> ${escapeHTML(clientName)}</div>` : ''}
+            <div style="margin-top: 4px;">
+              <span style="display: inline-block; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; padding: 2px 8px; border-radius: 9999px; ${isCompletedByParticipant ? 'background: #d1fae5; color: #065f46; border: 1px solid #a7f3d0;' : 'background: #f3f4f6; color: #4b5563; border: 1px solid #e5e7eb;'}">
+                ${isCompletedByParticipant ? '✓ Cuestionario Integrado en este Cuaderno' : 'Plantilla de Trabajo'}
+              </span>
+            </div>
           </div>
         </div>
 
         <h2 class="hero-title">${node.sessionTitle}</h2>
         <div class="objective-banner">
-          <strong>Propósito de Transformación:</strong><br>
+          <strong>Propósito de Transformación del Taller:</strong><br>
           ${node.objective}
         </div>
+
+        ${isCompletedByParticipant && form ? `
+        <!-- SECCIÓN: RESPUESTAS DEL CUESTIONARIO CONSTRUIDO POR EL PARTICIPANTE -->
+        <div class="card" style="border: 2px solid #059669; background: #f0fdf4; padding: 16px; margin-bottom: 16px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #a7f3d0; padding-bottom: 8px; margin-bottom: 12px;">
+            <div style="font-size: 12px; font-weight: 800; text-transform: uppercase; color: #065f46; letter-spacing: 0.5px;">
+              ✍️ Cuaderno de Trabajo Construido a Partir de tu Cuestionario
+            </div>
+            <div style="font-size: 10px; color: #047857; font-weight: 600;">
+              Completado el ${new Date(form.submittedAt).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })}
+            </div>
+          </div>
+
+          <div style="margin-bottom: 12px;">
+            <div style="font-size: 11px; font-weight: 700; color: #047857; text-transform: uppercase; margin-bottom: 4px;">
+              1. Emoción & Manifestación Somática en el Cuerpo:
+            </div>
+            <p style="margin: 0; font-size: 12px; color: #111827; background: #ffffff; padding: 10px 12px; border-radius: 6px; border: 1px solid #d1fae5; line-height: 1.5;">
+              ${escapeHTML(form.bodyEmotion)}
+            </p>
+          </div>
+
+          ${form.levelSpecificAnswer ? `
+          <div style="margin-bottom: 12px;">
+            <div style="font-size: 11px; font-weight: 700; color: #047857; text-transform: uppercase; margin-bottom: 4px;">
+              2. Respuesta al Eje Central de Indagación ("${escapeHTML(node.keyQuestion)}"):
+            </div>
+            <p style="margin: 0; font-size: 12px; color: #111827; background: #ffffff; padding: 10px 12px; border-radius: 6px; border: 1px solid #d1fae5; line-height: 1.5;">
+              ${escapeHTML(form.levelSpecificAnswer)}
+            </p>
+          </div>
+          ` : ''}
+
+          <div>
+            <div style="font-size: 11px; font-weight: 700; color: #047857; text-transform: uppercase; margin-bottom: 4px;">
+              3. Reflexiones Ontológicas, Quiebres & Acuerdos de Acción:
+            </div>
+            <p style="margin: 0; font-size: 12px; color: #111827; background: #ffffff; padding: 10px 12px; border-radius: 6px; border: 1px solid #d1fae5; line-height: 1.5;">
+              ${escapeHTML(form.reflections)}
+            </p>
+          </div>
+        </div>
+        ` : ''}
 
         <!-- Capacidades Tangibles -->
         <div class="card">
@@ -500,7 +560,9 @@ export class PDFGenerator {
           <div style="font-size: 11px; font-weight: 600; color: #374151; margin-top: 12px;">
             Espacio de Bitácora / Registro de Hallazgos Diarios:
           </div>
-          <div class="exercise-box"></div>
+          <div class="exercise-box" style="min-height: 60px;">
+            ${form?.bodyEmotion ? `<div style="font-size: 10px; color: #059669; font-weight: bold; text-transform: uppercase; margin-bottom: 2px;">Tu Sensación Somática Inicial:</div><div style="font-size: 11px; color: #374151;">${escapeHTML(form.bodyEmotion)}</div>` : ''}
+          </div>
         </div>
 
         <!-- Eje de Indagación Clave -->
@@ -512,18 +574,27 @@ export class PDFGenerator {
           <p style="font-size: 11px; color: #6b7280; margin: 0 0 10px 0;">
             ${escapeHTML(node.levelPrompt)}
           </p>
-          <div class="exercise-box" style="min-height: 110px;"></div>
+          <div class="exercise-box" style="min-height: 80px;">
+            ${form?.levelSpecificAnswer ? `
+              <div style="font-size: 10px; color: #059669; font-weight: bold; text-transform: uppercase; margin-bottom: 4px;">Tu Respuesta en el Cuestionario:</div>
+              <div style="font-size: 12px; color: #111827; font-weight: 500;">${escapeHTML(form.levelSpecificAnswer)}</div>
+            ` : `
+              <div style="color: #9ca3af; font-size: 11px; font-style: italic;">
+                Espacio para tus reflexiones escritas o diligenciamiento en el Cuestionario del Taller en la plataforma.
+              </div>
+            `}
+          </div>
         </div>
 
         <div class="footer">
           <div>${COMPANY_INFO.fullName} • Material de Trabajo Personal & Confidencial</div>
-          <div>Página 1 de 1 • Consultoría Ontológica 1 a 1</div>
+          <div>${node.level} • Taller & Consultoría Ontológica 1 a 1</div>
         </div>
       </body>
       </html>
     `;
 
-    openPrintWindow(htmlContent, `Guia_Trabajo_${node.level.replace(/\s+/g, '_')}_Sesion_${node.step}.pdf`);
+    openPrintWindow(htmlContent, `Cuaderno_Taller_${node.level.replace(/\s+/g, '_')}_Sesion_${node.step}.pdf`);
   }
 
   /**

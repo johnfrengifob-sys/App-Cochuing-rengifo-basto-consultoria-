@@ -25,6 +25,7 @@ interface PostSessionWorkbookModalProps {
   session: Session | null;
   client: User | null;
   onFormSaved?: (savedForm: PostSessionForm) => void;
+  isParticipant?: boolean;
 }
 
 export const PostSessionWorkbookModal: React.FC<PostSessionWorkbookModalProps> = ({
@@ -33,6 +34,7 @@ export const PostSessionWorkbookModal: React.FC<PostSessionWorkbookModalProps> =
   session,
   client,
   onFormSaved,
+  isParticipant = false,
 }) => {
   const [existingForm, setExistingForm] = useState<PostSessionForm | null>(null);
   const [sessionNumber, setSessionNumber] = useState<number>(1);
@@ -53,12 +55,20 @@ export const PostSessionWorkbookModal: React.FC<PostSessionWorkbookModalProps> =
 
   // Load existing form data or initialize
   useEffect(() => {
-    if (!isOpen || !session || !client) return;
+    if (!isOpen || !client) return;
 
-    const currentSessionNum = session.sessionNumber || client.programProgress || 1;
+    const currentSessionNum = session?.sessionNumber || client.programProgress || 1;
     setSessionNumber(currentSessionNum);
 
-    const foundForm = OntologicalStore.getPostSessionFormForSession(session.id);
+    const sessionIdToQuery = session?.id || `sess-${client.uid}-${currentSessionNum}`;
+    let foundForm = OntologicalStore.getPostSessionFormForSession(sessionIdToQuery);
+
+    // If not found by session id, search by client and session number
+    if (!foundForm) {
+      const clientForms = OntologicalStore.getPostSessionFormsForClient(client.uid);
+      foundForm = clientForms.find((f) => f.sessionNumber === currentSessionNum);
+    }
+
     if (foundForm) {
       setExistingForm(foundForm);
       setWorkbookTitle(foundForm.workbookTitle || `Sesión ${foundForm.sessionNumber}: Arquitectura y Dominio Ontológico`);
@@ -93,7 +103,22 @@ export const PostSessionWorkbookModal: React.FC<PostSessionWorkbookModalProps> =
     setSavedSuccess(false);
   }, [isOpen, session, client]);
 
-  if (!isOpen || !session || !client) return null;
+  if (!isOpen || !client) return null;
+
+  const effectiveSession: Session = session || {
+    id: `sess-${client.uid}-${sessionNumber}`,
+    sessionNumber: sessionNumber,
+    clientId: client.uid,
+    date: new Date().toISOString(),
+    meetLink: 'https://meet.google.com/rbc-sesion',
+    status: 'Completada',
+    durationMinutes: 60,
+    notes: '',
+    keyInsights: [],
+    actionAgreements: [],
+    somaticFocus: '',
+    programNodeStep: sessionNumber,
+  };
 
   const handleAddActionItem = () => {
     if (!newActionItem.trim()) return;
@@ -152,12 +177,12 @@ export const PostSessionWorkbookModal: React.FC<PostSessionWorkbookModalProps> =
 
   const buildFormData = (): PostSessionForm => {
     return {
-      id: existingForm?.id || `psf-${session.id}-${Date.now()}`,
-      sessionId: session.id,
+      id: existingForm?.id || `psf-${effectiveSession.id}-${Date.now()}`,
+      sessionId: effectiveSession.id,
       sessionNumber: sessionNumber,
       clientId: client.uid,
       clientName: client.name,
-      sessionDate: session.date,
+      sessionDate: effectiveSession.date,
       submittedAt: existingForm?.submittedAt || new Date().toISOString(),
       coacheeEmotionAndOpenness: q1Emotion,
       masterJudgmentAndNarrative: q2Judgment,
@@ -190,7 +215,7 @@ export const PostSessionWorkbookModal: React.FC<PostSessionWorkbookModalProps> =
       onFormSaved(formData);
     }
     // Trigger PDF generation
-    PDFGenerator.generateSessionWorkbookPDF(formData, client, session);
+    PDFGenerator.generateSessionWorkbookPDF(formData, client, effectiveSession);
   };
 
   return (
@@ -203,24 +228,33 @@ export const PostSessionWorkbookModal: React.FC<PostSessionWorkbookModalProps> =
               <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-black text-white dark:bg-white dark:text-black">
                 Sesión Individual {sessionNumber}
               </span>
-              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 flex items-center gap-1">
-                <CheckCircle2 className="w-3 h-3 text-emerald-600" />
-                Taller 100% Pagado ({client.totalInvested || '$1.500.000 COP'})
-              </span>
+              {isParticipant ? (
+                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 flex items-center gap-1">
+                  <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                  Cuestionario para Construir tu Cuaderno
+                </span>
+              ) : (
+                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 flex items-center gap-1">
+                  <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                  Taller 100% Pagado ({client.totalInvested || '$1.500.000 COP'})
+                </span>
+              )}
               <span className="px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-blue-100 text-blue-800 dark:bg-blue-950/60 dark:text-blue-300 flex items-center gap-1">
                 <Shield className="w-3 h-3 text-blue-600" />
-                Competencias Clave ICF
+                Consultoría Ontológica 1 a 1
               </span>
             </div>
 
             <h2 className="text-lg sm:text-xl font-bold text-black dark:text-white flex items-center gap-2">
               <FileText className="w-5 h-5 text-gray-700 dark:text-neutral-300" />
-              Espacio Post-Sesión & Generación de Cuaderno de Trabajo
+              {isParticipant
+                ? 'Cuestionario de Sesión • Construye tu Cuaderno de Trabajo'
+                : 'Espacio Post-Sesión & Generación de Cuaderno de Trabajo'}
             </h2>
             <p className="text-xs text-gray-500 dark:text-neutral-400 font-light">
-              Coachee:{' '}
-              <strong className="text-black dark:text-white font-medium">{client.name}</strong> •{' '}
-              {client.title || 'Participante'} • Sesión {sessionNumber}
+              {isParticipant
+                ? 'Responde estas preguntas tras tu sesión 1 a 1 para estructurar tus aprendizajes y descargar tu Cuaderno en PDF.'
+                : `Coachee: ${client.name} • ${client.title || 'Participante'} • Sesión ${sessionNumber}`}
             </p>
           </div>
 
@@ -251,7 +285,7 @@ export const PostSessionWorkbookModal: React.FC<PostSessionWorkbookModalProps> =
             <div className="p-3.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-800 dark:text-emerald-300 text-xs font-medium flex items-center gap-2 animate-fade-in">
               <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
               <span>
-                Formulario post-sesión guardado exitosamente. Ahora puedes generar o descargar el Cuaderno de Trabajo en PDF.
+                Cuestionario guardado con éxito. Ya puedes descargar tu Cuaderno de Trabajo en PDF con tus respuestas integradas.
               </span>
             </div>
           )}
@@ -259,7 +293,9 @@ export const PostSessionWorkbookModal: React.FC<PostSessionWorkbookModalProps> =
           {/* Eje Temático del Cuaderno */}
           <div className="p-4 rounded-2xl bg-gray-50 dark:bg-neutral-900 border border-gray-200/80 dark:border-neutral-800 space-y-2">
             <label className="block text-xs font-semibold text-black dark:text-white">
-              Título o Eje Temático del Cuaderno de Trabajo (Para el Coachee)
+              {isParticipant
+                ? 'Título o Eje Temático de tu Sesión'
+                : 'Título o Eje Temático del Cuaderno de Trabajo (Para el Coachee)'}
             </label>
             <input
               type="text"
@@ -275,7 +311,7 @@ export const PostSessionWorkbookModal: React.FC<PostSessionWorkbookModalProps> =
             <div className="flex items-center justify-between border-b border-gray-100 dark:border-neutral-800 pb-2">
               <h3 className="font-semibold text-sm text-black dark:text-white flex items-center gap-2">
                 <Compass className="w-4 h-4 text-blue-600" />
-                <span>Formulario Ontológico de Evaluación Post-Sesión</span>
+                <span>{isParticipant ? 'Preguntas Ontológicas de tu Sesión' : 'Formulario Ontológico de Evaluación Post-Sesión'}</span>
               </h3>
               <span className="text-[11px] text-gray-400 font-light">4 Preguntas Clave RBC</span>
             </div>
@@ -287,17 +323,21 @@ export const PostSessionWorkbookModal: React.FC<PostSessionWorkbookModalProps> =
                   1
                 </span>
                 <label className="text-xs font-semibold text-black dark:text-white leading-relaxed">
-                  ¿Qué emoción principal habitó al coachee hoy y cuál fue su nivel de resistencia o apertura para explorarla?
+                  {isParticipant
+                    ? '¿Qué emoción principal te habitó hoy y cuál fue tu nivel de resistencia o apertura para explorarla?'
+                    : '¿Qué emoción principal habitó al coachee hoy y cuál fue su nivel de resistencia o apertura para explorarla?'}
                 </label>
               </div>
               <p className="text-[11px] text-gray-400 font-light pl-7">
-                Indaga el clima emocional predominante (ansiedad, frustración, culpa, miedo, resignación) y la disposición corporal para entrar en vulnerabilidad.
+                {isParticipant
+                  ? 'Indaga tu clima emocional predominante (ansiedad, frustración, culpa, miedo, liviandad, expansión) y cómo respondió tu cuerpo o respiración.'
+                  : 'Indaga el clima emocional predominante (ansiedad, frustración, culpa, miedo, resignación) y la disposición corporal para entrar en vulnerabilidad.'}
               </p>
               <textarea
                 rows={3}
                 value={q1Emotion}
                 onChange={(e) => setQ1Emotion(e.target.value)}
-                placeholder="Describe la emoción que habitó en el encuentro, las manifestaciones somáticas del coachee y cómo transitó de la resistencia a la apertura..."
+                placeholder={isParticipant ? "Describe la emoción que sentiste, cómo se manifestó en tu cuerpo y cómo transitaste hacia una mayor apertura o calma..." : "Describe la emoción que habitó en el encuentro, las manifestaciones somáticas del coachee y cómo transitó de la resistencia a la apertura..."}
                 className="w-full px-3.5 py-2.5 rounded-xl bg-gray-50/50 dark:bg-neutral-900 border border-gray-200 dark:border-neutral-700 text-xs text-black dark:text-white placeholder:text-gray-400 focus:outline-hidden focus:ring-2 focus:ring-black dark:focus:ring-white"
               />
             </div>
@@ -309,17 +349,21 @@ export const PostSessionWorkbookModal: React.FC<PostSessionWorkbookModalProps> =
                   2
                 </span>
                 <label className="text-xs font-semibold text-black dark:text-white leading-relaxed">
-                  ¿Cuál fue el juicio maestro, la narrativa o la creencia limitante que estructuró su discurso durante la sesión?
+                  {isParticipant
+                    ? '¿Cuál fue tu juicio maestro, la narrativa o la creencia limitante que estructuró tu conversación?'
+                    : '¿Cuál fue el juicio maestro, la narrativa o la creencia limitante que estructuró su discurso durante la sesión?'}
                 </label>
               </div>
               <p className="text-[11px] text-gray-400 font-light pl-7">
-                Identifica el mandato de certeza o transparencia (ej: &quot;Si no lo hago yo, nadie lo hará bien&quot;, &quot;Decir no es defraudar&quot;) que determinó sus explicaciones.
+                {isParticipant
+                  ? 'Identifica tus mandatos o interpretaciones automáticas (ej: "Si no lo hago yo, nadie lo hará", "Decir no es defraudar", "No puedo fallar") que condicionaron tus explicaciones.'
+                  : 'Identifica el mandato de certeza o transparencia (ej: "Si no lo hago yo, nadie lo hará bien", "Decir no es defraudar") que determinó sus explicaciones.'}
               </p>
               <textarea
                 rows={3}
                 value={q2Judgment}
                 onChange={(e) => setQ2Judgment(e.target.value)}
-                placeholder="Escribe la frase textual o la creencia medular que sirvió de marco a sus dificultades u obstáculos..."
+                placeholder={isParticipant ? "Escribe la creencia medular o mandato que reconoces que ha estado limitando tu accionar o generando sobrecarga..." : "Escribe la frase textual o la creencia medular que sirvió de marco a sus dificultades u obstáculos..."}
                 className="w-full px-3.5 py-2.5 rounded-xl bg-gray-50/50 dark:bg-neutral-900 border border-gray-200 dark:border-neutral-700 text-xs text-black dark:text-white placeholder:text-gray-400 focus:outline-hidden focus:ring-2 focus:ring-black dark:focus:ring-white"
               />
             </div>
@@ -331,17 +375,21 @@ export const PostSessionWorkbookModal: React.FC<PostSessionWorkbookModalProps> =
                   3
                 </span>
                 <label className="text-xs font-semibold text-black dark:text-white leading-relaxed">
-                  ¿Qué evidencia de cambio de perspectiva o nuevo nivel de consciencia demostró el coachee al finalizar el encuentro?
+                  {isParticipant
+                    ? '¿Qué cambio de observador experimentaste hoy y qué nueva posibilidad se abre para ti?'
+                    : '¿Qué evidencia de cambio de perspectiva o nuevo nivel de consciencia demostró el coachee al finalizar el encuentro?'}
                 </label>
               </div>
               <p className="text-[11px] text-gray-400 font-light pl-7">
-                Describe el momento de &quot;insight&quot; o quiebre lúcido, cambios en el tono de voz, relajación corporal o compromisos nuevos de acción.
+                {isParticipant
+                  ? 'Describe tu momento de "darse cuenta" o quiebre lúcido, los cambios en tu estado de ánimo o las decisiones nuevas que ahora puedes tomar.'
+                  : 'Describe el momento de "insight" o quiebre lúcido, cambios en el tono de voz, relajación corporal o compromisos nuevos de acción.'}
               </p>
               <textarea
                 rows={3}
                 value={q3Perspective}
                 onChange={(e) => setQ3Perspective(e.target.value)}
-                placeholder="¿Qué declaró el coachee hacia el cierre? ¿Qué nueva posibilidad reconoció que antes era invisible para él/ella?..."
+                placeholder={isParticipant ? "¿Qué reconoces hoy que antes no podías ver? ¿Qué nueva acción o postura es posible ahora para ti?..." : "¿Qué declaró el coachee hacia el cierre? ¿Qué nueva posibilidad reconoció que antes era invisible para él/ella?..."}
                 className="w-full px-3.5 py-2.5 rounded-xl bg-gray-50/50 dark:bg-neutral-900 border border-gray-200 dark:border-neutral-700 text-xs text-black dark:text-white placeholder:text-gray-400 focus:outline-hidden focus:ring-2 focus:ring-black dark:focus:ring-white"
               />
             </div>
@@ -353,17 +401,21 @@ export const PostSessionWorkbookModal: React.FC<PostSessionWorkbookModalProps> =
                   4
                 </span>
                 <label className="text-xs font-semibold text-amber-950 dark:text-amber-200 leading-relaxed">
-                  ¿En qué momento de la sesión fui más directivo de lo necesario y qué competencia ICF debo cuidar más en nuestro próximo encuentro?
+                  {isParticipant
+                    ? 'Foco de Aprendizaje Ontológico & Presencia en la Sesión'
+                    : '¿En qué momento de la sesión fui más directivo de lo necesario y qué competencia ICF debo cuidar más en nuestro próximo encuentro?'}
                 </label>
               </div>
               <p className="text-[11px] text-amber-800/70 dark:text-amber-400/80 font-light pl-7">
-                Auto-observación y supervisión ética del Coach: Presencia, silencio fértil, indagación poderosa vs. dar consejos o imponer soluciones.
+                {isParticipant
+                  ? '¿Qué momento de silencio, pregunta reflexiva de John Fredy o indagación corporal sentiste que abrió tu mayor entendimiento?'
+                  : 'Auto-observación y supervisión ética del Coach: Presencia, silencio fértil, indagación poderosa vs. dar consejos o imponer soluciones.'}
               </p>
               <textarea
                 rows={3}
                 value={q4Directiveness}
                 onChange={(e) => setQ4Directiveness(e.target.value)}
-                placeholder="Reflexiona sobre tu postura como coach: ¿Cuándo sentiste la urgencia de rescatar al coachee? ¿Qué competencia (ICF 5: Mantiene la presencia, ICF 7: Evoca conciencia) requiere mayor impecabilidad?..."
+                placeholder={isParticipant ? "Reflexiona sobre el acompañamiento ontológico: ¿Qué distinción o pregunta tuvo el impacto más profundo en ti?..." : "Reflexiona sobre tu postura como coach: ¿Cuándo sentiste la urgencia de rescatar al coachee? ¿Qué competencia (ICF 5: Mantiene la presencia, ICF 7: Evoca conciencia) requiere mayor impecabilidad?..."}
                 className="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-[#1A1A1E] border border-amber-300 dark:border-amber-800/60 text-xs text-black dark:text-white placeholder:text-gray-400 focus:outline-hidden focus:ring-2 focus:ring-amber-500"
               />
             </div>
@@ -374,15 +426,17 @@ export const PostSessionWorkbookModal: React.FC<PostSessionWorkbookModalProps> =
             <div className="flex items-center justify-between border-b border-gray-200 dark:border-neutral-800 pb-2">
               <h3 className="font-semibold text-sm text-black dark:text-white flex items-center gap-2">
                 <Award className="w-4 h-4 text-emerald-600" />
-                <span>Cuaderno Práctico de Integración (Para el Coachee)</span>
+                <span>{isParticipant ? 'Tu Plan y Acuerdos de Acción' : 'Cuaderno Práctico de Integración (Para el Coachee)'}</span>
               </h3>
-              <span className="text-[11px] text-gray-400 font-light">Se incluye en el PDF descargable</span>
+              <span className="text-[11px] text-gray-400 font-light">Se incluye en tu PDF descargable</span>
             </div>
 
             {/* Declaración Central */}
             <div className="space-y-1.5">
               <label className="block text-xs font-semibold text-black dark:text-white">
-                Declaración Ontológica Central de Aprendizaje
+                {isParticipant
+                  ? 'Declaración Clave de tu Sesión (Tu Quiebre o Compromiso Central)'
+                  : 'Declaración Ontológica Central de Aprendizaje'}
               </label>
               <input
                 type="text"
@@ -396,7 +450,7 @@ export const PostSessionWorkbookModal: React.FC<PostSessionWorkbookModalProps> =
             {/* Lista de Acciones y Compromisos */}
             <div className="space-y-2">
               <label className="block text-xs font-semibold text-black dark:text-white">
-                Compromisos de Acción & Conversaciones Comprometidas
+                {isParticipant ? 'Tus Compromisos de Acción & Conversaciones Comprometidas' : 'Compromisos de Acción & Conversaciones Comprometidas'}
               </label>
 
               <div className="space-y-1.5">
@@ -443,7 +497,7 @@ export const PostSessionWorkbookModal: React.FC<PostSessionWorkbookModalProps> =
             <div className="space-y-1.5">
               <label className="block text-xs font-semibold text-black dark:text-white flex items-center gap-1.5">
                 <Activity className="w-3.5 h-3.5 text-blue-600" />
-                <span>Protocolo Somático y Corporal de Anclaje Quincenal</span>
+                <span>{isParticipant ? 'Tu Práctica Somática y Corporal de Anclaje Quincenal' : 'Protocolo Somático y Corporal de Anclaje Quincenal'}</span>
               </label>
               <textarea
                 rows={2}
@@ -460,7 +514,7 @@ export const PostSessionWorkbookModal: React.FC<PostSessionWorkbookModalProps> =
         <div className="px-6 py-4 border-t border-gray-100 dark:border-neutral-800 bg-gray-50/70 dark:bg-neutral-900/50 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shrink-0">
           <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-neutral-400">
             <Shield className="w-4 h-4 text-emerald-600 shrink-0" />
-            <span>Los datos quedan archivados en el perfil del cliente y sincronizados con su cuaderno.</span>
+            <span>Tus respuestas quedan guardadas y se integran automáticamente en tu Cuaderno PDF.</span>
           </div>
 
           <div className="flex items-center gap-2.5">
@@ -470,7 +524,7 @@ export const PostSessionWorkbookModal: React.FC<PostSessionWorkbookModalProps> =
               className="px-4 py-2 rounded-xl bg-white dark:bg-[#202024] border border-gray-200 dark:border-neutral-700 hover:bg-gray-50 dark:hover:bg-neutral-800 text-xs font-semibold text-black dark:text-white flex items-center gap-1.5 transition-colors cursor-pointer shadow-2xs"
             >
               <Save className="w-3.5 h-3.5 text-gray-600 dark:text-neutral-400" />
-              <span>Guardar Formulario</span>
+              <span>{isParticipant ? 'Guardar Cuestionario' : 'Guardar Formulario'}</span>
             </button>
 
             <button
@@ -479,7 +533,7 @@ export const PostSessionWorkbookModal: React.FC<PostSessionWorkbookModalProps> =
               className="px-4 py-2 rounded-xl bg-black dark:bg-white text-white dark:text-black hover:bg-neutral-800 dark:hover:bg-neutral-200 text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer shadow-md"
             >
               <Download className="w-3.5 h-3.5 text-emerald-400 dark:text-emerald-700" />
-              <span>Generar Cuaderno de Trabajo (PDF)</span>
+              <span>Descargar Cuaderno PDF</span>
             </button>
           </div>
         </div>
