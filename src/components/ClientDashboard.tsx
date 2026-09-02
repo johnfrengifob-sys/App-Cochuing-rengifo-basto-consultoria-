@@ -5,6 +5,7 @@ import {
   FormSubmission,
   AIInsight,
   ProgramNodeInfo,
+  PostSessionForm,
 } from '../types';
 import { OntologicalStore, PROGRAM_NODES } from '../services/store';
 import { PDFGenerator } from '../utils/pdfGenerator';
@@ -49,7 +50,7 @@ interface ClientDashboardProps {
   client: User;
 }
 
-type WorkspaceTab = 'materials' | 'reinforcement' | 'form' | 'gemini';
+type WorkspaceTab = 'materials' | 'reinforcement' | 'form' | 'workbook' | 'gemini';
 
 export const ClientDashboard: React.FC<ClientDashboardProps> = ({ client }) => {
   const [sessions, setSessions] = useState<Session[]>(() =>
@@ -64,6 +65,12 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({ client }) => {
   const [insights, setInsights] = useState<AIInsight[]>(() =>
     OntologicalStore.getInsightsForClient(client.uid)
   );
+
+  const [postSessionForms, setPostSessionForms] = useState<PostSessionForm[]>(() =>
+    OntologicalStore.getPostSessionFormsForClient(client.uid)
+  );
+
+  const calendarUrl = OntologicalStore.getCalendarUrl();
 
   // Active step in the 6-node roadmap
   const [currentProgress, setCurrentProgress] = useState<number>(
@@ -301,7 +308,7 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({ client }) => {
                   </div>
                 )}
 
-                <div className="pt-1">
+                <div className="pt-1 space-y-2">
                   <a
                     href={nextSession.meetLink}
                     target="_blank"
@@ -315,19 +322,47 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({ client }) => {
                       Entrar a Google Meet
                     </LiquidGlassButton>
                   </a>
-                  <p className="text-[11px] font-light text-gray-400 dark:text-neutral-500 text-center mt-2.5">
+
+                  <a
+                    href={calendarUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="w-full py-2 px-3 rounded-xl bg-gray-50 dark:bg-[#202024] border border-gray-200 dark:border-neutral-700 hover:bg-gray-100 dark:hover:bg-neutral-800 text-xs font-semibold text-black dark:text-white transition-colors flex items-center justify-center gap-2 cursor-pointer shadow-2xs"
+                    title="Abrir página oficial de agendamiento de sesiones uno a uno"
+                  >
+                    <Calendar className="w-3.5 h-3.5 text-blue-500" />
+                    <span>Agendar o Reprogramar Sesión 1 a 1</span>
+                    <ExternalLink className="w-3 h-3 text-gray-400" />
+                  </a>
+
+                  <p className="text-[11px] font-light text-gray-400 dark:text-neutral-500 text-center mt-1">
                     Enlace confidencial cifrado punto a punto
                   </p>
                 </div>
               </div>
             ) : (
-              <div className="text-center py-6">
-                <p className="text-sm font-light text-gray-500 dark:text-neutral-400 mb-2">
-                  No tienes sesiones pendientes por agendar.
-                </p>
-                <div className="text-xs text-gray-400 dark:text-neutral-500 font-light">
-                  Tu coach coordinará la fecha de la próxima sesión quincenal.
+              <div className="text-center py-5 space-y-3">
+                <div className="w-10 h-10 rounded-2xl bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 flex items-center justify-center mx-auto">
+                  <Calendar className="w-5 h-5" />
                 </div>
+                <div className="space-y-1">
+                  <p className="text-xs font-semibold text-black dark:text-white">
+                    Agenda tu Sesión 1 a 1
+                  </p>
+                  <p className="text-[11px] text-gray-400 dark:text-neutral-500 font-light max-w-xs mx-auto">
+                    Selecciona tu fecha y horario en la agenda de Google Calendar con John Fredy Rengifo Basto.
+                  </p>
+                </div>
+                <a
+                  href={calendarUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-black dark:bg-white text-white dark:text-black text-xs font-semibold hover:opacity-90 transition-opacity shadow-2xs"
+                >
+                  <Calendar className="w-3.5 h-3.5" />
+                  <span>Agendar Sesión 1 a 1</span>
+                  <ExternalLink className="w-3 h-3" />
+                </a>
               </div>
             )}
           </div>
@@ -681,6 +716,24 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({ client }) => {
                 Formulario & Quiebres
                 {existingForm && (
                   <span className="w-2 h-2 rounded-full bg-emerald-500 ml-1" />
+                )}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setActiveTab('workbook')}
+                className={`pb-3 px-3 text-xs sm:text-sm font-medium transition-all cursor-pointer relative flex items-center gap-2 ${
+                  activeTab === 'workbook'
+                    ? 'text-black dark:text-white border-b-2 border-black dark:border-white'
+                    : 'text-gray-400 dark:text-neutral-500 hover:text-gray-700 dark:hover:text-neutral-300'
+                }`}
+              >
+                <BookOpen className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                <span>Cuaderno Post-Sesión</span>
+                {postSessionForms.length > 0 && (
+                  <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 font-bold">
+                    {postSessionForms.length}
+                  </span>
                 )}
               </button>
             </div>
@@ -1195,6 +1248,166 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({ client }) => {
                     </div>
                   </form>
                 )}
+              </div>
+            )}
+
+            {/* Sub-Tab 4: Cuaderno de Trabajo Post-Sesión */}
+            {activeTab === 'workbook' && (
+              <div className="space-y-6 animate-fade-in">
+                <div className="p-6 rounded-3xl bg-gray-50 dark:bg-neutral-900 border border-gray-200/80 dark:border-neutral-800 space-y-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-gray-200/60 dark:border-neutral-800">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-black text-white dark:bg-white dark:text-black">
+                          Bitácora de Coherencia
+                        </span>
+                        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300">
+                          {client.paymentStatus === 'Completado' ? 'Taller 100% Pagado' : client.paymentStatus}
+                        </span>
+                      </div>
+                      <h3 className="font-bold text-base text-black dark:text-white flex items-center gap-2">
+                        <BookOpen className="w-4 h-4 text-emerald-600" />
+                        <span>Tu Cuaderno de Trabajo Post-Sesión</span>
+                      </h3>
+                      <p className="text-xs text-gray-500 dark:text-neutral-400 font-light">
+                        Documentación de tus quiebres, juicios maestros y acuerdos de acción tras cada sesión 1 a 1 con John Fredy Rengifo Basto.
+                      </p>
+                    </div>
+                  </div>
+
+                  {postSessionForms.length > 0 ? (
+                    <div className="space-y-6">
+                      {postSessionForms.map((pForm) => {
+                        const associatedSession = sessions.find((s) => s.id === pForm.sessionId);
+                        return (
+                          <div
+                            key={pForm.id}
+                            className="p-5 sm:p-6 rounded-2xl bg-white dark:bg-[#18181B] border border-gray-200/80 dark:border-neutral-800 space-y-5 shadow-2xs"
+                          >
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-gray-100 dark:border-neutral-800">
+                              <div>
+                                <div className="flex items-center gap-2 mb-1">
+                                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-black text-white dark:bg-white dark:text-black">
+                                    Sesión {pForm.sessionNumber}
+                                  </span>
+                                  <span className="text-xs text-gray-400 font-light">
+                                    {formattedDate(pForm.sessionDate || pForm.submittedAt)}
+                                  </span>
+                                </div>
+                                <h4 className="font-bold text-sm text-black dark:text-white">
+                                  {pForm.workbookTitle || `Sesión ${pForm.sessionNumber}: Cuaderno Ontológico`}
+                                </h4>
+                              </div>
+
+                              <button
+                                type="button"
+                                onClick={() => PDFGenerator.generateSessionWorkbookPDF(pForm, client, associatedSession)}
+                                className="px-4 py-2 rounded-xl bg-black dark:bg-white text-white dark:text-black text-xs font-bold hover:bg-neutral-800 dark:hover:bg-neutral-200 transition-colors cursor-pointer inline-flex items-center gap-2 shadow-2xs self-start sm:self-auto"
+                              >
+                                <FileDown className="w-3.5 h-3.5 text-emerald-400 dark:text-emerald-700" />
+                                <span>Descargar Cuaderno PDF</span>
+                              </button>
+                            </div>
+
+                            {/* Key Declaration */}
+                            {pForm.coacheeKeyDeclaration && (
+                              <div className="p-3.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/40 text-xs">
+                                <span className="font-bold text-emerald-900 dark:text-emerald-300 block mb-0.5 uppercase tracking-wider text-[10px]">
+                                  Declaración Clave de tu Sesión:
+                                </span>
+                                <p className="italic text-emerald-950 dark:text-emerald-200 font-medium">
+                                  &quot;{pForm.coacheeKeyDeclaration}&quot;
+                                </p>
+                              </div>
+                            )}
+
+                            {/* The 4 core dimensions */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              <div className="p-3.5 rounded-xl bg-gray-50 dark:bg-neutral-900 border border-gray-100 dark:border-neutral-800 space-y-1.5">
+                                <span className="text-[11px] font-bold text-black dark:text-white flex items-center gap-1.5">
+                                  <span className="w-4 h-4 rounded-full bg-blue-600 text-white text-[9px] flex items-center justify-center font-bold">1</span>
+                                  Emoción & Apertura Corporal
+                                </span>
+                                <p className="text-xs text-gray-600 dark:text-neutral-300 font-light leading-relaxed">
+                                  {pForm.coacheeEmotionAndOpenness}
+                                </p>
+                              </div>
+
+                              <div className="p-3.5 rounded-xl bg-gray-50 dark:bg-neutral-900 border border-gray-100 dark:border-neutral-800 space-y-1.5">
+                                <span className="text-[11px] font-bold text-black dark:text-white flex items-center gap-1.5">
+                                  <span className="w-4 h-4 rounded-full bg-blue-600 text-white text-[9px] flex items-center justify-center font-bold">2</span>
+                                  Juicio Maestro & Creencia Raíz
+                                </span>
+                                <p className="text-xs text-gray-600 dark:text-neutral-300 font-light leading-relaxed">
+                                  {pForm.masterJudgmentAndNarrative}
+                                </p>
+                              </div>
+
+                              <div className="p-3.5 rounded-xl bg-gray-50 dark:bg-neutral-900 border border-gray-100 dark:border-neutral-800 space-y-1.5">
+                                <span className="text-[11px] font-bold text-black dark:text-white flex items-center gap-1.5">
+                                  <span className="w-4 h-4 rounded-full bg-blue-600 text-white text-[9px] flex items-center justify-center font-bold">3</span>
+                                  Cambio de Observador & Consciencia
+                                </span>
+                                <p className="text-xs text-gray-600 dark:text-neutral-300 font-light leading-relaxed">
+                                  {pForm.perspectiveShiftEvidence}
+                                </p>
+                              </div>
+
+                              <div className="p-3.5 rounded-xl bg-gray-50 dark:bg-neutral-900 border border-gray-100 dark:border-neutral-800 space-y-1.5">
+                                <span className="text-[11px] font-bold text-amber-700 dark:text-amber-400 flex items-center gap-1.5">
+                                  <span className="w-4 h-4 rounded-full bg-amber-600 text-white text-[9px] flex items-center justify-center font-bold">4</span>
+                                  Foco de Competencia ICF
+                                </span>
+                                <p className="text-xs text-gray-600 dark:text-neutral-300 font-light leading-relaxed">
+                                  {pForm.directivenessAndIcfCompetency}
+                                </p>
+                              </div>
+                            </div>
+
+                            {/* Agreed Action Items */}
+                            {pForm.agreedActionItems && pForm.agreedActionItems.length > 0 && (
+                              <div className="p-3.5 rounded-xl bg-gray-50 dark:bg-neutral-900 border border-gray-100 dark:border-neutral-800 space-y-2">
+                                <strong className="text-xs font-bold text-black dark:text-white block">
+                                  Tus Compromisos de Acción Acordados:
+                                </strong>
+                                <ul className="space-y-1">
+                                  {pForm.agreedActionItems.map((act, i) => (
+                                    <li key={i} className="text-xs text-gray-600 dark:text-neutral-300 flex items-start gap-2 font-light">
+                                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0 mt-0.5" />
+                                      <span>{act}</span>
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
+
+                            {/* Somatic Homework */}
+                            {pForm.somaticHomework && (
+                              <div className="p-3.5 rounded-xl bg-purple-50/60 dark:bg-purple-950/20 border border-purple-200/60 dark:border-purple-900/30 text-xs space-y-1">
+                                <strong className="text-purple-900 dark:text-purple-300 font-bold block">
+                                  Práctica Somática y Corporal entre Sesiones:
+                                </strong>
+                                <p className="text-purple-950 dark:text-purple-200 font-light leading-relaxed">
+                                  {pForm.somaticHomework}
+                                </p>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div className="py-12 text-center rounded-2xl bg-white dark:bg-[#18181B] border border-gray-100 dark:border-neutral-800 space-y-2">
+                      <BookOpen className="w-10 h-10 text-gray-300 dark:text-neutral-700 mx-auto" />
+                      <h4 className="text-xs font-semibold text-black dark:text-white">
+                        Tu Cuaderno de Trabajo se generará al finalizar tu próxima sesión 1 a 1
+                      </h4>
+                      <p className="text-[11px] text-gray-400 font-light max-w-sm mx-auto">
+                        Aquí encontrarás tus reflexiones, quiebres ontológicos y el plan de acción descargable en PDF una vez finalizado el encuentro con tu Coach.
+                      </p>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
               </>

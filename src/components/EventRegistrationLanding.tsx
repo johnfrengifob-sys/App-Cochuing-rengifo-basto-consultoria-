@@ -210,31 +210,21 @@ export const EventRegistrationLanding: React.FC<EventRegistrationLandingProps> =
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
               {/* Left Column: Event Banner & Live Countdown */}
               <div className="lg:col-span-6 bg-white dark:bg-[#18181B] rounded-3xl border border-gray-100 dark:border-neutral-800 shadow-[0_10px_35px_rgba(0,0,0,0.03)] dark:shadow-[0_10px_35px_rgba(0,0,0,0.3)] overflow-hidden flex flex-col">
-                <div className="relative bg-black min-h-[220px] sm:min-h-[260px] overflow-hidden group">
+                <div className="relative bg-black overflow-hidden group flex flex-col items-center justify-center border-b border-gray-100 dark:border-neutral-800">
                   <img
                     src={event.imageUrl}
                     alt={event.title}
                     referrerPolicy="no-referrer"
-                    className="absolute inset-0 w-full h-full object-cover opacity-90 group-hover:scale-105 transition-transform duration-700 ease-out"
+                    className="w-full h-auto max-h-[280px] object-contain opacity-95 group-hover:scale-105 transition-transform duration-700 ease-out"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/40 to-black/20" />
-                  <div className="relative z-10 p-5 flex items-center justify-between">
-                    <span className="px-3 py-1 rounded-full bg-black/60 backdrop-blur-md border border-white/20 text-[10px] font-medium text-white">
+                  <div className="absolute top-4 left-4 right-4 z-10 flex items-center justify-between pointer-events-none">
+                    <span className="pointer-events-auto px-3 py-1 rounded-full bg-black/70 backdrop-blur-md border border-white/20 text-[10px] font-medium text-white">
                       {event.category}
                     </span>
-                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-white/90 backdrop-blur-md text-[10px] font-semibold text-black">
+                    <span className="pointer-events-auto inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-white/90 backdrop-blur-md text-[10px] font-semibold text-black">
                       <Flame className="w-3 h-3 text-rose-500 fill-rose-500" />
                       {event.spotsLeft} Cupos Disponibles
                     </span>
-                  </div>
-
-                  <div className="absolute bottom-4 left-5 right-5 z-10 text-white space-y-1">
-                    <h2 className="text-lg sm:text-xl font-semibold tracking-tight leading-snug">
-                      {event.title}
-                    </h2>
-                    <p className="text-xs text-gray-300 font-light line-clamp-2">
-                      {event.subtitle}
-                    </p>
                   </div>
                 </div>
 

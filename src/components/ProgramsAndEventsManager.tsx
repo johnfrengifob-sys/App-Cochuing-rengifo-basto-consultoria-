@@ -43,14 +43,18 @@ interface ProgramsAndEventsManagerProps {
 }
 
 export const ProgramsAndEventsManager: React.FC<ProgramsAndEventsManagerProps> = ({
-  cronogramaEvents,
-  programs,
-  eventRegistrations,
+  cronogramaEvents = [],
+  programs = [],
+  eventRegistrations = [],
   onRefreshEvents,
   onRefreshPrograms,
   onRefreshRegistrations,
   onOpenRegistrationPortal,
 }) => {
+  const safeEvents = Array.isArray(cronogramaEvents) ? cronogramaEvents : [];
+  const safePrograms = Array.isArray(programs) ? programs : [];
+  const safeRegistrations = Array.isArray(eventRegistrations) ? eventRegistrations : [];
+
   const [activeSubTab, setActiveSubTab] = useState<'events' | 'programs' | 'participants' | 'banner'>('events');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedEventFilter, setSelectedEventFilter] = useState<string>('all');
@@ -340,12 +344,13 @@ export const ProgramsAndEventsManager: React.FC<ProgramsAndEventsManagerProps> =
   };
 
   // Filtered registrations
-  const filteredRegistrations = eventRegistrations.filter((r) => {
+  const filteredRegistrations = safeRegistrations.filter((r) => {
+    if (!r) return false;
     const matchesSearch =
-      r.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      r.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      r.phone.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      r.ticketCode.toLowerCase().includes(searchQuery.toLowerCase());
+      (r.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (r.email || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (r.phone || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (r.ticketCode || '').toLowerCase().includes(searchQuery.toLowerCase());
 
     const matchesEvent =
       selectedEventFilter === 'all' || r.eventId === selectedEventFilter;
@@ -353,7 +358,7 @@ export const ProgramsAndEventsManager: React.FC<ProgramsAndEventsManagerProps> =
     return matchesSearch && matchesEvent;
   });
 
-  const featuredEvent = cronogramaEvents.find((e) => e.featured) || cronogramaEvents[0];
+  const featuredEvent = safeEvents.find((e) => e && e.featured) || safeEvents[0];
 
   return (
     <div className="p-4 sm:p-8 lg:p-10 max-w-7xl mx-auto w-full flex-1 flex flex-col space-y-6">

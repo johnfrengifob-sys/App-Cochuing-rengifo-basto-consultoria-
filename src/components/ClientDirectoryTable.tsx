@@ -109,9 +109,12 @@ export const ClientDirectoryTable: React.FC<ClientDirectoryTableProps> = ({
     'Falta de asertividad y complacencia crónica',
   ];
 
+  const safeClients = Array.isArray(clients) ? clients : [];
+
   // Filtered clients list
   const filteredClients = useMemo(() => {
-    return clients.filter((client) => {
+    return safeClients.filter((client) => {
+      if (!client) return false;
       const matchesStatus =
         statusFilter === 'all' || (client.status || 'active') === statusFilter;
 
@@ -119,26 +122,28 @@ export const ClientDirectoryTable: React.FC<ClientDirectoryTableProps> = ({
       if (!q) return matchesStatus;
 
       const matchesSearch =
-        client.name.toLowerCase().includes(q) ||
+        (client.name || '').toLowerCase().includes(q) ||
         (client.title || '').toLowerCase().includes(q) ||
-        client.email.toLowerCase().includes(q) ||
+        (client.email || '').toLowerCase().includes(q) ||
         (client.primaryBreakdown || '').toLowerCase().includes(q);
 
       return matchesStatus && matchesSearch;
     });
-  }, [clients, searchTerm, statusFilter]);
+  }, [safeClients, searchTerm, statusFilter]);
 
   // Financial calculation: parse and sum invested amounts
   const totalInvestmentAccumulated = useMemo(() => {
-    return clients.reduce((acc, c) => {
+    return safeClients.reduce((acc, c) => {
+      if (!c) return acc;
       const cleanStr = (c.totalInvested || '0').replace(/[^0-9]/g, '');
       const num = parseInt(cleanStr, 10) || 0;
       return acc + num;
     }, 0);
-  }, [clients]);
+  }, [safeClients]);
 
   const filteredInvestmentAccumulated = useMemo(() => {
     return filteredClients.reduce((acc, c) => {
+      if (!c) return acc;
       const cleanStr = (c.totalInvested || '0').replace(/[^0-9]/g, '');
       const num = parseInt(cleanStr, 10) || 0;
       return acc + num;
@@ -154,9 +159,9 @@ export const ClientDirectoryTable: React.FC<ClientDirectoryTableProps> = ({
   };
 
   // Status breakdown counts
-  const countActive = clients.filter((c) => (c.status || 'active') === 'active').length;
-  const countWaiting = clients.filter((c) => c.status === 'waiting').length;
-  const countInactive = clients.filter((c) => c.status === 'inactive').length;
+  const countActive = safeClients.filter((c) => (c?.status || 'active') === 'active').length;
+  const countWaiting = safeClients.filter((c) => c?.status === 'waiting').length;
+  const countInactive = safeClients.filter((c) => c?.status === 'inactive').length;
 
   const startEditingBreakdown = (client: User, e: React.MouseEvent) => {
     e.stopPropagation();

@@ -424,13 +424,13 @@ export const WebhookConfigModal: React.FC<WebhookConfigModalProps> = ({
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-semibold text-black dark:text-white uppercase tracking-wider mb-1.5">
-                    Enlace de Agendamiento (Sesión 20 min)
+                    Enlace de Agendamiento Sesiones 1 a 1 (Google Calendar)
                   </label>
                   <input
                     type="url"
                     value={calendarUrl}
                     onChange={(e) => setCalendarUrl(e.target.value)}
-                    placeholder="https://calendar.app.google/..."
+                    placeholder="https://calendar.app.google/UYJSud4znEcyUo717"
                     className="w-full px-4 py-3 rounded-2xl bg-[#F9F9F9] dark:bg-[#202024] border border-gray-200 dark:border-neutral-700 text-xs text-black dark:text-white font-mono focus:outline-none focus:ring-1 focus:ring-black dark:focus:ring-white"
                   />
                 </div>

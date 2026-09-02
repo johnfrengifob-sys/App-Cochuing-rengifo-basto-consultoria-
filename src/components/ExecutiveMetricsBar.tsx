@@ -32,9 +32,14 @@ export const ExecutiveMetricsBar: React.FC<ExecutiveMetricsBarProps> = ({
   onGoToCRM,
   onGoToEvents,
 }) => {
-  const safeInsights = allInsights || insights || [];
-  const safeClients = clients || [];
-  const safeSessions = sessions || [];
+  const safeInsights = Array.isArray(allInsights)
+    ? allInsights
+    : Array.isArray(insights)
+    ? insights
+    : [];
+  const safeClients = Array.isArray(clients) ? clients : [];
+  const safeSessions = Array.isArray(sessions) ? sessions : [];
+  const safeProspects = Array.isArray(prospects) ? prospects : [];
 
   // Counts by traffic light status
   const countActive = safeClients.filter((c) => (c.status || 'active') === 'active').length;

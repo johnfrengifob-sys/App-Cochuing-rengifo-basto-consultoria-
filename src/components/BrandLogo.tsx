@@ -42,6 +42,14 @@ export const BrandLogo: React.FC<BrandLogoProps> = ({
       ? '#ffffff'
       : 'currentColor';
 
+  // Dynamic image styling based on variant and dark-mode to ensure crisp pure white inversion in dark mode
+  const imgFilterClasses =
+    variant === 'dark'
+      ? 'brightness-0 invert mix-blend-normal'
+      : variant === 'light'
+      ? 'mix-blend-multiply'
+      : 'mix-blend-multiply dark:mix-blend-normal dark:brightness-0 dark:invert';
+
   // Image height mapping for clean horizontal and block layouts
   const imgHeightMap: Record<string, string> = {
     xs: 'h-6 sm:h-7',
@@ -82,7 +90,7 @@ export const BrandLogo: React.FC<BrandLogoProps> = ({
             src={brandLogoImg}
             alt="Rengifo Basto Consultoría Ontológica"
             referrerPolicy="no-referrer"
-            className="w-full h-auto object-contain mix-blend-multiply dark:invert dark:brightness-200 transition-all duration-300 select-none pointer-events-none drop-shadow-xs"
+            className={`w-full h-auto object-contain ${imgFilterClasses} transition-all duration-300 select-none pointer-events-none drop-shadow-xs`}
           />
         </div>
       </div>
@@ -116,7 +124,7 @@ export const BrandLogo: React.FC<BrandLogoProps> = ({
           src={brandLogoImg}
           alt="Rengifo Basto Consultoría Ontológica"
           referrerPolicy="no-referrer"
-          className={`${imgHeightMap[size] || 'h-9 sm:h-10'} w-auto object-contain mix-blend-multiply dark:invert dark:brightness-200 transition-all duration-300 select-none pointer-events-none drop-shadow-xs`}
+          className={`${imgHeightMap[size] || 'h-9 sm:h-10'} w-auto object-contain ${imgFilterClasses} transition-all duration-300 select-none pointer-events-none drop-shadow-xs`}
         />
       </div>
 

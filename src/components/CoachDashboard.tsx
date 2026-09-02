@@ -100,12 +100,14 @@ export const CoachDashboard: React.FC<CoachDashboardProps> = ({
   );
 
   // CRM State
-  const [prospects, setProspects] = useState<Prospect[]>(() =>
-    OntologicalStore.getProspects()
-  );
-  const [clients, setClients] = useState<User[]>(() =>
-    OntologicalStore.getUsers().filter((u) => u.role === 'client')
-  );
+  const [prospects, setProspects] = useState<Prospect[]>(() => {
+    const res = OntologicalStore.getProspects();
+    return Array.isArray(res) ? res : [];
+  });
+  const [clients, setClients] = useState<User[]>(() => {
+    const users = OntologicalStore.getUsers();
+    return Array.isArray(users) ? users.filter((u) => u && u.role === 'client') : [];
+  });
 
   // Modal States
   const [showMakeModal, setShowMakeModal] = useState(false);
@@ -326,13 +328,6 @@ export const CoachDashboard: React.FC<CoachDashboardProps> = ({
       return isoStr;
     }
   };
-
-  // Group prospects into Kanban columns
-  const columnMatriz = prospects.filter((p) => p.status === 'matriz_enviada');
-  const columnSesion20 = prospects.filter((p) => p.status === 'sesion_20min_agendada');
-  const columnDecision = prospects.filter(
-    (p) => p.status === 'convertido' || p.status === 'descartado'
-  );
 
   return (
     <div className="min-h-screen bg-white dark:bg-[#0D0D0E] text-black dark:text-neutral-100 flex flex-col transition-colors duration-200">

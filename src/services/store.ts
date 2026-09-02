@@ -1,6 +1,7 @@
 import {
   User,
   Session,
+  PostSessionForm,
   FormSubmission,
   AIInsight,
   PulseFlag,
@@ -580,9 +581,54 @@ const INITIAL_USERS: User[] = [
     primaryBreakdown: 'Control obsesivo y delegación con angustia',
     lastActivityAt: new Date(Date.now() - 1000 * 60 * 60 * 12).toISOString(),
   },
+  {
+    uid: 'client-andres',
+    name: 'Andrés Quintero',
+    email: 'andres.quintero@example.com',
+    role: 'client',
+    title: 'Director de Innovación & Emprendimiento',
+    avatarUrl:
+      'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=400&q=80',
+    joinedAt: '2024-03-10',
+    programProgress: 2,
+    paymentStatus: 'Completado', // Supuestamente ya pagó todo el taller
+    programName: 'Certeza, Fronteras & Dirección Personal',
+    programFee: '$1.500.000 COP',
+    status: 'active',
+    totalInvested: '$1.500.000 COP',
+    primaryBreakdown: 'Quiebre de autoexigencia extrema, delegación y presencia directiva',
+    lastActivityAt: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
+  },
 ];
 
 const INITIAL_SESSIONS: Session[] = [
+  {
+    id: 'sess-andres-1',
+    clientId: 'client-andres',
+    sessionNumber: 1,
+    date: new Date(Date.now() - 1000 * 60 * 60 * 24 * 14).toISOString(),
+    meetLink: 'https://meet.google.com/rbc-andres-ses1',
+    status: 'completed',
+    notes: 'Sesión 1: Mapeo del quiebre de autoexigencia y deconstrucción de la omnipotencia operativa.',
+  },
+  {
+    id: 'sess-andres-2',
+    clientId: 'client-andres',
+    sessionNumber: 2,
+    date: new Date(Date.now() - 1000 * 60 * 60 * 3).toISOString(), // Finished today
+    meetLink: 'https://meet.google.com/rbc-andres-ses2',
+    status: 'completed',
+    notes: 'Sesión 2: Reencuadre de la culpa al delegar y diseño de conversaciones de oferta y confianza.',
+  },
+  {
+    id: 'sess-andres-3',
+    clientId: 'client-andres',
+    sessionNumber: 3,
+    date: new Date(Date.now() + 1000 * 60 * 60 * 24 * 11).toISOString(),
+    meetLink: 'https://meet.google.com/rbc-andres-ses3',
+    status: 'scheduled',
+    notes: 'Sesión 3: Decodificación somática de la presencia directiva y acuerdos de equipo.',
+  },
   {
     id: 'sess-103',
     clientId: 'client-1',
@@ -652,6 +698,40 @@ const INITIAL_FORMS: FormSubmission[] = [
     reflections: 'Descubrí que asociaba el límite con la falta de compromiso, cuando en realidad es el guardián de la excelencia.',
     levelSpecificAnswer: 'Proclamé mi primer límite oficial con la junta directiva sobre tiempos de entrega.',
     submittedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 13).toISOString(),
+  },
+];
+
+export const INITIAL_POST_SESSION_FORMS: PostSessionForm[] = [
+  {
+    id: 'psf-andres-1',
+    sessionId: 'sess-andres-1',
+    sessionNumber: 1,
+    clientId: 'client-andres',
+    clientName: 'Andrés Quintero',
+    sessionDate: new Date(Date.now() - 1000 * 60 * 60 * 24 * 14).toISOString(),
+    submittedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 14 + 1000 * 60 * 65).toISOString(),
+    // Pregunta 1:
+    coacheeEmotionAndOpenness:
+      'Habitó una fuerte ansiedad encubierta en hiper-racionalización y urgencia operativa. En los primeros 25 minutos mostró una marcada resistencia corporal (mandíbula apretada, hombros elevados y tendencia a justificar su sobrecarga con métricas de la empresa). Al intervenir con una pausa somática y espejar su agotamiento, tuvo una apertura profunda y vulnerable para admitir el miedo a perder control.',
+    // Pregunta 2:
+    masterJudgmentAndNarrative:
+      'Juicio Maestro: "Si no lo controlo y resuelvo todo yo mismo, el proyecto colapsará y perderé mi valor como líder". Esta narrativa de omnipotencia y desconfianza básica estructuraba su resistencia radical a delegar en su equipo directivo.',
+    // Pregunta 3:
+    perspectiveShiftEvidence:
+      'Hacia el cierre de la sesión reconoció conmovido: "Pensaba que delegar era abandonar, pero ahora veo que exigir perfección absoluta es una forma de protegerme del miedo a no ser suficiente". Soltó la tensión física visiblemente y aceptó ceder el liderazgo del comité operativo de los martes.',
+    // Pregunta 4:
+    directivenessAndIcfCompetency:
+      'Hacia el minuto 43 sentí la tentación de sugerirle una metodología específica de gestión en vez de sostener el silencio reflexivo para que él diseñara su propio acuerdo de confianza. Debo cuidar con rigor la Competencia ICF 5 (Mantiene la Presencia) y Competencia ICF 7 (Evoca Conciencia), evitando actuar desde el rol de consultor directivo.',
+    workbookTitle: 'Deconstrucción de la Omnipotencia & Arquitectura de Confianza Directiva',
+    coacheeKeyDeclaration:
+      'Declaro que mi valor como líder radica en habilitar la autonomía de mi equipo y no en cargar con el peso del resultado solitario.',
+    agreedActionItems: [
+      'Delegar la entrega del informe semanal de operaciones sin intervenir en los borradores intermedios.',
+      'Realizar 3 pausas de centramiento y respiración diafragmática de 3 minutos antes de ingresar a comités directivos.',
+      'Anotar en la bitácora somática cada vez que surja el impulso automático de microgestión o fiscalización.',
+    ],
+    somaticHomework:
+      'Práctica de enraizamiento y soltura: 5 minutos al iniciar la jornada conectando los pies al suelo, abriendo el pecho y soltando la mandíbula antes de encender el ordenador.',
   },
 ];
 
@@ -836,6 +916,7 @@ const STORAGE_KEYS = {
   PROSPECTS: 'rbc_prospects_v2',
   EVENT_REGISTRATIONS: 'rbc_event_registrations_v2',
   SESSIONS: 'rbc_sessions_v2',
+  POST_SESSION_FORMS: 'rbc_post_session_forms_v2',
   FORMS: 'rbc_forms_v2',
   AI_INSIGHTS: 'rbc_ai_insights_v2',
   CRONOGRAMA_EVENTS: 'rbc_cronograma_events_v2',
@@ -868,7 +949,7 @@ export const DEFAULT_NEXT_LEVEL_PAYMENT_URL =
   'https://checkout.wompi.co/l/raiz-y-balance-next-level';
 
 export const DEFAULT_CALENDAR_URL =
-  'https://calendar.app.google/rbc-sesion-20min';
+  'https://calendar.app.google/UYJSud4znEcyUo717';
 
 export const DEFAULT_MATRIX_URL =
   'https://drive.google.com/file/d/rbc-matriz-raiz-y-balance.pdf';
@@ -902,7 +983,20 @@ export class OntologicalStore {
   private static load<T>(key: string, fallback: T): T {
     try {
       const data = localStorage.getItem(key);
-      return data ? JSON.parse(data) : fallback;
+      if (!data || data === 'undefined' || data === 'null') {
+        return fallback;
+      }
+      const parsed = JSON.parse(data);
+      if (parsed === null || parsed === undefined) {
+        return fallback;
+      }
+      if (Array.isArray(fallback)) {
+        if (!Array.isArray(parsed)) {
+          return fallback;
+        }
+        return parsed as unknown as T;
+      }
+      return parsed;
     } catch {
       return fallback;
     }
@@ -921,10 +1015,11 @@ export class OntologicalStore {
   }
 
   static getCronogramaEvents(): CronogramaEvent[] {
-    return this.load<CronogramaEvent[]>(
+    const list = this.load<CronogramaEvent[]>(
       STORAGE_KEYS.CRONOGRAMA_EVENTS,
       INITIAL_CRONOGRAMA_EVENTS
     );
+    return Array.isArray(list) ? list : INITIAL_CRONOGRAMA_EVENTS;
   }
 
   static saveCronogramaEvents(events: CronogramaEvent[]): void {
@@ -982,10 +1077,11 @@ export class OntologicalStore {
 
   // --- ONTOLOGICAL PROGRAMS CATALOGUE & QUOTAS ---
   static getPrograms(): OntologicalProgram[] {
-    return this.load<OntologicalProgram[]>(
+    const list = this.load<OntologicalProgram[]>(
       STORAGE_KEYS.PROGRAMS,
       INITIAL_PROGRAMS
     );
+    return Array.isArray(list) ? list : INITIAL_PROGRAMS;
   }
 
   static savePrograms(programs: OntologicalProgram[]): void {
@@ -1028,10 +1124,11 @@ export class OntologicalStore {
 
   // --- EVENT REGISTRATIONS & RSVP ---
   static getEventRegistrations(): EventRegistration[] {
-    return this.load<EventRegistration[]>(
+    const list = this.load<EventRegistration[]>(
       STORAGE_KEYS.EVENT_REGISTRATIONS,
       INITIAL_EVENT_REGISTRATIONS
     );
+    return Array.isArray(list) ? list : INITIAL_EVENT_REGISTRATIONS;
   }
 
   static saveEventRegistrations(registrations: EventRegistration[]): void {
@@ -1224,13 +1321,32 @@ export class OntologicalStore {
 
   static getUsers(): User[] {
     const rawUsers = this.load<User[]>(STORAGE_KEYS.USERS, INITIAL_USERS);
+    let safeUsers = Array.isArray(rawUsers) ? rawUsers : INITIAL_USERS;
+
+    // Ensure Andres Quintero is always present as a client who has 100% paid the workshop
+    if (!safeUsers.some((u) => u.uid === 'client-andres' || u.email === 'andres.quintero@example.com')) {
+      const andres = INITIAL_USERS.find((u) => u.uid === 'client-andres');
+      if (andres) {
+        safeUsers = [...safeUsers, andres];
+      }
+    }
+
     // Ensure coach profile is always accurately named and has the latest avatar, and ensure clients have default status & breakdown
-    return rawUsers.map((u) => {
+    return safeUsers.map((u) => {
       if (u.uid === 'coach-1' || u.role === 'coach') {
         return {
           ...u,
           name: 'John Fredy Rengifo Basto',
           avatarUrl: coachAvatarImg,
+        };
+      }
+      if (u.uid === 'client-andres' || u.name.toLowerCase().includes('andres quintero')) {
+        return {
+          ...u,
+          paymentStatus: 'Completado',
+          totalInvested: '$1.500.000 COP',
+          status: 'active',
+          primaryBreakdown: u.primaryBreakdown || 'Quiebre de autoexigencia extrema, delegación y presencia directiva',
         };
       }
       // Guarantee client defaults for status, totalInvested and primaryBreakdown
@@ -1324,9 +1440,60 @@ export class OntologicalStore {
     }
   }
 
+  static getUserByEmail(email: string): User | null {
+    if (!email || !email.trim()) {
+      return null;
+    }
+    const normalized = email.trim().toLowerCase();
+    const users = this.getUsers();
+
+    // 1. Direct match with existing users
+    const directMatch = users.find((u) => u.email.trim().toLowerCase() === normalized);
+    if (directMatch) {
+      return directMatch;
+    }
+
+    // 2. Recognized Coach/Admin email variants
+    if (
+      normalized === 'johnfrengifob@gmail.com' ||
+      normalized === 'rengifobastoco@gmail.com' ||
+      normalized === 'coach@rbc.com' ||
+      normalized === 'admin@rbc.com' ||
+      normalized === 'admin@rengifobasto.com'
+    ) {
+      const coach = users.find((u) => u.role === 'coach');
+      if (coach) {
+        return coach;
+      }
+    }
+
+    return null;
+  }
+
+  static authenticateByEmail(email: string): {
+    success: boolean;
+    user?: User;
+    error?: string;
+  } {
+    const user = this.getUserByEmail(email);
+    if (!user) {
+      return {
+        success: false,
+        error:
+          'El correo electrónico no se encuentra registrado en el Directorio Maestro de Google Sheets ni en la base de datos de participantes.',
+      };
+    }
+    this.setCurrentUser(user.uid);
+    return {
+      success: true,
+      user,
+    };
+  }
+
   // --- PROSPECTS CRM LOGIC ---
   static getProspects(): Prospect[] {
-    return this.load<Prospect[]>(STORAGE_KEYS.PROSPECTS, INITIAL_PROSPECTS);
+    const list = this.load<Prospect[]>(STORAGE_KEYS.PROSPECTS, INITIAL_PROSPECTS);
+    return Array.isArray(list) ? list : INITIAL_PROSPECTS;
   }
 
   static saveProspects(prospects: Prospect[]): void {
@@ -1486,7 +1653,13 @@ export class OntologicalStore {
 
   // --- SESSIONS ---
   static getSessions(): Session[] {
-    return this.load<Session[]>(STORAGE_KEYS.SESSIONS, INITIAL_SESSIONS);
+    const list = this.load<Session[]>(STORAGE_KEYS.SESSIONS, INITIAL_SESSIONS);
+    let safeList = Array.isArray(list) ? list : INITIAL_SESSIONS;
+    if (!safeList.some((s) => s.clientId === 'client-andres')) {
+      const andresSessions = INITIAL_SESSIONS.filter((s) => s.clientId === 'client-andres');
+      safeList = [...safeList, ...andresSessions];
+    }
+    return safeList;
   }
 
   static saveSessions(sessions: Session[]): void {
@@ -1499,7 +1672,8 @@ export class OntologicalStore {
   }
 
   static getSessionsForClient(clientId: string): Session[] {
-    return this.getSessions().filter((s) => s.clientId === clientId);
+    const sessions = this.getSessions();
+    return Array.isArray(sessions) ? sessions.filter((s) => s.clientId === clientId) : [];
   }
 
   static getNextSessionForClient(clientId: string): Session | null {
@@ -1509,18 +1683,62 @@ export class OntologicalStore {
     return clientSessions[0] || null;
   }
 
+  // --- POST-SESSION FORMS (EVALUACIÓN POST-SESIÓN & CUADERNO DE TRABAJO) ---
+  static getPostSessionForms(): PostSessionForm[] {
+    const list = this.load<PostSessionForm[]>(
+      STORAGE_KEYS.POST_SESSION_FORMS,
+      INITIAL_POST_SESSION_FORMS
+    );
+    let safeList = Array.isArray(list) ? list : INITIAL_POST_SESSION_FORMS;
+    if (!safeList.some((f) => f.id === 'psf-andres-1')) {
+      safeList = [...safeList, ...INITIAL_POST_SESSION_FORMS];
+    }
+    return safeList;
+  }
+
+  static savePostSessionForms(forms: PostSessionForm[]): void {
+    this.save(STORAGE_KEYS.POST_SESSION_FORMS, forms);
+  }
+
+  static getPostSessionFormsForClient(clientId: string): PostSessionForm[] {
+    const forms = this.getPostSessionForms();
+    return forms
+      .filter((f) => f.clientId === clientId)
+      .sort((a, b) => new Date(b.sessionDate).getTime() - new Date(a.sessionDate).getTime());
+  }
+
+  static getPostSessionFormForSession(sessionId: string): PostSessionForm | undefined {
+    const forms = this.getPostSessionForms();
+    return forms.find((f) => f.sessionId === sessionId);
+  }
+
+  static savePostSessionForm(form: PostSessionForm): void {
+    const forms = this.getPostSessionForms();
+    const filtered = forms.filter((f) => f.id !== form.id && f.sessionId !== form.sessionId);
+    this.savePostSessionForms([form, ...filtered]);
+  }
+
+  static deletePostSessionForm(formId: string): void {
+    const forms = this.getPostSessionForms();
+    this.savePostSessionForms(forms.filter((f) => f.id !== formId));
+  }
+
   // --- FORMS ---
   static getForms(): FormSubmission[] {
-    return this.load<FormSubmission[]>(STORAGE_KEYS.FORMS, INITIAL_FORMS);
+    const list = this.load<FormSubmission[]>(STORAGE_KEYS.FORMS, INITIAL_FORMS);
+    return Array.isArray(list) ? list : INITIAL_FORMS;
   }
 
   static getFormsForClient(clientId: string): FormSubmission[] {
-    return this.getForms()
-      .filter((f) => f.clientId === clientId)
-      .sort(
-        (a, b) =>
-          new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime()
-      );
+    const forms = this.getForms();
+    return Array.isArray(forms)
+      ? forms
+          .filter((f) => f.clientId === clientId)
+          .sort(
+            (a, b) =>
+              new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime()
+          )
+      : [];
   }
 
   static getFormForStep(
@@ -1556,19 +1774,23 @@ export class OntologicalStore {
 
   // --- AI INSIGHTS ---
   static getAIInsights(): AIInsight[] {
-    return this.load<AIInsight[]>(
+    const list = this.load<AIInsight[]>(
       STORAGE_KEYS.AI_INSIGHTS,
       INITIAL_AI_INSIGHTS
     );
+    return Array.isArray(list) ? list : INITIAL_AI_INSIGHTS;
   }
 
   static getInsightsForClient(clientId: string): AIInsight[] {
-    return this.getAIInsights()
-      .filter((i) => i.clientId === clientId)
-      .sort(
-        (a, b) =>
-          new Date(b.generatedAt).getTime() - new Date(a.generatedAt).getTime()
-      );
+    const insights = this.getAIInsights();
+    return Array.isArray(insights)
+      ? insights
+          .filter((i) => i.clientId === clientId)
+          .sort(
+            (a, b) =>
+              new Date(b.generatedAt).getTime() - new Date(a.generatedAt).getTime()
+          )
+      : [];
   }
 
   static getLatestInsightForClient(clientId: string): AIInsight | null {
@@ -1792,9 +2014,12 @@ export class OntologicalStore {
   }
 
   static getCalendarUrl(): string {
-    return (
-      localStorage.getItem(STORAGE_KEYS.CALENDAR_URL) || DEFAULT_CALENDAR_URL
-    );
+    const stored = localStorage.getItem(STORAGE_KEYS.CALENDAR_URL);
+    if (!stored || stored.includes('rbc-sesion-20min')) {
+      localStorage.setItem(STORAGE_KEYS.CALENDAR_URL, DEFAULT_CALENDAR_URL);
+      return DEFAULT_CALENDAR_URL;
+    }
+    return stored;
   }
 
   static setCalendarUrl(url: string): void {

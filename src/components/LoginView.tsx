@@ -4,6 +4,7 @@ import { PromotionalEventBanner } from './PromotionalEventBanner';
 import { ThemeToggle } from './ThemeToggle';
 import { AuthenticationSpace } from './AuthenticationSpace';
 import { BrandLogo } from './BrandLogo';
+import { OntologicalStore, COMPANY_INFO } from '../services/store';
 import {
   Sparkles,
   ShieldCheck,
@@ -14,26 +15,117 @@ import {
   Phone,
   Mail,
   MessageSquare,
+  ArrowRight,
+  Lock,
+  UserCheck,
+  AlertCircle,
+  CheckCircle2,
+  User as UserIcon,
+  ChevronRight,
+  FileSpreadsheet,
+  HelpCircle,
+  Video,
 } from 'lucide-react';
-import { COMPANY_INFO } from '../services/store';
 
 interface LoginViewProps {
   onLogin: (user: User) => void;
   availableUsers: User[];
   onNavigateToRegister?: () => void;
+  onOpenVideoConferences?: () => void;
 }
 
 export const LoginView: React.FC<LoginViewProps> = ({
   onLogin,
   availableUsers,
   onNavigateToRegister,
+  onOpenVideoConferences,
 }) => {
-  const [selectedUser, setSelectedUser] = useState<User>(availableUsers[0]);
+  // Tabs: 'participant' (by email verified in Google Sheets) or 'admin' (Master Coach)
+  const [activeTab, setActiveTab] = useState<'participant' | 'admin'>('participant');
+
+  // Participant email authentication state
+  const [emailInput, setEmailInput] = useState('');
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [authError, setAuthError] = useState<string | null>(null);
+  const [verifiedClient, setVerifiedClient] = useState<User | null>(null);
+
+  // Authenticating user target for MFA modal
   const [authenticatingUser, setAuthenticatingUser] = useState<User | null>(null);
 
-  const handleOpenAuth = (user: User) => {
-    setSelectedUser(user);
-    setAuthenticatingUser(user);
+  // Coach/Admin user
+  const coachUser = availableUsers.find((u) => u.role === 'coach') || {
+    uid: 'coach-1',
+    name: 'John Fredy Rengifo Basto',
+    email: 'johnfrengifob@gmail.com',
+    role: 'coach' as const,
+    title: 'Consultor Ontológico Senior & Master Coach',
+    avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80',
+    joinedAt: '2023-01-10',
+  };
+
+  // Sample client emails already in the Google Sheets database for easy preview testing
+  const registeredClients = availableUsers.filter((u) => u.role === 'client');
+
+  // Handle participant email verification against Google Sheets / Database
+  const handleVerifyEmail = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    setAuthError(null);
+
+    const trimmed = emailInput.trim().toLowerCase();
+    if (!trimmed) {
+      setAuthError('Por favor ingresa tu correo electrónico para verificar tu acceso.');
+      return;
+    }
+
+    setIsVerifying(true);
+
+    setTimeout(() => {
+      const foundUser = OntologicalStore.getUserByEmail(trimmed);
+
+      if (!foundUser) {
+        setIsVerifying(false);
+        setVerifiedClient(null);
+        setAuthError(
+          `El correo "${trimmed}" no se encuentra en el Directorio Maestro de Google Sheets ni en la base de datos de participantes registrados. Verifica que sea el correo con el que te registraste en el conversatorio o solicita tu inscripción.`
+        );
+        return;
+      }
+
+      // If user is a client, strictly grant them access ONLY to their own profile
+      setIsVerifying(false);
+      setVerifiedClient(foundUser);
+      // Launch MFA / Biometric verification for this specific participant
+      setAuthenticatingUser(foundUser);
+    }, 450);
+  };
+
+  // Quick Google Sign-In button simulation (autocompletes email or verifies)
+  const handleGoogleSignIn = () => {
+    setAuthError(null);
+    if (!emailInput) {
+      // Pick first registered client or suggest Sofía
+      const defaultEmail = registeredClients[0]?.email || 'sofia.restrepo@example.com';
+      setEmailInput(defaultEmail);
+    }
+    setIsVerifying(true);
+    setTimeout(() => {
+      const emailToSearch = emailInput.trim() || registeredClients[0]?.email || 'sofia.restrepo@example.com';
+      const foundUser = OntologicalStore.getUserByEmail(emailToSearch);
+      setIsVerifying(false);
+      if (foundUser) {
+        setVerifiedClient(foundUser);
+        setAuthenticatingUser(foundUser);
+      } else {
+        setAuthError(
+          `La cuenta de Google vinculada (${emailToSearch}) no tiene un cupo asignado en Google Sheets. Por favor regístrate en el conversatorio.`
+        );
+      }
+    }, 400);
+  };
+
+  // Handle Coach / Admin Login
+  const handleAdminLogin = () => {
+    setAuthenticatingUser(coachUser);
   };
 
   return (
@@ -53,150 +145,348 @@ export const LoginView: React.FC<LoginViewProps> = ({
 
       {/* Hero Header */}
       <div className="w-full max-w-4xl mx-auto text-center flex flex-col items-center pt-2">
-        {/* Brand Logo - Clean transparent vector identity */}
-        <div className="w-full flex items-center justify-center mb-4 sm:mb-5 transition-all">
+        <div className="w-full flex items-center justify-center mb-3 sm:mb-4 transition-all">
           <BrandLogo layout="hero" className="hover:opacity-95 transition-opacity" />
         </div>
 
         <p className="text-sm sm:text-base font-normal tracking-wide text-gray-600 dark:text-neutral-300 max-w-lg mx-auto leading-relaxed mb-4">
-          Acompañamiento ontológico profesional
+          Acompañamiento ontológico profesional & Espacio Privado Confidencial
         </p>
       </div>
 
-      {/* AI Advertising Banner for the Next Event in the Schedule */}
-      <div className="w-full max-w-5xl mx-auto">
+      {/* Advertising Banner for the Next Event in the Schedule */}
+      <div className="w-full max-w-5xl mx-auto space-y-3">
         <PromotionalEventBanner onRegisterInterest={onNavigateToRegister} />
+
+        {onOpenVideoConferences && (
+          <div className="flex flex-wrap items-center justify-between gap-3 px-2 py-2.5 rounded-2xl bg-[#F9F9F9] dark:bg-[#18181B] border border-gray-200/70 dark:border-neutral-800 text-xs">
+            <div className="flex items-center gap-2 text-gray-600 dark:text-neutral-400 font-light">
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+              <span>
+                <strong className="text-black dark:text-white font-medium">Salas de Google Meet:</strong> Transmisiones en vivo para talleres, conversatorios y masterclasses.
+              </span>
+            </div>
+
+            <button
+              type="button"
+              onClick={onOpenVideoConferences}
+              className="px-3.5 py-1.5 rounded-xl bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/20 text-xs font-semibold text-blue-700 dark:text-blue-400 transition-colors flex items-center gap-1.5 cursor-pointer shadow-2xs"
+            >
+              <Video className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+              <span>Ver Enlaces de Videoconferencias & Talleres</span>
+              <ChevronRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        )}
       </div>
 
-      {/* Main Authentication & Profile Selection Card */}
-      <div className="w-full max-w-2xl mx-auto flex flex-col items-center">
-        {/* Role & Account Selector Card with clean subtle Apple design */}
-        <div className="w-full bg-[#F9F9F9] dark:bg-[#18181B] rounded-3xl p-6 sm:p-7 border border-gray-100/80 dark:border-neutral-800 shadow-[0_4px_24px_rgba(0,0,0,0.02)] text-left transition-colors">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-5">
-            <div>
-              <span className="text-[11px] font-semibold tracking-wider uppercase text-gray-400 dark:text-neutral-400 block">
-                Perfiles de Acceso Ontológico
-              </span>
-              <p className="text-xs text-gray-500 dark:text-neutral-400 font-light mt-0.5">
-                Haz <strong className="font-semibold text-black dark:text-white">doble clic</strong> en tu perfil para autenticarte.
-              </p>
-            </div>
+      {/* Main Authentication Card */}
+      <div className="w-full max-w-xl mx-auto flex flex-col items-center">
+        <div className="w-full bg-[#F9F9F9] dark:bg-[#18181B] rounded-3xl p-6 sm:p-8 border border-gray-200/80 dark:border-neutral-800 shadow-[0_8px_30px_rgba(0,0,0,0.04)] text-left transition-colors">
+          {/* Segmented Tab Switcher */}
+          <div className="flex items-center p-1 bg-gray-200/70 dark:bg-neutral-800/80 rounded-2xl mb-6">
+            <button
+              type="button"
+              onClick={() => {
+                setActiveTab('participant');
+                setAuthError(null);
+              }}
+              className={`flex-1 py-2.5 px-3 rounded-xl text-xs font-medium transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                activeTab === 'participant'
+                  ? 'bg-white dark:bg-[#27272A] text-black dark:text-white shadow-xs font-semibold'
+                  : 'text-gray-600 dark:text-neutral-400 hover:text-black dark:hover:text-white'
+              }`}
+            >
+              <UserIcon className="w-4 h-4" />
+              <span>Acceso de Participante</span>
+            </button>
 
-            <div className="flex items-center gap-2">
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/5 dark:bg-white/10 text-[11px] font-medium text-gray-600 dark:text-neutral-300">
-                <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
-                <span>Acceso Multi-Factor</span>
-              </span>
-            </div>
+            <button
+              type="button"
+              onClick={() => {
+                setActiveTab('admin');
+                setAuthError(null);
+              }}
+              className={`flex-1 py-2.5 px-3 rounded-xl text-xs font-medium transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                activeTab === 'admin'
+                  ? 'bg-white dark:bg-[#27272A] text-black dark:text-white shadow-xs font-semibold'
+                  : 'text-gray-600 dark:text-neutral-400 hover:text-black dark:hover:text-white'
+              }`}
+            >
+              <Lock className="w-3.5 h-3.5" />
+              <span>Administración RBC</span>
+            </button>
           </div>
 
-          {/* Authentication methods preview badges */}
-          <div className="grid grid-cols-3 gap-2 mb-5 p-3 rounded-2xl bg-white/70 dark:bg-[#1F1F23] border border-gray-100 dark:border-neutral-800 text-[11px] text-gray-600 dark:text-neutral-300 font-light">
-            <div className="flex items-center gap-1.5 justify-center">
-              <svg className="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24">
-                <path
-                  fill="#4285F4"
-                  d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                />
-                <path
-                  fill="#34A853"
-                  d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                />
-                <path
-                  fill="#FBBC05"
-                  d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
-                />
-                <path
-                  fill="#EA4335"
-                  d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
-                />
-              </svg>
-              <span className="truncate">Cuenta Google</span>
-            </div>
-            <div className="flex items-center gap-1.5 justify-center border-x border-gray-200/60 dark:border-neutral-700">
-              <KeyRound className="w-3.5 h-3.5 text-blue-500 shrink-0" />
-              <span className="truncate">Código OTP</span>
-            </div>
-            <div className="flex items-center gap-1.5 justify-center">
-              <ScanFace className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
-              <span className="truncate">Face ID Facial</span>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-            {availableUsers.map((user) => {
-              const isSelected = selectedUser.uid === user.uid;
-              return (
-                <div
-                  key={user.uid}
-                  onClick={() => setSelectedUser(user)}
-                  onDoubleClick={() => handleOpenAuth(user)}
-                  title="Haz doble clic para abrir el espacio de autenticación"
-                  className={`group p-4 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between gap-3 select-none relative ${
-                    isSelected
-                      ? 'bg-white dark:bg-[#242428] border-black dark:border-white shadow-xs ring-2 ring-black/10 dark:ring-white/20'
-                      : 'bg-white/60 dark:bg-[#202024] border-gray-100 dark:border-neutral-800 hover:bg-white dark:hover:bg-[#27272D] hover:border-gray-200 dark:hover:border-neutral-700'
-                  }`}
-                  id={`profile-card-${user.uid}`}
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="relative">
-                      <img
-                        src={user.avatarUrl}
-                        alt={user.name}
-                        referrerPolicy="no-referrer"
-                        className="w-12 h-12 rounded-2xl object-cover shadow-xs ring-1 ring-black/5 dark:ring-white/10"
-                      />
-                      <div className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-black dark:bg-white text-white dark:text-black flex items-center justify-center text-[9px] font-bold">
-                        {user.role === 'coach' ? 'C' : 'U'}
-                      </div>
-                    </div>
-
-                    <div className="flex-1 min-w-0">
-                      <div className="text-xs sm:text-sm font-semibold text-black dark:text-white truncate tracking-tight">
-                        {user.name}
-                      </div>
-                      <div className="text-[11px] font-light text-gray-400 dark:text-neutral-400 capitalize truncate">
-                        {user.role === 'coach' ? 'Coach Consultor' : 'Cliente Directivo'}
-                      </div>
-                      <div className="text-[10px] text-gray-400 dark:text-neutral-500 truncate mt-0.5">
-                        {user.email}
-                      </div>
-                    </div>
+          {/* ========================================================================= */}
+          {/* TAB 1: PARTICIPANT ACCESS (STRICT PRIVACY BY VERIFIED EMAIL)              */}
+          {/* ========================================================================= */}
+          {activeTab === 'participant' ? (
+            <div className="space-y-5 animate-fade-in">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-[11px] font-medium text-emerald-700 dark:text-emerald-400 mb-2">
+                    <ShieldCheck className="w-3.5 h-3.5" />
+                    <span>Aislamiento de Perfil & Privacidad ICF</span>
                   </div>
+                  <h3 className="text-base font-semibold text-black dark:text-white tracking-tight">
+                    Ingresa con tu Correo Registrado
+                  </h3>
+                  <p className="text-xs text-gray-500 dark:text-neutral-400 font-light mt-1 leading-relaxed">
+                    Tu acceso valida tu identidad contra el Directorio de Google Sheets. Cada participante accede de forma individual y privada a su propio espacio.
+                  </p>
+                </div>
+              </div>
 
-                  {/* Action trigger button inside card for clear interaction */}
-                  <div className="pt-2.5 border-t border-gray-100 dark:border-neutral-800/80 flex items-center justify-between">
-                    <span className="text-[10px] font-light text-gray-400 dark:text-neutral-400 group-hover:text-black dark:group-hover:text-white transition-colors flex items-center gap-1">
-                      <Sparkles className="w-3 h-3 text-amber-500" />
-                      Doble clic para autenticar
-                    </span>
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleOpenAuth(user);
+              {/* Form Input */}
+              <form onSubmit={handleVerifyEmail} className="space-y-4 pt-1">
+                <div>
+                  <label className="block text-[11px] font-semibold uppercase tracking-wider text-black dark:text-white mb-1.5">
+                    Correo Electrónico (Registrado en Google Sheets)
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="email"
+                      required
+                      value={emailInput}
+                      onChange={(e) => {
+                        setEmailInput(e.target.value);
+                        if (authError) setAuthError(null);
                       }}
-                      className="px-2.5 py-1 rounded-xl bg-black dark:bg-white text-white dark:text-black text-[11px] font-medium hover:opacity-90 transition-all cursor-pointer flex items-center gap-1 shadow-2xs"
-                      id={`auth-btn-${user.uid}`}
-                    >
-                      <Fingerprint className="w-3 h-3" />
-                      <span>Autenticar</span>
-                    </button>
+                      placeholder="ejemplo: sofia.restrepo@example.com"
+                      className="w-full pl-10 pr-4 py-3 rounded-2xl bg-white dark:bg-[#202024] border border-gray-200 dark:border-neutral-700 text-xs sm:text-sm text-black dark:text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white transition-all"
+                    />
+                    <Mail className="w-4 h-4 text-gray-400 dark:text-neutral-500 absolute left-3.5 top-3.5" />
                   </div>
                 </div>
-              );
-            })}
-          </div>
 
-          <div className="mt-4 pt-3 flex items-center justify-between text-[11px] text-gray-400 dark:text-neutral-500 font-light">
-            <span>Seguridad biométrica e identidad federada Google Workspace</span>
-            <span>Versión 2.4</span>
+                {/* Error Banner */}
+                {authError && (
+                  <div className="p-3.5 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 text-xs text-rose-800 dark:text-rose-300 space-y-2 animate-fade-in">
+                    <div className="flex items-start gap-2">
+                      <AlertCircle className="w-4 h-4 text-rose-600 dark:text-rose-400 shrink-0 mt-0.5" />
+                      <div className="space-y-1">
+                        <span className="font-semibold block">Acceso Restringido</span>
+                        <p className="font-light leading-relaxed">{authError}</p>
+                      </div>
+                    </div>
+
+                    {onNavigateToRegister && (
+                      <div className="pt-2 border-t border-rose-200/60 dark:border-rose-900/40 flex items-center justify-between">
+                        <span className="text-[11px] text-rose-700 dark:text-rose-300">
+                          ¿No tienes cupo aún?
+                        </span>
+                        <button
+                          type="button"
+                          onClick={onNavigateToRegister}
+                          className="px-3 py-1 rounded-xl bg-rose-600 text-white text-[11px] font-medium hover:bg-rose-700 transition-colors flex items-center gap-1 cursor-pointer"
+                        >
+                          <Sparkles className="w-3 h-3" />
+                          <span>Inscribirme en el Taller</span>
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Primary Enter Button */}
+                <button
+                  type="submit"
+                  disabled={isVerifying}
+                  className="w-full py-3.5 px-4 rounded-2xl bg-black dark:bg-white text-white dark:text-black text-xs sm:text-sm font-semibold hover:opacity-90 active:scale-[0.99] transition-all cursor-pointer flex items-center justify-center gap-2 shadow-xs disabled:opacity-50"
+                  id="btn-verify-participant-email"
+                >
+                  {isVerifying ? (
+                    <>
+                      <span className="animate-spin rounded-full h-4 w-4 border-2 border-white dark:border-black border-t-transparent" />
+                      <span>Verificando en Google Sheets...</span>
+                    </>
+                  ) : (
+                    <>
+                      <UserCheck className="w-4 h-4" />
+                      <span>Ingresar a mi Espacio Personal</span>
+                      <ArrowRight className="w-4 h-4 ml-1" />
+                    </>
+                  )}
+                </button>
+
+                {/* Secondary Google SSO Button */}
+                <div className="pt-2 space-y-2">
+                  <div className="flex items-center gap-2 text-[10px] text-gray-400 dark:text-neutral-500 justify-center">
+                    <span className="h-px bg-gray-200 dark:bg-neutral-800 flex-1" />
+                    <span>Autenticación federada</span>
+                    <span className="h-px bg-gray-200 dark:bg-neutral-800 flex-1" />
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={handleGoogleSignIn}
+                    disabled={isVerifying}
+                    className="w-full py-2.5 px-4 rounded-2xl bg-white dark:bg-[#202024] border border-gray-200 dark:border-neutral-700 text-xs font-medium text-black dark:text-white hover:bg-gray-50 dark:hover:bg-[#25252A] transition-all flex items-center justify-center gap-2 cursor-pointer"
+                  >
+                    <svg className="w-4 h-4" viewBox="0 0 24 24">
+                      <path
+                        fill="#4285F4"
+                        d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                      />
+                      <path
+                        fill="#34A853"
+                        d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                      />
+                      <path
+                        fill="#FBBC05"
+                        d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
+                      />
+                      <path
+                        fill="#EA4335"
+                        d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
+                      />
+                    </svg>
+                    <span>Continuar con Cuenta de Google</span>
+                  </button>
+                </div>
+              </form>
+
+              {/* Verified Client Info Card preview before MFA */}
+              {verifiedClient && (
+                <div className="p-3.5 rounded-2xl bg-white dark:bg-[#202024] border border-emerald-500/30 flex items-center justify-between animate-fade-in">
+                  <div className="flex items-center gap-3">
+                    <img
+                      src={verifiedClient.avatarUrl}
+                      alt={verifiedClient.name}
+                      referrerPolicy="no-referrer"
+                      className="w-10 h-10 rounded-full object-cover ring-2 ring-emerald-500/40"
+                    />
+                    <div>
+                      <div className="text-xs font-semibold text-black dark:text-white">
+                        {verifiedClient.name}
+                      </div>
+                      <div className="text-[11px] text-gray-500 dark:text-neutral-400">
+                        {verifiedClient.email}
+                      </div>
+                    </div>
+                  </div>
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 font-medium">
+                    Autorizado
+                  </span>
+                </div>
+              )}
+
+              {/* Discrete testing helper: Quick fill with existing accounts in Google Sheets */}
+              {registeredClients.length > 0 && (
+                <div className="pt-3 border-t border-gray-200/70 dark:border-neutral-800/80">
+                  <div className="flex items-center gap-1.5 text-[11px] font-medium text-gray-500 dark:text-neutral-400 mb-2">
+                    <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                    <span>Participantes registrados en Google Sheets (Demostración):</span>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {registeredClients.map((client) => (
+                      <button
+                        key={client.uid}
+                        type="button"
+                        onClick={() => {
+                          setEmailInput(client.email);
+                          setAuthError(null);
+                        }}
+                        className={`text-[11px] px-2.5 py-1 rounded-xl border transition-all cursor-pointer flex items-center gap-1.5 ${
+                          emailInput.toLowerCase() === client.email.toLowerCase()
+                            ? 'bg-black text-white dark:bg-white dark:text-black border-black dark:border-white shadow-2xs font-semibold'
+                            : 'bg-white dark:bg-[#202024] text-gray-700 dark:text-neutral-300 border-gray-200 dark:border-neutral-700 hover:border-gray-400 dark:hover:border-neutral-500'
+                        }`}
+                        title={`Haz clic para probar el acceso con ${client.name}`}
+                      >
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                        <span className="font-medium">{client.name.split(' ')[0]}:</span>
+                        <span className="font-mono text-[10px] opacity-75">{client.email}</span>
+                      </button>
+                    ))}
+                  </div>
+                  <p className="text-[10px] text-gray-400 dark:text-neutral-500 font-light mt-2">
+                    * Haz clic en cualquier correo registrado para autocompletar el campo y probar la autenticación estricta.
+                  </p>
+                </div>
+              )}
+            </div>
+          ) : (
+            /* ========================================================================= */
+            /* TAB 2: ADMINISTRATOR ACCESS (MASTER COACH JOHN FREDY RENGIFO BASTO)      */
+            /* ========================================================================= */
+            <div className="space-y-5 animate-fade-in">
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-[11px] font-medium text-amber-700 dark:text-amber-400">
+                <Lock className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
+                <span>Control General & Gestión de Clientes</span>
+              </div>
+
+              <div>
+                <h3 className="text-base font-semibold text-black dark:text-white tracking-tight">
+                  Acceso Exclusivo Administrador
+                </h3>
+                <p className="text-xs text-gray-500 dark:text-neutral-400 font-light mt-1 leading-relaxed">
+                  Solo el Consultor Master Coach tiene acceso al directorio de participantes, sincronización con Google Sheets, quiebres ontológicos y panel de supervisión.
+                </p>
+              </div>
+
+              {/* Coach identity card */}
+              <div className="p-4 rounded-2xl bg-white dark:bg-[#202024] border border-gray-200 dark:border-neutral-700 flex items-center gap-3.5 shadow-2xs">
+                <img
+                  src={coachUser.avatarUrl}
+                  alt={coachUser.name}
+                  referrerPolicy="no-referrer"
+                  className="w-14 h-14 rounded-2xl object-cover ring-2 ring-black/10 dark:ring-white/10"
+                />
+                <div className="flex-1 min-w-0">
+                  <div className="text-xs sm:text-sm font-semibold text-black dark:text-white truncate">
+                    {coachUser.name}
+                  </div>
+                  <div className="text-[11px] text-gray-500 dark:text-neutral-400 truncate">
+                    {coachUser.title}
+                  </div>
+                  <div className="text-[10px] font-mono text-gray-400 dark:text-neutral-500 truncate mt-0.5">
+                    {coachUser.email}
+                  </div>
+                </div>
+                <span className="px-2.5 py-1 rounded-xl bg-black dark:bg-white text-white dark:text-black text-[10px] font-semibold tracking-wider uppercase">
+                  Admin
+                </span>
+              </div>
+
+              <div className="p-3.5 rounded-2xl bg-gray-100/70 dark:bg-neutral-800/60 border border-gray-200/60 dark:border-neutral-700 text-xs text-gray-600 dark:text-neutral-300 space-y-1">
+                <div className="font-semibold text-black dark:text-white flex items-center gap-1.5">
+                  <ShieldCheck className="w-4 h-4 text-emerald-500" />
+                  <span>Facultades de Administrador:</span>
+                </div>
+                <ul className="text-[11px] font-light list-disc list-inside space-y-0.5 text-gray-500 dark:text-neutral-400">
+                  <li>Directorio Maestro de Clientes & CRM de Conversatorios</li>
+                  <li>Sincronización bidireccional con Google Sheets</li>
+                  <li>Supervisión pedagógica y planes de trabajo personalizados</li>
+                  <li>Configuración de webhooks en Make / Google Workspace</li>
+                </ul>
+              </div>
+
+              <button
+                type="button"
+                onClick={handleAdminLogin}
+                className="w-full py-3.5 px-4 rounded-2xl bg-black dark:bg-white text-white dark:text-black text-xs sm:text-sm font-semibold hover:opacity-90 active:scale-[0.99] transition-all cursor-pointer flex items-center justify-center gap-2 shadow-xs"
+                id="btn-admin-login"
+              >
+                <Fingerprint className="w-4 h-4" />
+                <span>Autenticar como Master Coach Administrador</span>
+                <ArrowRight className="w-4 h-4 ml-1" />
+              </button>
+            </div>
+          )}
+
+          <div className="mt-5 pt-4 border-t border-gray-100 dark:border-neutral-800 flex items-center justify-between text-[11px] text-gray-400 dark:text-neutral-500 font-light">
+            <span className="flex items-center gap-1">
+              <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
+              Seguridad Encriptada Google Cloud
+            </span>
+            <span>Versión 2.5 • ICF Accredited</span>
           </div>
         </div>
       </div>
 
-      {/* Authentication Space Modal */}
+      {/* Authentication Space Modal (MFA, Google, Face ID, OTP) */}
       {authenticatingUser && (
         <AuthenticationSpace
           user={authenticatingUser}
@@ -215,7 +505,7 @@ export const LoginView: React.FC<LoginViewProps> = ({
           <div className="text-[11px] font-semibold uppercase tracking-wider text-gray-500 dark:text-neutral-400 mb-3">
             Información de Contacto & Sede
           </div>
-          
+
           <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-3 text-xs text-gray-600 dark:text-neutral-300">
             {/* Dirección */}
             <div className="inline-flex items-center gap-2">
@@ -291,5 +581,3 @@ export const LoginView: React.FC<LoginViewProps> = ({
     </div>
   );
 };
-
-

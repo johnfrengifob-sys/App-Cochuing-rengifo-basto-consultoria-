@@ -1,4 +1,4 @@
-import { FormSubmission, User, ProgramNodeInfo, AIInsight } from '../types';
+import { FormSubmission, User, ProgramNodeInfo, AIInsight, PostSessionForm, Session } from '../types';
 import { COMPANY_INFO } from '../services/store';
 import { GoogleWorkspaceService } from '../services/googleWorkspace';
 
@@ -706,6 +706,364 @@ export class PDFGenerator {
     `;
 
     openPrintWindow(htmlContent, `Refuerzo_${node.level.replace(/\s+/g, '_')}_Sesion_${node.step}.pdf`);
+  }
+
+  /**
+   * Generates and triggers printable PDF view for Session Practical Workbook (Cuaderno de Trabajo)
+   * generated from the Post-Session evaluation form.
+   */
+  static generateSessionWorkbookPDF(
+    form: PostSessionForm,
+    client?: User,
+    session?: Session
+  ): void {
+    const clientName = client?.name || form.clientName || 'Participante';
+    const fileName = `Cuaderno_Trabajo_Sesion_${form.sessionNumber}_${clientName.replace(/\s+/g, '_')}.pdf`;
+
+    // Sync with Google Drive if available
+    try {
+      if (client) {
+        GoogleWorkspaceService.savePDFReportToDrive(fileName, 'Cuaderno de Trabajo Ontológico', client, {
+          sessionStep: form.sessionNumber,
+          summary: form.workbookTitle || form.masterJudgmentAndNarrative,
+        });
+      }
+    } catch {
+      // ignore
+    }
+
+    const formattedDate = new Date(form.sessionDate || form.submittedAt).toLocaleDateString('es-ES', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    });
+
+    const actionItems = Array.isArray(form.agreedActionItems) && form.agreedActionItems.length > 0
+      ? form.agreedActionItems
+      : [
+          'Sostener la presencia reflexiva ante situaciones de sobrecarga o exigencia.',
+          'Registrar quiebres emocionales en la bitácora somática quincenal.',
+          'Diseñar conversaciones asertivas y claras con el equipo o entorno de trabajo.',
+        ];
+
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html lang="es">
+      <head>
+        <meta charset="UTF-8">
+        <title>Cuaderno de Trabajo - Sesión ${form.sessionNumber} - ${escapeHTML(clientName)}</title>
+        <style>
+          @page {
+            size: A4;
+            margin: 18mm;
+          }
+          * {
+            box-sizing: border-box;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+          }
+          body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            color: #111827;
+            background: #ffffff;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+          }
+          .header {
+            border-bottom: 2px solid #000;
+            padding-bottom: 14px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+          }
+          .brand-title {
+            font-size: 18px;
+            font-weight: 800;
+            margin: 0 0 2px 0;
+            letter-spacing: -0.5px;
+          }
+          .brand-subtitle {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: #4b5563;
+            margin: 0;
+          }
+          .badge-row {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+            margin-bottom: 10px;
+          }
+          .level-pill {
+            display: inline-block;
+            background: #000;
+            color: #fff;
+            font-size: 10px;
+            font-weight: 700;
+            padding: 3px 10px;
+            border-radius: 999px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+          }
+          .icf-pill {
+            display: inline-block;
+            background: #e0e7ff;
+            color: #3730a3;
+            font-size: 10px;
+            font-weight: 700;
+            padding: 3px 10px;
+            border-radius: 999px;
+          }
+          .hero-title {
+            font-size: 20px;
+            font-weight: 800;
+            color: #000;
+            margin: 0 0 4px 0;
+            line-height: 1.25;
+          }
+          .meta-strip {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 10px 14px;
+            margin-bottom: 18px;
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr;
+            gap: 12px;
+            font-size: 12px;
+          }
+          .meta-item strong {
+            display: block;
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #64748b;
+            margin-bottom: 2px;
+          }
+          .card {
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 14px 16px;
+            margin-bottom: 14px;
+            background: #fff;
+            page-break-inside: avoid;
+          }
+          .card-title {
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #000;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+          }
+          .question-label {
+            font-size: 11px;
+            font-weight: 700;
+            color: #1f2937;
+            margin: 0 0 4px 0;
+            line-height: 1.35;
+          }
+          .answer-box {
+            background: #f9fafb;
+            border-left: 3px solid #000;
+            padding: 10px 12px;
+            border-radius: 0 6px 6px 0;
+            font-size: 12px;
+            color: #374151;
+            line-height: 1.55;
+            margin-bottom: 12px;
+          }
+          .supervisor-box {
+            background: #fefce8;
+            border-left: 3px solid #ca8a04;
+            padding: 10px 12px;
+            border-radius: 0 6px 6px 0;
+            font-size: 12px;
+            color: #713f12;
+            line-height: 1.55;
+          }
+          .declaration-box {
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            padding: 12px 14px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #166534;
+            text-align: center;
+            margin-bottom: 12px;
+            line-height: 1.45;
+          }
+          .bullet-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            font-size: 12px;
+            color: #374151;
+            margin-bottom: 6px;
+          }
+          .bullet-check {
+            width: 14px;
+            height: 14px;
+            border: 1.5px solid #000;
+            border-radius: 3px;
+            margin-top: 2px;
+            flex-shrink: 0;
+          }
+          .signatures {
+            margin-top: 28px;
+            display: flex;
+            justify-content: space-between;
+            page-break-inside: avoid;
+            padding-top: 20px;
+            border-top: 1px solid #e5e7eb;
+          }
+          .sig-line {
+            width: 220px;
+            border-top: 1px solid #111827;
+            padding-top: 6px;
+            font-size: 11px;
+            color: #4b5563;
+            text-align: center;
+          }
+          .sig-line strong {
+            display: block;
+            font-size: 12px;
+            color: #000;
+          }
+          .footer {
+            margin-top: 24px;
+            border-top: 1px solid #e5e7eb;
+            padding-top: 10px;
+            display: flex;
+            justify-content: space-between;
+            font-size: 10px;
+            color: #9ca3af;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <div>
+            <div class="brand-title">${COMPANY_INFO.fullName}</div>
+            <div class="brand-subtitle">Consultoría Ontológica & Escuela de Liderazgo Consciente</div>
+          </div>
+          <div style="text-align: right;">
+            <div style="font-size: 11px; font-weight: 700; color: #000;">Master Coach: John Fredy Rengifo Basto</div>
+            <div style="font-size: 10px; color: #6b7280;">Estándares de Competencias Clave ICF</div>
+          </div>
+        </div>
+
+        <div class="badge-row">
+          <span class="level-pill">Cuaderno de Trabajo Ontológico • Sesión ${form.sessionNumber}</span>
+          <span class="icf-pill">Supervisión & Bitácora ICF</span>
+          <span style="font-size: 11px; color: #059669; font-weight: 600; margin-left: auto;">
+            ✓ Taller 100% Pagado & Habilitado
+          </span>
+        </div>
+
+        <div class="hero-title">${escapeHTML(form.workbookTitle || `Sesión ${form.sessionNumber}: Reencuadre y Dominio Ontológico`)}</div>
+
+        <div class="meta-strip">
+          <div class="meta-item">
+            <strong>Coachee / Participante</strong>
+            ${escapeHTML(clientName)} ${client?.title ? `— <span style="color:#64748b;">${escapeHTML(client.title)}</span>` : ''}
+          </div>
+          <div class="meta-item">
+            <strong>Fecha de la Sesión</strong>
+            ${formattedDate}
+          </div>
+          <div class="meta-item">
+            <strong>Inversión Realizada</strong>
+            ${client?.totalInvested || '$1.500.000 COP'} (Completado)
+          </div>
+        </div>
+
+        <!-- SECCIÓN 1: DIAGNÓSTICO ONTO-SOMÁTICO (PREGUNTAS 1, 2 Y 3) -->
+        <div class="card">
+          <div class="card-title">1. Diagnóstico Ontológico, Corporal y Discursivo de la Sesión</div>
+
+          <p class="question-label">1. ¿Qué emoción principal habitó al coachee hoy y cuál fue su nivel de resistencia o apertura para explorarla?</p>
+          <div class="answer-box">
+            ${escapeHTML(form.coacheeEmotionAndOpenness)}
+          </div>
+
+          <p class="question-label">2. ¿Cuál fue el juicio maestro, la narrativa o la creencia limitante que estructuró su discurso durante la sesión?</p>
+          <div class="answer-box">
+            ${escapeHTML(form.masterJudgmentAndNarrative)}
+          </div>
+
+          <p class="question-label">3. ¿Qué evidencia de cambio de perspectiva o nuevo nivel de consciencia demostró el coachee al finalizar el encuentro?</p>
+          <div class="answer-box" style="margin-bottom: 0;">
+            ${escapeHTML(form.perspectiveShiftEvidence)}
+          </div>
+        </div>
+
+        <!-- SECCIÓN 2: SUPERVISIÓN Y COMPETENCIAS ICF (PREGUNTA 4) -->
+        <div class="card">
+          <div class="card-title">2. Reflexión de Supervisión y Presencia del Coach (ICF)</div>
+          <p class="question-label">4. ¿En qué momento de la sesión fui más directivo de lo necesario y qué competencia ICF debo cuidar más en nuestro próximo encuentro?</p>
+          <div class="supervisor-box">
+            ${escapeHTML(form.directivenessAndIcfCompetency)}
+          </div>
+        </div>
+
+        <!-- SECCIÓN 3: CUADERNO PRÁCTICO PARA EL COACHEE -->
+        <div class="card">
+          <div class="card-title">3. Cuaderno Práctico de Integración & Acciones Quincenales</div>
+
+          ${form.coacheeKeyDeclaration ? `
+            <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: #15803d; margin-bottom: 4px;">Declaración Central de Aprendizaje:</div>
+            <div class="declaration-box">
+              "${escapeHTML(form.coacheeKeyDeclaration)}"
+            </div>
+          ` : ''}
+
+          <div style="font-size: 11px; font-weight: 700; color: #1f2937; margin: 10px 0 6px 0;">Plan de Acción y Conversaciones Comprometidas:</div>
+          ${actionItems.map((item) => `
+            <div class="bullet-item">
+              <div class="bullet-check"></div>
+              <div>${escapeHTML(item)}</div>
+            </div>
+          `).join('')}
+
+          ${form.somaticHomework ? `
+            <div style="font-size: 11px; font-weight: 700; color: #1f2937; margin: 12px 0 4px 0;">Protocolo Somático y Corporal de Anclaje:</div>
+            <div class="answer-box" style="background: #f8fafc; border-left-color: #0284c7; margin-bottom: 0;">
+              ${escapeHTML(form.somaticHomework)}
+            </div>
+          ` : ''}
+        </div>
+
+        <div class="signatures">
+          <div class="sig-line">
+            <strong>John Fredy Rengifo Basto</strong>
+            Master Coach Ontológico RBC • ICF
+            <div style="font-size: 9px; color: #6b7280; margin-top: 2px;">Firma Digital & Sello Ético</div>
+          </div>
+          <div class="sig-line">
+            <strong>${escapeHTML(clientName)}</strong>
+            Coachee • RBC Transformación
+            <div style="font-size: 9px; color: #6b7280; margin-top: 2px;">Compromiso & Acuerdos de Sesión</div>
+          </div>
+        </div>
+
+        <div class="footer">
+          <div>${COMPANY_INFO.fullName} • ${COMPANY_INFO.city} • Tel: ${COMPANY_INFO.formattedPhone}</div>
+          <div>Documento Confidencial de Coaching Ontológico • ICF Code of Ethics</div>
+        </div>
+      </body>
+      </html>
+    `;
+
+    openPrintWindow(htmlContent, fileName);
   }
 }
 

@@ -927,16 +927,30 @@ export const GoogleWorkspaceHub: React.FC<GoogleWorkspaceHubProps> = ({
                 </p>
               </div>
 
-              <a
-                href="https://calendar.google.com/calendar/u/0/r"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="px-4 py-2 rounded-2xl border border-gray-200 dark:border-neutral-700 hover:bg-gray-50 dark:hover:bg-neutral-800 text-black dark:text-white text-xs font-semibold transition-colors flex items-center gap-1.5 self-start sm:self-auto"
-              >
-                <Calendar className="w-4 h-4 text-blue-500" />
-                <span>Abrir Google Calendar</span>
-                <ExternalLink className="w-3.5 h-3.5 text-gray-400" />
-              </a>
+              <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto">
+                <a
+                  href={OntologicalStore.getCalendarUrl()}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-3.5 py-2 rounded-2xl bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-900/50 hover:bg-blue-100 dark:hover:bg-blue-900/60 text-blue-700 dark:text-blue-300 text-xs font-semibold transition-colors flex items-center gap-1.5"
+                  title="Página de agendamiento de sesiones 1 a 1 en Google Calendar"
+                >
+                  <Calendar className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+                  <span>Agendamiento 1 a 1</span>
+                  <ExternalLink className="w-3 h-3 text-blue-400" />
+                </a>
+
+                <a
+                  href="https://calendar.google.com/calendar/u/0/r"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-4 py-2 rounded-2xl border border-gray-200 dark:border-neutral-700 hover:bg-gray-50 dark:hover:bg-neutral-800 text-black dark:text-white text-xs font-semibold transition-colors flex items-center gap-1.5"
+                >
+                  <Calendar className="w-4 h-4 text-blue-500" />
+                  <span>Abrir Google Calendar</span>
+                  <ExternalLink className="w-3.5 h-3.5 text-gray-400" />
+                </a>
+              </div>
             </div>
 
             {/* Form */}

@@ -13,6 +13,7 @@ import { ClientDashboard } from './components/ClientDashboard';
 import { CoachDashboard } from './components/CoachDashboard';
 import { WebhookConfigModal } from './components/WebhookConfigModal';
 import { EventRegistrationLanding } from './components/EventRegistrationLanding';
+import { VideoConferenceModal } from './components/VideoConferenceModal';
 
 export default function App() {
   const [allUsers, setAllUsers] = useState<User[]>(() => OntologicalStore.getUsers());
@@ -21,6 +22,7 @@ export default function App() {
   );
   const [dashboardKey, setDashboardKey] = useState(0);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isVideoConferencesOpen, setIsVideoConferencesOpen] = useState(false);
   const [viewMode, setViewMode] = useState<'app' | 'register'>(() => {
     try {
       const urlParams = new URLSearchParams(window.location.search);
@@ -67,6 +69,11 @@ export default function App() {
   };
 
   const handleSwitchUser = (user: User) => {
+    // Strict isolation: only the coach/administrator has access to switch or supervise workspaces
+    if (currentUser?.role !== 'coach') {
+      console.warn('Acceso denegado: sólo el administrador puede cambiar de perfil.');
+      return;
+    }
     OntologicalStore.setCurrentUser(user.uid);
     setCurrentUser(user);
     refreshUsers();
@@ -90,25 +97,36 @@ export default function App() {
 
   if (!currentUser) {
     return (
-      <LoginView
-        onLogin={handleLogin}
-        availableUsers={allUsers}
-        onNavigateToRegister={() => setViewMode('register')}
-      />
+      <>
+        <LoginView
+          onLogin={handleLogin}
+          availableUsers={allUsers}
+          onNavigateToRegister={() => setViewMode('register')}
+          onOpenVideoConferences={() => setIsVideoConferencesOpen(true)}
+        />
+        <VideoConferenceModal
+          isOpen={isVideoConferencesOpen}
+          onClose={() => setIsVideoConferencesOpen(false)}
+          currentUser={null}
+        />
+      </>
     );
   }
 
-  const clients = allUsers.filter((u) => u.role === 'client');
+  const safeAllUsers = Array.isArray(allUsers) ? allUsers : [];
+  const clients = safeAllUsers.filter((u) => u && u.role === 'client');
+  const isCoach = currentUser.role === 'coach';
 
   return (
     <div className="min-h-screen bg-white dark:bg-[#0D0D0E] text-black dark:text-neutral-100 font-sans selection:bg-black selection:text-white dark:selection:bg-white dark:selection:text-black flex flex-col transition-colors duration-200">
       <Header
         currentUser={currentUser}
         onLogout={handleLogout}
-        onSwitchUser={handleSwitchUser}
-        allUsers={allUsers}
-        onOpenSettings={() => setIsSettingsOpen(true)}
+        onSwitchUser={isCoach ? handleSwitchUser : undefined}
+        allUsers={isCoach ? allUsers : []}
+        onOpenSettings={isCoach ? () => setIsSettingsOpen(true) : undefined}
         onOpenRegistrationPortal={() => setViewMode('register')}
+        onOpenVideoConferences={() => setIsVideoConferencesOpen(true)}
         onNavigateHome={handleNavigateHome}
       />
 
@@ -132,6 +150,12 @@ export default function App() {
       <WebhookConfigModal
         isOpen={isSettingsOpen}
         onClose={() => setIsSettingsOpen(false)}
+      />
+
+      <VideoConferenceModal
+        isOpen={isVideoConferencesOpen}
+        onClose={() => setIsVideoConferencesOpen(false)}
+        currentUser={currentUser}
       />
     </div>
   );

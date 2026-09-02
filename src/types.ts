@@ -60,6 +60,29 @@ export interface Session {
   ontologicalFocus?: string;
 }
 
+export interface PostSessionForm {
+  id: string;
+  sessionId: string;
+  sessionNumber: number;
+  clientId: string;
+  clientName: string;
+  sessionDate: string;
+  submittedAt: string;
+  // Pregunta 1: Emoción principal y nivel de resistencia/apertura
+  coacheeEmotionAndOpenness: string;
+  // Pregunta 2: Juicio maestro, narrativa o creencia limitante
+  masterJudgmentAndNarrative: string;
+  // Pregunta 3: Evidencia de cambio de perspectiva o nuevo nivel de consciencia
+  perspectiveShiftEvidence: string;
+  // Pregunta 4: Momento de directividad y competencia ICF a cuidar
+  directivenessAndIcfCompetency: string;
+  // Material de Cuaderno de Trabajo para el Coachee
+  workbookTitle?: string;
+  coacheeKeyDeclaration?: string;
+  agreedActionItems?: string[];
+  somaticHomework?: string;
+}
+
 export interface FormSubmission {
   id: string;
   clientId: string;

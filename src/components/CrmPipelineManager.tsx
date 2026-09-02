@@ -42,19 +42,24 @@ interface CrmPipelineManagerProps {
 }
 
 export const CrmPipelineManager: React.FC<CrmPipelineManagerProps> = ({
-  prospects,
-  clients,
-  eventRegistrations,
+  prospects = [],
+  clients = [],
+  eventRegistrations = [],
   onRefreshProspects,
   onRefreshClients,
   onSelectClientAndOpenWorkstation,
   onOpenMakeModal,
   onOpenRegistrationPortal,
 }) => {
+  const safeProspects = Array.isArray(prospects) ? prospects : [];
+  const safeClients = Array.isArray(clients) ? clients : [];
+  const safeRegistrations = Array.isArray(eventRegistrations) ? eventRegistrations : [];
+
   const [viewLayout, setViewLayout] = useState<'kanban' | 'list'>('kanban');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedOriginFilter, setSelectedOriginFilter] = useState<string>('all');
   const [copiedLinkFeedback, setCopiedLinkFeedback] = useState(false);
+  const [copiedCalendarLink, setCopiedCalendarLink] = useState(false);
 
   // New Prospect Modal
   const [showAddProspectModal, setShowAddProspectModal] = useState(false);
@@ -77,10 +82,11 @@ export const CrmPipelineManager: React.FC<CrmPipelineManagerProps> = ({
 
   // Filter prospects
   const filteredProspects = useMemo(() => {
-    return prospects.filter((p) => {
+    return safeProspects.filter((p) => {
+      if (!p) return false;
       const matchesSearch =
-        p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        p.whatsapp.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (p.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (p.whatsapp || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
         (p.email && p.email.toLowerCase().includes(searchQuery.toLowerCase())) ||
         (p.notes && p.notes.toLowerCase().includes(searchQuery.toLowerCase()));
 
@@ -89,19 +95,19 @@ export const CrmPipelineManager: React.FC<CrmPipelineManagerProps> = ({
 
       return matchesSearch && matchesOrigin;
     });
-  }, [prospects, searchQuery, selectedOriginFilter]);
+  }, [safeProspects, searchQuery, selectedOriginFilter]);
 
   // Stage Grouping
-  const groupMatriz = filteredProspects.filter((p) => p.status === 'matriz_enviada');
-  const groupSesion20 = filteredProspects.filter((p) => p.status === 'sesion_20min_agendada');
-  const groupConvertidos = filteredProspects.filter((p) => p.status === 'convertido');
-  const groupDescartados = filteredProspects.filter((p) => p.status === 'descartado');
+  const groupMatriz = filteredProspects.filter((p) => p && p.status === 'matriz_enviada');
+  const groupSesion20 = filteredProspects.filter((p) => p && p.status === 'sesion_20min_agendada');
+  const groupConvertidos = filteredProspects.filter((p) => p && p.status === 'convertido');
+  const groupDescartados = filteredProspects.filter((p) => p && p.status === 'descartado');
 
-  const totalCount = prospects.length;
+  const totalCount = safeProspects.length;
   const conversionRate =
     totalCount > 0
       ? Math.round(
-          (prospects.filter((p) => p.status === 'convertido').length / totalCount) * 100
+          (safeProspects.filter((p) => p && p.status === 'convertido').length / totalCount) * 100
         )
       : 0;
 
@@ -1056,6 +1062,53 @@ export const CrmPipelineManager: React.FC<CrmPipelineManagerProps> = ({
                   onChange={(e) => setScheduleDateTime(e.target.value)}
                   className="w-full px-3 py-2 bg-gray-50 dark:bg-[#202024] border border-gray-200 dark:border-neutral-700 rounded-xl text-black dark:text-white focus:outline-none"
                 />
+              </div>
+
+              <div className="p-3 bg-blue-50/80 dark:bg-blue-950/30 border border-blue-200/70 dark:border-blue-900/50 rounded-2xl space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-semibold text-blue-900 dark:text-blue-200 flex items-center gap-1.5">
+                    <Calendar className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+                    <span>Link Oficial de Agendamiento 1 a 1</span>
+                  </span>
+                  <a
+                    href={OntologicalStore.getCalendarUrl()}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-[11px] font-bold text-blue-700 dark:text-blue-300 hover:underline flex items-center gap-1"
+                  >
+                    <span>Abrir Google Calendar</span>
+                    <ExternalLink className="w-3 h-3" />
+                  </a>
+                </div>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    readOnly
+                    value={OntologicalStore.getCalendarUrl()}
+                    className="w-full text-[10px] font-mono bg-white dark:bg-[#121214] border border-blue-200 dark:border-blue-900 rounded-xl px-2.5 py-1.5 text-gray-700 dark:text-neutral-300 select-all"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      navigator.clipboard.writeText(OntologicalStore.getCalendarUrl());
+                      setCopiedCalendarLink(true);
+                      setTimeout(() => setCopiedCalendarLink(false), 2000);
+                    }}
+                    className="px-2.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-medium shrink-0 flex items-center gap-1 cursor-pointer"
+                  >
+                    {copiedCalendarLink ? (
+                      <>
+                        <CheckCheck className="w-3 h-3" />
+                        <span>Copiado</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="w-3 h-3" />
+                        <span>Copiar</span>
+                      </>
+                    )}
+                  </button>
+                </div>
               </div>
 
               <div className="pt-2 flex items-center justify-end gap-2">
