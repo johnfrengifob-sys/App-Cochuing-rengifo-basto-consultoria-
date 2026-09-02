@@ -108,7 +108,7 @@ export const GeminiOntologicalCopilot: React.FC<GeminiOntologicalCopilotProps> =
             : null,
           role: userRole,
         },
-        userRole
+        userRole === 'client' ? 'client' : 'coach'
       );
 
       setMessages((prev) => [

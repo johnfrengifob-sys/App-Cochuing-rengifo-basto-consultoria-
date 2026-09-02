@@ -6,6 +6,7 @@ export type ClientStatus = 'active' | 'waiting' | 'inactive';
 
 export interface User {
   uid: string;
+  id?: string;
   name: string;
   email: string;
   role: UserRole;
@@ -14,6 +15,9 @@ export interface User {
   phone?: string;
   joinedAt?: string;
   programProgress?: number; // 1 to 6 (sesión quincenal en el programa de 12 semanas)
+  programStep?: number;
+  company?: string;
+  notes?: string;
   paymentStatus?: PaymentStatus;
   programName?: string;
   programFee?: string;
@@ -115,12 +119,18 @@ export interface AIInsight {
   clientId: string;
   sessionId: string;
   sessionStep?: number;
-  linguisticBarriers: string[];
-  limitingBeliefs: string[];
-  emotionalWisdom: string; // Síntesis Ontológica & Sabiduría Emocional
-  pulseFlag: PulseFlag; // Indicador de estado: Green, Yellow, Red
+  linguisticBarriers: string[] | string;
+  limitingBeliefs?: string[];
+  emotionalWisdom?: string; // Síntesis Ontológica & Sabiduría Emocional
+  pulseFlag?: PulseFlag; // Indicador de estado: Green, Yellow, Red
   generatedAt: string;
   webhookStatus?: 'sent' | 'fallback' | 'pending';
+  somaticIndicators?: string;
+  recommendedShift?: string;
+  powerfulQuestions?: string[];
+  somaticScore?: number;
+  confidenceScore?: number;
+  confidenceLevel?: string;
 }
 
 export interface EventRegistration {
