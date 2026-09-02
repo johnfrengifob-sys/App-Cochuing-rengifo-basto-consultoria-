@@ -6,15 +6,21 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-// Initialize Google Gemini AI SDK with required User-Agent
-const ai = new GoogleGenAI({
-  apiKey: process.env.GEMINI_API_KEY || '',
-  httpOptions: {
-    headers: {
-      'User-Agent': 'aistudio-build',
-    },
-  },
-});
+// Lazy initialization of Google Gemini AI SDK with required User-Agent
+let geminiClient: GoogleGenAI | null = null;
+function getGeminiClient(): GoogleGenAI {
+  if (!geminiClient) {
+    geminiClient = new GoogleGenAI({
+      apiKey: process.env.GEMINI_API_KEY || '',
+      httpOptions: {
+        headers: {
+          'User-Agent': 'aistudio-build',
+        },
+      },
+    });
+  }
+  return geminiClient;
+}
 
 const SYSTEM_INSTRUCTION_ONTOLOGY = `
 Eres el Copiloto de Inteligencia Artificial Ontológica de "Rengifo Basto Consultoría Ontológica", la firma de coaching ontológico ejecutivo y somático liderada para la cuenta oficial rengifobastoco@gmail.com (Coach John Freddy Rengifo Basto).
@@ -89,7 +95,7 @@ ${(messages || [])
 
 Por favor responde como el Copiloto de Inteligencia Artificial Ontológica de Rengifo Basto Consultoría Ontológica, brindando una respuesta profunda, una pregunta transformadora y una sugerencia de intervención somática o lingüística.`;
 
-      const response = await ai.models.generateContent({
+      const response = await getGeminiClient().models.generateContent({
         model: 'gemini-3.7-flash',
         contents: formattedPrompt,
         config: {
@@ -149,7 +155,7 @@ Genera una respuesta estructurada en formato JSON con los siguientes campos:
 5. "somaticScore": Un número entero entre 40 y 95 que represente el índice de coherencia somática actual (donde >80 es armónico y <60 requiere intervención inmediata).
 `;
 
-      const response = await ai.models.generateContent({
+      const response = await getGeminiClient().models.generateContent({
         model: 'gemini-3.7-flash',
         contents: prompt,
         config: {
@@ -199,7 +205,7 @@ Genera una respuesta en formato JSON con:
 2. "coachFeedback": Retroalimentación ontológica breve del coach sobre el uso de actos del habla, el nivel de asertividad y la sugerencia de siguiente movimiento.
 `;
 
-      const response = await ai.models.generateContent({
+      const response = await getGeminiClient().models.generateContent({
         model: 'gemini-3.7-flash',
         contents: prompt,
         config: {
@@ -249,7 +255,7 @@ Devuelve un JSON con:
 3. "hookIdeas": 3 frases gancho provocadoras que despierten quiebres en directivos.
 `;
 
-      const response = await ai.models.generateContent({
+      const response = await getGeminiClient().models.generateContent({
         model: 'gemini-3.7-flash',
         contents: prompt,
         config: {
