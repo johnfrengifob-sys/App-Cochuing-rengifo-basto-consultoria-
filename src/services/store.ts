@@ -10,6 +10,7 @@ import {
   PaymentStatus,
   CronogramaEvent,
   EventRegistration,
+  OntologicalProgram,
 } from '../types';
 import promotionalEventBannerImg from '../assets/images/proximo_evento_banner_1788270380574.jpg';
 import coachAvatarImg from '../assets/images/regenerated_image_1788287101599.jpg';
@@ -723,6 +724,79 @@ const INITIAL_CRONOGRAMA_EVENTS: CronogramaEvent[] = [
   },
 ];
 
+const INITIAL_PROGRAMS: OntologicalProgram[] = [
+  {
+    id: 'prog-1',
+    name: 'Certeza, Fronteras & Dirección Personal',
+    subtitle: 'Programa de Transformación Ontológica de 12 Semanas (6 Nodos)',
+    category: 'Programa de Acompañamiento',
+    duration: '12 Semanas (6 Sesiones Quincenales)',
+    format: '1 a 1 Ejecutivo',
+    fee: '$1.500.000 COP',
+    totalCapacity: 10,
+    availableSpots: 4,
+    enrolledCount: 6,
+    status: 'active',
+    description: 'Proceso inmersivo de 12 semanas con enfoque lingüístico, corporal y emocional para ejecutivos y líderes que buscan soberanía y límites.',
+    keyOutcomes: [
+      'Mapeo de la transparencia y quiebres inconscientes',
+      'Declaración de fronteras y límites no dichos',
+      'Decodificación somática y desactivación de la autoexigencia',
+      'Diseño de futuros y compromisos innegociables',
+    ],
+    startDate: '2026-09-01',
+    displaySchedule: 'Sesiones Quincenales de 60 min personalizadas',
+    facilitator: 'John Fredy Rengifo Basto',
+    totalNodes: 6,
+  },
+  {
+    id: 'prog-2',
+    name: 'Conversatorio Raíz y Balance',
+    subtitle: 'Espacio Abierto de Indagación y Soberanía Directiva',
+    category: 'Conversatorio Quincenal',
+    duration: 'Encuentro Quincenal (90 min)',
+    format: 'Grupal / Cohorte',
+    fee: 'Acceso Libre / Pre-Registro',
+    totalCapacity: 30,
+    availableSpots: 12,
+    enrolledCount: 18,
+    status: 'active',
+    description: 'Encuentros reflexivos en vivo para explorar los patrones de exigencia, límites y coherencia ontológica.',
+    keyOutcomes: [
+      'Diagnóstico con Matriz Ontológica',
+      'Sesión de exploración de 20 min',
+      'Comunidad ejecutiva de aprendizaje',
+    ],
+    startDate: '2026-09-17',
+    displaySchedule: 'Jueves quincenales 7:00 PM (GMT-5)',
+    facilitator: 'John Fredy Rengifo Basto',
+    totalNodes: 1,
+  },
+  {
+    id: 'prog-3',
+    name: 'Masterclass: Sabiduría Adaptativa del Miedo y la Culpa',
+    subtitle: 'Autoasistencia Ontológica y Reencuadre Somático para Líderes',
+    category: 'Masterclass Ontológica',
+    duration: 'Sesión Intensiva de 2 Horas',
+    format: 'Taller Intensivo',
+    fee: '$250.000 COP',
+    totalCapacity: 25,
+    availableSpots: 14,
+    enrolledCount: 11,
+    status: 'enrolling',
+    description: 'Aprende a decodificar las emociones densas en tu cuerpo y transformarlas en decisiones lúcidas y acuerdos impecables.',
+    keyOutcomes: [
+      'Protocolos somáticos de liberación de estrés',
+      'Reencuadre de juicios maestros limitantes',
+      'Guía de auto-asistencia y box breathing',
+    ],
+    startDate: '2026-09-18',
+    displaySchedule: 'Viernes 7:00 PM a 9:00 PM',
+    facilitator: 'John Fredy Rengifo Basto',
+    totalNodes: 1,
+  },
+];
+
 const INITIAL_EVENT_REGISTRATIONS: EventRegistration[] = [
   {
     id: 'reg-1',
@@ -765,6 +839,7 @@ const STORAGE_KEYS = {
   FORMS: 'rbc_forms_v2',
   AI_INSIGHTS: 'rbc_ai_insights_v2',
   CRONOGRAMA_EVENTS: 'rbc_cronograma_events_v2',
+  PROGRAMS: 'rbc_programs_v2',
   WEBHOOK_URL: 'rbc_webhook_url_v2',
   MAKE_PHASE1_WEBHOOK_URL: 'rbc_make_phase1_webhook_url_v2',
   MAKE_PHASE2_CALENDLY_WEBHOOK_URL: 'rbc_make_phase2_calendly_webhook_url_v2',
@@ -879,6 +954,78 @@ export class OntologicalStore {
     return updatedEvent;
   }
 
+  static addCronogramaEvent(eventData: Omit<CronogramaEvent, 'id'>): CronogramaEvent {
+    const events = this.getCronogramaEvents();
+    const newEvent: CronogramaEvent = {
+      ...eventData,
+      id: 'event-' + Date.now(),
+    };
+    if (newEvent.featured) {
+      // Un-feature other events
+      events.forEach((e) => {
+        e.featured = false;
+      });
+    }
+    const updated = [newEvent, ...events];
+    this.saveCronogramaEvents(updated);
+    return newEvent;
+  }
+
+  static deleteCronogramaEvent(id: string): void {
+    const events = this.getCronogramaEvents();
+    const updated = events.filter((e) => e.id !== id);
+    if (updated.length > 0 && !updated.some((e) => e.featured)) {
+      updated[0].featured = true;
+    }
+    this.saveCronogramaEvents(updated);
+  }
+
+  // --- ONTOLOGICAL PROGRAMS CATALOGUE & QUOTAS ---
+  static getPrograms(): OntologicalProgram[] {
+    return this.load<OntologicalProgram[]>(
+      STORAGE_KEYS.PROGRAMS,
+      INITIAL_PROGRAMS
+    );
+  }
+
+  static savePrograms(programs: OntologicalProgram[]): void {
+    this.save(STORAGE_KEYS.PROGRAMS, programs);
+  }
+
+  static addProgram(programData: Omit<OntologicalProgram, 'id'>): OntologicalProgram {
+    const programs = this.getPrograms();
+    const newProgram: OntologicalProgram = {
+      ...programData,
+      id: 'prog-' + Date.now(),
+    };
+    const updated = [newProgram, ...programs];
+    this.savePrograms(updated);
+    return newProgram;
+  }
+
+  static updateProgram(
+    id: string,
+    updates: Partial<OntologicalProgram>
+  ): OntologicalProgram | null {
+    const programs = this.getPrograms();
+    let updatedProgram: OntologicalProgram | null = null;
+    const updated = programs.map((p) => {
+      if (p.id === id) {
+        updatedProgram = { ...p, ...updates };
+        return updatedProgram;
+      }
+      return p;
+    });
+    this.savePrograms(updated);
+    return updatedProgram;
+  }
+
+  static deleteProgram(id: string): void {
+    const programs = this.getPrograms();
+    const updated = programs.filter((p) => p.id !== id);
+    this.savePrograms(updated);
+  }
+
   // --- EVENT REGISTRATIONS & RSVP ---
   static getEventRegistrations(): EventRegistration[] {
     return this.load<EventRegistration[]>(
@@ -889,6 +1036,64 @@ export class OntologicalStore {
 
   static saveEventRegistrations(registrations: EventRegistration[]): void {
     this.save(STORAGE_KEYS.EVENT_REGISTRATIONS, registrations);
+  }
+
+  static deleteEventRegistration(id: string): void {
+    const registrations = this.getEventRegistrations();
+    const target = registrations.find((r) => r.id === id || r.ticketCode === id);
+    if (target) {
+      // restore spot if event exists
+      const events = this.getCronogramaEvents();
+      const evt = events.find((e) => e.id === target.eventId);
+      if (evt && evt.spotsLeft < evt.totalSpots) {
+        this.updateCronogramaEvent(evt.id, {
+          spotsLeft: Math.min(evt.totalSpots, evt.spotsLeft + 1),
+        });
+      }
+    }
+    const updated = registrations.filter((r) => r.id !== id && r.ticketCode !== id);
+    this.saveEventRegistrations(updated);
+  }
+
+  static addManualEventRegistration(params: {
+    eventId: string;
+    name: string;
+    email: string;
+    phone: string;
+    attended?: boolean;
+  }): EventRegistration {
+    const events = this.getCronogramaEvents();
+    const targetEvent = events.find((e) => e.id === params.eventId) || events[0] || INITIAL_CRONOGRAMA_EVENTS[0];
+    
+    if (targetEvent.spotsLeft > 0) {
+      this.updateCronogramaEvent(targetEvent.id, {
+        spotsLeft: Math.max(0, targetEvent.spotsLeft - 1),
+      });
+    }
+
+    const randomSuffix = Math.floor(10000 + Math.random() * 90000);
+    const ticketCode = `RBC-MANUAL-${randomSuffix}`;
+    const regId = `reg-${Date.now()}`;
+
+    const newRegistration: EventRegistration = {
+      id: regId,
+      ticketCode,
+      eventId: targetEvent.id,
+      eventTitle: targetEvent.title,
+      eventDate: targetEvent.date,
+      name: params.name.trim(),
+      email: params.email.trim().toLowerCase(),
+      phone: params.phone.trim(),
+      registeredAt: new Date().toISOString(),
+      icfTermsAccepted: true,
+      privacyTermsAccepted: true,
+      attendedEvent: Boolean(params.attended),
+      googleAuthConnected: false,
+    };
+
+    const registrations = this.getEventRegistrations();
+    this.saveEventRegistrations([newRegistration, ...registrations]);
+    return newRegistration;
   }
 
   static registerForEvent(params: {

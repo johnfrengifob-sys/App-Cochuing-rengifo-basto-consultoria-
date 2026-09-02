@@ -57,11 +57,25 @@ export const BrandLogo: React.FC<BrandLogoProps> = ({
   if (layout === 'hero') {
     return (
       <div
+        role={onClick ? 'button' : undefined}
+        tabIndex={onClick ? 0 : undefined}
         onClick={onClick}
+        onKeyDown={
+          onClick
+            ? (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  onClick();
+                }
+              }
+            : undefined
+        }
         className={`inline-flex flex-col items-center justify-center select-none ${className} ${
-          onClick ? 'cursor-pointer' : ''
+          onClick
+            ? 'cursor-pointer hover:opacity-85 active:scale-[0.99] transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-black dark:focus-visible:ring-white rounded-xl'
+            : ''
         }`}
-        title="Rengifo Basto Consultoría Ontológica"
+        title="Ir al panel principal • Rengifo Basto Consultoría Ontológica"
       >
         <div className="relative flex items-center justify-center w-full max-w-[360px] sm:max-w-[420px] px-2 py-1">
           <img
@@ -77,11 +91,25 @@ export const BrandLogo: React.FC<BrandLogoProps> = ({
 
   return (
     <div
+      role={onClick ? 'button' : undefined}
+      tabIndex={onClick ? 0 : undefined}
       onClick={onClick}
+      onKeyDown={
+        onClick
+          ? (e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                onClick();
+              }
+            }
+          : undefined
+      }
       className={`inline-flex flex-col select-none ${className} ${
-        onClick ? 'cursor-pointer' : ''
+        onClick
+          ? 'cursor-pointer hover:opacity-85 active:scale-[0.99] transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-black dark:focus-visible:ring-white rounded-xl p-0.5'
+          : ''
       }`}
-      title="Rengifo Basto Consultoría Ontológica"
+      title={onClick ? "Ir al panel principal • Rengifo Basto Consultoría Ontológica" : "Rengifo Basto Consultoría Ontológica"}
     >
       <div className="flex items-center">
         <img

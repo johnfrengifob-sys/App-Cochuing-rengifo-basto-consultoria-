@@ -166,7 +166,11 @@ export const EventRegistrationLanding: React.FC<EventRegistrationLandingProps> =
       <header className="w-full border-b border-gray-100 dark:border-neutral-800 bg-white/80 dark:bg-[#0D0D0E]/80 backdrop-blur-md sticky top-0 z-30">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 h-18 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <BrandLogo size="sm" />
+            <BrandLogo
+              size="sm"
+              onClick={onNavigateToLogin || (() => onEnterPlatform())}
+              className="transition-transform active:scale-95"
+            />
           </div>
 
           <div className="flex items-center gap-3">

@@ -19,6 +19,7 @@ export default function App() {
   const [currentUser, setCurrentUser] = useState<User | null>(() =>
     OntologicalStore.getCurrentUser()
   );
+  const [dashboardKey, setDashboardKey] = useState(0);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [viewMode, setViewMode] = useState<'app' | 'register'>(() => {
     try {
@@ -45,6 +46,12 @@ export default function App() {
     setAllUsers(updated);
     const active = OntologicalStore.getCurrentUser();
     if (active) setCurrentUser(active);
+  };
+
+  const handleNavigateHome = () => {
+    setViewMode('app');
+    setDashboardKey((prev) => prev + 1);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleLogin = (user: User) => {
@@ -102,18 +109,23 @@ export default function App() {
         allUsers={allUsers}
         onOpenSettings={() => setIsSettingsOpen(true)}
         onOpenRegistrationPortal={() => setViewMode('register')}
+        onNavigateHome={handleNavigateHome}
       />
 
       <div className="flex-1">
         {currentUser.role === 'coach' ? (
           <CoachDashboard
+            key={`coach-${currentUser.uid}-${dashboardKey}`}
             coach={currentUser}
             clients={clients}
             onRefreshClients={refreshUsers}
             onOpenRegistrationPortal={() => setViewMode('register')}
           />
         ) : (
-          <ClientDashboard client={currentUser} />
+          <ClientDashboard
+            key={`client-${currentUser.uid}-${dashboardKey}`}
+            client={currentUser}
+          />
         )}
       </div>
 

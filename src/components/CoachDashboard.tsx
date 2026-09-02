@@ -5,12 +5,12 @@ import {
   AIInsight,
   Session,
   Prospect,
-  ProspectStatus,
   PaymentStatus,
   ClientStatus,
   ProgramNodeInfo,
   CronogramaEvent,
   EventRegistration,
+  OntologicalProgram,
 } from '../types';
 import { OntologicalStore, DEFAULT_WEBHOOK_URL, PROGRAM_NODES } from '../services/store';
 import { PDFGenerator } from '../utils/pdfGenerator';
@@ -24,6 +24,8 @@ import { ExecutiveMetricsBar } from './ExecutiveMetricsBar';
 import { ClientWorkstationView } from './ClientWorkstationView';
 import { GoogleWorkspaceHub } from './GoogleWorkspaceHub';
 import { GeminiOntologicalCopilot } from './GeminiOntologicalCopilot';
+import { CrmPipelineManager } from './CrmPipelineManager';
+import { ProgramsAndEventsManager } from './ProgramsAndEventsManager';
 import {
   Users,
   Sparkles,
@@ -62,6 +64,7 @@ import {
   LayoutList,
   UserCircle2,
   HardDrive,
+  BookOpen,
 } from 'lucide-react';
 
 interface CoachDashboardProps {
@@ -83,16 +86,18 @@ export const CoachDashboard: React.FC<CoachDashboardProps> = ({
   // Sub-view inside 'clients' tab: Directory (table/scale 20-30+) vs Workstation (1 on 1 session view)
   const [clientsViewMode, setClientsViewMode] = useState<'directory' | 'workstation'>('directory');
 
-  // Events & Cronograma State
+  // Events & Programs State
   const [cronogramaEvents, setCronogramaEvents] = useState<CronogramaEvent[]>(() =>
     OntologicalStore.getCronogramaEvents()
+  );
+  const [programs, setPrograms] = useState<OntologicalProgram[]>(() =>
+    OntologicalStore.getPrograms()
   );
 
   // Pre-Registrations & RSVP state
   const [eventRegistrations, setEventRegistrations] = useState<EventRegistration[]>(() =>
     OntologicalStore.getEventRegistrations()
   );
-  const [copiedLinkFeedback, setCopiedLinkFeedback] = useState(false);
 
   // CRM State
   const [prospects, setProspects] = useState<Prospect[]>(() =>
@@ -102,17 +107,8 @@ export const CoachDashboard: React.FC<CoachDashboardProps> = ({
     OntologicalStore.getUsers().filter((u) => u.role === 'client')
   );
 
-  // New Prospect Modal State
-  const [showAddProspectModal, setShowAddProspectModal] = useState(false);
+  // Modal States
   const [showMakeModal, setShowMakeModal] = useState(false);
-  const [prospectName, setProspectName] = useState('');
-  const [prospectPhone, setProspectPhone] = useState('');
-  const [prospectEmail, setProspectEmail] = useState('');
-  const [prospectNotes, setProspectNotes] = useState('');
-
-  // Conversion Modal State
-  const [convertingProspect, setConvertingProspect] = useState<Prospect | null>(null);
-  const [selectedPaymentStatus, setSelectedPaymentStatus] = useState<PaymentStatus>('Completado');
 
   // Active Client Selection State
   const [selectedClientId, setSelectedClientId] = useState<string>(
@@ -152,6 +148,29 @@ export const CoachDashboard: React.FC<CoachDashboardProps> = ({
   const allInsights = OntologicalStore.getAIInsights();
   const allSessions = OntologicalStore.getSessions();
 
+  // Refresh handlers
+  const handleRefreshProspects = () => {
+    setProspects(OntologicalStore.getProspects());
+  };
+
+  const handleRefreshEvents = () => {
+    setCronogramaEvents(OntologicalStore.getCronogramaEvents());
+  };
+
+  const handleRefreshPrograms = () => {
+    setPrograms(OntologicalStore.getPrograms());
+  };
+
+  const handleRefreshRegistrations = () => {
+    setEventRegistrations(OntologicalStore.getEventRegistrations());
+  };
+
+  const handleRefreshClientsList = () => {
+    const refreshed = OntologicalStore.getUsers().filter((u) => u.role === 'client');
+    setClients(refreshed);
+    if (onRefreshClients) onRefreshClients();
+  };
+
   // Handle client selection switch
   const handleSelectClient = (clientId: string, openWorkstation: boolean = true) => {
     setSelectedClientId(clientId);
@@ -167,94 +186,20 @@ export const CoachDashboard: React.FC<CoachDashboardProps> = ({
   // Client Mutations
   const handleUpdateClientStatus = (clientId: string, status: ClientStatus) => {
     OntologicalStore.updateClientStatus(clientId, status);
-    const refreshed = OntologicalStore.getUsers().filter((u) => u.role === 'client');
-    setClients(refreshed);
-    if (onRefreshClients) onRefreshClients();
+    handleRefreshClientsList();
   };
 
   const handleUpdateClientBreakdown = (clientId: string, breakdown: string) => {
     OntologicalStore.updateClientBreakdown(clientId, breakdown);
-    const refreshed = OntologicalStore.getUsers().filter((u) => u.role === 'client');
-    setClients(refreshed);
-    if (onRefreshClients) onRefreshClients();
+    handleRefreshClientsList();
   };
 
   const handleUpdateClientInvested = (clientId: string, invested: string) => {
     OntologicalStore.updateClientInvested(clientId, invested);
-    const refreshed = OntologicalStore.getUsers().filter((u) => u.role === 'client');
-    setClients(refreshed);
-    if (onRefreshClients) onRefreshClients();
+    handleRefreshClientsList();
   };
 
   const latestForm = forms[0] || null;
-  const latestInsight = insights[0] || null;
-
-  // --- CRM ACTIONS ---
-  const handleStatusChange = (prospectId: string, newStatus: ProspectStatus) => {
-    OntologicalStore.updateProspectStatus(prospectId, newStatus);
-    setProspects(OntologicalStore.getProspects());
-  };
-
-  const handleAddProspect = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!prospectName.trim() || !prospectPhone.trim()) return;
-
-    OntologicalStore.addProspect({
-      name: prospectName.trim(),
-      whatsapp: prospectPhone.trim(),
-      email: prospectEmail.trim() || undefined,
-      notes: prospectNotes.trim() || 'Participante de Conversatorio Raíz y Balance',
-      status: 'matriz_enviada',
-      origin: 'Conversatorio Raíz y Balance',
-      matrixSentAt: new Date().toISOString(),
-    });
-
-    setProspects(OntologicalStore.getProspects());
-    setProspectName('');
-    setProspectPhone('');
-    setProspectEmail('');
-    setProspectNotes('');
-    setShowAddProspectModal(false);
-  };
-
-  const handleConfirmConversion = () => {
-    if (!convertingProspect) return;
-    const newClient = OntologicalStore.convertProspectToClient(
-      convertingProspect.id,
-      selectedPaymentStatus
-    );
-
-    if (newClient) {
-      const updatedClients = OntologicalStore.getUsers().filter(
-        (u) => u.role === 'client'
-      );
-      setClients(updatedClients);
-      setProspects(OntologicalStore.getProspects());
-      setSelectedClientId(newClient.uid);
-      setForms(OntologicalStore.getFormsForClient(newClient.uid));
-      setInsights(OntologicalStore.getInsightsForClient(newClient.uid));
-      setSessions(OntologicalStore.getSessionsForClient(newClient.uid));
-      setConvertingProspect(null);
-      setActiveMainTab('clients');
-      if (onRefreshClients) onRefreshClients();
-    }
-  };
-
-  const handleCopyRegistrationLink = () => {
-    const url = `${window.location.origin}/?view=registro`;
-    navigator.clipboard.writeText(url);
-    setCopiedLinkFeedback(true);
-    setTimeout(() => setCopiedLinkFeedback(false), 2500);
-  };
-
-  const handleConfirmAttendance = (ticketCodeOrId: string) => {
-    OntologicalStore.confirmEventAttendance(ticketCodeOrId);
-    setEventRegistrations(OntologicalStore.getEventRegistrations());
-    setProspects(OntologicalStore.getProspects());
-    const refreshedClients = OntologicalStore.getUsers().filter((u) => u.role === 'client');
-    setClients(refreshedClients);
-    if (onRefreshClients) onRefreshClients();
-  };
 
   // Trigger Webhook and generate Ontological AI Analysis
   const handleGenerateAIAnalysis = async () => {
@@ -347,17 +292,13 @@ export const CoachDashboard: React.FC<CoachDashboardProps> = ({
       clientId: selectedClientId,
       sessionNumber: Number(newSessionNumber),
       date: new Date(newSessionDate).toISOString(),
-      meetLink: `https://meet.google.com/rbc-${Math.random()
-        .toString(36)
-        .substring(2, 7)}`,
+      meetLink: `https://meet.google.com/rbc-${Math.random().toString(36).substring(2, 5)}-${Math.random().toString(36).substring(2, 5)}`,
       status: 'scheduled',
-      notes:
-        newSessionFocus ||
-        `Sesión ${newSessionNumber}: Indagación ontológica y diseño de acuerdos.`,
+      ontologicalFocus: newSessionFocus.trim() || undefined,
     };
 
-    localStorage.setItem('rbc_sessions_v2', JSON.stringify([...allSessions, newSess]));
-    setSessions([...sessions, newSess]);
+    OntologicalStore.saveSessions([...allSessions, newSess]);
+    setSessions(OntologicalStore.getSessionsForClient(selectedClientId));
     setShowNewSessionModal(false);
     setNewSessionDate('');
     setNewSessionFocus('');
@@ -463,7 +404,7 @@ export const CoachDashboard: React.FC<CoachDashboardProps> = ({
               }`}
             >
               <Calendar className="w-3.5 h-3.5" />
-              <span>Cronograma & Eventos</span>
+              <span>Programas & Eventos</span>
               <span
                 className={`text-[10px] px-1.5 py-0.5 rounded-full font-semibold ${
                   activeMainTab === 'events'
@@ -471,7 +412,7 @@ export const CoachDashboard: React.FC<CoachDashboardProps> = ({
                     : 'bg-gray-100 dark:bg-neutral-800 text-gray-600 dark:text-neutral-400'
                 }`}
               >
-                {cronogramaEvents.length}
+                {programs.length + cronogramaEvents.length}
               </span>
             </button>
 
@@ -507,400 +448,23 @@ export const CoachDashboard: React.FC<CoachDashboardProps> = ({
       </div>
 
       {/* ========================================================================= */}
-      {/* VIEW 1: CRM ONTO-KANBAN PIPELINE */}
+      {/* VIEW 1: CRM ONTO-KANBAN PIPELINE (COMPACTO, AGRUPADO Y CONVERSIÓN)        */}
       {/* ========================================================================= */}
       {activeMainTab === 'crm' ? (
-        <div className="p-6 sm:p-10 max-w-7xl mx-auto w-full flex-1 flex flex-col space-y-8">
-          {/* CRM Top Bar info & Quick Add */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-6 border-b border-gray-100 dark:border-neutral-800 gap-4">
-            <div>
-              <span className="text-[10px] font-medium tracking-widest uppercase text-gray-400 dark:text-neutral-500 block">
-                Fase 1 & 2 • Embudo de Conversión
-              </span>
-              <h2 className="text-2xl font-light text-black dark:text-white tracking-tight mt-0.5">
-                Pipeline de Exploración:{' '}
-                <strong className="font-semibold">Conversatorio Raíz y Balance</strong>
-              </h2>
-              <p className="text-xs font-light text-gray-500 dark:text-neutral-400 mt-1 max-w-2xl">
-                Automatiza la transición de los asistentes del conversatorio que solicitaron la matriz vía WhatsApp hacia la sesión de 20 minutos y el cierre en el programa de 12 semanas.
-              </p>
-            </div>
-
-            <div className="flex items-center gap-2.5 shrink-0">
-              <button
-                type="button"
-                onClick={() => setShowMakeModal(true)}
-                className="px-3.5 py-2 rounded-xl border border-gray-200/90 dark:border-neutral-700 bg-white dark:bg-[#1A1A1E] hover:bg-gray-50 dark:hover:bg-neutral-800 text-black dark:text-white text-xs font-medium transition-all flex items-center gap-2 cursor-pointer shadow-2xs hover:border-black dark:hover:border-neutral-500 whitespace-nowrap"
-              >
-                <Workflow className="w-3.5 h-3.5 text-black dark:text-white" />
-                <span>Automatización Make</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setShowAddProspectModal(true)}
-                className="px-3.5 py-2 rounded-xl bg-black dark:bg-white text-white dark:text-black hover:bg-neutral-800 dark:hover:bg-neutral-200 text-xs font-medium transition-all flex items-center gap-1.5 cursor-pointer shadow-xs whitespace-nowrap"
-              >
-                <Plus className="w-3.5 h-3.5 stroke-[2]" />
-                <span>Nuevo Prospecto</span>
-              </button>
-            </div>
-          </div>
-
-          {/* Enlace Público de Pre-Inscripción de Inicio Rápido & Consentimiento */}
-          <div className="p-6 rounded-3xl bg-black text-white dark:bg-[#151518] dark:text-white border border-black dark:border-neutral-800 shadow-lg space-y-4">
-            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-              <div className="space-y-1">
-                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 dark:bg-white/5 border border-white/15 text-[10px] uppercase font-semibold tracking-wider text-amber-300">
-                  <Sparkles className="w-3 h-3 text-amber-400" />
-                  Link de Inicio Rápido para Invitados
-                </div>
-                <h3 className="text-lg font-semibold tracking-tight">
-                  Espacio de Registro Independiente para Asistentes al Conversatorio
-                </h3>
-                <p className="text-xs font-light text-neutral-300 dark:text-neutral-400 max-w-3xl leading-relaxed">
-                  Comparte este enlace directo en tus grupos o redes. Los usuarios reservan su cupo con su cuenta de Google, aceptan el marco ético y de confidencialidad de la <strong>ICF</strong> y la privacidad de Gemini, y obtienen su ticket digital con código único. <em>Solo al confirmar su asistencia podrán ingresar al portal directivo completo</em>.
-                </p>
-              </div>
-
-              <div className="flex flex-wrap items-center gap-2.5 shrink-0">
-                <button
-                  type="button"
-                  onClick={handleCopyRegistrationLink}
-                  className="px-4 py-2 rounded-full bg-white text-black text-xs font-semibold hover:bg-neutral-200 transition-all flex items-center gap-2 cursor-pointer shadow-sm"
-                >
-                  {copiedLinkFeedback ? (
-                    <>
-                      <CheckCheck className="w-4 h-4 text-emerald-600" />
-                      <span>¡Enlace Copiado!</span>
-                    </>
-                  ) : (
-                    <>
-                      <Copy className="w-4 h-4" />
-                      <span>Copiar Link de Registro</span>
-                    </>
-                  )}
-                </button>
-
-                {onOpenRegistrationPortal && (
-                  <button
-                    type="button"
-                    onClick={onOpenRegistrationPortal}
-                    className="px-4 py-2 rounded-full bg-white/10 hover:bg-white/20 text-white text-xs font-medium border border-white/20 transition-all flex items-center gap-2 cursor-pointer"
-                  >
-                    <ExternalLink className="w-4 h-4" />
-                    <span>Probar Landing de Registro</span>
-                  </button>
-                )}
-              </div>
-            </div>
-
-            {/* Live RSVP Pre-registered attendees preview */}
-            <div className="pt-4 border-t border-white/10 flex flex-col md:flex-row md:items-center justify-between gap-3 text-xs">
-              <div className="flex items-center gap-2">
-                <Ticket className="w-4 h-4 text-amber-400" />
-                <span className="font-medium text-white">
-                  {eventRegistrations.length} Participantes Pre-Inscritos con Ticket Digital (RSVP):
-                </span>
-              </div>
-              <div className="flex flex-wrap items-center gap-2">
-                {eventRegistrations.map((reg) => (
-                  <div
-                    key={reg.id}
-                    className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 border border-white/10 text-xs"
-                  >
-                    <span className="font-semibold text-white">{reg.userName}</span>
-                    <span className="font-mono text-[10px] text-amber-300">{reg.ticketCode}</span>
-                    {reg.attendanceConfirmed ? (
-                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-medium">
-                        Asistió &bull; Acceso Activo
-                      </span>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={() => handleConfirmAttendance(reg.ticketCode)}
-                        title="Confirmar asistencia durante el evento para activar su acceso al portal"
-                        className="text-[10px] px-2 py-0.5 rounded-full bg-amber-400 text-black font-semibold hover:bg-amber-300 cursor-pointer transition-all"
-                      >
-                        Confirmar Asistencia
-                      </button>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Make.com Scenario Interactive Status Banner */}
-          <div className="p-5 rounded-3xl bg-[#F9F9F9] dark:bg-[#151518] border border-gray-200/80 dark:border-neutral-800 flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div className="flex items-start gap-3">
-              <div className="w-8 h-8 rounded-2xl bg-black dark:bg-white text-white dark:text-black flex items-center justify-center shrink-0 mt-0.5">
-                <Workflow className="w-4 h-4" />
-              </div>
-              <div className="space-y-0.5">
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-semibold text-black dark:text-white uppercase tracking-wider">
-                    Ciclo Autónomo Make.com & Google Cloud Firestore
-                  </span>
-                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-white dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 text-black dark:text-neutral-200 font-medium">
-                    Fases 1, 2 & 3 Activas
-                  </span>
-                </div>
-                <p className="text-xs font-light text-gray-500 dark:text-neutral-400">
-                  <strong>1. Atracción:</strong> Webhook &rarr; Firestore Create &rarr; WhatsApp | <strong>2. Agendamiento:</strong> Calendly &rarr; Firestore Search &rarr; Update (<code>sesion_20min_agendada</code>) | <strong>3. Cierre:</strong> Pasarela de Pago &rarr; <code>prospects</code> (convertido) &rarr; <code>users</code> (client, Nodo 1) &rarr; Gmail/WhatsApp (Bienvenida).
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2 self-start md:self-auto shrink-0">
-              <button
-                type="button"
-                onClick={() => setShowMakeModal(true)}
-                className="px-3.5 py-1.5 rounded-full bg-white dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 text-xs font-medium text-black dark:text-white hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black transition-all cursor-pointer flex items-center gap-1.5"
-              >
-                Configurar Escenarios
-                <ArrowRight className="w-3 h-3" />
-              </button>
-            </div>
-          </div>
-
-          {/* Kanban Columns Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 flex-1 items-start">
-            {/* COLUMN 1: MATRIZ ENVIADA */}
-            <div className="bg-[#F9F9F9] dark:bg-[#151518] rounded-3xl p-5 border border-gray-200/80 dark:border-neutral-800 flex flex-col space-y-4">
-              <div className="flex items-center justify-between pb-3 border-b border-gray-200/60 dark:border-neutral-800">
-                <div className="flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-black dark:bg-white" />
-                  <h3 className="text-xs font-semibold text-black dark:text-white uppercase tracking-wider">
-                    1. Matriz Enviada
-                  </h3>
-                </div>
-                <span className="text-xs font-medium text-gray-500 dark:text-neutral-400 bg-white dark:bg-neutral-800 px-2 py-0.5 rounded-full border border-gray-200 dark:border-neutral-700">
-                  {columnMatriz.length}
-                </span>
-              </div>
-              <p className="text-[11px] font-light text-gray-500 dark:text-neutral-400">
-                Solicitaron el ejercicio ontológico vía WhatsApp post-conversatorio.
-              </p>
-
-              <div className="space-y-3">
-                {columnMatriz.length === 0 ? (
-                  <div className="p-8 text-center bg-white dark:bg-[#1A1A1E] rounded-2xl border border-gray-100 dark:border-neutral-800 text-xs font-light text-gray-400 dark:text-neutral-500">
-                    No hay prospectos en esta etapa.
-                  </div>
-                ) : (
-                  columnMatriz.map((p) => (
-                    <div
-                      key={p.id}
-                      className="bg-white dark:bg-[#1A1A1E] rounded-2xl p-4.5 border border-gray-100 dark:border-neutral-800 shadow-[0_2px_12px_rgba(0,0,0,0.02)] space-y-3 hover:border-gray-300 dark:hover:border-neutral-700 transition-all"
-                    >
-                      <div className="flex items-start justify-between gap-2">
-                        <div>
-                          <div className="text-xs font-semibold text-black dark:text-white">
-                            {p.name}
-                          </div>
-                          <div className="text-[11px] font-light text-gray-400 dark:text-neutral-500">
-                            {p.origin}
-                          </div>
-                        </div>
-                        <span className="text-[10px] text-gray-400 dark:text-neutral-500 font-light">
-                          {formatDate(p.createdAt)}
-                        </span>
-                      </div>
-
-                      {p.notes && (
-                        <p className="text-[11px] font-light text-gray-600 dark:text-neutral-300 bg-[#F9F9F9] dark:bg-[#202024] p-2.5 rounded-xl border border-gray-100 dark:border-neutral-800">
-                          {p.notes}
-                        </p>
-                      )}
-
-                      <div className="pt-2 border-t border-gray-100 dark:border-neutral-800 flex items-center justify-between gap-2">
-                        <a
-                          href={`https://wa.me/${p.whatsapp.replace(/[^0-9]/g, '')}`}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="inline-flex items-center gap-1 text-[11px] font-medium text-black dark:text-neutral-200 hover:underline"
-                        >
-                          <Phone className="w-3 h-3 text-black dark:text-white" />
-                          {p.whatsapp}
-                        </a>
-
-                        <button
-                          onClick={() =>
-                            handleStatusChange(p.id, 'sesion_20min_agendada')
-                          }
-                          className="px-2.5 py-1 rounded-full bg-black dark:bg-white text-white dark:text-black text-[10px] font-medium hover:bg-black/80 dark:hover:bg-white/80 transition-all flex items-center gap-1 cursor-pointer"
-                        >
-                          Agendar 20m <ArrowRight className="w-2.5 h-2.5" />
-                        </button>
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-            </div>
-
-            {/* COLUMN 2: SESIÓN 20 MIN */}
-            <div className="bg-[#F9F9F9] dark:bg-[#151518] rounded-3xl p-5 border border-gray-200/80 dark:border-neutral-800 flex flex-col space-y-4">
-              <div className="flex items-center justify-between pb-3 border-b border-gray-200/60 dark:border-neutral-800">
-                <div className="flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-black dark:bg-white" />
-                  <h3 className="text-xs font-semibold text-black dark:text-white uppercase tracking-wider">
-                    2. Sesión 20 min
-                  </h3>
-                </div>
-                <span className="text-xs font-medium text-gray-500 dark:text-neutral-400 bg-white dark:bg-neutral-800 px-2 py-0.5 rounded-full border border-gray-200 dark:border-neutral-700">
-                  {columnSesion20.length}
-                </span>
-              </div>
-              <p className="text-[11px] font-light text-gray-500 dark:text-neutral-400">
-                Agendados en Google Calendar para exploración y diagnóstico.
-              </p>
-
-              <div className="space-y-3">
-                {columnSesion20.length === 0 ? (
-                  <div className="p-8 text-center bg-white dark:bg-[#1A1A1E] rounded-2xl border border-gray-100 dark:border-neutral-800 text-xs font-light text-gray-400 dark:text-neutral-500">
-                    No hay sesiones de 20 min agendadas.
-                  </div>
-                ) : (
-                  columnSesion20.map((p) => (
-                    <div
-                      key={p.id}
-                      className="bg-white dark:bg-[#1A1A1E] rounded-2xl p-4.5 border border-gray-100 dark:border-neutral-800 shadow-[0_2px_12px_rgba(0,0,0,0.02)] space-y-3 hover:border-gray-300 dark:hover:border-neutral-700 transition-all"
-                    >
-                      <div className="flex items-start justify-between gap-2">
-                        <div>
-                          <div className="text-xs font-semibold text-black dark:text-white">
-                            {p.name}
-                          </div>
-                          <div className="text-[11px] font-light text-gray-400 dark:text-neutral-500 flex items-center gap-1 mt-0.5">
-                            <Calendar className="w-3 h-3 text-black dark:text-white" />
-                            {p.session20minDate
-                              ? formatDate(p.session20minDate)
-                              : 'Por coordinar'}
-                          </div>
-                        </div>
-                      </div>
-
-                      {p.notes && (
-                        <p className="text-[11px] font-light text-gray-600 dark:text-neutral-300 bg-[#F9F9F9] dark:bg-[#202024] p-2.5 rounded-xl border border-gray-100 dark:border-neutral-800">
-                          {p.notes}
-                        </p>
-                      )}
-
-                      <div className="pt-2 border-t border-gray-100 dark:border-neutral-800 flex items-center justify-between gap-2">
-                        <button
-                          onClick={() => handleStatusChange(p.id, 'descartado')}
-                          className="text-[10px] text-gray-400 dark:text-neutral-500 hover:text-black dark:hover:text-white font-light cursor-pointer"
-                        >
-                          Descartar
-                        </button>
-
-                        <button
-                          onClick={() => setConvertingProspect(p)}
-                          className="px-3 py-1 rounded-full bg-black dark:bg-white text-white dark:text-black text-[10px] font-medium hover:bg-black/80 dark:hover:bg-white/80 transition-all flex items-center gap-1 cursor-pointer"
-                        >
-                          <UserCheck className="w-3 h-3" />
-                          Convertir a Programa
-                        </button>
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-            </div>
-
-            {/* COLUMN 3: DECISIÓN / CIERRE */}
-            <div className="bg-[#F9F9F9] dark:bg-[#151518] rounded-3xl p-5 border border-gray-200/80 dark:border-neutral-800 flex flex-col space-y-4">
-              <div className="flex items-center justify-between pb-3 border-b border-gray-200/60 dark:border-neutral-800">
-                <div className="flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-black dark:bg-white" />
-                  <h3 className="text-xs font-semibold text-black dark:text-white uppercase tracking-wider">
-                    3. Decisión & Cierre
-                  </h3>
-                </div>
-                <span className="text-xs font-medium text-gray-500 dark:text-neutral-400 bg-white dark:bg-neutral-800 px-2 py-0.5 rounded-full border border-gray-200 dark:border-neutral-700">
-                  {columnDecision.length}
-                </span>
-              </div>
-              <p className="text-[11px] font-light text-gray-500 dark:text-neutral-400">
-                Convertidos al programa 1 a 1 o derivados.
-              </p>
-
-              <div className="space-y-3">
-                {columnDecision.length === 0 ? (
-                  <div className="p-8 text-center bg-white dark:bg-[#1A1A1E] rounded-2xl border border-gray-100 dark:border-neutral-800 text-xs font-light text-gray-400 dark:text-neutral-500">
-                    Sin decisiones registradas aún.
-                  </div>
-                ) : (
-                  columnDecision.map((p) => {
-                    const isConverted = p.status === 'convertido';
-                    return (
-                      <div
-                        key={p.id}
-                        className={`rounded-2xl p-4.5 border space-y-2.5 transition-all ${
-                          isConverted
-                            ? 'bg-white dark:bg-[#1A1A1E] border-black/20 dark:border-neutral-700 shadow-xs'
-                            : 'bg-white/60 dark:bg-[#1A1A1E]/60 border-gray-200 dark:border-neutral-800 opacity-75'
-                        }`}
-                      >
-                        <div className="flex items-start justify-between">
-                          <div>
-                            <div className="text-xs font-semibold text-black dark:text-white">
-                              {p.name}
-                            </div>
-                            <div className="text-[10px] font-light text-gray-400 dark:text-neutral-500">
-                              {p.origin}
-                            </div>
-                          </div>
-                          <span
-                            className={`px-2 py-0.5 rounded-full text-[9px] font-medium uppercase tracking-wider ${
-                              isConverted
-                                ? 'bg-black dark:bg-white text-white dark:text-black'
-                                : 'bg-gray-100 dark:bg-neutral-800 text-gray-500 dark:text-neutral-400'
-                            }`}
-                          >
-                            {isConverted ? 'Convertido 1 a 1' : 'Descartado'}
-                          </span>
-                        </div>
-
-                        {p.notes && (
-                          <p className="text-[11px] font-light text-gray-600 dark:text-neutral-300">
-                            {p.notes}
-                          </p>
-                        )}
-
-                        <div className="text-[10px] text-gray-400 dark:text-neutral-500 font-light flex items-center justify-between pt-1">
-                          <span>
-                            {p.convertedAt
-                              ? `Cierre: ${formatDate(p.convertedAt)}`
-                              : 'Concluido'}
-                          </span>
-                          {isConverted && (
-                            <button
-                              onClick={() => {
-                                const matchedClient = clients.find(
-                                  (c) => c.name === p.name
-                                );
-                                if (matchedClient) {
-                                  setSelectedClientId(matchedClient.uid);
-                                  setActiveMainTab('clients');
-                                }
-                              }}
-                              className="text-black dark:text-white font-medium underline text-[10px] cursor-pointer"
-                            >
-                              Ver en Clientes
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
+        <CrmPipelineManager
+          prospects={prospects}
+          clients={clients}
+          eventRegistrations={eventRegistrations}
+          onRefreshProspects={handleRefreshProspects}
+          onRefreshClients={handleRefreshClientsList}
+          onSelectClientAndOpenWorkstation={(cid) => {
+            setSelectedClientId(cid);
+            setActiveMainTab('clients');
+            setClientsViewMode('workstation');
+          }}
+          onOpenMakeModal={() => setShowMakeModal(true)}
+          onOpenRegistrationPortal={onOpenRegistrationPortal}
+        />
       ) : activeMainTab === 'clients' ? (
         /* ========================================================================= */
         /* VIEW 2: CLIENTES ANCLA (DIRECTORIO GERENCIAL & FICHA DE TRABAJO 1 A 1)    */
@@ -1020,163 +584,17 @@ export const CoachDashboard: React.FC<CoachDashboardProps> = ({
         </div>
       ) : activeMainTab === 'events' ? (
         /* ========================================================================= */
-        /* VIEW 3: CRONOGRAMA & PUBLICIDAD IA (EVENTOS & CONVERSATORIOS)            */
+        /* VIEW 3: GESTIÓN INTEGRAL DE PROGRAMAS, CUPOS, PARTICIPANTES Y EVENTOS   */
         /* ========================================================================= */
-        <div className="p-6 sm:p-10 max-w-7xl mx-auto w-full flex-1 flex flex-col space-y-10">
-          {/* Header */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-6 border-b border-gray-100 dark:border-neutral-800 gap-4">
-            <div>
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#F9F9F9] dark:bg-neutral-800 border border-gray-200/80 dark:border-neutral-700 text-[10px] font-semibold text-black dark:text-white uppercase tracking-widest mb-2">
-                <Sparkles className="w-3 h-3 text-amber-500" />
-                Inteligencia Artificial & Cronograma
-              </div>
-              <h2 className="text-2xl sm:text-3xl font-light text-black dark:text-white tracking-tight">
-                Espacio Publicitario IA &{' '}
-                <strong className="font-semibold">Próximo Evento en Cronograma</strong>
-              </h2>
-              <p className="text-xs sm:text-sm font-light text-gray-500 dark:text-neutral-400 mt-1 max-w-2xl leading-relaxed">
-                Este visual publicitario ha sido sintetizado por IA y se presenta automáticamente a todos los visitantes en la pantalla de inicio y a los clientes en su portal directivo.
-              </p>
-            </div>
-
-            <div className="flex items-center gap-3">
-              <span className="text-xs text-gray-400 dark:text-neutral-500 font-light hidden sm:inline">
-                {cronogramaEvents.length} Eventos en Agenda
-              </span>
-            </div>
-          </div>
-
-          {/* Section: Live AI Generated Advertising Banner Preview */}
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="text-xs font-semibold text-black dark:text-white uppercase tracking-wider flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                Vista Previa en Vivo (Pantalla de Inicio & Portal de Clientes)
-              </h3>
-              <span className="text-[11px] font-light text-gray-400 dark:text-neutral-500">
-                Renderizado automático en 16:9 con tipografía suiza
-              </span>
-            </div>
-
-            <PromotionalEventBanner />
-          </div>
-
-          {/* Section: Scheduled Events in Cronograma */}
-          <div className="space-y-6 pt-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-lg font-semibold text-black dark:text-white tracking-tight">
-                  Eventos Programados en la Agenda
-                </h3>
-                <p className="text-xs font-light text-gray-500 dark:text-neutral-400">
-                  Selecciona cuál evento debe anunciarse en el banner publicitario principal del inicio.
-                </p>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {cronogramaEvents.map((evt) => {
-                const isFeatured = evt.featured;
-                return (
-                  <div
-                    key={evt.id}
-                    className={`rounded-3xl p-6 border transition-all space-y-4 flex flex-col justify-between ${
-                      isFeatured
-                        ? 'bg-white dark:bg-[#1A1A1E] border-black dark:border-white shadow-md ring-1 ring-black dark:ring-white'
-                        : 'bg-[#F9F9F9] dark:bg-[#151518] border-gray-200/80 dark:border-neutral-800 hover:bg-white dark:hover:bg-[#1A1A1E] hover:border-gray-300 dark:hover:border-neutral-700'
-                    }`}
-                  >
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between">
-                        <span className="text-[10px] font-semibold uppercase tracking-wider px-2.5 py-1 rounded-full bg-white dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 text-black dark:text-white">
-                          {evt.category}
-                        </span>
-
-                        {isFeatured ? (
-                          <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-black dark:text-white bg-black/5 dark:bg-white/10 px-2.5 py-1 rounded-full">
-                            <CheckCircle2 className="w-3.5 h-3.5 text-black dark:text-white" />
-                            Activo en Inicio
-                          </span>
-                        ) : (
-                          <span className="text-xs font-light text-gray-400 dark:text-neutral-500">
-                            En espera
-                          </span>
-                        )}
-                      </div>
-
-                      <h4 className="text-base font-semibold text-black dark:text-white tracking-tight leading-snug">
-                        {evt.title}
-                      </h4>
-                      <p className="text-xs font-light text-gray-600 dark:text-neutral-400 line-clamp-2">
-                        {evt.subtitle}
-                      </p>
-
-                      <div className="grid grid-cols-2 gap-2 text-xs pt-2">
-                        <div className="p-2.5 rounded-xl bg-white dark:bg-[#202024] border border-gray-100 dark:border-neutral-800">
-                          <span className="text-[9px] uppercase font-semibold text-gray-400 dark:text-neutral-500 block">
-                            Fecha
-                          </span>
-                          <span className="font-medium text-black dark:text-white truncate block">
-                            {evt.displayDate}
-                          </span>
-                        </div>
-                        <div className="p-2.5 rounded-xl bg-white dark:bg-[#202024] border border-gray-100 dark:border-neutral-800">
-                          <span className="text-[9px] uppercase font-semibold text-gray-400 dark:text-neutral-500 block">
-                            Horario
-                          </span>
-                          <span className="font-medium text-black dark:text-white truncate block">
-                            {evt.time}
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* AI Prompt Metadata Note */}
-                      <div className="p-3 rounded-2xl bg-white dark:bg-[#202024] border border-gray-100 dark:border-neutral-800 text-[11px] font-light text-gray-500 dark:text-neutral-400 space-y-1">
-                        <span className="text-[9px] font-semibold uppercase tracking-wider text-black dark:text-white flex items-center gap-1">
-                          <Sparkles className="w-2.5 h-2.5 text-amber-500" />
-                          Prompt de Imagen IA Utilizado
-                        </span>
-                        <p className="italic text-gray-400 dark:text-neutral-500 line-clamp-2">
-                          &quot;{evt.aiPromptUsed || 'Luxury minimalist ontological coaching banner...'}&quot;
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="pt-3 border-t border-gray-100 dark:border-neutral-800 flex items-center justify-between gap-2">
-                      <a
-                        href={evt.meetUrl || 'https://meet.google.com'}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-xs text-gray-500 dark:text-neutral-400 hover:text-black dark:hover:text-white flex items-center gap-1 font-light"
-                      >
-                        <Video className="w-3.5 h-3.5" />
-                        Google Meet
-                        <ExternalLink className="w-3 h-3" />
-                      </a>
-
-                      {!isFeatured && (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const updated = cronogramaEvents.map((e) => ({
-                              ...e,
-                              featured: e.id === evt.id,
-                            }));
-                            setCronogramaEvents(updated);
-                            OntologicalStore.saveCronogramaEvents(updated);
-                          }}
-                          className="px-4 py-2 rounded-full bg-black dark:bg-white text-white dark:text-black text-xs font-medium hover:bg-gray-800 dark:hover:bg-neutral-200 transition-all cursor-pointer shadow-xs"
-                        >
-                          Fijar en el Inicio
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </div>
+        <ProgramsAndEventsManager
+          events={cronogramaEvents}
+          programs={programs}
+          registrations={eventRegistrations}
+          onRefreshEvents={handleRefreshEvents}
+          onRefreshPrograms={handleRefreshPrograms}
+          onRefreshRegistrations={handleRefreshRegistrations}
+          onOpenRegistrationPortal={onOpenRegistrationPortal}
+        />
       ) : activeMainTab === 'workspace' ? (
         /* ========================================================================= */
         /* VIEW 4: GOOGLE WORKSPACE HUB (DRIVE, SHEETS, FORMS, CALENDAR & MEET)     */
@@ -1251,168 +669,6 @@ export const CoachDashboard: React.FC<CoachDashboardProps> = ({
           />
         </div>
       ) : null}
-
-      {/* ========================================================================= */}
-      {/* MODAL: REGISTRAR NUEVO PROSPECTO (WHATSAPP) */}
-      {/* ========================================================================= */}
-      {showAddProspectModal && (
-        <div className="fixed inset-0 z-50 bg-black/40 dark:bg-black/70 backdrop-blur-xs flex items-center justify-center p-6">
-          <div className="bg-white dark:bg-[#151518] rounded-3xl p-8 max-w-md w-full border border-gray-100 dark:border-neutral-800 shadow-2xl animate-fade-in space-y-5">
-            <div>
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#F9F9F9] dark:bg-neutral-800 border border-gray-100 dark:border-neutral-700 text-[10px] font-medium text-gray-500 dark:text-neutral-400 uppercase tracking-widest mb-2">
-                Conversatorio Raíz y Balance
-              </div>
-              <h3 className="text-xl font-semibold text-black dark:text-white tracking-tight">
-                Registrar Solicitud de Matriz
-              </h3>
-              <p className="text-xs font-light text-gray-500 dark:text-neutral-400 mt-1">
-                Ingresa los datos del participante que solicitó el ejercicio vía WhatsApp.
-              </p>
-            </div>
-
-            <form onSubmit={handleAddProspect} className="space-y-4">
-              <div>
-                <label className="block text-xs font-semibold text-black dark:text-white uppercase tracking-wider mb-1.5">
-                  Nombre Completo
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="Ej. Roberto Gómez"
-                  value={prospectName}
-                  onChange={(e) => setProspectName(e.target.value)}
-                  className="w-full px-4 py-3 rounded-2xl bg-[#F9F9F9] dark:bg-[#202024] border border-gray-200 dark:border-neutral-700 text-xs text-black dark:text-white font-light focus:outline-none focus:ring-1 focus:ring-black dark:focus:ring-white"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-black dark:text-white uppercase tracking-wider mb-1.5">
-                  WhatsApp
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="+57 300 000 0000"
-                  value={prospectPhone}
-                  onChange={(e) => setProspectPhone(e.target.value)}
-                  className="w-full px-4 py-3 rounded-2xl bg-[#F9F9F9] dark:bg-[#202024] border border-gray-200 dark:border-neutral-700 text-xs text-black dark:text-white font-light focus:outline-none focus:ring-1 focus:ring-black dark:focus:ring-white"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-black dark:text-white uppercase tracking-wider mb-1.5">
-                  Correo Electrónico (Opcional)
-                </label>
-                <input
-                  type="email"
-                  placeholder="nombre@ejemplo.com"
-                  value={prospectEmail}
-                  onChange={(e) => setProspectEmail(e.target.value)}
-                  className="w-full px-4 py-3 rounded-2xl bg-[#F9F9F9] dark:bg-[#202024] border border-gray-200 dark:border-neutral-700 text-xs text-black dark:text-white font-light focus:outline-none focus:ring-1 focus:ring-black dark:focus:ring-white"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-black dark:text-white uppercase tracking-wider mb-1.5">
-                  Notas / Quiebre Inicial
-                </label>
-                <textarea
-                  rows={2}
-                  placeholder="Ej. Manifestó agotamiento en delegación y necesidad de fijar límites..."
-                  value={prospectNotes}
-                  onChange={(e) => setProspectNotes(e.target.value)}
-                  className="w-full px-4 py-3 rounded-2xl bg-[#F9F9F9] dark:bg-[#202024] border border-gray-200 dark:border-neutral-700 text-xs text-black dark:text-white font-light focus:outline-none focus:ring-1 focus:ring-black dark:focus:ring-white resize-y"
-                />
-              </div>
-
-              <div className="pt-3 flex items-center justify-end gap-3">
-                <button
-                  type="button"
-                  onClick={() => setShowAddProspectModal(false)}
-                  className="px-5 py-2.5 rounded-full text-xs font-medium text-gray-500 dark:text-neutral-400 hover:text-black dark:hover:text-white cursor-pointer"
-                >
-                  Cancelar
-                </button>
-                <LiquidGlassButton type="submit">
-                  Guardar en Pipeline
-                </LiquidGlassButton>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* ========================================================================= */}
-      {/* MODAL: CONVERTIR PROSPECTO EN CLIENTE 1 A 1 */}
-      {/* ========================================================================= */}
-      {convertingProspect && (
-        <div className="fixed inset-0 z-50 bg-black/40 dark:bg-black/70 backdrop-blur-xs flex items-center justify-center p-6">
-          <div className="bg-white dark:bg-[#151518] rounded-3xl p-8 max-w-md w-full border border-gray-100 dark:border-neutral-800 shadow-2xl animate-fade-in space-y-5">
-            <div>
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#F9F9F9] dark:bg-neutral-800 border border-gray-100 dark:border-neutral-700 text-[10px] font-medium text-gray-500 dark:text-neutral-400 uppercase tracking-widest mb-2">
-                Cierre de Conversión
-              </div>
-              <h3 className="text-xl font-semibold text-black dark:text-white tracking-tight">
-                Vincular al Programa 1 a 1
-              </h3>
-              <p className="text-xs font-light text-gray-500 dark:text-neutral-400 mt-1">
-                Convertir a <strong>{convertingProspect.name}</strong> al programa{' '}
-                <em>"Certeza, Fronteras & Dirección Personal"</em> (12 Semanas).
-              </p>
-            </div>
-
-            <div className="space-y-3">
-              <label className="block text-xs font-semibold text-black dark:text-white uppercase tracking-wider">
-                Modalidad de Pago Acordada
-              </label>
-
-              {(
-                ['Completado', 'Cuota 1 de 2', 'Pago Único'] as PaymentStatus[]
-              ).map((status) => (
-                <label
-                  key={status}
-                  className={`flex items-center justify-between p-3.5 rounded-2xl border cursor-pointer transition-all ${
-                    selectedPaymentStatus === status
-                      ? 'border-black dark:border-white bg-[#F9F9F9] dark:bg-[#202024]'
-                      : 'border-gray-200 dark:border-neutral-700 bg-white dark:bg-[#151518] hover:bg-gray-50 dark:hover:bg-neutral-800'
-                  }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <input
-                      type="radio"
-                      name="paymentStatus"
-                      checked={selectedPaymentStatus === status}
-                      onChange={() => setSelectedPaymentStatus(status)}
-                      className="accent-black dark:accent-white"
-                    />
-                    <span className="text-xs font-medium text-black dark:text-white">{status}</span>
-                  </div>
-                  <span className="text-[11px] font-light text-gray-400 dark:text-neutral-500">
-                    $1.500.000 COP
-                  </span>
-                </label>
-              ))}
-            </div>
-
-            <div className="p-3.5 rounded-2xl bg-[#F9F9F9] dark:bg-[#202024] border border-gray-100 dark:border-neutral-800 text-[11px] font-light text-gray-600 dark:text-neutral-300 leading-relaxed">
-              Al confirmar, se creará el perfil del cliente, se habilitará su Roadmap de 12 semanas (Nodo 1) y se creará su primer enlace cifrado de Google Meet.
-            </div>
-
-            <div className="pt-3 flex items-center justify-end gap-3">
-              <button
-                type="button"
-                onClick={() => setConvertingProspect(null)}
-                className="px-5 py-2.5 rounded-full text-xs font-medium text-gray-500 dark:text-neutral-400 hover:text-black dark:hover:text-white cursor-pointer"
-              >
-                Cancelar
-              </button>
-              <LiquidGlassButton onClick={handleConfirmConversion}>
-                Confirmar Cierre y Matricular
-              </LiquidGlassButton>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* ========================================================================= */}
       {/* MODAL: AGENDAR NUEVA SESIÓN QUINCENAL */}

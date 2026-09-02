@@ -11,6 +11,7 @@ interface HeaderProps {
   allUsers?: User[];
   onOpenSettings?: () => void;
   onOpenRegistrationPortal?: () => void;
+  onNavigateHome?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -20,13 +21,18 @@ export const Header: React.FC<HeaderProps> = ({
   allUsers = [],
   onOpenSettings,
   onOpenRegistrationPortal,
+  onNavigateHome,
 }) => {
   return (
     <header className="sticky top-0 z-40 w-full bg-white/85 dark:bg-[#0D0D0E]/85 backdrop-blur-xl border-b border-gray-100 dark:border-neutral-800 transition-all duration-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 h-20 flex items-center justify-between">
         {/* Brand identity */}
         <div className="flex items-center gap-3">
-          <BrandLogo size="sm" />
+          <BrandLogo
+            size="sm"
+            onClick={onNavigateHome}
+            className="transition-transform active:scale-95"
+          />
         </div>
 
         {/* User profile & actions */}

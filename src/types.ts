@@ -57,6 +57,7 @@ export interface Session {
   meetLink: string;
   status: SessionStatus;
   notes?: string;
+  ontologicalFocus?: string;
 }
 
 export interface FormSubmission {
@@ -154,7 +155,29 @@ export type EventCategory =
   | 'Conversatorio Quincenal'
   | 'Masterclass Ontológica'
   | 'Taller Vivencial'
-  | 'Círculo de Liderazgo';
+  | 'Círculo de Liderazgo'
+  | 'Programa de Acompañamiento'
+  | 'Seminario Ejecutivo';
+
+export interface OntologicalProgram {
+  id: string;
+  name: string;
+  subtitle: string;
+  category: string;
+  duration: string; // ej: "12 Semanas (6 Sesiones Quincenales)"
+  format: '1 a 1 Ejecutivo' | 'Grupal / Cohorte' | 'Taller Intensivo' | 'Híbrido';
+  fee: string; // "$1.500.000 COP"
+  totalCapacity: number; // cupos máximos totales
+  availableSpots: number; // cupos disponibles restantes
+  enrolledCount?: number; // cantidad de participantes activos
+  status: 'active' | 'enrolling' | 'completed' | 'draft';
+  description: string;
+  keyOutcomes: string[];
+  startDate?: string;
+  displaySchedule?: string;
+  facilitator: string;
+  totalNodes: number;
+}
 
 export interface CronogramaEvent {
   id: string;
@@ -164,8 +187,9 @@ export interface CronogramaEvent {
   date: string; // ISO string
   displayDate: string; // "Jueves, 12 de Octubre"
   time: string; // "7:00 PM (GMT-5)"
-  mode: 'Online (Google Meet)' | 'Presencial & Streaming';
+  mode: 'Online (Google Meet)' | 'Presencial & Streaming' | 'Híbrido';
   meetUrl?: string;
+  location?: string;
   description: string;
   imageUrl: string;
   aiPromptUsed?: string;
@@ -174,6 +198,7 @@ export interface CronogramaEvent {
   totalSpots: number;
   featured: boolean;
   status: 'upcoming' | 'live' | 'completed';
+  price?: string;
 }
 
 export interface GoogleWorkspaceConfig {
