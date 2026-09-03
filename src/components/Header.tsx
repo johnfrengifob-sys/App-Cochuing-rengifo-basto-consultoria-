@@ -8,6 +8,7 @@ import {
   Lock,
   Video,
   ChevronDown,
+  ChevronRight,
   UserX,
   CalendarX,
   AlertTriangle,
