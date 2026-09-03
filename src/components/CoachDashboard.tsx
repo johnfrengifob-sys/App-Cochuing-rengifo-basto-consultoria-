@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   User,
   FormSubmission,
@@ -17,7 +17,6 @@ import { OntologicalStore, DEFAULT_WEBHOOK_URL, PROGRAM_NODES } from '../service
 import { PDFGenerator } from '../utils/pdfGenerator';
 import { LiquidGlassButton } from './LiquidGlassButton';
 import { PulseBadge } from './PulseBadge';
-import { WebhookConfigModal } from './WebhookConfigModal';
 import { PromotionalEventBanner } from './PromotionalEventBanner';
 import { ClientTrafficStatusBadge } from './ClientTrafficStatusBadge';
 import { ClientDirectoryTable } from './ClientDirectoryTable';
@@ -122,9 +121,6 @@ export const CoachDashboard: React.FC<CoachDashboardProps> = ({
     return Array.isArray(users) ? users.filter((u) => u && u.role === 'client') : [];
   });
 
-  // Modal States
-  const [showMakeModal, setShowMakeModal] = useState(false);
-
   // Active Client Selection State
   const [selectedClientId, setSelectedClientId] = useState<string>(
     clients[0]?.uid || ''
@@ -185,6 +181,22 @@ export const CoachDashboard: React.FC<CoachDashboardProps> = ({
     setClients(refreshed);
     if (onRefreshClients) onRefreshClients();
   };
+
+  // Sync clients when prop changes from parent (App.tsx)
+  useEffect(() => {
+    if (Array.isArray(initialClients) && initialClients.length > 0) {
+      setClients(initialClients.filter((u) => u && u.role === 'client'));
+    }
+  }, [initialClients]);
+
+  // Keep forms, insights, and sessions strictly synchronized with selectedClientId
+  useEffect(() => {
+    if (selectedClient?.uid) {
+      setForms(OntologicalStore.getFormsForClient(selectedClient.uid));
+      setInsights(OntologicalStore.getInsightsForClient(selectedClient.uid));
+      setSessions(OntologicalStore.getSessionsForClient(selectedClient.uid));
+    }
+  }, [selectedClientId, clients]);
 
   // Handle client selection switch
   const handleSelectClient = (clientId: string, openWorkstation: boolean = true) => {
@@ -348,147 +360,287 @@ export const CoachDashboard: React.FC<CoachDashboardProps> = ({
 
   return (
     <div className="min-h-screen bg-transparent text-black dark:text-neutral-100 flex flex-col transition-colors duration-200">
-      {/* Sub-Header Navigation: Consola del Consultor Ontológico */}
-      <div className="border-b border-white/60 dark:border-white/10 bg-white/60 dark:bg-[#151518]/60 backdrop-blur-xl px-4 sm:px-10 py-3.5 transition-colors">
-        <div className="max-w-7xl mx-auto flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-          <div className="flex items-center gap-3 flex-wrap">
-            <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
-            <div>
-              <h1 className="text-base font-semibold text-black dark:text-white tracking-tight leading-tight">
-                Consola del Consultor Ontológico
-              </h1>
-              <p className="text-[11px] text-gray-500 dark:text-neutral-400 font-light">
-                Sistema Ejecutivo RBC • John Fredy Rengifo Basto
-              </p>
-            </div>
-
-            {/* Botón de acceso directo en la Consola del Consultor para el Espacio Académico */}
-            <button
-              id="coach-academic-space-header-btn"
-              type="button"
-              onClick={() => {
-                setAcademicInitialSubTab('courses');
-                setActiveMainTab('academic');
-              }}
-              className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer border shadow-2xs ${
-                activeMainTab === 'academic'
-                  ? 'bg-black text-white dark:bg-white dark:text-black border-black dark:border-white shadow-xs font-bold ring-2 ring-indigo-500/20'
-                  : 'bg-indigo-50/90 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-300 border-indigo-200/80 dark:border-indigo-800/60 hover:bg-indigo-100 dark:hover:bg-indigo-900/60'
-              }`}
-              title="Espacio Académico (Cursos, Capacidad, Temarios, Pasos, Sala Meet & Automatizaciones)"
-            >
-              <GraduationCap className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
-              <span>Espacio Académico</span>
-              <span
-                className={`text-[10px] px-2 py-0.5 rounded-full font-mono font-medium ${
-                  activeMainTab === 'academic'
-                    ? 'bg-white/20 dark:bg-black/20 text-white dark:text-black'
-                    : 'bg-indigo-100 dark:bg-indigo-900/60 text-indigo-800 dark:text-indigo-200'
-                }`}
-              >
-                6 Módulos
-              </span>
-            </button>
+      {/* Sub-Header Navigation: Consola del Consultor Ontológico (Título Centrado y Funciones Lineales Delgadas) */}
+      <div className="glass-panel-sheer border-b border-white/50 dark:border-white/10 px-4 sm:px-8 py-5 transition-colors">
+        <div className="max-w-7xl mx-auto flex flex-col items-center text-center space-y-3.5">
+          {/* Centered Title & Description */}
+          <div className="space-y-1 max-w-3xl">
+            <h1 className="text-2xl sm:text-3xl font-semibold text-black dark:text-white tracking-tight leading-tight">
+              Consola del Consultor Ontológico
+            </h1>
+            <p className="text-xs sm:text-sm text-gray-500 dark:text-neutral-400 font-light leading-relaxed">
+              Supervisión estratégica de clientes, gestión de embudo ontológico, validación financiera y facilitación directiva.
+            </p>
           </div>
 
-          {/* Master View Switcher (Homogenized Appearance) */}
-          <div className="flex items-center gap-1 p-1 bg-white/70 dark:bg-[#1E1E22]/70 backdrop-blur-md rounded-2xl border border-white/60 dark:border-neutral-700 shadow-2xs self-stretch lg:self-auto overflow-x-auto no-scrollbar">
-            <button
-              onClick={() => setActiveMainTab('crm')}
-              className={`px-3.5 py-2 rounded-xl text-xs font-medium transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap shrink-0 ${
-                activeMainTab === 'crm'
-                  ? 'bg-black dark:bg-white text-white dark:text-black shadow-xs font-semibold'
-                  : 'text-neutral-600 dark:text-neutral-400 hover:text-black dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-neutral-800'
-              }`}
-            >
-              <Kanban className="w-3.5 h-3.5" />
-              <span>Pipeline CRM</span>
-              <span
-                className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono font-medium ${
+          {/* Funciones de la Consola: Botones delgados, lineales y con altura compacta */}
+          <div className="w-full pt-1">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-2 sm:gap-2.5 w-full max-w-7xl mx-auto">
+              {/* Función 1: Pipeline CRM */}
+              <button
+                id="coach-nav-crm-btn"
+                type="button"
+                onClick={() => setActiveMainTab('crm')}
+                className={`group px-3 py-2 sm:py-2.5 rounded-xl transition-all cursor-pointer text-left flex items-center gap-2.5 w-full ${
+                  activeMainTab === 'crm'
+                    ? 'bg-black text-white dark:bg-white dark:text-black shadow-sm ring-1 ring-black/10 dark:ring-white/20'
+                    : 'glass-panel-opal hover:bg-white/90 dark:hover:bg-[#202026] text-neutral-800 dark:text-neutral-200 border border-white/60 dark:border-white/10 shadow-2xs hover:border-black/20 dark:hover:border-white/20'
+                }`}
+              >
+                <div className={`p-1.5 rounded-lg shrink-0 ${
                   activeMainTab === 'crm'
                     ? 'bg-white/20 dark:bg-black/20 text-white dark:text-black'
-                    : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400'
+                    : 'bg-sky-50 dark:bg-sky-950/50 text-sky-600 dark:text-sky-400'
+                }`}>
+                  <Kanban className="w-3.5 h-3.5" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between gap-1">
+                    <span className="text-xs font-semibold truncate leading-tight">Pipeline CRM</span>
+                    <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono font-bold shrink-0 ${
+                      activeMainTab === 'crm'
+                        ? 'bg-white/20 dark:bg-black/20 text-white dark:text-black'
+                        : 'bg-sky-100 dark:bg-sky-900/60 text-sky-800 dark:text-sky-200'
+                    }`}>
+                      {prospects.length}
+                    </span>
+                  </div>
+                  <span className={`text-[10px] block truncate font-light leading-tight mt-0.5 ${
+                    activeMainTab === 'crm' ? 'text-white/80 dark:text-black/70' : 'text-gray-500 dark:text-neutral-400'
+                  }`}>
+                    Embudo & Registros
+                  </span>
+                </div>
+              </button>
+
+              {/* Función 2: Clientes Ancla */}
+              <button
+                id="coach-nav-clients-btn"
+                type="button"
+                onClick={() => setActiveMainTab('clients')}
+                className={`group px-3 py-2 sm:py-2.5 rounded-xl transition-all cursor-pointer text-left flex items-center gap-2.5 w-full ${
+                  activeMainTab === 'clients'
+                    ? 'bg-black text-white dark:bg-white dark:text-black shadow-sm ring-1 ring-black/10 dark:ring-white/20'
+                    : 'glass-panel-opal hover:bg-white/90 dark:hover:bg-[#202026] text-neutral-800 dark:text-neutral-200 border border-white/60 dark:border-white/10 shadow-2xs hover:border-black/20 dark:hover:border-white/20'
                 }`}
               >
-                {prospects.length}
-              </span>
-            </button>
-
-            <button
-              onClick={() => setActiveMainTab('clients')}
-              className={`px-3.5 py-2 rounded-xl text-xs font-medium transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap shrink-0 ${
-                activeMainTab === 'clients'
-                  ? 'bg-black dark:bg-white text-white dark:text-black shadow-xs font-semibold'
-                  : 'text-neutral-600 dark:text-neutral-400 hover:text-black dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-neutral-800'
-              }`}
-            >
-              <Users className="w-3.5 h-3.5" />
-              <span>Clientes Ancla</span>
-              <span
-                className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono font-medium ${
+                <div className={`p-1.5 rounded-lg shrink-0 ${
                   activeMainTab === 'clients'
                     ? 'bg-white/20 dark:bg-black/20 text-white dark:text-black'
-                    : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400'
+                    : 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400'
+                }`}>
+                  <Users className="w-3.5 h-3.5" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between gap-1">
+                    <span className="text-xs font-semibold truncate leading-tight">Clientes Ancla</span>
+                    <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono font-bold shrink-0 ${
+                      activeMainTab === 'clients'
+                        ? 'bg-white/20 dark:bg-black/20 text-white dark:text-black'
+                        : 'bg-emerald-100 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-200'
+                    }`}>
+                      {clients.length}
+                    </span>
+                  </div>
+                  <span className={`text-[10px] block truncate font-light leading-tight mt-0.5 ${
+                    activeMainTab === 'clients' ? 'text-white/80 dark:text-black/70' : 'text-gray-500 dark:text-neutral-400'
+                  }`}>
+                    Directorio & 1 a 1
+                  </span>
+                </div>
+              </button>
+
+              {/* Función 3: Espacio Académico */}
+              <button
+                id="coach-nav-academic-btn"
+                type="button"
+                onClick={() => {
+                  setAcademicInitialSubTab('courses');
+                  setActiveMainTab('academic');
+                }}
+                className={`group px-3 py-2 sm:py-2.5 rounded-xl transition-all cursor-pointer text-left flex items-center gap-2.5 w-full ${
+                  activeMainTab === 'academic'
+                    ? 'bg-black text-white dark:bg-white dark:text-black shadow-sm ring-1 ring-black/10 dark:ring-white/20'
+                    : 'glass-panel-opal hover:bg-white/90 dark:hover:bg-[#202026] text-neutral-800 dark:text-neutral-200 border border-white/60 dark:border-white/10 shadow-2xs hover:border-black/20 dark:hover:border-white/20'
                 }`}
               >
-                {clients.length}
-              </span>
-            </button>
+                <div className={`p-1.5 rounded-lg shrink-0 ${
+                  activeMainTab === 'academic'
+                    ? 'bg-white/20 dark:bg-black/20 text-white dark:text-black'
+                    : 'bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400'
+                }`}>
+                  <GraduationCap className="w-3.5 h-3.5" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between gap-1">
+                    <span className="text-xs font-semibold truncate leading-tight">Académico</span>
+                    <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono font-bold shrink-0 ${
+                      activeMainTab === 'academic'
+                        ? 'bg-white/20 dark:bg-black/20 text-white dark:text-black'
+                        : 'bg-indigo-100 dark:bg-indigo-900/60 text-indigo-800 dark:text-indigo-200'
+                    }`}>
+                      6 Mód.
+                    </span>
+                  </div>
+                  <span className={`text-[10px] block truncate font-light leading-tight mt-0.5 ${
+                    activeMainTab === 'academic' ? 'text-white/80 dark:text-black/70' : 'text-gray-500 dark:text-neutral-400'
+                  }`}>
+                    Cursos & Meet
+                  </span>
+                </div>
+              </button>
 
-            <button
-              onClick={() => setActiveMainTab('payments')}
-              className={`px-3.5 py-2 rounded-xl text-xs font-medium transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap shrink-0 ${
-                activeMainTab === 'payments'
-                  ? 'bg-black dark:bg-white text-white dark:text-black shadow-xs font-semibold'
-                  : 'text-neutral-600 dark:text-neutral-400 hover:text-black dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-neutral-800'
-              }`}
-            >
-              <Banknote className="w-3.5 h-3.5 text-amber-500" />
-              <span>Validación Pagos</span>
-              {pendingPaymentCount > 0 ? (
-                <span className="text-[10px] px-1.5 py-0.2 rounded-full font-mono font-bold bg-amber-500 text-white animate-pulse">
-                  {pendingPaymentCount}
-                </span>
-              ) : (
-                <span className="text-[10px] px-1.5 py-0.2 rounded-full font-mono font-medium bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400">
-                  {paymentRequests.length}
-                </span>
-              )}
-            </button>
+              {/* Función 4: Eventos & Talleres */}
+              <button
+                id="coach-nav-events-btn"
+                type="button"
+                onClick={() => setActiveMainTab('events')}
+                className={`group px-3 py-2 sm:py-2.5 rounded-xl transition-all cursor-pointer text-left flex items-center gap-2.5 w-full ${
+                  activeMainTab === 'events'
+                    ? 'bg-black text-white dark:bg-white dark:text-black shadow-sm ring-1 ring-black/10 dark:ring-white/20'
+                    : 'glass-panel-opal hover:bg-white/90 dark:hover:bg-[#202026] text-neutral-800 dark:text-neutral-200 border border-white/60 dark:border-white/10 shadow-2xs hover:border-black/20 dark:hover:border-white/20'
+                }`}
+              >
+                <div className={`p-1.5 rounded-lg shrink-0 ${
+                  activeMainTab === 'events'
+                    ? 'bg-white/20 dark:bg-black/20 text-white dark:text-black'
+                    : 'bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400'
+                }`}>
+                  <Ticket className="w-3.5 h-3.5" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between gap-1">
+                    <span className="text-xs font-semibold truncate leading-tight">Eventos</span>
+                    <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono font-bold shrink-0 ${
+                      activeMainTab === 'events'
+                        ? 'bg-white/20 dark:bg-black/20 text-white dark:text-black'
+                        : 'bg-rose-100 dark:bg-rose-900/60 text-rose-800 dark:text-rose-200'
+                    }`}>
+                      Agenda
+                    </span>
+                  </div>
+                  <span className={`text-[10px] block truncate font-light leading-tight mt-0.5 ${
+                    activeMainTab === 'events' ? 'text-white/80 dark:text-black/70' : 'text-gray-500 dark:text-neutral-400'
+                  }`}>
+                    Talleres & Registro
+                  </span>
+                </div>
+              </button>
 
-            <button
-              onClick={() => setActiveMainTab('workspace')}
-              className={`px-3.5 py-2 rounded-xl text-xs font-medium transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap shrink-0 ${
-                activeMainTab === 'workspace'
-                  ? 'bg-black dark:bg-white text-white dark:text-black shadow-xs font-semibold'
-                  : 'text-neutral-600 dark:text-neutral-400 hover:text-black dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-neutral-800'
-              }`}
-            >
-              <HardDrive className="w-3.5 h-3.5 text-emerald-500" />
-              <span>Google Workspace</span>
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-            </button>
+              {/* Función 5: Validación Pagos */}
+              <button
+                id="coach-nav-payments-btn"
+                type="button"
+                onClick={() => setActiveMainTab('payments')}
+                className={`group px-3 py-2 sm:py-2.5 rounded-xl transition-all cursor-pointer text-left flex items-center gap-2.5 w-full ${
+                  activeMainTab === 'payments'
+                    ? 'bg-black text-white dark:bg-white dark:text-black shadow-sm ring-1 ring-black/10 dark:ring-white/20'
+                    : 'glass-panel-opal hover:bg-white/90 dark:hover:bg-[#202026] text-neutral-800 dark:text-neutral-200 border border-white/60 dark:border-white/10 shadow-2xs hover:border-black/20 dark:hover:border-white/20'
+                }`}
+              >
+                <div className={`p-1.5 rounded-lg shrink-0 ${
+                  activeMainTab === 'payments'
+                    ? 'bg-white/20 dark:bg-black/20 text-white dark:text-black'
+                    : 'bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400'
+                }`}>
+                  <Banknote className="w-3.5 h-3.5" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between gap-1">
+                    <span className="text-xs font-semibold truncate leading-tight">Pagos</span>
+                    {pendingPaymentCount > 0 ? (
+                      <span className="text-[10px] px-1.5 py-0.2 rounded-full font-mono font-bold bg-amber-500 text-white animate-pulse shrink-0 shadow-xs">
+                        {pendingPaymentCount} pend.
+                      </span>
+                    ) : (
+                      <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono font-bold shrink-0 ${
+                        activeMainTab === 'payments'
+                          ? 'bg-white/20 dark:bg-black/20 text-white dark:text-black'
+                          : 'bg-amber-100 dark:bg-amber-900/60 text-amber-800 dark:text-amber-200'
+                      }`}>
+                        {paymentRequests.length}
+                      </span>
+                    )}
+                  </div>
+                  <span className={`text-[10px] block truncate font-light leading-tight mt-0.5 ${
+                    activeMainTab === 'payments' ? 'text-white/80 dark:text-black/70' : 'text-gray-500 dark:text-neutral-400'
+                  }`}>
+                    Bre-B Nu & Efectivo
+                  </span>
+                </div>
+              </button>
 
-            <button
-              onClick={() => setActiveMainTab('gemini')}
-              className={`px-3.5 py-2 rounded-xl text-xs font-medium transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap shrink-0 ${
-                activeMainTab === 'gemini'
-                  ? 'bg-black dark:bg-white text-white dark:text-black shadow-xs font-semibold'
-                  : 'text-neutral-600 dark:text-neutral-400 hover:text-black dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-neutral-800'
-              }`}
-            >
-              <Sparkles className="w-3.5 h-3.5 text-purple-500" />
-              <span>Gemini 3.7 Copiloto</span>
-              <span
-                className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono font-bold ${
+              {/* Función 6: Google Workspace */}
+              <button
+                id="coach-nav-workspace-btn"
+                type="button"
+                onClick={() => setActiveMainTab('workspace')}
+                className={`group px-3 py-2 sm:py-2.5 rounded-xl transition-all cursor-pointer text-left flex items-center gap-2.5 w-full ${
+                  activeMainTab === 'workspace'
+                    ? 'bg-black text-white dark:bg-white dark:text-black shadow-sm ring-1 ring-black/10 dark:ring-white/20'
+                    : 'glass-panel-opal hover:bg-white/90 dark:hover:bg-[#202026] text-neutral-800 dark:text-neutral-200 border border-white/60 dark:border-white/10 shadow-2xs hover:border-black/20 dark:hover:border-white/20'
+                }`}
+              >
+                <div className={`p-1.5 rounded-lg shrink-0 ${
+                  activeMainTab === 'workspace'
+                    ? 'bg-white/20 dark:bg-black/20 text-white dark:text-black'
+                    : 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400'
+                }`}>
+                  <HardDrive className="w-3.5 h-3.5" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between gap-1">
+                    <span className="text-xs font-semibold truncate leading-tight">Workspace</span>
+                    <span className="inline-flex items-center gap-1 text-[10px] font-medium text-emerald-600 dark:text-emerald-400 shrink-0">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                      <span>Sync</span>
+                    </span>
+                  </div>
+                  <span className={`text-[10px] block truncate font-light leading-tight mt-0.5 ${
+                    activeMainTab === 'workspace' ? 'text-white/80 dark:text-black/70' : 'text-gray-500 dark:text-neutral-400'
+                  }`}>
+                    Drive, Sheets, Forms
+                  </span>
+                </div>
+              </button>
+
+              {/* Función 7: Gemini 3.7 Copiloto */}
+              <button
+                id="coach-nav-gemini-btn"
+                type="button"
+                onClick={() => setActiveMainTab('gemini')}
+                className={`group px-3 py-2 sm:py-2.5 rounded-xl transition-all cursor-pointer text-left flex items-center gap-2.5 w-full ${
+                  activeMainTab === 'gemini'
+                    ? 'bg-black text-white dark:bg-white dark:text-black shadow-sm ring-1 ring-black/10 dark:ring-white/20'
+                    : 'glass-panel-opal hover:bg-white/90 dark:hover:bg-[#202026] text-neutral-800 dark:text-neutral-200 border border-white/60 dark:border-white/10 shadow-2xs hover:border-black/20 dark:hover:border-white/20'
+                }`}
+              >
+                <div className={`p-1.5 rounded-lg shrink-0 ${
                   activeMainTab === 'gemini'
                     ? 'bg-white/20 dark:bg-black/20 text-white dark:text-black'
-                    : 'bg-purple-100 dark:bg-purple-950/60 text-purple-800 dark:text-purple-300'
-                }`}
-              >
-                IA
-              </span>
-            </button>
+                    : 'bg-purple-50 dark:bg-purple-950/50 text-purple-600 dark:text-purple-400'
+                }`}>
+                  <Sparkles className="w-3.5 h-3.5" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between gap-1">
+                    <span className="text-xs font-semibold truncate leading-tight">Gemini 3.7</span>
+                    <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono font-bold shrink-0 ${
+                      activeMainTab === 'gemini'
+                        ? 'bg-white/20 dark:bg-black/20 text-white dark:text-black'
+                        : 'bg-purple-100 dark:bg-purple-900/60 text-purple-800 dark:text-purple-200'
+                    }`}>
+                      IA Flash
+                    </span>
+                  </div>
+                  <span className={`text-[10px] block truncate font-light leading-tight mt-0.5 ${
+                    activeMainTab === 'gemini' ? 'text-white/80 dark:text-black/70' : 'text-gray-500 dark:text-neutral-400'
+                  }`}>
+                    Copiloto Ontológico
+                  </span>
+                </div>
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -531,9 +683,8 @@ export const CoachDashboard: React.FC<CoachDashboardProps> = ({
           onRefreshProspects={handleRefreshProspects}
           onRefreshClients={handleRefreshClientsList}
           onSelectClientAndOpenWorkstation={(cid) => {
-            setSelectedClientId(cid);
+            handleSelectClient(cid, true);
             setActiveMainTab('clients');
-            setClientsViewMode('workstation');
           }}
           onOpenMakeModal={() => {
             setAcademicInitialSubTab('automations');
@@ -564,22 +715,21 @@ export const CoachDashboard: React.FC<CoachDashboardProps> = ({
         /* VIEW 2: CLIENTES ANCLA (DIRECTORIO GERENCIAL & FICHA DE TRABAJO 1 A 1)    */
         /* ========================================================================= */
         <div className="flex-1 flex flex-col p-4 sm:p-8 lg:p-10 max-w-7xl mx-auto w-full space-y-6">
-          {/* Executive KPI & Health Barometer (Visible for instant operational overview) */}
-          <ExecutiveMetricsBar
-            clients={clients}
-            prospects={prospects}
-            allInsights={allInsights}
-            sessions={allSessions}
-            onGoToClients={() => {
-              setActiveMainTab('clients');
-              setClientsViewMode('directory');
-            }}
-            onGoToCRM={() => setActiveMainTab('crm')}
-            onGoToEvents={() => {
-              setAcademicInitialSubTab('meet_workshops');
-              setActiveMainTab('academic');
-            }}
-          />
+          {/* Executive KPI & Health Barometer (Visible ONLY in Directory mode for macro view, avoiding clutter in 1-on-1 session) */}
+          {clientsViewMode === 'directory' && (
+            <ExecutiveMetricsBar
+              clients={clients}
+              prospects={prospects}
+              allInsights={allInsights}
+              sessions={allSessions}
+              onGoToClients={() => {
+                setActiveMainTab('clients');
+                setClientsViewMode('directory');
+              }}
+              onGoToCRM={() => setActiveMainTab('crm')}
+              onGoToEvents={() => setActiveMainTab('events')}
+            />
+          )}
 
           {/* View Mode Switcher Header */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-gray-100 dark:border-neutral-800">
@@ -592,7 +742,7 @@ export const CoachDashboard: React.FC<CoachDashboardProps> = ({
                 {clientsViewMode === 'directory' ? (
                   <>Directorio Central de <strong className="font-semibold">Clientes Activos ({clients.length})</strong></>
                 ) : (
-                  <>Ficha de Consulta: <strong className="font-semibold">{selectedClient?.name || 'Cliente'}</strong></>
+                  <>Ficha de Consulta 1 a 1: <strong className="font-semibold">{selectedClient?.name || 'Cliente'}</strong></>
                 )}
               </h2>
             </div>
@@ -657,7 +807,7 @@ export const CoachDashboard: React.FC<CoachDashboardProps> = ({
               sessions={sessions}
               isGeneratingAI={isGeneratingAI}
               generationFeedback={generationFeedback}
-              onSelectClient={(clientId) => handleSelectClient(clientId, false)}
+              onSelectClient={(clientId) => handleSelectClient(clientId, true)}
               onBackToDirectory={() => setClientsViewMode('directory')}
               onGenerateAI={handleGenerateAIAnalysis}
               onGenerateAIAnalysis={handleGenerateAIAnalysis}
@@ -687,10 +837,18 @@ export const CoachDashboard: React.FC<CoachDashboardProps> = ({
         </div>
       ) : activeMainTab === 'events' ? (
         /* ========================================================================= */
-        /* VIEW 3: GESTIÓN INTEGRAL DE SALA MEET & TALLERES (ACADÉMICO)              */
+        /* VIEW 3: GESTIÓN INTEGRAL DE EVENTOS, TALLERES & CONVOCATORIA (AGENDA)      */
         /* ========================================================================= */
         <div className="flex-1 flex flex-col p-4 sm:p-8 lg:p-10 max-w-7xl mx-auto w-full space-y-6">
-          <AdminAcademicManager initialSubTab="meet_workshops" />
+          <ProgramsAndEventsManager
+            cronogramaEvents={cronogramaEvents}
+            programs={programs}
+            eventRegistrations={eventRegistrations}
+            onRefreshEvents={handleRefreshEvents}
+            onRefreshPrograms={handleRefreshPrograms}
+            onRefreshRegistrations={handleRefreshRegistrations}
+            onOpenRegistrationPortal={onOpenRegistrationPortal}
+          />
         </div>
       ) : activeMainTab === 'workspace' ? (
         /* ========================================================================= */
@@ -701,8 +859,7 @@ export const CoachDashboard: React.FC<CoachDashboardProps> = ({
             clients={clients}
             sessions={allSessions}
             onOpenClient={(cid) => {
-              setSelectedClientId(cid);
-              setClientsViewMode('workstation');
+              handleSelectClient(cid, true);
               setActiveMainTab('clients');
             }}
           />
@@ -730,12 +887,12 @@ export const CoachDashboard: React.FC<CoachDashboardProps> = ({
               <span className="text-xs text-gray-400 font-light">Cliente en Foco:</span>
               <select
                 value={selectedClientId || ''}
-                onChange={(e) => setSelectedClientId(e.target.value || null)}
+                onChange={(e) => setSelectedClientId(e.target.value)}
                 className="px-3 py-1.5 rounded-xl bg-white dark:bg-[#1A1A1E] border border-gray-200 dark:border-neutral-700 text-xs text-gray-900 dark:text-white font-medium focus:outline-hidden"
               >
                 <option value="">Seleccionar cliente...</option>
                 {clients.map((c) => (
-                  <option key={c.id} value={c.id}>
+                  <option key={c.uid} value={c.uid}>
                     {c.name} ({c.company || 'Directivo'})
                   </option>
                 ))}
@@ -744,7 +901,7 @@ export const CoachDashboard: React.FC<CoachDashboardProps> = ({
           </div>
 
           <GeminiOntologicalCopilot
-            currentClient={clients.find((c) => c.id === selectedClientId) || clients[0]}
+            currentClient={clients.find((c) => c.uid === selectedClientId) || clients[0]}
             userRole="coach"
             onApplyInsightToClient={(diag) => {
               if (selectedClientId) {
@@ -847,14 +1004,6 @@ export const CoachDashboard: React.FC<CoachDashboardProps> = ({
           </div>
         </div>
       )}
-      {/* ========================================================================= */}
-      {/* MODAL: MAKE.COM CONFIGURATION & LIVE TESTER */}
-      {/* ========================================================================= */}
-      <WebhookConfigModal
-        isOpen={showMakeModal}
-        onClose={() => setShowMakeModal(false)}
-        onProspectAdded={() => setProspects(OntologicalStore.getProspects())}
-      />
     </div>
   );
 };

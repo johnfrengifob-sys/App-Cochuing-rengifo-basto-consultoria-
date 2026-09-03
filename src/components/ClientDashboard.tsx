@@ -514,7 +514,7 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
 
           {/* Payment Status and Roadmap Progress Pill */}
           <div className="flex flex-wrap items-center gap-3 self-start md:self-auto">
-            <div className="px-4 py-2 rounded-2xl bg-white/65 dark:bg-[#18181B]/65 backdrop-blur-xl border border-white/70 dark:border-white/10 text-xs shadow-xs">
+            <div className="px-4 py-2 rounded-2xl glass-panel-opal text-xs shadow-xs">
               <span className="text-[10px] font-medium uppercase tracking-wider text-gray-400 dark:text-neutral-500 block">
                 Estado del Programa
               </span>
@@ -581,7 +581,7 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
       )}
 
       {/* BARRA DE ACCESO RÁPIDO: ESPACIO ÚNICO DE CUADERNO DE TRABAJO & CUESTIONARIOS */}
-      <section className="p-4 sm:p-5 rounded-2xl bg-white/70 dark:bg-[#18181B]/70 backdrop-blur-xl border border-white/75 dark:border-white/10 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4 transition-all">
+      <section className="glass-panel-opal rounded-2xl p-4 sm:p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 transition-all">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-black dark:bg-white text-white dark:text-black flex items-center justify-center shrink-0 shadow-2xs">
             <BookOpen className="w-4 h-4 text-emerald-400 dark:text-emerald-600" />
@@ -637,7 +637,7 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
         {/* LEFT COLUMN: Next Session & 12-Week Roadmap Explorer (5 Cols) */}
         <div className="lg:col-span-5 space-y-6">
           {/* Card: Próxima Sesión */}
-          <div className="bg-white/70 dark:bg-[#18181B]/70 backdrop-blur-xl rounded-3xl p-7 border border-white/75 dark:border-white/10 shadow-sm transition-all">
+          <div className="glass-panel-opal rounded-3xl p-7 shadow-sm transition-all">
             <div className="flex items-center justify-between mb-5">
               <span className="text-xs font-medium uppercase tracking-widest text-gray-400 dark:text-neutral-500">
                 Próxima Sesión Quincenal
@@ -796,7 +796,7 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
           </div>
 
           {/* Card: 12-Week Roadmap Level Explorer */}
-          <div className="bg-white/70 dark:bg-[#18181B]/70 backdrop-blur-xl rounded-3xl p-7 border border-white/75 dark:border-white/10 shadow-sm space-y-6">
+          <div className="glass-panel-opal rounded-3xl p-7 space-y-6">
             <div className="flex items-center justify-between pb-3 border-b border-gray-100 dark:border-neutral-800">
               <div className="flex items-center gap-2">
                 <Layers className="w-4 h-4 text-black dark:text-white stroke-[1.5]" />
@@ -980,7 +980,7 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
 
         {/* RIGHT COLUMN: Interactive Level Workspace & Work Materials (7 Cols) */}
         <div className="lg:col-span-7" id="session-workspace-content">
-          <div className="bg-white/75 dark:bg-[#18181B]/75 backdrop-blur-xl rounded-3xl p-6 sm:p-9 border border-white/75 dark:border-white/10 shadow-sm space-y-7">
+          <div className="glass-panel-sheer rounded-3xl p-6 sm:p-9 space-y-7">
             {/* Header: Selected Session & Level Information */}
             <div className="pb-6 border-b border-black/5 dark:border-white/10 space-y-4">
               <div className="flex flex-wrap items-center justify-between gap-2">

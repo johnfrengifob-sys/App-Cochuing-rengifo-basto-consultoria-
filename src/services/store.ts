@@ -27,7 +27,9 @@ export const COMPANY_INFO = {
   fullName: 'Rengifo Basto Consultoría Ontológica',
   shortName: 'Rengifo Basto',
   address: 'Crr 20bis # 65a-22',
-  city: 'Bogotá, Colombia',
+  city: 'Manizales, Colombia',
+  mapsUrl:
+    'https://www.google.com/maps/@5.0565989,-75.4837305,20.33z?entry=ttu&g_ep=EgoyMDI2MDkwMS4wIKXMDSoASAFQAw%3D%3D',
   phone: '3234642257',
   formattedPhone: '+57 323 464 2257',
   email: 'johnfrengifob@gmail.com',

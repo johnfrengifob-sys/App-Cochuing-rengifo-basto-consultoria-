@@ -312,7 +312,7 @@ export const CrmPipelineManager: React.FC<CrmPipelineManagerProps> = ({
 
       {/* 2. Grouped Summary KPI Metric Pills (Compact & Clean) */}
       <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-5 gap-3">
-        <div className="p-3.5 rounded-2xl bg-[#F9F9F9] dark:bg-[#151518] border border-gray-200/80 dark:border-neutral-800 flex items-center justify-between">
+        <div className="p-3.5 rounded-2xl glass-panel-opal flex items-center justify-between">
           <div>
             <span className="text-[10px] uppercase font-semibold text-gray-400 dark:text-neutral-500 block">
               Total Prospectos
@@ -324,7 +324,7 @@ export const CrmPipelineManager: React.FC<CrmPipelineManagerProps> = ({
           </div>
         </div>
 
-        <div className="p-3.5 rounded-2xl bg-blue-50/40 dark:bg-blue-950/20 border border-blue-200/60 dark:border-blue-900/40 flex items-center justify-between">
+        <div className="p-3.5 rounded-2xl glass-panel-opal flex items-center justify-between">
           <div>
             <span className="text-[10px] uppercase font-semibold text-blue-600 dark:text-blue-400 block">
               1. Matriz Enviada
@@ -338,7 +338,7 @@ export const CrmPipelineManager: React.FC<CrmPipelineManagerProps> = ({
           </div>
         </div>
 
-        <div className="p-3.5 rounded-2xl bg-amber-50/40 dark:bg-amber-950/20 border border-amber-200/60 dark:border-amber-900/40 flex items-center justify-between">
+        <div className="p-3.5 rounded-2xl glass-panel-opal flex items-center justify-between">
           <div>
             <span className="text-[10px] uppercase font-semibold text-amber-600 dark:text-amber-400 block">
               2. Sesión 20 min
@@ -352,7 +352,7 @@ export const CrmPipelineManager: React.FC<CrmPipelineManagerProps> = ({
           </div>
         </div>
 
-        <div className="p-3.5 rounded-2xl bg-emerald-50/40 dark:bg-emerald-950/20 border border-emerald-200/60 dark:border-emerald-900/40 flex items-center justify-between">
+        <div className="p-3.5 rounded-2xl glass-panel-opal flex items-center justify-between">
           <div>
             <span className="text-[10px] uppercase font-semibold text-emerald-600 dark:text-emerald-400 block">
               3. Convertidos
@@ -366,7 +366,7 @@ export const CrmPipelineManager: React.FC<CrmPipelineManagerProps> = ({
           </div>
         </div>
 
-        <div className="p-3.5 rounded-2xl bg-[#F9F9F9] dark:bg-[#151518] border border-gray-200/80 dark:border-neutral-800 flex items-center justify-between col-span-2 sm:col-span-4 lg:col-span-1">
+        <div className="p-3.5 rounded-2xl glass-panel-opal flex items-center justify-between col-span-2 sm:col-span-4 lg:col-span-1">
           <div>
             <span className="text-[10px] uppercase font-semibold text-gray-400 dark:text-neutral-500 block">
               Conversión
@@ -462,7 +462,7 @@ export const CrmPipelineManager: React.FC<CrmPipelineManagerProps> = ({
       </div>
 
       {/* 4. Controls Toolbar: Search, Origin Filter & Layout Switcher */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 bg-[#F9F9F9] dark:bg-[#151518] rounded-2xl border border-gray-200/80 dark:border-neutral-800">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 glass-panel-opal rounded-2xl">
         <div className="flex flex-1 items-center gap-2 max-w-md">
           <div className="relative flex-1">
             <Search className="w-3.5 h-3.5 text-gray-400 dark:text-neutral-500 absolute left-3 top-1/2 -translate-y-1/2" />
@@ -486,7 +486,7 @@ export const CrmPipelineManager: React.FC<CrmPipelineManagerProps> = ({
         </div>
 
         {/* Layout Switcher */}
-        <div className="inline-flex items-center p-1 rounded-xl bg-white dark:bg-[#1E1E22] border border-gray-200/80 dark:border-neutral-700 self-start sm:self-auto">
+        <div className="inline-flex items-center p-1 rounded-xl bg-white/80 dark:bg-[#1E1E22]/80 border border-gray-200/80 dark:border-neutral-700 self-start sm:self-auto">
           <button
             type="button"
             onClick={() => setViewLayout('kanban')}
@@ -520,7 +520,7 @@ export const CrmPipelineManager: React.FC<CrmPipelineManagerProps> = ({
         /* ================= COMPACT KANBAN COLUMNS ================= */
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 flex-1 items-start">
           {/* COLUMN 1: MATRIZ ENVIADA */}
-          <div className="bg-[#F9F9F9] dark:bg-[#151518] rounded-2xl p-4 border border-gray-200/80 dark:border-neutral-800 flex flex-col space-y-3">
+          <div className="glass-panel-sheer rounded-2xl p-4 flex flex-col space-y-3">
             <div className="flex items-center justify-between pb-2 border-b border-gray-200/60 dark:border-neutral-800">
               <div className="flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-blue-500" />
@@ -535,14 +535,14 @@ export const CrmPipelineManager: React.FC<CrmPipelineManagerProps> = ({
 
             <div className="space-y-2.5">
               {groupMatriz.length === 0 ? (
-                <div className="p-6 text-center bg-white dark:bg-[#1A1A1E] rounded-xl border border-gray-100 dark:border-neutral-800 text-xs font-light text-gray-400 dark:text-neutral-500">
+                <div className="p-6 text-center card-solid-white rounded-xl text-xs font-light text-gray-400 dark:text-neutral-500">
                   Sin prospectos en esta etapa.
                 </div>
               ) : (
                 groupMatriz.map((p) => (
                   <div
                     key={p.id}
-                    className="bg-white dark:bg-[#1A1A1E] rounded-xl p-3.5 border border-gray-100 dark:border-neutral-800 shadow-2xs space-y-2.5 hover:border-gray-300 dark:hover:border-neutral-700 transition-all"
+                    className="card-solid-white rounded-xl p-3.5 shadow-2xs space-y-2.5 hover:border-black/30 dark:hover:border-neutral-500 transition-all"
                   >
                     <div className="flex items-start justify-between gap-2">
                       <div>
@@ -591,7 +591,7 @@ export const CrmPipelineManager: React.FC<CrmPipelineManagerProps> = ({
           </div>
 
           {/* COLUMN 2: SESIÓN 20 MIN AGENDADA */}
-          <div className="bg-[#F9F9F9] dark:bg-[#151518] rounded-2xl p-4 border border-gray-200/80 dark:border-neutral-800 flex flex-col space-y-3">
+          <div className="glass-panel-sheer rounded-2xl p-4 flex flex-col space-y-3">
             <div className="flex items-center justify-between pb-2 border-b border-gray-200/60 dark:border-neutral-800">
               <div className="flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
@@ -606,14 +606,14 @@ export const CrmPipelineManager: React.FC<CrmPipelineManagerProps> = ({
 
             <div className="space-y-2.5">
               {groupSesion20.length === 0 ? (
-                <div className="p-6 text-center bg-white dark:bg-[#1A1A1E] rounded-xl border border-gray-100 dark:border-neutral-800 text-xs font-light text-gray-400 dark:text-neutral-500">
+                <div className="p-6 text-center card-solid-white rounded-xl text-xs font-light text-gray-400 dark:text-neutral-500">
                   Sin sesiones agendadas.
                 </div>
               ) : (
                 groupSesion20.map((p) => (
                   <div
                     key={p.id}
-                    className="bg-white dark:bg-[#1A1A1E] rounded-xl p-3.5 border border-amber-200/50 dark:border-amber-900/40 shadow-2xs space-y-2.5 hover:border-amber-400 dark:hover:border-amber-700 transition-all"
+                    className="card-solid-white rounded-xl p-3.5 shadow-2xs space-y-2.5 hover:border-amber-400 dark:hover:border-amber-700 transition-all"
                   >
                     <div className="flex items-start justify-between gap-2">
                       <div>
@@ -676,7 +676,7 @@ export const CrmPipelineManager: React.FC<CrmPipelineManagerProps> = ({
           </div>
 
           {/* COLUMN 3: DECISIÓN & CIERRE (CONVERTIDOS Y DESCARTADOS) */}
-          <div className="bg-[#F9F9F9] dark:bg-[#151518] rounded-2xl p-4 border border-gray-200/80 dark:border-neutral-800 flex flex-col space-y-3">
+          <div className="glass-panel-sheer rounded-2xl p-4 flex flex-col space-y-3">
             <div className="flex items-center justify-between pb-2 border-b border-gray-200/60 dark:border-neutral-800">
               <div className="flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-emerald-500" />
@@ -698,7 +698,7 @@ export const CrmPipelineManager: React.FC<CrmPipelineManagerProps> = ({
 
             <div className="space-y-2.5">
               {groupConvertidos.length === 0 && groupDescartados.length === 0 ? (
-                <div className="p-6 text-center bg-white dark:bg-[#1A1A1E] rounded-xl border border-gray-100 dark:border-neutral-800 text-xs font-light text-gray-400 dark:text-neutral-500">
+                <div className="p-6 text-center card-solid-white rounded-xl text-xs font-light text-gray-400 dark:text-neutral-500">
                   Sin decisiones registradas.
                 </div>
               ) : (
@@ -709,7 +709,7 @@ export const CrmPipelineManager: React.FC<CrmPipelineManagerProps> = ({
                     return (
                       <div
                         key={p.id}
-                        className="bg-white dark:bg-[#1A1A1E] rounded-xl p-3.5 border border-emerald-200/80 dark:border-emerald-900/60 shadow-2xs space-y-2"
+                        className="card-solid-white rounded-xl p-3.5 shadow-2xs space-y-2 hover:border-emerald-300 dark:hover:border-emerald-700 transition-all"
                       >
                         <div className="flex items-start justify-between">
                           <div>
@@ -750,7 +750,7 @@ export const CrmPipelineManager: React.FC<CrmPipelineManagerProps> = ({
                   {groupDescartados.map((p) => (
                     <div
                       key={p.id}
-                      className="bg-white/60 dark:bg-[#1A1A1E]/60 rounded-xl p-3 border border-gray-200 dark:border-neutral-800 opacity-70 space-y-1.5"
+                      className="card-solid-white rounded-xl p-3 opacity-70 space-y-1.5"
                     >
                       <div className="flex items-center justify-between">
                         <span className="text-xs font-medium text-gray-700 dark:text-neutral-300 line-through">
@@ -776,7 +776,7 @@ export const CrmPipelineManager: React.FC<CrmPipelineManagerProps> = ({
         </div>
       ) : (
         /* ================= COMPACT GROUPED LIST VIEW ================= */
-        <div className="bg-white dark:bg-[#151518] rounded-2xl border border-gray-200/80 dark:border-neutral-800 overflow-hidden shadow-2xs">
+        <div className="glass-panel-sheer rounded-2xl overflow-hidden shadow-2xs">
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse text-xs">
               <thead>

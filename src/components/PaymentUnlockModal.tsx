@@ -441,18 +441,27 @@ export const PaymentUnlockModal: React.FC<PaymentUnlockModalProps> = ({
                 </span>
               </div>
 
-              <div className="p-3 rounded-2xl bg-white dark:bg-[#1E1C22] border border-amber-200/60 dark:border-amber-900/30 space-y-1">
-                <span className="text-[10px] text-gray-500 dark:text-neutral-400 uppercase font-semibold block flex items-center gap-1">
-                  <MapPin className="w-3 h-3 text-amber-600" />
-                  Lugar de Entrega
+              <a
+                href={COMPANY_INFO.mapsUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="p-3 rounded-2xl bg-white dark:bg-[#1E1C22] border border-amber-200/60 dark:border-amber-900/30 space-y-1 block hover:border-amber-400 dark:hover:border-amber-700 transition-colors group cursor-pointer"
+                title="Abrir ubicación en Google Maps (Manizales, Colombia)"
+              >
+                <span className="text-[10px] text-gray-500 dark:text-neutral-400 uppercase font-semibold block flex items-center justify-between">
+                  <span className="flex items-center gap-1">
+                    <MapPin className="w-3 h-3 text-amber-600 group-hover:scale-110 transition-transform" />
+                    Lugar de Entrega
+                  </span>
+                  <ExternalLink className="w-3 h-3 text-amber-600 opacity-60 group-hover:opacity-100" />
                 </span>
-                <strong className="text-xs font-bold text-black dark:text-white block">
+                <strong className="text-xs font-bold text-black dark:text-white block group-hover:underline">
                   {COMPANY_INFO.address}
                 </strong>
                 <span className="text-[10px] text-gray-500 dark:text-neutral-400 block">
                   {COMPANY_INFO.city} • Consultorio Rengifo Basto Consultoría Ontológica
                 </span>
-              </div>
+              </a>
             </div>
 
             {/* Note / Date input */}

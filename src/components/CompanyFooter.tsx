@@ -1,6 +1,6 @@
 import React from 'react';
 import { BrandLogo } from './BrandLogo';
-import { MapPin, Phone, MessageSquare, ShieldCheck, Mail } from 'lucide-react';
+import { MapPin, Phone, MessageSquare, ShieldCheck, Mail, ExternalLink } from 'lucide-react';
 import { COMPANY_INFO } from '../services/store';
 
 interface CompanyFooterProps {
@@ -22,10 +22,17 @@ export const CompanyFooter: React.FC<CompanyFooterProps> = ({
             <BrandLogo size="xs" layout="full" />
           </div>
           <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] font-light">
-            <span className="flex items-center gap-1">
-              <MapPin className="w-3 h-3 text-neutral-400" />
-              {COMPANY_INFO.address}
-            </span>
+            <a
+              href={COMPANY_INFO.mapsUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1 hover:underline text-gray-600 dark:text-neutral-300 group cursor-pointer"
+              title="Abrir ubicación en Google Maps (Manizales, Colombia)"
+            >
+              <MapPin className="w-3 h-3 text-emerald-600 dark:text-emerald-400 group-hover:scale-110 transition-transform" />
+              <span>{COMPANY_INFO.address}, Manizales</span>
+              <ExternalLink className="w-2.5 h-2.5 opacity-60 group-hover:opacity-100" />
+            </a>
             <span className="opacity-40">•</span>
             <a
               href={COMPANY_INFO.whatsappUrl}
@@ -65,12 +72,25 @@ export const CompanyFooter: React.FC<CompanyFooterProps> = ({
             </h4>
             <ul className="space-y-2.5 text-xs font-light text-gray-600 dark:text-neutral-300">
               <li className="flex items-start gap-2.5">
-                <MapPin className="w-4 h-4 text-black dark:text-white shrink-0 mt-0.5" />
-                <div>
-                  <span className="font-medium text-black dark:text-white block">Dirección Corporativa</span>
-                  <span className="text-gray-500 dark:text-neutral-400">{COMPANY_INFO.address}</span>
-                  <span className="text-[10px] text-gray-400 dark:text-neutral-500 block">Bogotá, Colombia</span>
-                </div>
+                <a
+                  href={COMPANY_INFO.mapsUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="group flex items-start gap-2.5 hover:text-black dark:hover:text-white transition-colors cursor-pointer"
+                  title="Abrir ubicación exacta en Google Maps (Manizales)"
+                >
+                  <MapPin className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5 group-hover:scale-110 transition-transform" />
+                  <div>
+                    <span className="font-medium text-black dark:text-white block group-hover:underline flex items-center gap-1.5">
+                      <span>Dirección Corporativa</span>
+                      <ExternalLink className="w-3 h-3 text-emerald-600 dark:text-emerald-400 opacity-70 group-hover:opacity-100" />
+                    </span>
+                    <span className="text-gray-500 dark:text-neutral-400 block">{COMPANY_INFO.address}</span>
+                    <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium block">
+                      Manizales, Colombia • Clic para ver mapa
+                    </span>
+                  </div>
+                </a>
               </li>
               <li className="flex items-start gap-2.5">
                 <Phone className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />

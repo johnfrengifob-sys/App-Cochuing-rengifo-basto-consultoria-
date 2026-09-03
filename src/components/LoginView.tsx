@@ -25,6 +25,7 @@ import {
   FileSpreadsheet,
   HelpCircle,
   Video,
+  ExternalLink,
 } from 'lucide-react';
 
 interface LoginViewProps {
@@ -521,14 +522,22 @@ export const LoginView: React.FC<LoginViewProps> = ({
 
           <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-3 text-xs text-gray-600 dark:text-neutral-300">
             {/* Dirección */}
-            <div className="inline-flex items-center gap-2">
-              <span className="w-6 h-6 rounded-full bg-white dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 flex items-center justify-center shrink-0 shadow-2xs">
-                <MapPin className="w-3.5 h-3.5 text-black dark:text-white" />
+            <a
+              href={COMPANY_INFO.mapsUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 group hover:underline cursor-pointer"
+              title="Abrir ubicación en Google Maps (Manizales, Colombia)"
+            >
+              <span className="w-6 h-6 rounded-full bg-white dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 flex items-center justify-center shrink-0 shadow-2xs group-hover:border-emerald-500 transition-colors">
+                <MapPin className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 group-hover:scale-110 transition-transform" />
               </span>
               <span className="font-light">
-                <strong className="font-medium text-black dark:text-white">Dirección:</strong> {COMPANY_INFO.address}, Bogotá, Colombia
+                <strong className="font-medium text-black dark:text-white">Dirección:</strong>{' '}
+                {COMPANY_INFO.address}, Manizales, Colombia
               </span>
-            </div>
+              <ExternalLink className="w-3 h-3 text-emerald-600 opacity-60 group-hover:opacity-100" />
+            </a>
 
             {/* Teléfono / WhatsApp */}
             <div className="inline-flex items-center gap-2">

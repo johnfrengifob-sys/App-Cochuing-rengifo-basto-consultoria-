@@ -474,7 +474,7 @@ export const GoogleWorkspaceHub: React.FC<GoogleWorkspaceHubProps> = ({
       )}
 
       {/* Main Header / Ecosystem Brain Banner */}
-      <div className="bg-white dark:bg-[#151518] rounded-3xl p-6 sm:p-8 border border-gray-200/80 dark:border-neutral-800 shadow-2xs">
+      <div className="glass-panel-sheer rounded-3xl p-6 sm:p-8 shadow-2xs">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
           <div className="space-y-2">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200/80 dark:border-emerald-800/60 text-emerald-700 dark:text-emerald-300 text-[11px] font-semibold tracking-wide">
@@ -530,7 +530,7 @@ export const GoogleWorkspaceHub: React.FC<GoogleWorkspaceHubProps> = ({
 
         {/* Ecosystem Health Barometer */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-6 pt-6 border-t border-gray-100 dark:border-neutral-800/80">
-          <div className="p-3.5 rounded-2xl bg-purple-50/50 dark:bg-purple-950/20 border border-purple-100 dark:border-purple-900/40">
+          <div className="p-3.5 rounded-2xl glass-panel-opal">
             <span className="text-[10px] text-purple-600 dark:text-purple-400 font-bold uppercase tracking-wider block">
               Cerebro Ontológico
             </span>
@@ -543,7 +543,7 @@ export const GoogleWorkspaceHub: React.FC<GoogleWorkspaceHubProps> = ({
             </div>
           </div>
 
-          <div className="p-3.5 rounded-2xl bg-gray-50/80 dark:bg-neutral-900/60 border border-gray-100 dark:border-neutral-800">
+          <div className="p-3.5 rounded-2xl glass-panel-opal">
             <span className="text-[10px] text-gray-400 dark:text-neutral-500 font-bold uppercase tracking-wider block">
               Total Archivos Workspace
             </span>
@@ -555,7 +555,7 @@ export const GoogleWorkspaceHub: React.FC<GoogleWorkspaceHubProps> = ({
             </div>
           </div>
 
-          <div className="p-3.5 rounded-2xl bg-gray-50/80 dark:bg-neutral-900/60 border border-gray-100 dark:border-neutral-800">
+          <div className="p-3.5 rounded-2xl glass-panel-opal">
             <span className="text-[10px] text-gray-400 dark:text-neutral-500 font-bold uppercase tracking-wider block">
               Directorio Sheets
             </span>
@@ -568,7 +568,7 @@ export const GoogleWorkspaceHub: React.FC<GoogleWorkspaceHubProps> = ({
             </div>
           </div>
 
-          <div className="p-3.5 rounded-2xl bg-gray-50/80 dark:bg-neutral-900/60 border border-gray-100 dark:border-neutral-800">
+          <div className="p-3.5 rounded-2xl glass-panel-opal">
             <span className="text-[10px] text-gray-400 dark:text-neutral-500 font-bold uppercase tracking-wider block">
               Cuenta Ancla Master
             </span>
@@ -656,7 +656,7 @@ export const GoogleWorkspaceHub: React.FC<GoogleWorkspaceHubProps> = ({
       {activeTab === 'brain' && (
         <div className="space-y-6 animate-fade-in">
           {/* Header Description & Search */}
-          <div className="bg-gradient-to-br from-purple-50/70 via-white to-neutral-50 dark:from-purple-950/30 dark:via-[#151518] dark:to-neutral-900 rounded-3xl p-6 sm:p-8 border border-purple-200/70 dark:border-purple-900/50 shadow-2xs space-y-5">
+          <div className="glass-panel-sheer rounded-3xl p-6 sm:p-8 shadow-2xs space-y-5 border-purple-200/70 dark:border-purple-900/50">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div className="space-y-1">
                 <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full bg-purple-100 dark:bg-purple-900/60 text-purple-700 dark:text-purple-300 text-[10px] font-bold uppercase tracking-wider">
@@ -735,7 +735,7 @@ export const GoogleWorkspaceHub: React.FC<GoogleWorkspaceHubProps> = ({
               .map((doc) => (
                 <div
                   key={doc.id}
-                  className="bg-white dark:bg-[#151518] rounded-3xl p-5 border border-gray-200/80 dark:border-neutral-800 hover:border-purple-300 dark:hover:border-purple-700/60 transition-all flex flex-col justify-between shadow-2xs hover:shadow-md space-y-4"
+                  className="card-solid-white rounded-3xl p-5 hover:border-purple-300 dark:hover:border-purple-700/60 transition-all flex flex-col justify-between shadow-2xs hover:shadow-md space-y-4"
                 >
                   <div className="space-y-3">
                     {/* Top Row: Category Badge + Options */}
@@ -860,7 +860,7 @@ export const GoogleWorkspaceHub: React.FC<GoogleWorkspaceHubProps> = ({
       {activeTab === 'drive' && (
         <div className="space-y-6 animate-fade-in">
           {/* Drive Folders Architecture Card */}
-          <div className="bg-white dark:bg-[#151518] rounded-3xl p-6 sm:p-8 border border-gray-200/80 dark:border-neutral-800 shadow-2xs">
+          <div className="glass-panel-sheer rounded-3xl p-6 sm:p-8 shadow-2xs">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-gray-100 dark:border-neutral-800">
               <div>
                 <span className="text-[10px] text-gray-400 dark:text-neutral-500 uppercase tracking-wider font-bold block">
@@ -899,7 +899,7 @@ export const GoogleWorkspaceHub: React.FC<GoogleWorkspaceHubProps> = ({
 
             {/* Folder Branches Display */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
-              <div className="p-4 rounded-2xl bg-gray-50/80 dark:bg-neutral-900 border border-gray-200/60 dark:border-neutral-800 space-y-2">
+              <div className="p-4 rounded-2xl glass-panel-opal space-y-2">
                 <div className="flex items-center justify-between">
                   <div className="w-8 h-8 rounded-xl bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 flex items-center justify-center">
                     <Folder className="w-4 h-4" />
@@ -916,7 +916,7 @@ export const GoogleWorkspaceHub: React.FC<GoogleWorkspaceHubProps> = ({
                 </p>
               </div>
 
-              <div className="p-4 rounded-2xl bg-gray-50/80 dark:bg-neutral-900 border border-gray-200/60 dark:border-neutral-800 space-y-2">
+              <div className="p-4 rounded-2xl glass-panel-opal space-y-2">
                 <div className="flex items-center justify-between">
                   <div className="w-8 h-8 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
                     <FileSpreadsheet className="w-4 h-4" />
@@ -933,7 +933,7 @@ export const GoogleWorkspaceHub: React.FC<GoogleWorkspaceHubProps> = ({
                 </p>
               </div>
 
-              <div className="p-4 rounded-2xl bg-gray-50/80 dark:bg-neutral-900 border border-gray-200/60 dark:border-neutral-800 space-y-2">
+              <div className="p-4 rounded-2xl glass-panel-opal space-y-2">
                 <div className="flex items-center justify-between">
                   <div className="w-8 h-8 rounded-xl bg-purple-50 dark:bg-purple-950/40 text-purple-600 dark:text-purple-400 flex items-center justify-center">
                     <FileText className="w-4 h-4" />
@@ -1036,7 +1036,7 @@ export const GoogleWorkspaceHub: React.FC<GoogleWorkspaceHubProps> = ({
           </div>
 
           {/* Exported Documents Table */}
-          <div className="bg-white dark:bg-[#151518] rounded-3xl border border-gray-200/80 dark:border-neutral-800 shadow-2xs overflow-hidden">
+          <div className="glass-panel-sheer rounded-3xl shadow-2xs overflow-hidden">
             <div className="p-6 border-b border-gray-100 dark:border-neutral-800 flex items-center justify-between">
               <div>
                 <h4 className="text-base font-bold text-black dark:text-white">

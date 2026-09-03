@@ -156,7 +156,7 @@ export const PaymentValidationManager: React.FC<PaymentValidationManagerProps> =
   return (
     <div className="space-y-6">
       {/* Top Banner & Action Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-5 sm:p-6 rounded-3xl bg-[#F9F9F9] dark:bg-[#18181B] border border-gray-200/80 dark:border-neutral-800">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-5 sm:p-6 rounded-3xl glass-panel-sheer">
         <div className="space-y-1">
           <div className="flex items-center gap-2">
             <span className="p-1.5 rounded-lg bg-purple-100 dark:bg-purple-950/60 text-[#820AD1] dark:text-[#C084FC]">
@@ -222,7 +222,7 @@ export const PaymentValidationManager: React.FC<PaymentValidationManagerProps> =
 
       {/* Metric Counters */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-        <div className="p-4 rounded-2xl bg-white dark:bg-[#1C1C20] border border-gray-200/80 dark:border-neutral-800 space-y-1">
+        <div className="p-4 rounded-2xl glass-panel-opal space-y-1">
           <div className="flex items-center justify-between text-xs text-gray-500 dark:text-neutral-400">
             <span>Pendientes</span>
             <Clock className={`w-3.5 h-3.5 ${pendingRequests.length > 0 ? 'text-amber-500 animate-pulse' : 'text-gray-400'}`} />
@@ -233,7 +233,7 @@ export const PaymentValidationManager: React.FC<PaymentValidationManagerProps> =
           <span className="text-[10px] text-gray-400 block">Requieren tu aprobación</span>
         </div>
 
-        <div className="p-4 rounded-2xl bg-white dark:bg-[#1C1C20] border border-gray-200/80 dark:border-neutral-800 space-y-1">
+        <div className="p-4 rounded-2xl glass-panel-opal space-y-1">
           <div className="flex items-center justify-between text-xs text-gray-500 dark:text-neutral-400">
             <span>Aprobados</span>
             <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
@@ -244,7 +244,7 @@ export const PaymentValidationManager: React.FC<PaymentValidationManagerProps> =
           <span className="text-[10px] text-gray-400 block">Niveles desbloqueados</span>
         </div>
 
-        <div className="p-4 rounded-2xl bg-white dark:bg-[#1C1C20] border border-gray-200/80 dark:border-neutral-800 space-y-1">
+        <div className="p-4 rounded-2xl glass-panel-opal space-y-1">
           <div className="flex items-center justify-between text-xs text-gray-500 dark:text-neutral-400">
             <span>En Efectivo</span>
             <Banknote className="w-3.5 h-3.5 text-amber-500" />
@@ -255,7 +255,7 @@ export const PaymentValidationManager: React.FC<PaymentValidationManagerProps> =
           <span className="text-[10px] text-gray-400 block">Pagos presenciales</span>
         </div>
 
-        <div className="p-4 rounded-2xl bg-white dark:bg-[#1C1C20] border border-gray-200/80 dark:border-neutral-800 space-y-1">
+        <div className="p-4 rounded-2xl glass-panel-opal space-y-1">
           <div className="flex items-center justify-between text-xs text-gray-500 dark:text-neutral-400">
             <span>Bre-B | Nu</span>
             <Smartphone className="w-3.5 h-3.5 text-[#820AD1]" />
@@ -268,7 +268,7 @@ export const PaymentValidationManager: React.FC<PaymentValidationManagerProps> =
       </div>
 
       {/* Search & Filters */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-3 rounded-2xl bg-white dark:bg-[#1A1A1E] border border-gray-200/80 dark:border-neutral-800">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-3 rounded-2xl glass-panel-opal">
         {/* Search Input */}
         <div className="relative flex-1 min-w-[200px]">
           <Search className="w-4 h-4 absolute left-3 top-2.5 text-gray-400" />
@@ -359,7 +359,7 @@ export const PaymentValidationManager: React.FC<PaymentValidationManagerProps> =
 
       {/* Requests List / Cards */}
       {filteredRequests.length === 0 ? (
-        <div className="p-12 text-center rounded-3xl bg-[#F9F9F9] dark:bg-[#151518] border border-gray-100 dark:border-neutral-800 space-y-2">
+        <div className="p-12 text-center rounded-3xl glass-panel-opal space-y-2">
           <CheckCircle2 className="w-8 h-8 text-emerald-500 mx-auto" />
           <h3 className="text-sm font-bold text-black dark:text-white">
             No hay solicitudes que coincidan con los filtros
@@ -389,10 +389,10 @@ export const PaymentValidationManager: React.FC<PaymentValidationManagerProps> =
             return (
               <div
                 key={req.id}
-                className={`p-4 sm:p-5 rounded-2xl border transition-all ${
+                className={`p-4 sm:p-5 rounded-2xl transition-all card-solid-white shadow-2xs ${
                   isPending
-                    ? 'bg-white dark:bg-[#19191D] border-amber-300/80 dark:border-amber-800/60 shadow-xs'
-                    : 'bg-white dark:bg-[#161619] border-gray-200/70 dark:border-neutral-800/80'
+                    ? 'border-amber-300/80 dark:border-amber-800/60'
+                    : ''
                 }`}
               >
                 <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">

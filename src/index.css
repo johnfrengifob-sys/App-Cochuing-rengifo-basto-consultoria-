@@ -14,36 +14,49 @@
 }
 
 /* Glassmorphic Container Opacity Tiers for background image translucency */
+/* 1. Contenedores Principales Muy Transparentes (Sheer Glass) */
 .glass-panel-sheer {
-  background-color: rgba(255, 255, 255, 0.4);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  background-color: rgba(255, 255, 255, 0.32);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.45);
 }
 .dark .glass-panel-sheer {
-  background-color: rgba(18, 18, 22, 0.4);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  background-color: rgba(14, 14, 18, 0.35);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
+/* 2. Contenedores Secundarios Opalizados (Frosted Opal Glass / Lechoso traslúcido) */
+.glass-panel-opal,
 .glass-panel-medium {
-  background-color: rgba(255, 255, 255, 0.65);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  background-color: rgba(255, 255, 255, 0.68);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.04), inset 0 1px 1px rgba(255, 255, 255, 0.85);
 }
+.dark .glass-panel-opal,
 .dark .glass-panel-medium {
-  background-color: rgba(20, 20, 24, 0.65);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  background-color: rgba(22, 22, 28, 0.72);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.08);
 }
 
+/* 3. Contenedores Blanco Puro / Enfoque Nítido (Solid White Cards) */
+.card-solid-white,
 .glass-panel-solid {
-  background-color: rgba(255, 255, 255, 0.82);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  background-color: #ffffff;
+  border: 1px solid rgba(229, 231, 235, 0.9);
+  box-shadow: 0 4px 16px -2px rgba(0, 0, 0, 0.05);
 }
+.dark .card-solid-white,
 .dark .glass-panel-solid {
-  background-color: rgba(24, 24, 28, 0.82);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  background-color: #1a1a20;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 4px 16px -2px rgba(0, 0, 0, 0.4);
 }
 

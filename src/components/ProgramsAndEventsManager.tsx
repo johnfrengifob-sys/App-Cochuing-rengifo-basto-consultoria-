@@ -417,7 +417,7 @@ export const ProgramsAndEventsManager: React.FC<ProgramsAndEventsManagerProps> =
       </div>
 
       {/* 2. Sub-Tab Switcher Bar */}
-      <div className="flex items-center justify-between gap-3 p-1.5 bg-[#F9F9F9] dark:bg-[#151518] rounded-2xl border border-gray-200/80 dark:border-neutral-800 overflow-x-auto">
+      <div className="flex items-center justify-between gap-3 p-1.5 glass-panel-opal rounded-2xl overflow-x-auto">
         <div className="flex items-center gap-1.5 min-w-max">
           <button
             type="button"
@@ -491,7 +491,7 @@ export const ProgramsAndEventsManager: React.FC<ProgramsAndEventsManagerProps> =
               return (
                 <div
                   key={event.id}
-                  className={`bg-white dark:bg-[#18181B] rounded-2xl p-5 border transition-all duration-200 space-y-4 shadow-2xs ${
+                  className={`card-solid-white rounded-2xl p-5 border transition-all duration-200 space-y-4 shadow-2xs ${
                     event.featured
                       ? 'border-black dark:border-white ring-1 ring-black/5 dark:ring-white/10'
                       : 'border-gray-200/80 dark:border-neutral-800'
@@ -573,7 +573,7 @@ export const ProgramsAndEventsManager: React.FC<ProgramsAndEventsManagerProps> =
                   </div>
 
                   {/* Date, Time, Mode */}
-                  <div className="grid grid-cols-2 gap-2 text-xs bg-[#F9F9F9] dark:bg-[#202024] p-3 rounded-xl border border-gray-100 dark:border-neutral-800">
+                  <div className="grid grid-cols-2 gap-2 text-xs glass-panel-opal p-3 rounded-xl">
                     <div className="flex items-center gap-2 text-gray-700 dark:text-neutral-300">
                       <Calendar className="w-3.5 h-3.5 text-gray-400" />
                       <span className="font-medium">{event.displayDate || event.date.split('T')[0]}</span>
@@ -669,7 +669,7 @@ export const ProgramsAndEventsManager: React.FC<ProgramsAndEventsManagerProps> =
               return (
                 <div
                   key={prog.id}
-                  className="bg-white dark:bg-[#18181B] rounded-2xl p-5 border border-gray-200/80 dark:border-neutral-800 shadow-2xs space-y-4 flex flex-col justify-between"
+                  className="card-solid-white rounded-2xl p-5 shadow-2xs space-y-4 flex flex-col justify-between"
                 >
                   <div className="space-y-3">
                     {/* Header */}
@@ -707,7 +707,7 @@ export const ProgramsAndEventsManager: React.FC<ProgramsAndEventsManagerProps> =
                     </div>
 
                     {/* Program Info Chips */}
-                    <div className="space-y-1.5 text-xs bg-[#F9F9F9] dark:bg-[#202024] p-3 rounded-xl border border-gray-100 dark:border-neutral-800">
+                    <div className="space-y-1.5 text-xs glass-panel-opal p-3 rounded-xl">
                       <div className="flex items-center justify-between text-gray-700 dark:text-neutral-300">
                         <span className="text-gray-400">Duración:</span>
                         <span className="font-semibold">{prog.duration}</span>
@@ -794,7 +794,7 @@ export const ProgramsAndEventsManager: React.FC<ProgramsAndEventsManagerProps> =
       {activeSubTab === 'participants' && (
         <div className="space-y-4">
           {/* Filter toolbar */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 bg-[#F9F9F9] dark:bg-[#151518] rounded-2xl border border-gray-200/80 dark:border-neutral-800">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 glass-panel-opal rounded-2xl">
             <div className="flex flex-1 items-center gap-2 max-w-md">
               <div className="relative flex-1">
                 <Search className="w-3.5 h-3.5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
@@ -843,7 +843,7 @@ export const ProgramsAndEventsManager: React.FC<ProgramsAndEventsManagerProps> =
           </div>
 
           {/* Table */}
-          <div className="bg-white dark:bg-[#151518] rounded-2xl border border-gray-200/80 dark:border-neutral-800 overflow-hidden shadow-2xs">
+          <div className="glass-panel-sheer rounded-2xl overflow-hidden shadow-2xs">
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse text-xs">
                 <thead>
@@ -931,7 +931,7 @@ export const ProgramsAndEventsManager: React.FC<ProgramsAndEventsManagerProps> =
 
       {/* ================= SUB-TAB 4: BANNER ACTIVO EN INICIO ================= */}
       {activeSubTab === 'banner' && (
-        <div className="bg-white dark:bg-[#18181B] rounded-3xl p-6 sm:p-8 border border-gray-200/80 dark:border-neutral-800 shadow-sm space-y-6">
+        <div className="glass-panel-sheer rounded-3xl p-6 sm:p-8 shadow-sm space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
               <span className="text-[10px] uppercase font-bold px-2.5 py-0.5 rounded-full bg-amber-400/20 text-amber-700 dark:text-amber-300">
@@ -967,7 +967,7 @@ export const ProgramsAndEventsManager: React.FC<ProgramsAndEventsManagerProps> =
             </div>
 
             <div className="lg:col-span-6 space-y-4 text-xs">
-              <div className="p-4 bg-[#F9F9F9] dark:bg-[#202024] rounded-2xl border border-gray-100 dark:border-neutral-800 space-y-2">
+              <div className="p-4 glass-panel-opal rounded-2xl space-y-2">
                 <span className="text-[10px] uppercase font-bold text-gray-400 block">
                   Prompt Utilizado para Generación IA:
                 </span>
@@ -977,11 +977,11 @@ export const ProgramsAndEventsManager: React.FC<ProgramsAndEventsManagerProps> =
               </div>
 
               <div className="grid grid-cols-2 gap-3">
-                <div className="p-3 bg-gray-50 dark:bg-[#202024] rounded-xl border border-gray-100 dark:border-neutral-800">
+                <div className="p-3 glass-panel-opal rounded-xl">
                   <span className="text-[10px] text-gray-400 block">Fecha en Portada</span>
                   <span className="font-bold text-black dark:text-white">{featuredEvent.displayDate}</span>
                 </div>
-                <div className="p-3 bg-gray-50 dark:bg-[#202024] rounded-xl border border-gray-100 dark:border-neutral-800">
+                <div className="p-3 glass-panel-opal rounded-xl">
                   <span className="text-[10px] text-gray-400 block">Cupos Disponibles</span>
                   <span className="font-bold text-emerald-600 dark:text-emerald-400">{featuredEvent.spotsLeft} de {featuredEvent.totalSpots}</span>
                 </div>

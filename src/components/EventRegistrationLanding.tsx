@@ -615,10 +615,17 @@ export const EventRegistrationLanding: React.FC<EventRegistrationLandingProps> =
         <div className="max-w-4xl mx-auto flex flex-col items-center gap-5">
           {/* Contact Strip */}
           <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs text-gray-600 dark:text-neutral-300">
-            <span className="inline-flex items-center gap-1.5">
-              <MapPin className="w-3.5 h-3.5 text-black dark:text-white" />
-              <span>{COMPANY_INFO.address}, Bogotá, Colombia</span>
-            </span>
+            <a
+              href={COMPANY_INFO.mapsUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 hover:underline group cursor-pointer"
+              title="Abrir ubicación en Google Maps (Manizales, Colombia)"
+            >
+              <MapPin className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 group-hover:scale-110 transition-transform" />
+              <span>{COMPANY_INFO.address}, Manizales, Colombia</span>
+              <ExternalLink className="w-2.5 h-2.5 opacity-60 group-hover:opacity-100" />
+            </a>
             <span>•</span>
             <span className="inline-flex items-center gap-1.5">
               <Phone className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />

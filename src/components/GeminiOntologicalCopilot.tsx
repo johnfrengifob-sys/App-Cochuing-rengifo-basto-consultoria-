@@ -217,10 +217,10 @@ export const GeminiOntologicalCopilot: React.FC<GeminiOntologicalCopilotProps> =
 
   return (
     <div
-      className={`bg-white dark:bg-[#151518] rounded-3xl border border-gray-200/80 dark:border-neutral-800 shadow-xs flex flex-col overflow-hidden ${className}`}
+      className={`glass-panel-sheer rounded-3xl overflow-hidden shadow-2xs flex flex-col ${className}`}
     >
       {/* Header with Gemini Branding & Account details */}
-      <div className="p-4 sm:p-5 border-b border-gray-100 dark:border-neutral-800/80 bg-gradient-to-r from-gray-50/70 via-white to-gray-50/70 dark:from-neutral-900/50 dark:via-[#151518] dark:to-neutral-900/50 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div className="p-4 sm:p-5 border-b border-white/60 dark:border-white/10 glass-panel-opal flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-black to-gray-800 dark:from-white dark:to-gray-200 text-white dark:text-black flex items-center justify-center shadow-xs shrink-0">
             <Sparkles className="w-5 h-5" />
@@ -243,12 +243,12 @@ export const GeminiOntologicalCopilot: React.FC<GeminiOntologicalCopilotProps> =
         </div>
 
         {/* Tab Navigation */}
-        <div className="flex items-center gap-1 bg-gray-100/80 dark:bg-neutral-900 p-1 rounded-2xl overflow-x-auto">
+        <div className="flex items-center gap-1 bg-white/60 dark:bg-neutral-900/80 border border-black/5 dark:border-white/10 p-1 rounded-2xl overflow-x-auto">
           <button
             onClick={() => setActiveTab('chat')}
             className={`px-3 py-1.5 rounded-xl text-xs font-medium transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${
               activeTab === 'chat'
-                ? 'bg-white dark:bg-neutral-800 text-black dark:text-white shadow-2xs font-semibold'
+                ? 'bg-black text-white dark:bg-white dark:text-black shadow-2xs font-semibold'
                 : 'text-gray-500 dark:text-neutral-400 hover:text-black dark:hover:text-white'
             }`}
           >
@@ -260,7 +260,7 @@ export const GeminiOntologicalCopilot: React.FC<GeminiOntologicalCopilotProps> =
             onClick={() => setActiveTab('roleplay')}
             className={`px-3 py-1.5 rounded-xl text-xs font-medium transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${
               activeTab === 'roleplay'
-                ? 'bg-white dark:bg-neutral-800 text-black dark:text-white shadow-2xs font-semibold'
+                ? 'bg-black text-white dark:bg-white dark:text-black shadow-2xs font-semibold'
                 : 'text-gray-500 dark:text-neutral-400 hover:text-black dark:hover:text-white'
             }`}
           >
@@ -272,7 +272,7 @@ export const GeminiOntologicalCopilot: React.FC<GeminiOntologicalCopilotProps> =
             onClick={() => setActiveTab('diagnose')}
             className={`px-3 py-1.5 rounded-xl text-xs font-medium transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${
               activeTab === 'diagnose'
-                ? 'bg-white dark:bg-neutral-800 text-black dark:text-white shadow-2xs font-semibold'
+                ? 'bg-black text-white dark:bg-white dark:text-black shadow-2xs font-semibold'
                 : 'text-gray-500 dark:text-neutral-400 hover:text-black dark:hover:text-white'
             }`}
           >
@@ -285,7 +285,7 @@ export const GeminiOntologicalCopilot: React.FC<GeminiOntologicalCopilotProps> =
               onClick={() => setActiveTab('marketing')}
               className={`px-3 py-1.5 rounded-xl text-xs font-medium transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${
                 activeTab === 'marketing'
-                  ? 'bg-white dark:bg-neutral-800 text-black dark:text-white shadow-2xs font-semibold'
+                  ? 'bg-black text-white dark:bg-white dark:text-black shadow-2xs font-semibold'
                   : 'text-gray-500 dark:text-neutral-400 hover:text-black dark:hover:text-white'
               }`}
             >
@@ -314,8 +314,8 @@ export const GeminiOntologicalCopilot: React.FC<GeminiOntologicalCopilotProps> =
                 <div
                   className={`max-w-[85%] sm:max-w-[75%] rounded-2xl p-4 text-xs sm:text-sm leading-relaxed ${
                     m.role === 'user'
-                      ? 'bg-black text-white dark:bg-white dark:text-black font-normal rounded-tr-xs'
-                      : 'bg-gray-100/90 dark:bg-neutral-900/90 text-gray-800 dark:text-neutral-200 border border-gray-200/60 dark:border-neutral-800 rounded-tl-xs'
+                      ? 'bg-black text-white dark:bg-white dark:text-black font-normal rounded-tr-xs shadow-2xs'
+                      : 'card-solid-white text-gray-800 dark:text-neutral-200 rounded-tl-xs shadow-2xs'
                   }`}
                 >
                   <p className="whitespace-pre-line">{m.content}</p>
@@ -353,7 +353,7 @@ export const GeminiOntologicalCopilot: React.FC<GeminiOntologicalCopilotProps> =
                 <div className="w-8 h-8 rounded-full bg-black dark:bg-white text-white dark:text-black flex items-center justify-center shrink-0 animate-pulse">
                   <Sparkles className="w-4 h-4 animate-spin" />
                 </div>
-                <div className="px-4 py-2.5 rounded-2xl bg-gray-100 dark:bg-neutral-900 text-gray-500 dark:text-neutral-400 border border-gray-200/50 dark:border-neutral-800 flex items-center gap-2">
+                <div className="px-4 py-2.5 rounded-2xl card-solid-white text-gray-500 dark:text-neutral-400 flex items-center gap-2 shadow-2xs">
                   <span className="w-1.5 h-1.5 rounded-full bg-black dark:bg-white animate-bounce" />
                   <span className="w-1.5 h-1.5 rounded-full bg-black dark:bg-white animate-bounce [animation-delay:0.2s]" />
                   <span className="w-1.5 h-1.5 rounded-full bg-black dark:bg-white animate-bounce [animation-delay:0.4s]" />
@@ -365,7 +365,7 @@ export const GeminiOntologicalCopilot: React.FC<GeminiOntologicalCopilotProps> =
           </div>
 
           {/* Quick Prompts & Brain Knowledge pills */}
-          <div className="px-4 py-2 bg-gray-50/50 dark:bg-neutral-900/30 border-t border-gray-100 dark:border-neutral-800/60 overflow-x-auto flex items-center gap-2">
+          <div className="px-4 py-2.5 glass-panel-opal border-t border-white/60 dark:border-white/10 overflow-x-auto flex items-center gap-2">
             {brainDocs.length > 0 && (
               <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-purple-100 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 text-[10px] font-bold shrink-0 border border-purple-200 dark:border-purple-800/60">
                 <Brain className="w-3 h-3" />
@@ -380,7 +380,7 @@ export const GeminiOntologicalCopilot: React.FC<GeminiOntologicalCopilotProps> =
                     `Analiza este caso aplicando los axiomas y distinciones del documento "${doc.name}": ${doc.contentSnippet || doc.description || ''}`
                   )
                 }
-                className="px-3 py-1 rounded-full bg-purple-50 dark:bg-purple-900/30 border border-purple-200 dark:border-purple-800 text-[11px] text-purple-800 dark:text-purple-200 hover:bg-purple-100 dark:hover:bg-purple-900/50 whitespace-nowrap cursor-pointer transition-all flex items-center gap-1 shrink-0"
+                className="px-3 py-1 rounded-full card-solid-white text-[11px] text-purple-800 dark:text-purple-200 hover:border-purple-400 whitespace-nowrap cursor-pointer transition-all flex items-center gap-1 shrink-0 shadow-2xs"
                 title={`Consultar axiomas de ${doc.name}`}
               >
                 <span>🧠 {doc.name.split(':')[0] || doc.name}</span>
@@ -390,7 +390,7 @@ export const GeminiOntologicalCopilot: React.FC<GeminiOntologicalCopilotProps> =
               <button
                 key={idx}
                 onClick={() => handleSendMessage(p)}
-                className="px-3 py-1 rounded-full bg-white dark:bg-neutral-800 border border-gray-200/80 dark:border-neutral-700 text-[11px] text-gray-600 dark:text-neutral-300 hover:border-black dark:hover:border-white whitespace-nowrap cursor-pointer transition-all shadow-2xs shrink-0"
+                className="px-3 py-1 rounded-full card-solid-white text-[11px] text-gray-600 dark:text-neutral-300 hover:border-black dark:hover:border-white whitespace-nowrap cursor-pointer transition-all shadow-2xs shrink-0"
               >
                 {p}
               </button>
@@ -398,7 +398,7 @@ export const GeminiOntologicalCopilot: React.FC<GeminiOntologicalCopilotProps> =
           </div>
 
           {/* Input Area */}
-          <div className="p-3 sm:p-4 bg-white dark:bg-[#151518] border-t border-gray-100 dark:border-neutral-800">
+          <div className="p-3 sm:p-4 glass-panel-opal border-t border-white/60 dark:border-white/10">
             <form
               onSubmit={(e) => {
                 e.preventDefault();
@@ -411,7 +411,7 @@ export const GeminiOntologicalCopilot: React.FC<GeminiOntologicalCopilotProps> =
                 value={inputText}
                 onChange={(e) => setInputText(e.target.value)}
                 placeholder="Escribe tu consulta, quiebre o escenario de coaching..."
-                className="flex-1 px-4 py-3 rounded-2xl bg-gray-50 dark:bg-neutral-900 border border-gray-200 dark:border-neutral-800 text-xs sm:text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-hidden focus:ring-2 focus:ring-black dark:focus:ring-white transition-all"
+                className="flex-1 px-4 py-3 rounded-2xl card-solid-white text-xs sm:text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-hidden focus:ring-1 focus:ring-black dark:focus:ring-white transition-all shadow-2xs"
                 disabled={isLoading}
               />
               <button
@@ -429,7 +429,7 @@ export const GeminiOntologicalCopilot: React.FC<GeminiOntologicalCopilotProps> =
       {/* TAB 2: SIMULADOR DE CONVERSACIONES DIFÍCILES (ROLEPLAY) */}
       {activeTab === 'roleplay' && (
         <div className="p-4 sm:p-6 space-y-6">
-          <div className="p-4 rounded-2xl bg-gray-50 dark:bg-neutral-900 border border-gray-200/70 dark:border-neutral-800 space-y-3">
+          <div className="p-4 rounded-2xl glass-panel-opal space-y-3">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <span className="text-xs font-semibold text-gray-900 dark:text-white uppercase tracking-wider">
                 Configuración del Escenario
@@ -445,7 +445,7 @@ export const GeminiOntologicalCopilot: React.FC<GeminiOntologicalCopilotProps> =
                   type="text"
                   value={roleplayScenario}
                   onChange={(e) => setRoleplayScenario(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl bg-white dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 text-xs text-gray-800 dark:text-neutral-200 focus:outline-hidden focus:ring-1 focus:ring-black dark:focus:ring-white"
+                  className="w-full px-3 py-2 rounded-xl card-solid-white text-xs text-gray-800 dark:text-neutral-200 focus:outline-hidden focus:ring-1 focus:ring-black dark:focus:ring-white"
                 />
               </div>
               <div>
@@ -456,7 +456,7 @@ export const GeminiOntologicalCopilot: React.FC<GeminiOntologicalCopilotProps> =
                   type="text"
                   value={counterpartyRole}
                   onChange={(e) => setCounterpartyRole(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl bg-white dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 text-xs text-gray-800 dark:text-neutral-200 focus:outline-hidden focus:ring-1 focus:ring-black dark:focus:ring-white"
+                  className="w-full px-3 py-2 rounded-xl card-solid-white text-xs text-gray-800 dark:text-neutral-200 focus:outline-hidden focus:ring-1 focus:ring-black dark:focus:ring-white"
                 />
               </div>
             </div>
@@ -465,7 +465,7 @@ export const GeminiOntologicalCopilot: React.FC<GeminiOntologicalCopilotProps> =
           {/* Dialogue Feed */}
           <div className="space-y-4 min-h-[220px] max-h-[360px] overflow-y-auto pr-1">
             {roleplayHistory.length === 0 ? (
-              <div className="p-8 text-center border-2 border-dashed border-gray-200 dark:border-neutral-800 rounded-2xl text-gray-400 text-xs">
+              <div className="p-8 text-center card-solid-white rounded-2xl text-gray-400 text-xs shadow-2xs">
                 <Zap className="w-6 h-6 mx-auto mb-2 opacity-50" />
                 <p>Comienza escribiendo tu apertura o declaración para iniciar la práctica guiada.</p>
               </div>
@@ -475,15 +475,15 @@ export const GeminiOntologicalCopilot: React.FC<GeminiOntologicalCopilotProps> =
                   <div
                     className={`p-3.5 rounded-2xl text-xs sm:text-sm ${
                       item.role === 'Tú'
-                        ? 'bg-black text-white dark:bg-white dark:text-black ml-8 rounded-tr-xs'
-                        : 'bg-gray-100 dark:bg-neutral-900 text-gray-900 dark:text-white mr-8 border border-gray-200 dark:border-neutral-800 rounded-tl-xs'
+                        ? 'bg-black text-white dark:bg-white dark:text-black ml-8 rounded-tr-xs shadow-2xs'
+                        : 'card-solid-white text-gray-900 dark:text-white mr-8 rounded-tl-xs shadow-2xs'
                     }`}
                   >
                     <div className="font-bold text-[10px] mb-1 opacity-70 uppercase tracking-wider">{item.role}:</div>
                     <p className="whitespace-pre-line">{item.content}</p>
                   </div>
                   {item.feedback && (
-                    <div className="p-3 rounded-xl bg-amber-50/80 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/60 text-[11px] text-amber-900 dark:text-amber-300 ml-4 flex items-start gap-2">
+                    <div className="p-3 rounded-xl bg-amber-50/80 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/60 text-[11px] text-amber-900 dark:text-amber-300 ml-4 flex items-start gap-2 shadow-2xs">
                       <Sparkles className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
                       <div>
                         <strong>Feedback del Coach Ontológico (Gemini):</strong> {item.feedback}
@@ -494,7 +494,7 @@ export const GeminiOntologicalCopilot: React.FC<GeminiOntologicalCopilotProps> =
               ))
             )}
             {roleplayLoading && (
-              <div className="p-3 rounded-xl bg-gray-100 dark:bg-neutral-900 text-xs text-gray-500 animate-pulse">
+              <div className="p-3 rounded-xl card-solid-white text-xs text-gray-500 animate-pulse shadow-2xs">
                 Gemini formulando respuesta y evaluación ontológica...
               </div>
             )}
@@ -507,7 +507,7 @@ export const GeminiOntologicalCopilot: React.FC<GeminiOntologicalCopilotProps> =
               value={roleplayInput}
               onChange={(e) => setRoleplayInput(e.target.value)}
               placeholder={`Escribe lo que le dirías a "${counterpartyRole}"...`}
-              className="flex-1 px-4 py-3 rounded-2xl bg-gray-50 dark:bg-neutral-900 border border-gray-200 dark:border-neutral-800 text-xs text-gray-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-black dark:focus:ring-white"
+              className="flex-1 px-4 py-3 rounded-2xl card-solid-white text-xs text-gray-900 dark:text-white focus:outline-hidden focus:ring-1 focus:ring-black dark:focus:ring-white shadow-2xs"
               disabled={roleplayLoading}
               onKeyDown={(e) => {
                 if (e.key === 'Enter') {
@@ -541,7 +541,7 @@ export const GeminiOntologicalCopilot: React.FC<GeminiOntologicalCopilotProps> =
                   rows={2}
                   value={diagEmotion}
                   onChange={(e) => setDiagEmotion(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-2xl bg-gray-50 dark:bg-neutral-900 border border-gray-200 dark:border-neutral-800 text-xs text-gray-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-black dark:focus:ring-white resize-none"
+                  className="w-full px-3.5 py-2.5 rounded-2xl card-solid-white text-xs text-gray-900 dark:text-white focus:outline-hidden focus:ring-1 focus:ring-black dark:focus:ring-white resize-none shadow-2xs"
                   placeholder="Ej: Opresión en el pecho, autoexigencia implacable..."
                 />
               </div>
@@ -554,7 +554,7 @@ export const GeminiOntologicalCopilot: React.FC<GeminiOntologicalCopilotProps> =
                   rows={2}
                   value={diagReflection}
                   onChange={(e) => setDiagReflection(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-2xl bg-gray-50 dark:bg-neutral-900 border border-gray-200 dark:border-neutral-800 text-xs text-gray-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-black dark:focus:ring-white resize-none"
+                  className="w-full px-3.5 py-2.5 rounded-2xl card-solid-white text-xs text-gray-900 dark:text-white focus:outline-hidden focus:ring-1 focus:ring-black dark:focus:ring-white resize-none shadow-2xs"
                   placeholder="Ej: Me cuesta delegar y siento que debo responder por todo..."
                 />
               </div>
@@ -572,8 +572,8 @@ export const GeminiOntologicalCopilot: React.FC<GeminiOntologicalCopilotProps> =
 
           {/* Diagnosis Result Card */}
           {diagResult && (
-            <div className="p-5 rounded-3xl bg-gray-50/80 dark:bg-neutral-900/60 border border-gray-200 dark:border-neutral-800 space-y-4 animate-fadeIn">
-              <div className="flex items-center justify-between pb-3 border-b border-gray-200/60 dark:border-neutral-800">
+            <div className="p-5 rounded-3xl glass-panel-opal space-y-4 animate-fadeIn">
+              <div className="flex items-center justify-between pb-3 border-b border-black/5 dark:border-white/10">
                 <span className="text-xs font-bold text-gray-900 dark:text-white flex items-center gap-2">
                   <BrainCircuit className="w-4 h-4 text-emerald-500" />
                   Informe Sintético Gemini 3.7
@@ -584,24 +584,24 @@ export const GeminiOntologicalCopilot: React.FC<GeminiOntologicalCopilotProps> =
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
-                <div className="p-3.5 rounded-2xl bg-white dark:bg-neutral-800/80 border border-gray-100 dark:border-neutral-700/60 space-y-1">
+                <div className="p-3.5 rounded-2xl card-solid-white space-y-1 shadow-2xs">
                   <span className="font-semibold text-gray-800 dark:text-neutral-200 block">Barreras Lingüísticas:</span>
                   <p className="text-gray-600 dark:text-neutral-300 leading-relaxed font-light">{diagResult.linguisticBarriers}</p>
                 </div>
 
-                <div className="p-3.5 rounded-2xl bg-white dark:bg-neutral-800/80 border border-gray-100 dark:border-neutral-700/60 space-y-1">
+                <div className="p-3.5 rounded-2xl card-solid-white space-y-1 shadow-2xs">
                   <span className="font-semibold text-gray-800 dark:text-neutral-200 block">Patrones Somáticos:</span>
                   <p className="text-gray-600 dark:text-neutral-300 leading-relaxed font-light">{diagResult.somaticIndicators}</p>
                 </div>
 
-                <div className="p-3.5 rounded-2xl bg-white dark:bg-neutral-800/80 border border-gray-100 dark:border-neutral-700/60 space-y-1">
+                <div className="p-3.5 rounded-2xl card-solid-white space-y-1 shadow-2xs">
                   <span className="font-semibold text-gray-800 dark:text-neutral-200 block">Reencuadre Sugerido:</span>
                   <p className="text-gray-600 dark:text-neutral-300 leading-relaxed font-light">{diagResult.recommendedShift}</p>
                 </div>
               </div>
 
               {diagResult.powerfulQuestions && diagResult.powerfulQuestions.length > 0 && (
-                <div className="p-4 rounded-2xl bg-white dark:bg-neutral-800/80 border border-gray-100 dark:border-neutral-700/60 space-y-2">
+                <div className="p-4 rounded-2xl card-solid-white space-y-2 shadow-2xs">
                   <span className="text-xs font-semibold text-gray-900 dark:text-white block">
                     Preguntas Poderosas para la Sesión:
                   </span>
@@ -622,7 +622,7 @@ export const GeminiOntologicalCopilot: React.FC<GeminiOntologicalCopilotProps> =
       {/* TAB 4: MARKETING & CONVERSATORIOS CON GEMINI */}
       {activeTab === 'marketing' && userRole === 'coach' && (
         <div className="p-4 sm:p-6 space-y-6">
-          <div className="p-4 rounded-2xl bg-gray-50 dark:bg-neutral-900 border border-gray-200/70 dark:border-neutral-800 space-y-3">
+          <div className="p-4 rounded-2xl glass-panel-opal space-y-3">
             <span className="text-xs font-bold text-gray-900 dark:text-white uppercase tracking-wider block">
               Generador de Publicidad y Convocatorias con Gemini
             </span>
@@ -635,7 +635,7 @@ export const GeminiOntologicalCopilot: React.FC<GeminiOntologicalCopilotProps> =
                   type="text"
                   value={mktEventTitle}
                   onChange={(e) => setMktEventTitle(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl bg-white dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 text-xs text-gray-800 dark:text-neutral-200"
+                  className="w-full px-3 py-2 rounded-xl card-solid-white text-xs text-gray-800 dark:text-neutral-200"
                 />
               </div>
               <div>
@@ -646,7 +646,7 @@ export const GeminiOntologicalCopilot: React.FC<GeminiOntologicalCopilotProps> =
                   type="text"
                   value={mktEventDate}
                   onChange={(e) => setMktEventDate(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl bg-white dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 text-xs text-gray-800 dark:text-neutral-200"
+                  className="w-full px-3 py-2 rounded-xl card-solid-white text-xs text-gray-800 dark:text-neutral-200"
                 />
               </div>
             </div>
@@ -677,7 +677,7 @@ export const GeminiOntologicalCopilot: React.FC<GeminiOntologicalCopilotProps> =
                     <span>{copiedId === 'mkt-wa' ? 'Copiado' : 'Copiar'}</span>
                   </button>
                 </div>
-                <p className="text-xs text-gray-700 dark:text-neutral-300 whitespace-pre-line font-mono bg-white/70 dark:bg-neutral-900/70 p-3 rounded-xl border border-emerald-100 dark:border-emerald-900/50">
+                <p className="text-xs text-gray-700 dark:text-neutral-300 whitespace-pre-line font-mono card-solid-white p-3 rounded-xl">
                   {mktResult.whatsappScript}
                 </p>
               </div>
@@ -696,7 +696,7 @@ export const GeminiOntologicalCopilot: React.FC<GeminiOntologicalCopilotProps> =
                     <span>{copiedId === 'mkt-li' ? 'Copiado' : 'Copiar'}</span>
                   </button>
                 </div>
-                <p className="text-xs text-gray-700 dark:text-neutral-300 whitespace-pre-line font-mono bg-white/70 dark:bg-neutral-900/70 p-3 rounded-xl border border-blue-100 dark:border-blue-900/50">
+                <p className="text-xs text-gray-700 dark:text-neutral-300 whitespace-pre-line font-mono card-solid-white p-3 rounded-xl">
                   {mktResult.linkedinPost}
                 </p>
               </div>

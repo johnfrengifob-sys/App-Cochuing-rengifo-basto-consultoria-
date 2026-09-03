@@ -74,7 +74,7 @@ export const ExecutiveMetricsBar: React.FC<ExecutiveMetricsBarProps> = ({
       {/* 1. Clientes & Semáforo */}
       <div
         onClick={onGoToClients}
-        className="bg-white/70 dark:bg-[#151518]/70 backdrop-blur-xl rounded-3xl p-5 border border-white/75 dark:border-white/10 shadow-sm hover:border-black dark:hover:border-neutral-600 transition-all cursor-pointer group flex flex-col justify-between"
+        className="glass-panel-opal rounded-3xl p-5 hover:border-black dark:hover:border-neutral-500 transition-all cursor-pointer group flex flex-col justify-between"
       >
         <div className="flex items-center justify-between">
           <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-neutral-500">
@@ -116,7 +116,7 @@ export const ExecutiveMetricsBar: React.FC<ExecutiveMetricsBarProps> = ({
       {/* 2. Inversión Acumulada */}
       <div
         onClick={onGoToClients}
-        className="bg-white/70 dark:bg-[#151518]/70 backdrop-blur-xl rounded-3xl p-5 border border-white/75 dark:border-white/10 shadow-sm hover:border-black dark:hover:border-neutral-600 transition-all cursor-pointer group flex flex-col justify-between"
+        className="glass-panel-opal rounded-3xl p-5 hover:border-black dark:hover:border-neutral-500 transition-all cursor-pointer group flex flex-col justify-between"
       >
         <div className="flex items-center justify-between">
           <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-neutral-500">
@@ -141,7 +141,7 @@ export const ExecutiveMetricsBar: React.FC<ExecutiveMetricsBarProps> = ({
       {/* 3. Semáforo Somático / Pulso Ontológico */}
       <div
         onClick={onGoToClients}
-        className="bg-white/70 dark:bg-[#151518]/70 backdrop-blur-xl rounded-3xl p-5 border border-white/75 dark:border-white/10 shadow-sm hover:border-black dark:hover:border-neutral-600 transition-all cursor-pointer group flex flex-col justify-between"
+        className="glass-panel-opal rounded-3xl p-5 hover:border-black dark:hover:border-neutral-500 transition-all cursor-pointer group flex flex-col justify-between"
       >
         <div className="flex items-center justify-between">
           <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-neutral-500">
@@ -183,7 +183,7 @@ export const ExecutiveMetricsBar: React.FC<ExecutiveMetricsBarProps> = ({
       {/* 4. Sesiones y Agenda */}
       <div
         onClick={onGoToEvents}
-        className="bg-white/70 dark:bg-[#151518]/70 backdrop-blur-xl rounded-3xl p-5 border border-white/75 dark:border-white/10 shadow-sm hover:border-black dark:hover:border-neutral-600 transition-all cursor-pointer group flex flex-col justify-between"
+        className="glass-panel-opal rounded-3xl p-5 hover:border-black dark:hover:border-neutral-500 transition-all cursor-pointer group flex flex-col justify-between"
       >
         <div className="flex items-center justify-between">
           <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-neutral-500">
