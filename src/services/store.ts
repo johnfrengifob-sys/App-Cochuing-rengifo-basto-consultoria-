@@ -624,6 +624,8 @@ const INITIAL_SESSIONS: Session[] = [
     date: new Date(Date.now() - 1000 * 60 * 60 * 24 * 14).toISOString(),
     meetLink: 'https://meet.google.com/rbc-andres-ses1',
     status: 'completed',
+    isPaid: true,
+    paymentValidatedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 30).toISOString(),
     notes: 'Sesión 1: Mapeo del quiebre de autoexigencia y deconstrucción de la omnipotencia operativa.',
   },
   {
@@ -633,6 +635,8 @@ const INITIAL_SESSIONS: Session[] = [
     date: new Date(Date.now() - 1000 * 60 * 60 * 3).toISOString(), // Finished today
     meetLink: 'https://meet.google.com/rbc-andres-ses2',
     status: 'completed',
+    isPaid: true,
+    paymentValidatedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 30).toISOString(),
     notes: 'Sesión 2: Reencuadre de la culpa al delegar y diseño de conversaciones de oferta y confianza.',
   },
   {
@@ -642,6 +646,8 @@ const INITIAL_SESSIONS: Session[] = [
     date: new Date(Date.now() + 1000 * 60 * 60 * 24 * 11).toISOString(),
     meetLink: 'https://meet.google.com/rbc-andres-ses3',
     status: 'scheduled',
+    isPaid: true,
+    paymentValidatedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 30).toISOString(),
     notes: 'Sesión 3: Decodificación somática de la presencia directiva y acuerdos de equipo.',
   },
   {
@@ -651,6 +657,8 @@ const INITIAL_SESSIONS: Session[] = [
     date: new Date(Date.now() + 1000 * 60 * 60 * 26).toISOString(), // Tomorrow afternoon
     meetLink: 'https://meet.google.com/rbc-onto-ses3',
     status: 'scheduled',
+    isPaid: true,
+    paymentValidatedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 6).toISOString(),
     notes: 'Sesión 3: Decodificación somática de la opresión en el pecho y mandatos de autoexigencia.',
   },
   {
@@ -660,6 +668,8 @@ const INITIAL_SESSIONS: Session[] = [
     date: new Date(Date.now() - 1000 * 60 * 60 * 24 * 14).toISOString(),
     meetLink: 'https://meet.google.com/rbc-onto-ses2',
     status: 'completed',
+    isPaid: true,
+    paymentValidatedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 6).toISOString(),
     notes: 'Sesión 2: Mapeo de límites no dichos y rediseño del "No" ontológico.',
   },
   {
@@ -669,6 +679,8 @@ const INITIAL_SESSIONS: Session[] = [
     date: new Date(Date.now() - 1000 * 60 * 60 * 24 * 28).toISOString(),
     meetLink: 'https://meet.google.com/rbc-onto-ses1',
     status: 'completed',
+    isPaid: true,
+    paymentValidatedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 6).toISOString(),
     notes: 'Sesión 1: Mapeo de la transparencia cotidiana y quiebres no declarados.',
   },
   {
@@ -678,6 +690,8 @@ const INITIAL_SESSIONS: Session[] = [
     date: new Date(Date.now() + 1000 * 60 * 60 * 72).toISOString(),
     meetLink: 'https://meet.google.com/rbc-onto-ses2',
     status: 'scheduled',
+    isPaid: true,
+    paymentValidatedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 10).toISOString(),
     notes: 'Sesión 2: Distinción entre juicios y hechos en las relaciones con socios.',
   },
   {
@@ -687,6 +701,8 @@ const INITIAL_SESSIONS: Session[] = [
     date: new Date(Date.now() + 1000 * 60 * 60 * 96).toISOString(),
     meetLink: 'https://meet.google.com/rbc-onto-ses5',
     status: 'scheduled',
+    isPaid: true,
+    paymentValidatedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 20).toISOString(),
     notes: 'Sesión 5: Declaración de nueva identidad y diseño de conversaciones de oferta.',
   },
 ];
@@ -998,6 +1014,7 @@ const STORAGE_KEYS = {
   MATRIX_URL: 'rbc_matrix_url_v2',
   PORTAL_URL: 'rbc_portal_url_v2',
   NEXT_LEVEL_PAYMENT_URL: 'rbc_next_level_payment_url_v2',
+  WORKSHOPS_VIEWED: 'rbc_workshops_viewed_v2',
 };
 
 export const DEFAULT_WEBHOOK_URL =
@@ -1490,6 +1507,101 @@ export class OntologicalStore {
     return updatedUser;
   }
 
+  static cancelUserSubscription(clientId: string): User | null {
+    const users = this.getUsers();
+    let updatedUser: User | null = null;
+    const updatedUsers = users.map((u) => {
+      if (u.uid === clientId) {
+        updatedUser = {
+          ...u,
+          status: 'inactive',
+          notes: (u.notes ? u.notes + '\n' : '') + `[${new Date().toLocaleDateString('es-CO')}] Suscripción cancelada a solicitud del participante.`,
+          lastActivityAt: new Date().toISOString(),
+        };
+        return updatedUser;
+      }
+      return u;
+    });
+    if (updatedUser) {
+      this.saveUsers(updatedUsers);
+    }
+    return updatedUser;
+  }
+
+  static reactivateUserSubscription(clientId: string): User | null {
+    const users = this.getUsers();
+    let updatedUser: User | null = null;
+    const updatedUsers = users.map((u) => {
+      if (u.uid === clientId) {
+        updatedUser = {
+          ...u,
+          status: 'active',
+          notes: (u.notes ? u.notes + '\n' : '') + `[${new Date().toLocaleDateString('es-CO')}] Suscripción reactivada por el participante.`,
+          lastActivityAt: new Date().toISOString(),
+        };
+        return updatedUser;
+      }
+      return u;
+    });
+    if (updatedUser) {
+      this.saveUsers(updatedUsers);
+    }
+    return updatedUser;
+  }
+
+  static deleteUserAccount(userId: string): boolean {
+    const users = this.getUsers();
+    const filteredUsers = users.filter((u) => u.uid !== userId);
+    if (filteredUsers.length === users.length) {
+      return false;
+    }
+    this.saveUsers(filteredUsers);
+
+    // Clean up client sessions
+    try {
+      const sessions = this.getSessions();
+      const remainingSessions = sessions.filter((s) => s.clientId !== userId);
+      this.saveSessions(remainingSessions);
+    } catch {
+      // ignore
+    }
+
+    // Clean up client forms
+    try {
+      const forms = this.getForms();
+      const remainingForms = forms.filter((f) => f.clientId !== userId);
+      this.saveForms(remainingForms);
+    } catch {
+      // ignore
+    }
+
+    // Clean up client postSessionForms
+    try {
+      const postForms = this.getPostSessionForms();
+      const remainingPostForms = postForms.filter((pf) => pf.clientId !== userId);
+      this.savePostSessionForms(remainingPostForms);
+    } catch {
+      // ignore
+    }
+
+    // Clean up client payment requests
+    try {
+      const payRequests = this.getPaymentRequests();
+      const remainingPayRequests = payRequests.filter((pr) => pr.clientId !== userId);
+      this.savePaymentRequests(remainingPayRequests);
+    } catch {
+      // ignore
+    }
+
+    // If current user is deleted, clear session
+    const currentId = localStorage.getItem(STORAGE_KEYS.CURRENT_USER_ID);
+    if (currentId === userId) {
+      this.setCurrentUser(null);
+    }
+
+    return true;
+  }
+
   static getCurrentUser(): User | null {
     const users = this.getUsers();
     const currentId = localStorage.getItem(STORAGE_KEYS.CURRENT_USER_ID);
@@ -1702,30 +1814,93 @@ export class OntologicalStore {
     if (updatedUser) {
       this.saveUsers(updatedUsers);
 
-      // Create scheduled session for this newly unlocked step if none exists
-      const targetSessionNumber = updatedUser.programProgress || targetStep;
-      const sessions = this.getSessions();
-      const hasSessionForStep = sessions.some(
-        (s) => s.clientId === clientId && s.sessionNumber === targetSessionNumber
-      );
+      // Apertura de estado en las sesiones pagadas
+      const isFullPlan = paymentStatus === 'Pago Único' || targetStep === 6;
+      const stepsToOpen = isFullPlan
+        ? [1, 2, 3, 4, 5, 6]
+        : Array.from({ length: targetStep }, (_, i) => i + 1);
 
-      if (!hasSessionForStep) {
-        const nodeInfo =
-          PROGRAM_NODES.find((n) => n.step === targetSessionNumber) || PROGRAM_NODES[0];
-        const newSession: Session = {
-          id: 'sess-' + Date.now(),
-          clientId: clientId,
-          sessionNumber: targetSessionNumber,
-          date: new Date(Date.now() + 1000 * 60 * 60 * 72).toISOString(),
-          meetLink: `https://meet.google.com/rbc-${Math.random().toString(36).substring(2, 7)}`,
-          status: 'scheduled',
-          notes: `Sesión ${targetSessionNumber}: ${nodeInfo.sessionTitle}.`,
-        };
-        this.saveSessions([...sessions, newSession]);
-      }
+      this.openSessionsForPayment(
+        clientId,
+        stepsToOpen,
+        undefined,
+        isFullPlan ? 'full' : 'level'
+      );
     }
 
     return updatedUser;
+  }
+
+  /**
+   * Apertura de estado para las sesiones pagadas por el coachee.
+   * Modifica el estado de las sesiones a 'scheduled' (Abierta / Programada),
+   * asigna enlaces verificados de Google Meet, fechas de cronograma quincenal
+   * y las marca con sello de pago validado.
+   */
+  static openSessionsForPayment(
+    clientId: string,
+    stepsToOpen: number[],
+    paymentRequestId?: string,
+    planType: 'level' | 'full' = 'level'
+  ): Session[] {
+    const sessions = this.getSessions();
+    const updatedSessions = [...sessions];
+    const openedSessions: Session[] = [];
+    const now = Date.now();
+
+    stepsToOpen.forEach((step, index) => {
+      const existingIndex = updatedSessions.findIndex(
+        (s) => s.clientId === clientId && s.sessionNumber === step
+      );
+      const nodeInfo = PROGRAM_NODES.find((n) => n.step === step) || PROGRAM_NODES[0];
+
+      if (existingIndex >= 0) {
+        const existing = updatedSessions[existingIndex];
+        const shouldUpdateStatus = existing.status !== 'completed';
+        const updatedSess: Session = {
+          ...existing,
+          // Apertura de estado: pasa a 'scheduled' si no estaba completada
+          status: shouldUpdateStatus ? 'scheduled' : existing.status,
+          isPaid: true,
+          paymentValidatedAt: existing.paymentValidatedAt || new Date().toISOString(),
+          unlockedByPaymentId: paymentRequestId || existing.unlockedByPaymentId,
+          unlockedPaymentPlan: planType || existing.unlockedPaymentPlan,
+          meetLink:
+            existing.meetLink && existing.meetLink.includes('meet.google.com')
+              ? existing.meetLink
+              : `https://meet.google.com/rbc-${Math.random().toString(36).substring(2, 7)}`,
+          notes:
+            existing.notes ||
+            `Sesión ${step}: ${nodeInfo.sessionTitle}. Apertura de estado realizada tras validación de pago.`,
+          ontologicalFocus: existing.ontologicalFocus || nodeInfo.objective,
+        };
+        updatedSessions[existingIndex] = updatedSess;
+        openedSessions.push(updatedSess);
+      } else {
+        // Crear nueva sesión con apertura de estado 'scheduled'
+        const daysOffset = 3 + index * 14;
+        const scheduledDate = new Date(now + 1000 * 60 * 60 * 24 * daysOffset).toISOString();
+        const newSession: Session = {
+          id: `sess-${clientId}-step-${step}-${Date.now() + index}`,
+          clientId,
+          sessionNumber: step,
+          date: scheduledDate,
+          meetLink: `https://meet.google.com/rbc-${Math.random().toString(36).substring(2, 7)}`,
+          status: 'scheduled',
+          isPaid: true,
+          paymentValidatedAt: new Date().toISOString(),
+          unlockedByPaymentId: paymentRequestId,
+          unlockedPaymentPlan: planType,
+          notes: `Sesión ${step}: ${nodeInfo.sessionTitle}. Apertura de estado realizada tras validación de pago.`,
+          ontologicalFocus: nodeInfo.objective,
+        };
+        updatedSessions.push(newSession);
+        openedSessions.push(newSession);
+      }
+    });
+
+    this.saveSessions(updatedSessions);
+    return openedSessions;
   }
 
   // --- PAYMENT REQUESTS & CASH / BRE-B VALIDATION ---
@@ -1762,7 +1937,7 @@ export class OntologicalStore {
   static approvePaymentRequest(
     requestId: string,
     reviewedBy: string = 'John Fredy Rengifo Basto'
-  ): { request: PaymentRequest | null; user: User | null } {
+  ): { request: PaymentRequest | null; user: User | null; openedSessions: Session[] } {
     const requests = this.getPaymentRequests();
     let approvedReq: PaymentRequest | null = null;
 
@@ -1780,10 +1955,8 @@ export class OntologicalStore {
     });
 
     if (!approvedReq) {
-      return { request: null, user: null };
+      return { request: null, user: null, openedSessions: [] };
     }
-
-    this.savePaymentRequests(updatedRequests);
 
     // Unlock the target node for client
     const targetPaymentStatus: PaymentStatus =
@@ -1799,6 +1972,26 @@ export class OntologicalStore {
       approvedReq.clientId,
       stepToUnlock,
       targetPaymentStatus
+    );
+
+    // Apertura de estado en las sesiones que pagó:
+    const stepsToOpen: number[] =
+      approvedReq.planType === 'full'
+        ? [1, 2, 3, 4, 5, 6]
+        : [approvedReq.targetStep || stepToUnlock];
+
+    const openedSessions = this.openSessionsForPayment(
+      approvedReq.clientId,
+      stepsToOpen,
+      approvedReq.id,
+      approvedReq.planType
+    );
+
+    approvedReq.openedSessionNumbers = stepsToOpen;
+    approvedReq.openedSessionIds = openedSessions.map((s) => s.id);
+
+    this.savePaymentRequests(
+      updatedRequests.map((r) => (r.id === approvedReq!.id ? approvedReq! : r))
     );
 
     // Update invested amount
@@ -1817,7 +2010,7 @@ export class OntologicalStore {
       this.updateClientStatus(approvedReq.clientId, 'active');
     }
 
-    return { request: approvedReq, user: updatedUser };
+    return { request: approvedReq, user: updatedUser, openedSessions };
   }
 
   static rejectPaymentRequest(
@@ -1855,7 +2048,7 @@ export class OntologicalStore {
     amount: string,
     notes?: string,
     reviewedBy: string = 'John Fredy Rengifo Basto'
-  ): { request: PaymentRequest; user: User | null } {
+  ): { request: PaymentRequest; user: User | null; openedSessions: Session[] } {
     const client = this.getUsers().find((u) => u.uid === clientId);
     const node = PROGRAM_NODES.find((n) => n.step === targetStep) || PROGRAM_NODES[0];
 
@@ -1876,6 +2069,22 @@ export class OntologicalStore {
       reviewedAt: new Date().toISOString(),
       reviewedBy,
     };
+
+    // Apertura de estado en las sesiones pagadas
+    const stepsToOpen: number[] =
+      planType === 'full'
+        ? [1, 2, 3, 4, 5, 6]
+        : [targetStep];
+
+    const openedSessions = this.openSessionsForPayment(
+      clientId,
+      stepsToOpen,
+      newReq.id,
+      planType
+    );
+
+    newReq.openedSessionNumbers = stepsToOpen;
+    newReq.openedSessionIds = openedSessions.map((s) => s.id);
 
     const requests = this.getPaymentRequests();
     this.savePaymentRequests([newReq, ...requests]);
@@ -1898,7 +2107,7 @@ export class OntologicalStore {
       this.updateClientStatus(clientId, 'active');
     }
 
-    return { request: newReq, user: updatedUser };
+    return { request: newReq, user: updatedUser, openedSessions };
   }
 
   // --- SESSIONS ---
@@ -1931,6 +2140,25 @@ export class OntologicalStore {
       .filter((s) => s.status === 'scheduled')
       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
     return clientSessions[0] || null;
+  }
+
+  static updateSessionStatus(
+    sessionId: string,
+    status: 'scheduled' | 'completed' | 'cancelled'
+  ): Session | null {
+    const sessions = this.getSessions();
+    let updated: Session | null = null;
+    const updatedList = sessions.map((s) => {
+      if (s.id === sessionId) {
+        updated = { ...s, status };
+        return updated;
+      }
+      return s;
+    });
+    if (updated) {
+      this.saveSessions(updatedList);
+    }
+    return updated;
   }
 
   // --- POST-SESSION FORMS (EVALUACIÓN POST-SESIÓN & CUADERNO DE TRABAJO) ---
@@ -1973,6 +2201,54 @@ export class OntologicalStore {
     this.savePostSessionForms(forms.filter((f) => f.id !== formId));
   }
 
+  // --- WORKSHOP ATTENDANCE & DOCUMENT REGISTRY ---
+  static getUserById(clientId: string): User | undefined {
+    return this.getUsers().find((u) => u.uid === clientId);
+  }
+
+  static getWorkshopsViewed(clientId: string): number[] {
+    const map = this.load<Record<string, number[]>>(STORAGE_KEYS.WORKSHOPS_VIEWED, {
+      'user-andres-quintero': [1, 2],
+    });
+    if (!map[clientId]) {
+      const user = this.getUserById(clientId);
+      const initial: number[] = [];
+      const max = Math.min(user?.programProgress || 1, 2);
+      for (let i = 1; i <= max; i++) {
+        initial.push(i);
+      }
+      map[clientId] = initial;
+      this.save(STORAGE_KEYS.WORKSHOPS_VIEWED, map);
+    }
+    return map[clientId] || [];
+  }
+
+  static toggleWorkshopViewed(clientId: string, step: number): boolean {
+    const map = this.load<Record<string, number[]>>(STORAGE_KEYS.WORKSHOPS_VIEWED, {
+      'user-andres-quintero': [1, 2],
+    });
+    const current = map[clientId] || this.getWorkshopsViewed(clientId);
+    const exists = current.includes(step);
+    const updated = exists
+      ? current.filter((s) => s !== step)
+      : [...current, step].sort((a, b) => a - b);
+    map[clientId] = updated;
+    this.save(STORAGE_KEYS.WORKSHOPS_VIEWED, map);
+    return !exists;
+  }
+
+  static setWorkshopViewed(clientId: string, step: number, viewed: boolean): void {
+    const map = this.load<Record<string, number[]>>(STORAGE_KEYS.WORKSHOPS_VIEWED, {
+      'user-andres-quintero': [1, 2],
+    });
+    const current = map[clientId] || [];
+    const updated = viewed
+      ? Array.from(new Set([...current, step])).sort((a, b) => a - b)
+      : current.filter((s) => s !== step);
+    map[clientId] = updated;
+    this.save(STORAGE_KEYS.WORKSHOPS_VIEWED, map);
+  }
+
   // --- FORMS ---
   static getForms(): FormSubmission[] {
     const list = this.load<FormSubmission[]>(STORAGE_KEYS.FORMS, INITIAL_FORMS);
@@ -2002,6 +2278,10 @@ export class OntologicalStore {
   static getLatestFormForClient(clientId: string): FormSubmission | null {
     const forms = this.getFormsForClient(clientId);
     return forms[0] || null;
+  }
+
+  static saveForms(forms: FormSubmission[]): void {
+    this.save(STORAGE_KEYS.FORMS, forms);
   }
 
   static submitForm(

@@ -58,6 +58,11 @@ export const PaymentValidationManager: React.FC<PaymentValidationManagerProps> =
   const [directPlan, setDirectPlan] = useState<'level' | 'full'>('level');
   const [directAmount, setDirectAmount] = useState('$500.000 COP');
   const [directNotes, setDirectNotes] = useState('Pago en efectivo recibido y validado en sesión presencial.');
+  const [aperturaSuccessNotice, setAperturaSuccessNotice] = useState<{
+    clientName: string;
+    amount: string;
+    openedSessionNumbers: number[];
+  } | null>(null);
 
   // Statistics
   const pendingRequests = requests.filter((r) => r.status === 'pending');
@@ -82,6 +87,13 @@ export const PaymentValidationManager: React.FC<PaymentValidationManagerProps> =
   const handleApprove = (reqId: string) => {
     const result = OntologicalStore.approvePaymentRequest(reqId, coachName);
     onRequestUpdated();
+    if (result.request) {
+      setAperturaSuccessNotice({
+        clientName: result.request.clientName,
+        amount: result.request.amount,
+        openedSessionNumbers: result.request.openedSessionNumbers || [result.request.targetStep],
+      });
+    }
     if (result.user && onClientUnlocked) {
       onClientUnlocked(result.user);
     }
@@ -114,6 +126,13 @@ export const PaymentValidationManager: React.FC<PaymentValidationManagerProps> =
 
     setShowDirectCashModal(false);
     onRequestUpdated();
+    if (result.request) {
+      setAperturaSuccessNotice({
+        clientName: result.request.clientName,
+        amount: result.request.amount,
+        openedSessionNumbers: result.request.openedSessionNumbers || [result.request.targetStep],
+      });
+    }
     if (result.user && onClientUnlocked) {
       onClientUnlocked(result.user);
     }
@@ -162,6 +181,44 @@ export const PaymentValidationManager: React.FC<PaymentValidationManagerProps> =
           <span>Registrar Pago en Efectivo Directo</span>
         </button>
       </div>
+
+      {/* Banner de Feedback: Apertura de Estado en Sesiones */}
+      {aperturaSuccessNotice && (
+        <div className="p-4 sm:p-5 rounded-3xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-300 dark:border-emerald-800/80 text-emerald-900 dark:text-emerald-200 flex items-start justify-between gap-4 animate-fade-in shadow-xs">
+          <div className="flex items-start gap-3.5">
+            <div className="w-9 h-9 rounded-2xl bg-emerald-600 text-white flex items-center justify-center shrink-0 mt-0.5 shadow-xs">
+              <CheckCircle2 className="w-5 h-5" />
+            </div>
+            <div className="space-y-1.5">
+              <div className="flex flex-wrap items-center gap-2">
+                <h4 className="text-sm font-bold text-emerald-950 dark:text-emerald-100">
+                  Apertura de Estado Exitosa en Sesiones
+                </h4>
+                <span className="px-2.5 py-0.5 rounded-full bg-emerald-200/70 dark:bg-emerald-900/60 text-emerald-950 dark:text-emerald-200 text-[10px] font-bold">
+                  {aperturaSuccessNotice.amount}
+                </span>
+              </div>
+              <p className="text-xs font-light text-emerald-900 dark:text-emerald-300 leading-relaxed max-w-2xl">
+                Se validó el pago de <strong>{aperturaSuccessNotice.clientName}</strong>. En este momento se realizó la <strong>apertura de estado inmediata</strong> para:{' '}
+                <strong className="underline font-semibold">
+                  {aperturaSuccessNotice.openedSessionNumbers.length > 1
+                    ? `Sesiones ${aperturaSuccessNotice.openedSessionNumbers.join(', ')} (Programa de 12 Semanas Completo)`
+                    : `Sesión ${aperturaSuccessNotice.openedSessionNumbers[0]}`}
+                </strong>
+                . El participante y tú ya tienen habilitada la sesión en estado <em>Abierta / Programada</em> con acceso directo a Google Meet, Google Calendar y Cuaderno Ontológico.
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => setAperturaSuccessNotice(null)}
+            className="p-1.5 rounded-xl text-emerald-700 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 transition-colors cursor-pointer shrink-0"
+            title="Cerrar notificación"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
 
       {/* Metric Counters */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
@@ -408,10 +465,32 @@ export const PaymentValidationManager: React.FC<PaymentValidationManagerProps> =
                       </p>
                     )}
 
-                    {isApproved && req.reviewedBy && (
-                      <span className="text-[10px] text-gray-400 block">
-                        Validado por {req.reviewedBy} el {formatDate(req.reviewedAt || '')}
-                      </span>
+                    {isApproved && (
+                      <div className="space-y-1.5 pt-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20 text-[11px] font-bold">
+                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                            <span>
+                              Apertura de Estado:{' '}
+                              {req.openedSessionNumbers && req.openedSessionNumbers.length > 0
+                                ? req.openedSessionNumbers.length > 1
+                                  ? `Sesiones 1 a ${Math.max(...req.openedSessionNumbers)} Abiertas`
+                                  : `Sesión ${req.openedSessionNumbers[0]} Abierta`
+                                : req.planType === 'full'
+                                ? 'Sesiones 1 a 6 (Programa Completo) Abiertas'
+                                : `Sesión ${req.targetStep} Abierta`}
+                            </span>
+                          </span>
+                          <span className="text-[11px] text-gray-500 dark:text-neutral-400 font-light">
+                            • Google Meet activo & cuaderno habilitado
+                          </span>
+                        </div>
+                        {req.reviewedBy && (
+                          <span className="text-[10px] text-gray-400 block font-light">
+                            Validado por {req.reviewedBy} el {formatDate(req.reviewedAt || '')}
+                          </span>
+                        )}
+                      </div>
                     )}
                   </div>
 

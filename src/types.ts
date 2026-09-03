@@ -58,6 +58,10 @@ export interface Session {
   status: SessionStatus;
   notes?: string;
   ontologicalFocus?: string;
+  isPaid?: boolean;
+  paymentValidatedAt?: string;
+  unlockedByPaymentId?: string;
+  unlockedPaymentPlan?: 'level' | 'full';
 }
 
 export interface PostSessionForm {
@@ -309,5 +313,7 @@ export interface PaymentRequest {
   reviewedAt?: string;
   reviewedBy?: string;
   rejectionReason?: string;
+  openedSessionNumbers?: number[];
+  openedSessionIds?: string[];
 }
 

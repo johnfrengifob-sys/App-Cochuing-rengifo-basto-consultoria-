@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   User,
   Session,
@@ -16,6 +16,7 @@ import { PromotionalEventBanner } from './PromotionalEventBanner';
 import { PaymentUnlockModal } from './PaymentUnlockModal';
 import { PostSessionWorkbookModal } from './PostSessionWorkbookModal';
 import { GeminiOntologicalCopilot } from './GeminiOntologicalCopilot';
+import { WorkshopRegistrySection } from './WorkshopRegistrySection';
 import {
   Video,
   Calendar,
@@ -49,15 +50,96 @@ import {
   MessageCircle,
   Zap,
   AlertCircle,
+  LogOut,
+  CalendarX,
+  UserX,
+  ChevronDown,
+  ShieldCheck,
+  AlertTriangle,
+  ShieldAlert,
+  X,
 } from 'lucide-react';
 
 interface ClientDashboardProps {
   client: User;
+  onLogout?: () => void;
+  onUserUpdated?: () => void;
 }
 
 type WorkspaceTab = 'materials' | 'reinforcement' | 'form' | 'workbook' | 'gemini';
 
-export const ClientDashboard: React.FC<ClientDashboardProps> = ({ client }) => {
+export const ClientDashboard: React.FC<ClientDashboardProps> = ({
+  client,
+  onLogout,
+  onUserUpdated,
+}) => {
+  // Participant Account Menu & Modal State (Next to Participant Photo)
+  const [isParticipantMenuOpen, setIsParticipantMenuOpen] = useState(false);
+  const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [participantNotice, setParticipantNotice] = useState<{ message: string; type: 'success' | 'info' } | null>(null);
+  const participantMenuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (participantMenuRef.current && !participantMenuRef.current.contains(event.target as Node)) {
+        setIsParticipantMenuOpen(false);
+      }
+    };
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setIsParticipantMenuOpen(false);
+        setIsCancelModalOpen(false);
+        setIsDeleteModalOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, []);
+
+  const handleToggleSubscription = () => {
+    setIsParticipantMenuOpen(false);
+    setIsCancelModalOpen(true);
+  };
+
+  const handleConfirmToggleSubscription = () => {
+    if (client.status === 'inactive') {
+      OntologicalStore.reactivateUserSubscription(client.uid);
+      setParticipantNotice({
+        message: '¡Suscripción reactivada con éxito! Tu plan formativo vuelve a estar activo.',
+        type: 'success',
+      });
+    } else {
+      OntologicalStore.cancelUserSubscription(client.uid);
+      setParticipantNotice({
+        message: 'Suscripción cancelada. Tu estado se ha marcado como pausado/inactivo.',
+        type: 'info',
+      });
+    }
+    setIsCancelModalOpen(false);
+    onUserUpdated?.();
+    setTimeout(() => setParticipantNotice(null), 4000);
+  };
+
+  const handleDeleteAccountClick = () => {
+    setIsParticipantMenuOpen(false);
+    setIsDeleteModalOpen(true);
+  };
+
+  const handleConfirmDeleteAccount = () => {
+    OntologicalStore.deleteUserAccount(client.uid);
+    setIsDeleteModalOpen(false);
+    if (onLogout) {
+      onLogout();
+    } else {
+      window.location.reload();
+    }
+  };
+
   const [sessions, setSessions] = useState<Session[]>(() =>
     OntologicalStore.getSessionsForClient(client.uid)
   );
@@ -113,6 +195,17 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({ client }) => {
   // 1-on-1 Session Questionnaire & Workbook Modal State (for participants)
   const [isSessionWorkbookModalOpen, setIsSessionWorkbookModalOpen] = useState(false);
   const [sessionForWorkbook, setSessionForWorkbook] = useState<Session | null>(null);
+
+  // Workshop Viewed Tracking State & Sub-Tab Mode
+  const [workshopsViewed, setWorkshopsViewed] = useState<number[]>(() =>
+    OntologicalStore.getWorkshopsViewed(client.uid)
+  );
+  const [sessionWorkspaceMode, setSessionWorkspaceMode] = useState<'sessions' | 'workshops'>('sessions');
+
+  const handleToggleWorkshopViewed = (step: number) => {
+    OntologicalStore.toggleWorkshopViewed(client.uid, step);
+    setWorkshopsViewed(OntologicalStore.getWorkshopsViewed(client.uid));
+  };
 
   const activeNodeInfo: ProgramNodeInfo =
     PROGRAM_NODES.find((n) => n.step === selectedNodeStep) || PROGRAM_NODES[0];
@@ -237,27 +330,150 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({ client }) => {
 
   return (
     <div className="min-h-screen bg-white dark:bg-[#0D0D0E] text-black dark:text-neutral-100 py-10 px-4 sm:px-6 max-w-7xl mx-auto space-y-12 transition-colors duration-200">
-      {/* Personalized Greeting & Program Status Banner */}
+      {/* Personalized Greeting & Program Status Banner with Participant Account Dropdown */}
       <section className="pt-2">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-gray-100 dark:border-neutral-800">
-          <div>
-            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#F9F9F9] dark:bg-[#18181B] border border-gray-100 dark:border-neutral-800 text-xs font-light text-gray-500 dark:text-neutral-400 mb-3">
-              <span className="w-1.5 h-1.5 rounded-full bg-black dark:bg-white" />
-              Programa 1 a 1 • 12 Semanas
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-6 border-b border-gray-100 dark:border-neutral-800">
+          <div className="flex items-start sm:items-center gap-4 sm:gap-5">
+            {/* Participant Photo & Dropdown Container */}
+            <div ref={participantMenuRef} className="relative shrink-0">
+              <div className="relative group">
+                <img
+                  src={client.avatarUrl}
+                  alt={client.name}
+                  referrerPolicy="no-referrer"
+                  className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl object-cover shadow-sm ring-2 ring-gray-100 dark:ring-neutral-800 cursor-pointer transition-transform group-hover:scale-105"
+                  onClick={() => setIsParticipantMenuOpen(!isParticipantMenuOpen)}
+                  title="Haz clic para ver opciones de tu cuenta"
+                />
+                <span
+                  className={`absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full border-2 border-white dark:border-[#0D0D0E] ${
+                    client.status === 'inactive' ? 'bg-rose-500' : 'bg-emerald-500'
+                  }`}
+                  title={client.status === 'inactive' ? 'Suscripción Pausada' : 'Suscripción Activa'}
+                />
+              </div>
+
+              {/* Floating Dropdown Menu beside/under photo */}
+              {isParticipantMenuOpen && (
+                <div
+                  id="dashboard-participant-account-dropdown"
+                  className="absolute left-0 top-full mt-2 w-72 sm:w-80 rounded-2xl bg-white dark:bg-[#18181B] border border-gray-200/90 dark:border-neutral-800 shadow-2xl z-50 overflow-hidden animate-fade-in text-black dark:text-white"
+                >
+                  <div className="p-4 bg-gray-50/80 dark:bg-[#1E1E22]/60 border-b border-gray-100 dark:border-neutral-800">
+                    <div className="text-xs font-bold truncate">{client.name}</div>
+                    <div className="text-[11px] text-gray-500 dark:text-neutral-400 font-mono truncate">{client.email}</div>
+                    <div className="mt-2 flex items-center gap-2">
+                      <span className={`text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${
+                        client.status === 'inactive'
+                          ? 'bg-rose-100 dark:bg-rose-950/60 text-rose-800 dark:text-rose-300'
+                          : 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300'
+                      }`}>
+                        {client.status === 'inactive' ? 'Suscripción Inactiva' : 'Suscripción Activa'}
+                      </span>
+                      <span className="text-[10px] text-gray-400">Participante</span>
+                    </div>
+                  </div>
+
+                  <div className="p-2 space-y-1">
+                    {/* Cerrar Sesión */}
+                    <button
+                      id="dashboard-btn-logout"
+                      type="button"
+                      onClick={() => {
+                        setIsParticipantMenuOpen(false);
+                        onLogout?.();
+                      }}
+                      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-gray-100 dark:hover:bg-[#222226] text-left transition-colors cursor-pointer group"
+                    >
+                      <div className="w-8 h-8 rounded-lg bg-gray-100 dark:bg-[#26262B] flex items-center justify-center shrink-0 group-hover:bg-black group-hover:text-white dark:group-hover:bg-white dark:group-hover:text-black transition-colors">
+                        <LogOut className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <div className="text-xs font-semibold text-black dark:text-white">Cerrar Sesión</div>
+                        <div className="text-[10px] font-light text-gray-500 dark:text-neutral-400">Salir de tu espacio personal</div>
+                      </div>
+                    </button>
+
+                    {/* Cancelar / Reactivar Suscripción */}
+                    <button
+                      id="dashboard-btn-cancel-subscription"
+                      type="button"
+                      onClick={handleToggleSubscription}
+                      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-amber-50/80 dark:hover:bg-amber-950/20 text-left transition-colors cursor-pointer group"
+                    >
+                      <div className="w-8 h-8 rounded-lg bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 flex items-center justify-center shrink-0 group-hover:bg-amber-600 group-hover:text-white transition-colors">
+                        <CalendarX className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <div className="text-xs font-semibold text-black dark:text-white">
+                          {client.status === 'inactive' ? 'Reactivar Suscripción' : 'Cancelar Suscripción'}
+                        </div>
+                        <div className="text-[10px] font-light text-gray-500 dark:text-neutral-400">
+                          {client.status === 'inactive' ? 'Reanudar programa y talleres' : 'Pausar cobros y plan del programa'}
+                        </div>
+                      </div>
+                    </button>
+
+                    {/* Eliminar Cuenta */}
+                    <button
+                      id="dashboard-btn-delete-account"
+                      type="button"
+                      onClick={handleDeleteAccountClick}
+                      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-rose-50/80 dark:hover:bg-rose-950/20 text-left transition-colors cursor-pointer group"
+                    >
+                      <div className="w-8 h-8 rounded-lg bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-400 flex items-center justify-center shrink-0 group-hover:bg-rose-600 group-hover:text-white transition-colors">
+                        <UserX className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <div className="text-xs font-semibold text-rose-700 dark:text-rose-400">Eliminar Cuenta</div>
+                        <div className="text-[10px] font-light text-gray-500 dark:text-neutral-400">Borrar usuario y registros personales</div>
+                      </div>
+                    </button>
+                  </div>
+
+                  <div className="px-4 py-2 bg-gray-50/50 dark:bg-[#141417] border-t border-gray-100 dark:border-neutral-800 text-[10px] font-light text-gray-400 dark:text-neutral-500 flex items-center gap-1.5">
+                    <ShieldCheck className="w-3 h-3 text-emerald-600 shrink-0" />
+                    <span>RBC Coaching Ontológico • Confidencial</span>
+                  </div>
+                </div>
+              )}
             </div>
 
-            <h1 className="text-3xl sm:text-4xl font-light tracking-tight text-black dark:text-white">
-              Bienvenido(a),{' '}
-              <span className="font-semibold text-black dark:text-white">
-                {client.name}
-              </span>
-            </h1>
-            <p className="text-sm font-light text-gray-500 dark:text-neutral-400 mt-1.5 max-w-xl leading-relaxed">
-              Programa:{' '}
-              <strong>
-                {client.programName || 'Certeza, Fronteras & Dirección Personal'}
-              </strong>
-            </p>
+            {/* Greeting and Quick Account Menu Toggle */}
+            <div className="space-y-1">
+              <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#F9F9F9] dark:bg-[#18181B] border border-gray-100 dark:border-neutral-800 text-xs font-light text-gray-500 dark:text-neutral-400 mb-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-black dark:bg-white" />
+                Programa 1 a 1 • 12 Semanas
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2">
+                <h1 className="text-2xl sm:text-3xl font-light tracking-tight text-black dark:text-white">
+                  Bienvenido(a),{' '}
+                  <span className="font-semibold text-black dark:text-white">
+                    {client.name}
+                  </span>
+                </h1>
+
+                {/* Dropdown Menu Trigger Button right next to participant photo and name */}
+                <button
+                  id="dashboard-participant-menu-trigger"
+                  type="button"
+                  onClick={() => setIsParticipantMenuOpen(!isParticipantMenuOpen)}
+                  className="px-2.5 py-1 rounded-xl border border-gray-200/90 dark:border-neutral-700 hover:bg-gray-100 dark:hover:bg-[#1E1E22] text-gray-700 dark:text-neutral-200 transition-colors cursor-pointer inline-flex items-center gap-1.5 text-xs font-medium shadow-2xs"
+                  title="Abrir menú de opciones de participante"
+                >
+                  <span className="text-[11px]">Opciones de Cuenta</span>
+                  <ChevronDown className={`w-3.5 h-3.5 text-gray-500 transition-transform duration-200 ${isParticipantMenuOpen ? 'rotate-180' : ''}`} />
+                </button>
+              </div>
+
+              <p className="text-xs sm:text-sm font-light text-gray-500 dark:text-neutral-400 max-w-xl leading-relaxed">
+                Programa:{' '}
+                <strong>
+                  {client.programName || 'Certeza, Fronteras & Dirección Personal'}
+                </strong>
+              </p>
+            </div>
           </div>
 
           {/* Payment Status and Roadmap Progress Pill */}
@@ -328,169 +544,61 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({ client }) => {
         </section>
       )}
 
-      {/* SECCIÓN PRINCIPAL: CUADERNOS DE TRABAJO & CUESTIONARIOS ONTOLÓGICOS (PARA PARTICIPANTES) */}
-      <section className="p-6 sm:p-7 rounded-3xl bg-gradient-to-br from-[#FAFAFA] to-[#F4F4F5] dark:from-[#18181B] dark:to-[#121214] border border-gray-200/90 dark:border-neutral-800 shadow-xs space-y-5">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-gray-200/70 dark:border-neutral-800">
-          <div className="space-y-1">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-black text-white dark:bg-white dark:text-black">
-                Participantes RBC
-              </span>
-              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 flex items-center gap-1">
-                <CheckCircle2 className="w-3 h-3 text-emerald-600" />
-                Construcción de Cuadernos en PDF
+      {/* BARRA DE ACCESO RÁPIDO: CUADERNOS DE TRABAJO & BITÁCORA ONTOLÓGICA */}
+      <section className="p-4 sm:p-5 rounded-2xl bg-[#F9F9F9] dark:bg-[#18181B] border border-gray-200/80 dark:border-neutral-800 shadow-2xs flex flex-col md:flex-row md:items-center justify-between gap-4 transition-all">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-black dark:bg-white text-white dark:text-black flex items-center justify-center shrink-0 shadow-2xs">
+            <BookOpen className="w-4 h-4 text-emerald-400 dark:text-emerald-600" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <h2 className="text-xs sm:text-sm font-semibold text-black dark:text-white">
+                Cuadernos de Trabajo & Bitácora Ontológica
+              </h2>
+              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300">
+                PDF Descargables
               </span>
             </div>
-            <h2 className="text-lg sm:text-xl font-bold text-black dark:text-white flex items-center gap-2">
-              <BookOpen className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
-              <span>Cuestionarios de Preguntas & Cuadernos de Trabajo</span>
-            </h2>
-            <p className="text-xs text-gray-600 dark:text-neutral-400 font-light max-w-2xl leading-relaxed">
-              Los cuestionarios de preguntas son el espacio reflexivo para construir tus cuadernos de trabajo tanto para <strong>Talleres grupales</strong> como para <strong>Sesiones individuales 1 a 1</strong>. Al responderlos, tus reflexiones, quiebres y acuerdos se integran automáticamente en tu <strong>Cuaderno de Trabajo en PDF</strong> listo para descargar.
+            <p className="text-[11px] font-light text-gray-500 dark:text-neutral-400">
+              Diligencia tus cuestionarios para integrar tus quiebres y reflexiones en tus cuadernos de trabajo descargables.
             </p>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
-          {/* Tarjeta 1: Cuaderno de Talleres */}
-          <div className="p-5 rounded-2xl bg-white dark:bg-[#1F1F23] border border-gray-200/80 dark:border-neutral-800 space-y-4 shadow-2xs flex flex-col justify-between">
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border border-blue-200/60 dark:border-blue-900/40">
-                  {activeNodeInfo.level} • Taller {activeNodeInfo.step}
-                </span>
-                {existingForm ? (
-                  <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
-                    <CheckCircle2 className="w-3.5 h-3.5" />
-                    Cuestionario respondido
-                  </span>
-                ) : (
-                  <span className="text-[10px] font-medium text-amber-600 dark:text-amber-400 flex items-center gap-1">
-                    <AlertCircle className="w-3.5 h-3.5" />
-                    Pendiente por responder
-                  </span>
-                )}
-              </div>
-              <h3 className="font-bold text-sm text-black dark:text-white">
-                Cuaderno del Taller (Nivel Activo)
-              </h3>
-              <p className="text-xs text-gray-500 dark:text-neutral-400 font-light leading-relaxed">
-                {existingForm
-                  ? `Ya respondiste el cuestionario del Taller ${activeNodeInfo.step}. Tu Cuaderno de Trabajo contiene tus respuestas integradas y está listo para descarga.`
-                  : `Diligencia las preguntas reflexivas del Taller ${activeNodeInfo.step} para que tus respuestas se transfieran a tu Cuaderno PDF.`}
-              </p>
-            </div>
+        <div className="flex flex-wrap items-center gap-2 shrink-0">
+          <button
+            type="button"
+            onClick={() => {
+              setActiveTab('form');
+              const formElement = document.getElementById('session-workspace-content');
+              if (formElement) formElement.scrollIntoView({ behavior: 'smooth' });
+            }}
+            className={`px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer shadow-2xs ${
+              existingForm
+                ? 'bg-white dark:bg-[#202024] border border-emerald-300 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300 hover:border-emerald-500'
+                : 'bg-black dark:bg-white text-white dark:text-black hover:bg-neutral-800 dark:hover:bg-neutral-200'
+            }`}
+          >
+            <FileText className="w-3.5 h-3.5 text-emerald-500" />
+            <span>
+              {existingForm
+                ? `Taller ${activeNodeInfo.step} (Respondido)`
+                : `✍️ Cuestionario Taller ${activeNodeInfo.step}`}
+            </span>
+          </button>
 
-            <div className="space-y-2 pt-2 border-t border-gray-100 dark:border-neutral-800">
-              <button
-                type="button"
-                onClick={() => {
-                  setActiveTab('form');
-                  const formElement = document.getElementById('session-workspace-content');
-                  if (formElement) {
-                    formElement.scrollIntoView({ behavior: 'smooth' });
-                  }
-                }}
-                className="w-full py-2.5 px-3 rounded-xl bg-black dark:bg-white text-white dark:text-black hover:bg-neutral-800 dark:hover:bg-neutral-200 text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer shadow-2xs"
-              >
-                <FileText className="w-3.5 h-3.5 text-emerald-400 dark:text-emerald-600" />
-                <span>
-                  {existingForm
-                    ? '✍️ Editar Cuestionario del Taller'
-                    : '✍️ Diligenciar Cuestionario del Taller'}
-                </span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  if (isNodeLocked) {
-                    handleOpenPaymentForNode(activeNodeInfo);
-                  } else {
-                    PDFGenerator.generateLevelWorkbookPDF(activeNodeInfo, client, existingForm);
-                  }
-                }}
-                className="w-full py-2 px-3 rounded-xl bg-gray-50 dark:bg-[#26262B] border border-gray-200 dark:border-neutral-700 hover:bg-gray-100 dark:hover:bg-neutral-800 text-xs font-semibold text-black dark:text-white transition-colors flex items-center justify-center gap-2 cursor-pointer shadow-2xs"
-              >
-                <Download className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-                <span>
-                  {existingForm
-                    ? '📄 Descargar Cuaderno de Taller (PDF)'
-                    : '📄 Descargar Cuaderno de Taller (Plantilla)'}
-                </span>
-              </button>
-            </div>
-          </div>
-
-          {/* Tarjeta 2: Cuaderno de Sesiones 1 a 1 */}
-          <div className="p-5 rounded-2xl bg-white dark:bg-[#1F1F23] border border-gray-200/80 dark:border-neutral-800 space-y-4 shadow-2xs flex flex-col justify-between">
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 border border-purple-200/60 dark:border-purple-900/40">
-                  Sesiones Individuales 1 a 1
-                </span>
-                {postSessionForms.length > 0 ? (
-                  <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
-                    <CheckCircle2 className="w-3.5 h-3.5" />
-                    {postSessionForms.length} Cuaderno(s) generado(s)
-                  </span>
-                ) : (
-                  <span className="text-[10px] font-medium text-blue-600 dark:text-blue-400 flex items-center gap-1">
-                    <Calendar className="w-3.5 h-3.5" />
-                    Disponible para registro
-                  </span>
-                )}
-              </div>
-              <h3 className="font-bold text-sm text-black dark:text-white">
-                Cuaderno de Sesión Individual 1 a 1
-              </h3>
-              <p className="text-xs text-gray-500 dark:text-neutral-400 font-light leading-relaxed">
-                {postSessionForms.length > 0
-                  ? `Registraste reflexiones y quiebres para tu sesión 1 a 1. Puedes editar tus respuestas o descargar tu cuaderno ontológico individual en PDF.`
-                  : `Responde las 4 preguntas ontológicas de tu sesión 1 a 1 con John Fredy para estructurar tu Cuaderno de Trabajo en PDF.`}
-              </p>
-            </div>
-
-            <div className="space-y-2 pt-2 border-t border-gray-100 dark:border-neutral-800">
-              <button
-                type="button"
-                onClick={() => {
-                  setSessionForWorkbook(sessions[0] || nextSession || null);
-                  setIsSessionWorkbookModalOpen(true);
-                }}
-                className="w-full py-2.5 px-3 rounded-xl bg-black dark:bg-white text-white dark:text-black hover:bg-neutral-800 dark:hover:bg-neutral-200 text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer shadow-2xs"
-              >
-                <FileText className="w-3.5 h-3.5 text-emerald-400 dark:text-emerald-600" />
-                <span>
-                  {postSessionForms.length > 0
-                    ? '✍️ Editar Cuestionario de Sesión'
-                    : '✍️ Diligenciar Cuestionario de Sesión'}
-                </span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  if (postSessionForms.length > 0) {
-                    const latestPForm = postSessionForms[0];
-                    const assocSession = sessions.find((s) => s.id === latestPForm.sessionId) || nextSession || undefined;
-                    PDFGenerator.generateSessionWorkbookPDF(latestPForm, client, assocSession);
-                  } else {
-                    setSessionForWorkbook(sessions[0] || nextSession || null);
-                    setIsSessionWorkbookModalOpen(true);
-                  }
-                }}
-                className="w-full py-2 px-3 rounded-xl bg-gray-50 dark:bg-[#26262B] border border-gray-200 dark:border-neutral-700 hover:bg-gray-100 dark:hover:bg-neutral-800 text-xs font-semibold text-black dark:text-white transition-colors flex items-center justify-center gap-2 cursor-pointer shadow-2xs"
-              >
-                <Download className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-                <span>
-                  {postSessionForms.length > 0
-                    ? '📄 Descargar Cuaderno de Sesión (PDF)'
-                    : '✍️ Llenar Cuestionario para Generar Cuaderno PDF'}
-                </span>
-              </button>
-            </div>
-          </div>
+          <button
+            type="button"
+            onClick={() => {
+              setActiveTab('workbook');
+              const formElement = document.getElementById('session-workspace-content');
+              if (formElement) formElement.scrollIntoView({ behavior: 'smooth' });
+            }}
+            className="px-3.5 py-2 rounded-xl bg-white dark:bg-[#202024] border border-gray-200 dark:border-neutral-700 text-xs font-semibold text-black dark:text-white hover:bg-gray-50 dark:hover:bg-neutral-800 flex items-center gap-1.5 transition-all cursor-pointer shadow-2xs"
+          >
+            <BookOpen className="w-3.5 h-3.5 text-blue-500" />
+            <span>Cuadernos Sesión 1 a 1 ({postSessionForms.length})</span>
+          </button>
         </div>
       </section>
 
@@ -510,6 +618,17 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({ client }) => {
             {nextSession ? (
               <div className="space-y-5">
                 <div>
+                  <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+                    <div className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-100/80 dark:bg-emerald-950/70 border border-emerald-300/60 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300 text-[10px] font-bold">
+                      <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                      <span>Apertura de Estado: Habilitada</span>
+                    </div>
+                    {nextSession.isPaid && (
+                      <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">
+                        Pago Validado
+                      </span>
+                    )}
+                  </div>
                   <div className="flex items-center gap-2 text-black dark:text-white font-medium text-lg tracking-tight capitalize">
                     <Calendar className="w-5 h-5 text-black dark:text-white stroke-[1.5]" />
                     {formattedDate(nextSession.date)}
@@ -565,6 +684,37 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({ client }) => {
                           ? 'Ver / Editar'
                           : '✍️ Diligenciar'}
                       </span>
+                      <ChevronRight className="w-3 h-3" />
+                    </button>
+                  </div>
+
+                  {/* Acceso ágil al Registro y Documentos del Taller Vinculado */}
+                  <div className="p-3 rounded-2xl bg-white dark:bg-[#202024] border border-gray-200/80 dark:border-neutral-800 flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <Layers className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400 shrink-0" />
+                      <div className="truncate">
+                        <span className="text-xs font-semibold text-black dark:text-white truncate block">
+                          Taller {nextSession.sessionNumber || currentProgress}: Documentos
+                        </span>
+                        <span className="text-[10px] text-gray-400 font-light">
+                          {workshopsViewed.includes(nextSession.sessionNumber || currentProgress)
+                            ? '✅ Taller Visto'
+                            : '⏳ Pendiente de Ver'}
+                        </span>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedNodeStep(nextSession.sessionNumber || currentProgress);
+                        setActiveTab('workbook');
+                        setSessionWorkspaceMode('workshops');
+                        const el = document.getElementById('session-workspace-content');
+                        if (el) el.scrollIntoView({ behavior: 'smooth' });
+                      }}
+                      className="text-[11px] font-bold text-blue-700 dark:text-blue-400 hover:underline flex items-center gap-1 cursor-pointer shrink-0"
+                    >
+                      <span>Ver Registro</span>
                       <ChevronRight className="w-3 h-3" />
                     </button>
                   </div>
@@ -674,6 +824,8 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({ client }) => {
                         const hasForm = forms.some(
                           (f) => f.sessionStep === node.step
                         );
+                        const nodeSession = sessions.find((s) => s.sessionNumber === node.step);
+                        const isSessionOpen = !isLocked && !isCompleted;
 
                         return (
                           <button
@@ -724,9 +876,15 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({ client }) => {
                                       className="w-1.5 h-1.5 rounded-full bg-emerald-500"
                                     />
                                   )}
-                                  {isCurrent && (
-                                    <span className="text-[8px] font-semibold bg-black dark:bg-white text-white dark:text-black px-1.5 py-0.2 rounded-full uppercase tracking-wider">
-                                      En curso
+                                  {isCompleted && (
+                                    <span className="text-[8px] font-semibold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 px-1.5 py-0.2 rounded-full uppercase tracking-wider">
+                                      Realizada
+                                    </span>
+                                  )}
+                                  {isSessionOpen && (
+                                    <span className="text-[8px] font-bold bg-emerald-600 text-white dark:bg-emerald-400 dark:text-black px-2 py-0.2 rounded-full uppercase tracking-wider flex items-center gap-0.5 shadow-2xs">
+                                      <Sparkles className="w-2 h-2" />
+                                      Abierta
                                     </span>
                                   )}
                                   {isLocked && (
@@ -891,6 +1049,35 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({ client }) => {
             {/* Navigation Tabs and Content (ONLY shown when node is unlocked/active) */}
             {!isNodeLocked ? (
               <>
+                {/* Session Status & Quick Action Callout */}
+                <div className="p-4 rounded-2xl bg-emerald-50/70 dark:bg-emerald-950/25 border border-emerald-200/80 dark:border-emerald-800/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-fade-in shadow-2xs">
+                  <div className="space-y-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-200 text-[10px] font-bold uppercase tracking-wider">
+                        <CheckCircle2 className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
+                        Apertura de Estado: Sesión Habilitada
+                      </span>
+                      <span className="text-[10px] font-semibold text-emerald-700 dark:text-emerald-400 bg-white dark:bg-[#1E1E22] px-2 py-0.5 rounded-full border border-emerald-200/60 dark:border-emerald-800">
+                        Pago Validado
+                      </span>
+                    </div>
+                    <p className="text-xs font-light text-gray-700 dark:text-neutral-300">
+                      Materiales de trabajo y cuestionario ontológico del <strong>Taller {activeNodeInfo.step}</strong> listos para tu proceso.
+                    </p>
+                  </div>
+
+                  <div className="flex items-center gap-2 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => setActiveTab('form')}
+                      className="px-3.5 py-2 rounded-xl bg-black dark:bg-white text-white dark:text-black text-xs font-semibold hover:bg-neutral-800 dark:hover:bg-neutral-200 transition-colors flex items-center gap-1.5 cursor-pointer shadow-2xs"
+                    >
+                      <FileText className="w-3.5 h-3.5 text-emerald-400 dark:text-emerald-600" />
+                      <span>{existingForm ? 'Ver Cuestionario' : 'Diligenciar Cuestionario'}</span>
+                    </button>
+                  </div>
+                </div>
+
                 {/* Navigation Tabs for Workspace */}
             <div className="flex border-b border-gray-100 dark:border-neutral-800 gap-2">
               <button
@@ -949,10 +1136,13 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({ client }) => {
                 }`}
               >
                 <BookOpen className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                <span>Cuadernos Sesión 1 a 1</span>
+                <span>Sesiones 1 a 1 & Talleres</span>
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 dark:bg-blue-950/60 dark:text-blue-300 font-bold">
+                  {workshopsViewed.length}/6 Talleres
+                </span>
                 {postSessionForms.length > 0 && (
-                  <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 font-bold">
-                    {postSessionForms.length}
+                  <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 font-bold">
+                    {postSessionForms.length} Cuadernos
                   </span>
                 )}
               </button>
@@ -1547,41 +1737,105 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({ client }) => {
               </div>
             )}
 
-            {/* Sub-Tab 4: Cuaderno de Trabajo Post-Sesión */}
+            {/* Sub-Tab 4: Cuaderno de Trabajo Post-Sesión & Talleres */}
             {activeTab === 'workbook' && (
-              <div className="space-y-6 animate-fade-in">
-                <div className="p-6 rounded-3xl bg-gray-50 dark:bg-neutral-900 border border-gray-200/80 dark:border-neutral-800 space-y-4">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-gray-200/60 dark:border-neutral-800">
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-black text-white dark:bg-white dark:text-black">
-                          Bitácora de Coherencia
+              <div id="session-workspace-content" className="space-y-6 animate-fade-in">
+                {/* Sub-Navigation Switcher between 1-on-1 Session Workbooks and Workshop Registry */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-2 rounded-2xl bg-gray-100/90 dark:bg-neutral-900 border border-gray-200/80 dark:border-neutral-800">
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <button
+                      type="button"
+                      onClick={() => setSessionWorkspaceMode('sessions')}
+                      className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${
+                        sessionWorkspaceMode === 'sessions'
+                          ? 'bg-white dark:bg-[#1E1E22] text-black dark:text-white shadow-2xs'
+                          : 'text-gray-500 hover:text-black dark:hover:text-white'
+                      }`}
+                    >
+                      <BookOpen className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                      <span>Cuadernos Sesión 1 a 1</span>
+                      {postSessionForms.length > 0 && (
+                        <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 font-bold">
+                          {postSessionForms.length}
                         </span>
-                        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300">
-                          {client.paymentStatus === 'Completado' ? 'Taller 100% Pagado' : client.paymentStatus}
-                        </span>
-                      </div>
-                      <h3 className="font-bold text-base text-black dark:text-white flex items-center gap-2">
-                        <BookOpen className="w-4 h-4 text-emerald-600" />
-                        <span>Cuadernos de Trabajo de Sesiones 1 a 1</span>
-                      </h3>
-                      <p className="text-xs text-gray-500 dark:text-neutral-400 font-light">
-                        Documentación de tus quiebres, juicios maestros y acuerdos de acción tras cada sesión 1 a 1 con John Fredy Rengifo Basto.
-                      </p>
-                    </div>
+                      )}
+                    </button>
 
                     <button
                       type="button"
-                      onClick={() => {
-                        setSessionForWorkbook(sessions[0] || null);
-                        setIsSessionWorkbookModalOpen(true);
-                      }}
-                      className="px-4 py-2.5 rounded-xl bg-black dark:bg-white text-white dark:text-black text-xs font-bold hover:bg-neutral-800 dark:hover:bg-neutral-200 transition-colors cursor-pointer inline-flex items-center gap-2 shadow-xs shrink-0 self-start sm:self-auto"
+                      onClick={() => setSessionWorkspaceMode('workshops')}
+                      className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${
+                        sessionWorkspaceMode === 'workshops'
+                          ? 'bg-white dark:bg-[#1E1E22] text-black dark:text-white shadow-2xs'
+                          : 'text-gray-500 hover:text-black dark:hover:text-white'
+                      }`}
                     >
-                      <FileText className="w-3.5 h-3.5 text-emerald-400 dark:text-emerald-700" />
-                      <span>✍️ Diligenciar Cuestionario de Sesión</span>
+                      <Layers className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+                      <span>Registro de Talleres & Documentos</span>
+                      <span className="text-[10px] px-2 py-0.2 rounded-full bg-blue-100 text-blue-800 dark:bg-blue-950/60 dark:text-blue-300 font-bold">
+                        {workshopsViewed.length}/6 Vistos
+                      </span>
                     </button>
                   </div>
+
+                  <span className="text-[11px] font-light text-gray-500 dark:text-neutral-400 px-2">
+                    {sessionWorkspaceMode === 'sessions'
+                      ? 'Tus sesiones individuales con John Fredy Rengifo Basto'
+                      : 'Bitácora y documentos de los 6 talleres formativos'}
+                  </span>
+                </div>
+
+                {sessionWorkspaceMode === 'workshops' ? (
+                  <WorkshopRegistrySection
+                    client={client}
+                    sessions={sessions}
+                    forms={forms}
+                    postSessionForms={postSessionForms}
+                    workshopsViewed={workshopsViewed}
+                    onToggleWorkshopViewed={handleToggleWorkshopViewed}
+                    onOpenSessionWorkbook={(sess) => {
+                      setSessionForWorkbook(sess);
+                      setIsSessionWorkbookModalOpen(true);
+                    }}
+                    onSelectWorkshopForForm={(step) => {
+                      setSelectedNodeStep(step);
+                      setActiveTab('form');
+                    }}
+                    currentProgress={currentProgress}
+                  />
+                ) : (
+                  <div className="p-6 rounded-3xl bg-gray-50 dark:bg-neutral-900 border border-gray-200/80 dark:border-neutral-800 space-y-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-gray-200/60 dark:border-neutral-800">
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-black text-white dark:bg-white dark:text-black">
+                            Bitácora de Coherencia
+                          </span>
+                          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300">
+                            {client.paymentStatus === 'Completado' ? 'Taller 100% Pagado' : client.paymentStatus}
+                          </span>
+                        </div>
+                        <h3 className="font-bold text-base text-black dark:text-white flex items-center gap-2">
+                          <BookOpen className="w-4 h-4 text-emerald-600" />
+                          <span>Cuadernos de Trabajo de Sesiones 1 a 1</span>
+                        </h3>
+                        <p className="text-xs text-gray-500 dark:text-neutral-400 font-light">
+                          Documentación de tus quiebres, juicios maestros y acuerdos de acción tras cada sesión 1 a 1 con John Fredy Rengifo Basto.
+                        </p>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSessionForWorkbook(sessions[0] || null);
+                          setIsSessionWorkbookModalOpen(true);
+                        }}
+                        className="px-4 py-2.5 rounded-xl bg-black dark:bg-white text-white dark:text-black text-xs font-bold hover:bg-neutral-800 dark:hover:bg-neutral-200 transition-colors cursor-pointer inline-flex items-center gap-2 shadow-xs shrink-0 self-start sm:self-auto"
+                      >
+                        <FileText className="w-3.5 h-3.5 text-emerald-400 dark:text-emerald-700" />
+                        <span>✍️ Diligenciar Cuestionario de Sesión</span>
+                      </button>
+                    </div>
 
                   {postSessionForms.length > 0 ? (
                     <div className="space-y-6">
@@ -1715,6 +1969,101 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({ client }) => {
                                 </p>
                               </div>
                             )}
+
+                            {/* Linked Workshop & Official Documents Box */}
+                            {(() => {
+                              const linkedNode = PROGRAM_NODES.find((n) => n.step === pForm.sessionNumber);
+                              if (!linkedNode) return null;
+                              const isWorkshopViewed = workshopsViewed.includes(linkedNode.step);
+                              const linkedForm = forms.find((f) => f.sessionStep === linkedNode.step);
+
+                              return (
+                                <div className="p-4 rounded-2xl bg-linear-to-r from-gray-50 to-[#F8F8FA] dark:from-neutral-900 dark:to-[#19191D] border border-gray-200/80 dark:border-neutral-800 space-y-3">
+                                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                                    <div className="flex flex-wrap items-center gap-2">
+                                      <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-800 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-950/80 px-2.5 py-0.5 rounded-full border border-emerald-300/40">
+                                        Taller del Programa Vinculado: Taller {linkedNode.step} • {linkedNode.level}
+                                      </span>
+                                      <span className="text-xs font-bold text-black dark:text-white truncate">
+                                        {linkedNode.sessionTitle}
+                                      </span>
+                                    </div>
+
+                                    <button
+                                      type="button"
+                                      onClick={() => handleToggleWorkshopViewed(linkedNode.step)}
+                                      className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer inline-flex items-center gap-1.5 shadow-2xs shrink-0 ${
+                                        isWorkshopViewed
+                                          ? 'bg-emerald-600 text-white hover:bg-emerald-700'
+                                          : 'bg-white dark:bg-[#202024] border border-gray-300 dark:border-neutral-700 text-gray-700 dark:text-neutral-300 hover:text-black dark:hover:text-white'
+                                      }`}
+                                      title={isWorkshopViewed ? 'Desmarcar taller visto' : 'Marcar este taller como visto'}
+                                    >
+                                      {isWorkshopViewed ? (
+                                        <>
+                                          <CheckCircle2 className="w-3.5 h-3.5 text-white" />
+                                          <span>Taller Visto ✓</span>
+                                        </>
+                                      ) : (
+                                        <>
+                                          <Clock className="w-3.5 h-3.5 text-amber-500" />
+                                          <span>Marcar como Visto</span>
+                                        </>
+                                      )}
+                                    </button>
+                                  </div>
+
+                                  <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-gray-200/60 dark:border-neutral-800 text-xs">
+                                    <span className="text-gray-400 font-medium text-[11px]">Documentos del Taller:</span>
+
+                                    <button
+                                      type="button"
+                                      onClick={() => PDFGenerator.generateLevelWorkbookPDF(linkedNode, client, linkedForm || undefined)}
+                                      className="px-2.5 py-1.5 rounded-xl bg-white dark:bg-[#222226] border border-gray-200 dark:border-neutral-700 hover:border-emerald-500 text-gray-700 dark:text-neutral-300 hover:text-black dark:hover:text-white font-semibold text-[11px] flex items-center gap-1.5 cursor-pointer transition-colors shadow-2xs"
+                                      title="Descargar Cuaderno de Trabajo en PDF del Taller"
+                                    >
+                                      <BookOpen className="w-3 h-3 text-emerald-600" />
+                                      <span>Cuaderno Taller PDF</span>
+                                    </button>
+
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setSelectedNodeStep(linkedNode.step);
+                                        setActiveTab('form');
+                                      }}
+                                      className="px-2.5 py-1.5 rounded-xl bg-white dark:bg-[#222226] border border-gray-200 dark:border-neutral-700 hover:border-blue-500 text-gray-700 dark:text-neutral-300 hover:text-black dark:hover:text-white font-semibold text-[11px] flex items-center gap-1.5 cursor-pointer transition-colors shadow-2xs"
+                                      title="Ver o completar cuestionario del taller"
+                                    >
+                                      <FileText className="w-3 h-3 text-blue-500" />
+                                      <span>{linkedForm ? 'Cuestionario Respondido' : 'Cuestionario Pendiente'}</span>
+                                    </button>
+
+                                    <button
+                                      type="button"
+                                      onClick={() => PDFGenerator.generateReinforcementPackPDF(linkedNode, client)}
+                                      className="px-2.5 py-1.5 rounded-xl bg-white dark:bg-[#222226] border border-gray-200 dark:border-neutral-700 hover:border-purple-500 text-gray-700 dark:text-neutral-300 hover:text-black dark:hover:text-white font-semibold text-[11px] flex items-center gap-1.5 cursor-pointer transition-colors shadow-2xs"
+                                      title="Descargar Kit de Refuerzo Somático en PDF"
+                                    >
+                                      <Download className="w-3 h-3 text-purple-500" />
+                                      <span>Kit de Refuerzo PDF</span>
+                                    </button>
+
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setSelectedNodeStep(linkedNode.step);
+                                        setSessionWorkspaceMode('workshops');
+                                      }}
+                                      className="px-2.5 py-1.5 rounded-xl bg-gray-100 dark:bg-neutral-800 hover:bg-gray-200 dark:hover:bg-neutral-700 text-gray-700 dark:text-neutral-200 text-[11px] font-medium flex items-center gap-1 ml-auto cursor-pointer transition-colors"
+                                    >
+                                      <span>Ver Registro Completo</span>
+                                      <ChevronRight className="w-3 h-3" />
+                                    </button>
+                                  </div>
+                                </div>
+                              );
+                            })()}
                           </div>
                         );
                       })}
@@ -1732,20 +2081,32 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({ client }) => {
                           Diligencia el cuestionario con las 4 preguntas ontológicas tras tu sesión individual con tu Coach. Tus respuestas construirán tu Cuaderno de Trabajo en PDF descargable.
                         </p>
                       </div>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setSessionForWorkbook(sessions[0] || nextSession || null);
-                          setIsSessionWorkbookModalOpen(true);
-                        }}
-                        className="px-5 py-2.5 rounded-xl bg-black dark:bg-white text-white dark:text-black text-xs font-bold hover:bg-neutral-800 dark:hover:bg-neutral-200 transition-all cursor-pointer inline-flex items-center gap-2 shadow-xs"
-                      >
-                        <FileText className="w-3.5 h-3.5 text-emerald-400 dark:text-emerald-700" />
-                        <span>✍️ Diligenciar Cuestionario de tu Sesión</span>
-                      </button>
+                      <div className="flex flex-col sm:flex-row items-center justify-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSessionForWorkbook(sessions[0] || nextSession || null);
+                            setIsSessionWorkbookModalOpen(true);
+                          }}
+                          className="px-5 py-2.5 rounded-xl bg-black dark:bg-white text-white dark:text-black text-xs font-bold hover:bg-neutral-800 dark:hover:bg-neutral-200 transition-all cursor-pointer inline-flex items-center gap-2 shadow-xs"
+                        >
+                          <FileText className="w-3.5 h-3.5 text-emerald-400 dark:text-emerald-700" />
+                          <span>✍️ Diligenciar Cuestionario de tu Sesión</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => setSessionWorkspaceMode('workshops')}
+                          className="px-4 py-2.5 rounded-xl bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-900 text-blue-700 dark:text-blue-300 text-xs font-semibold hover:bg-blue-100 transition-all cursor-pointer inline-flex items-center gap-2"
+                        >
+                          <Layers className="w-3.5 h-3.5 text-blue-600" />
+                          <span>Ver Registro de Talleres ({workshopsViewed.length}/6)</span>
+                        </button>
+                      </div>
                     </div>
                   )}
                 </div>
+                )}
               </div>
             )}
               </>
@@ -1780,6 +2141,175 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({ client }) => {
           setPostSessionForms(OntologicalStore.getPostSessionFormsForClient(client.uid));
         }}
       />
+
+      {/* Participant Toast Notification */}
+      {participantNotice && (
+        <div
+          id="participant-dashboard-notice"
+          className="fixed bottom-6 right-6 z-50 max-w-md p-4 rounded-2xl bg-black text-white dark:bg-white dark:text-black shadow-2xl border border-gray-800 dark:border-gray-200 animate-fade-in flex items-center gap-3 text-xs"
+        >
+          <div className="w-2 h-2 rounded-full bg-emerald-400 shrink-0" />
+          <span className="font-medium flex-1">{participantNotice.message}</span>
+          <button
+            type="button"
+            onClick={() => setParticipantNotice(null)}
+            className="text-gray-400 hover:text-white dark:hover:text-black cursor-pointer"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      )}
+
+      {/* MODAL 1: CANCELAR / REACTIVAR SUSCRIPCIÓN */}
+      {isCancelModalOpen && (
+        <div
+          id="dashboard-cancel-subscription-modal"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fade-in"
+        >
+          <div className="w-full max-w-md bg-white dark:bg-[#18181B] rounded-3xl border border-gray-200 dark:border-neutral-800 shadow-2xl p-6 sm:p-7 space-y-5 text-black dark:text-white">
+            <div className="flex items-start justify-between">
+              <div
+                className={`w-12 h-12 rounded-2xl flex items-center justify-center ${
+                  client.status === 'inactive'
+                    ? 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400'
+                    : 'bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400'
+                }`}
+              >
+                {client.status === 'inactive' ? (
+                  <CheckCircle2 className="w-6 h-6" />
+                ) : (
+                  <CalendarX className="w-6 h-6" />
+                )}
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsCancelModalOpen(false)}
+                className="p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-neutral-800 text-gray-400 hover:text-black dark:hover:text-white transition-colors cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="space-y-2">
+              <h3 className="text-lg font-bold text-black dark:text-white">
+                {client.status === 'inactive'
+                  ? 'Reactivar Suscripción al Programa'
+                  : 'Cancelar / Pausar Suscripción al Programa'}
+              </h3>
+              <p className="text-xs font-light text-gray-600 dark:text-neutral-400 leading-relaxed">
+                {client.status === 'inactive' ? (
+                  <>
+                    Tu estado actual es <strong>Inactivo / Pausado</strong>. Al reactivar tu suscripción, reanudarás tu acceso normal a las convocatorias de talleres, sesiones quincenales 1 a 1 y seguimiento ontológico continuo.
+                  </>
+                ) : (
+                  <>
+                    Al cancelar tu suscripción:
+                    <br />
+                    • Tu estado formativo pasará a <strong>Inactivo</strong>.
+                    <br />
+                    • Se pausarán futuros compromisos de pago y cuotas pendientes.
+                    <br />
+                    • Mantendrás acceso de consulta a los <strong>Cuadernos de Trabajo y Bitácoras</strong> que ya hayas diligenciado previamente.
+                  </>
+                )}
+              </p>
+            </div>
+
+            <div className="p-3.5 rounded-xl bg-[#F9F9F9] dark:bg-[#202024] border border-gray-200/80 dark:border-neutral-800 text-xs text-gray-600 dark:text-neutral-400 flex items-center gap-2">
+              <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
+              <span>
+                {client.status === 'inactive'
+                  ? 'Puedes reactivar de inmediato sin costo adicional.'
+                  : 'Podrás solicitar reactivación en cualquier momento contactando a tu coach.'}
+              </span>
+            </div>
+
+            <div className="flex items-center gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setIsCancelModalOpen(false)}
+                className="flex-1 py-2.5 px-4 rounded-xl border border-gray-200 dark:border-neutral-700 hover:bg-gray-100 dark:hover:bg-neutral-800 text-xs font-medium text-black dark:text-white transition-colors cursor-pointer"
+              >
+                Volver
+              </button>
+              <button
+                id="dashboard-confirm-toggle-subscription-button"
+                type="button"
+                onClick={handleConfirmToggleSubscription}
+                className={`flex-1 py-2.5 px-4 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-xs ${
+                  client.status === 'inactive'
+                    ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
+                    : 'bg-amber-600 hover:bg-amber-700 text-white'
+                }`}
+              >
+                {client.status === 'inactive' ? 'Sí, Reactivar Suscripción' : 'Confirmar Cancelación'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL 2: ELIMINAR CUENTA DEFINITIVAMENTE */}
+      {isDeleteModalOpen && (
+        <div
+          id="dashboard-delete-account-modal"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/65 backdrop-blur-xs animate-fade-in"
+        >
+          <div className="w-full max-w-md bg-white dark:bg-[#18181B] rounded-3xl border border-rose-200 dark:border-rose-900/60 shadow-2xl p-6 sm:p-7 space-y-5 text-black dark:text-white">
+            <div className="flex items-start justify-between">
+              <div className="w-12 h-12 rounded-2xl bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400 flex items-center justify-center">
+                <ShieldAlert className="w-6 h-6" />
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsDeleteModalOpen(false)}
+                className="p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-neutral-800 text-gray-400 hover:text-black dark:hover:text-white transition-colors cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="space-y-2">
+              <h3 className="text-lg font-bold text-rose-700 dark:text-rose-400">
+                Eliminar Cuenta de Participante
+              </h3>
+              <p className="text-xs font-light text-gray-600 dark:text-neutral-400 leading-relaxed">
+                ¿Estás seguro de que deseas eliminar permanentemente tu cuenta de participante (<strong>{client.name}</strong>)?
+              </p>
+              <div className="p-3.5 rounded-xl bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-900/40 text-xs text-rose-800 dark:text-rose-300 space-y-1.5">
+                <div className="font-bold flex items-center gap-1.5">
+                  <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+                  Esta acción es permanente e irreversible:
+                </div>
+                <ul className="list-disc list-inside text-[11px] font-light space-y-0.5 pl-1">
+                  <li>Se eliminarán tus cuestionarios y reflexiones ontológicas.</li>
+                  <li>Se revocarán los enlaces a tus sesiones individuales.</li>
+                  <li>Cerrarás tu sesión inmediatamente y tu cuenta será borrada.</li>
+                </ul>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setIsDeleteModalOpen(false)}
+                className="flex-1 py-2.5 px-4 rounded-xl border border-gray-200 dark:border-neutral-700 hover:bg-gray-100 dark:hover:bg-neutral-800 text-xs font-medium text-black dark:text-white transition-colors cursor-pointer"
+              >
+                Cancelar y Mantener Cuenta
+              </button>
+              <button
+                id="dashboard-confirm-delete-account-button"
+                type="button"
+                onClick={handleConfirmDeleteAccount}
+                className="flex-1 py-2.5 px-4 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold transition-all cursor-pointer shadow-xs flex items-center justify-center gap-1.5"
+              >
+                <UserX className="w-3.5 h-3.5" />
+                <span>Sí, Eliminar Cuenta</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

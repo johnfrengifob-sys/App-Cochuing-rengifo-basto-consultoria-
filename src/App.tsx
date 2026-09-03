@@ -125,9 +125,10 @@ export default function App() {
         onSwitchUser={isCoach ? handleSwitchUser : undefined}
         allUsers={isCoach ? allUsers : []}
         onOpenSettings={isCoach ? () => setIsSettingsOpen(true) : undefined}
-        onOpenRegistrationPortal={() => setViewMode('register')}
+        onOpenRegistrationPortal={isCoach ? () => setViewMode('register') : undefined}
         onOpenVideoConferences={() => setIsVideoConferencesOpen(true)}
         onNavigateHome={handleNavigateHome}
+        onUserUpdated={refreshUsers}
       />
 
       <div className="flex-1">
@@ -143,6 +144,8 @@ export default function App() {
           <ClientDashboard
             key={`client-${currentUser.uid}-${dashboardKey}`}
             client={currentUser}
+            onLogout={handleLogout}
+            onUserUpdated={refreshUsers}
           />
         )}
       </div>
