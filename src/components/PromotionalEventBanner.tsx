@@ -23,7 +23,7 @@ import {
 interface PromotionalEventBannerProps {
   onRegisterInterest?: (event: CronogramaEvent) => void;
   className?: string;
-  variant?: 'landing' | 'compact' | 'full';
+  variant?: 'landing' | 'compact' | 'participant' | 'full';
 }
 
 export const PromotionalEventBanner: React.FC<PromotionalEventBannerProps> = ({
@@ -108,6 +108,128 @@ export const PromotionalEventBanner: React.FC<PromotionalEventBannerProps> = ({
       setTimeout(() => setShowShareNotice(false), 2500);
     }
   };
+
+  // Compact, non-invasive participant space layout: only the countdown overlaid on the image and the quick access button to the meet room
+  if (variant === 'participant' || variant === 'compact') {
+    return (
+      <div
+        id="participant-promotional-banner"
+        className={`relative w-full rounded-2xl sm:rounded-3xl overflow-hidden border border-gray-200/80 dark:border-neutral-800 shadow-sm bg-[#0D0D0E] group transition-all duration-300 ${className}`}
+      >
+        {/* Background Promotional Graphic */}
+        <div className="absolute inset-0">
+          <img
+            src={event.imageUrl}
+            alt={event.title}
+            referrerPolicy="no-referrer"
+            className="w-full h-full object-cover object-center filter brightness-[0.75] contrast-[1.05] group-hover:scale-[1.01] transition-transform duration-700"
+          />
+          {/* Subtle Dark Gradient Vignette for Optical Contrast and Text Legibility */}
+          <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/75 to-black/80 sm:to-black/65 backdrop-blur-[0.5px]" />
+        </div>
+
+        {/* Content Overlaid Directly on the Image: Counter + Meet Button */}
+        <div className="relative z-10 p-3.5 sm:p-4 md:py-4 md:px-6 flex flex-col md:flex-row md:items-center justify-between gap-3 sm:gap-4">
+          {/* Left: Event Tag & Countdown Directly Over Image */}
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+            {/* Live Badge or 4-Unit Counter */}
+            {timeLeft.isLive ? (
+              <div className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-rose-600/90 text-white font-bold text-xs sm:text-sm animate-pulse shadow-md border border-rose-400/30">
+                <Radio className="w-4 h-4 text-white shrink-0" />
+                <span>🔴 ¡TALLER EN VIVO AHORA!</span>
+              </div>
+            ) : (
+              <div className="flex items-center gap-1.5 sm:gap-2">
+                <div className="px-2.5 sm:px-3 py-1.5 rounded-xl bg-black/75 backdrop-blur-md border border-white/20 text-center shadow-md min-w-[48px] sm:min-w-[54px]">
+                  <span className="font-mono text-sm sm:text-base font-extrabold text-white block leading-tight">
+                    {String(timeLeft.days).padStart(2, '0')}
+                  </span>
+                  <span className="text-[9px] text-gray-300 uppercase font-semibold tracking-wider block mt-0.5">
+                    Días
+                  </span>
+                </div>
+                <span className="text-white/60 font-mono font-bold text-xs sm:text-sm">:</span>
+                <div className="px-2.5 sm:px-3 py-1.5 rounded-xl bg-black/75 backdrop-blur-md border border-white/20 text-center shadow-md min-w-[48px] sm:min-w-[54px]">
+                  <span className="font-mono text-sm sm:text-base font-extrabold text-white block leading-tight">
+                    {String(timeLeft.hours).padStart(2, '0')}
+                  </span>
+                  <span className="text-[9px] text-gray-300 uppercase font-semibold tracking-wider block mt-0.5">
+                    Horas
+                  </span>
+                </div>
+                <span className="text-white/60 font-mono font-bold text-xs sm:text-sm">:</span>
+                <div className="px-2.5 sm:px-3 py-1.5 rounded-xl bg-black/75 backdrop-blur-md border border-white/20 text-center shadow-md min-w-[48px] sm:min-w-[54px]">
+                  <span className="font-mono text-sm sm:text-base font-extrabold text-white block leading-tight">
+                    {String(timeLeft.minutes).padStart(2, '0')}
+                  </span>
+                  <span className="text-[9px] text-gray-300 uppercase font-semibold tracking-wider block mt-0.5">
+                    Min
+                  </span>
+                </div>
+                <span className="text-white/60 font-mono font-bold text-xs sm:text-sm">:</span>
+                <div className="px-2.5 sm:px-3 py-1.5 rounded-xl bg-black/75 backdrop-blur-md border border-white/20 text-center shadow-md min-w-[48px] sm:min-w-[54px]">
+                  <span className="font-mono text-sm sm:text-base font-extrabold text-emerald-400 block leading-tight animate-pulse">
+                    {String(timeLeft.seconds).padStart(2, '0')}
+                  </span>
+                  <span className="text-[9px] text-gray-300 uppercase font-semibold tracking-wider block mt-0.5">
+                    Seg
+                  </span>
+                </div>
+              </div>
+            )}
+
+            <div className="hidden lg:block h-7 w-[1px] bg-white/20 ml-1" />
+
+            {/* Subtle Title Context (compact, non-invasive) */}
+            <div className="hidden lg:flex flex-col text-left">
+              <span className="text-[10px] font-semibold text-emerald-400 uppercase tracking-wider flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block animate-pulse" />
+                Próximo Taller Online RBC
+              </span>
+              <span className="text-xs text-white/90 font-medium truncate max-w-[280px]">
+                {event.title}
+              </span>
+            </div>
+          </div>
+
+          {/* Right: Quick Entry Button to Meet Room */}
+          <div className="flex items-center gap-2 shrink-0 self-start md:self-auto">
+            <a
+              href={meetUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 px-4 sm:px-5 py-2.5 rounded-xl sm:rounded-2xl bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white font-bold text-xs sm:text-sm shadow-lg hover:shadow-emerald-600/30 active:scale-[0.98] transition-all cursor-pointer whitespace-nowrap"
+              title="Ingresar directamente a la sala de Google Meet"
+            >
+              <Video className="w-4 h-4 text-white shrink-0" />
+              <span>Ingreso Rápido a Meet</span>
+              <ExternalLink className="w-3.5 h-3.5 text-emerald-200 shrink-0" />
+            </a>
+
+            <button
+              type="button"
+              onClick={handleCopyMeetLink}
+              className="p-2.5 rounded-xl sm:rounded-2xl bg-black/60 hover:bg-black/80 backdrop-blur-md border border-white/20 text-white text-xs transition-colors cursor-pointer"
+              title="Copiar enlace directo de Meet"
+            >
+              {copiedMeetNotice ? (
+                <Check className="w-4 h-4 text-emerald-400" />
+              ) : (
+                <Copy className="w-4 h-4 text-gray-200" />
+              )}
+            </button>
+          </div>
+        </div>
+
+        {/* Copy Notice Toast */}
+        {copiedMeetNotice && (
+          <div className="relative z-10 bg-emerald-950/90 border-t border-emerald-800 text-emerald-200 text-xs text-center py-1.5 font-light">
+            Enlace de Meet copiado al portapapeles.
+          </div>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div

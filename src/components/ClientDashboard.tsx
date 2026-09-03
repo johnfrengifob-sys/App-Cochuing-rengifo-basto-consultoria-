@@ -284,9 +284,9 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({ client }) => {
         </div>
       </section>
 
-      {/* AI Advertising Banner: Próximo Evento / Conversatorio en Cronograma */}
-      <section className="space-y-3">
-        <PromotionalEventBanner />
+      {/* Advertising Banner: Próximo Evento / Conversatorio en Cronograma (Espacio no invasivo y compacto para participantes con contador y acceso directo a Meet) */}
+      <section>
+        <PromotionalEventBanner variant="participant" />
       </section>
 
       {/* Pending Payment Validation Banner for Participant */}
