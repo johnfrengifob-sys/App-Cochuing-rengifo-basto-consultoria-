@@ -18,7 +18,7 @@ export class PDFGenerator {
     try {
       GoogleWorkspaceService.savePDFReportToDrive(fileName, 'Registro Ontológico Oficial', client, {
         sessionStep: node.step,
-        summary: insight?.emotionalWisdom || client.primaryBreakdown,
+        summary: insight?.emotionalWisdom || client?.primaryBreakdown || 'Registro ontológico',
       });
     } catch {
       // ignore

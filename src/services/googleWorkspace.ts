@@ -491,12 +491,12 @@ export class GoogleWorkspaceService {
       'Sincronizado el',
     ];
 
-    const rows = clients.map((c) => [
+    const rows = clients.filter(Boolean).map((c) => [
       c.uid,
       c.name,
       c.email,
       c.status === 'active' ? '🟢 ACTIVO' : c.status === 'waiting' ? '🟡 EN ESPERA' : '⚪ INACTIVO',
-      c.primaryBreakdown || 'En proceso de indagación inicial',
+      c?.primaryBreakdown || 'En proceso de indagación inicial',
       c.totalInvested || c.programFee || '$1.500.000 COP',
       c.paymentStatus || 'Completado',
       `Sesión ${c.programProgress || 1} de 6`,
@@ -792,7 +792,7 @@ export class GoogleWorkspaceService {
     const eventDescription = `Sesión Quincenal del Programa Certeza, Fronteras & Dirección Personal.
 Cliente: ${client.name} (${client.email})
 Coach: John Fredy Rengifo Basto (${PRIMARY_ACCOUNT_EMAIL})
-Quiebre Principal: ${client.primaryBreakdown || 'Indagación general'}
+Quiebre Principal: ${client?.primaryBreakdown || 'Indagación general'}
 Notas del Coach: ${notes || 'Sesión programada desde la plataforma central.'}`;
 
     let eventId = `gcal_${Date.now()}`;

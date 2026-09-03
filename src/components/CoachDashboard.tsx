@@ -214,19 +214,20 @@ export const CoachDashboard: React.FC<CoachDashboardProps> = ({
   const latestForm = forms[0] || null;
 
   // Trigger Webhook and generate Ontological AI Analysis
-  const handleGenerateAIAnalysis = async () => {
-    if (!selectedClient) return;
+  const handleGenerateAIAnalysis = async (targetClientId?: string, customForm?: any) => {
+    const clientToProcess = (targetClientId ? clients.find((c) => c.uid === targetClientId) : null) || selectedClient;
+    if (!clientToProcess) return;
 
-    let formToProcess = latestForm;
+    let formToProcess = customForm || latestForm;
     if (!formToProcess) {
       formToProcess = OntologicalStore.submitForm({
-        clientId: selectedClient.uid,
+        clientId: clientToProcess.uid,
         sessionId: sessions[0]?.id || 'sess-baseline',
-        sessionStep: selectedClient.programProgress || 1,
+        sessionStep: clientToProcess.programProgress || 1,
         level:
-          (selectedClient.programProgress || 1) <= 2
+          (clientToProcess.programProgress || 1) <= 2
             ? 'Nivel I'
-            : (selectedClient.programProgress || 1) <= 4
+            : (clientToProcess.programProgress || 1) <= 4
             ? 'Nivel II'
             : 'Nivel III',
         bodyEmotion:
@@ -237,6 +238,9 @@ export const CoachDashboard: React.FC<CoachDashboardProps> = ({
           'He postergado la conversación de renegociación de alcance con el cliente principal.',
       });
       setForms([formToProcess]);
+    } else if (customForm && !customForm.id) {
+      formToProcess = OntologicalStore.submitForm(customForm);
+      setForms(OntologicalStore.getFormsForClient(clientToProcess.uid));
     }
 
     setIsGeneratingAI(true);
@@ -244,12 +248,12 @@ export const CoachDashboard: React.FC<CoachDashboardProps> = ({
 
     try {
       const result = await OntologicalStore.triggerAIAnalysisWebhook(
-        selectedClient.uid,
+        clientToProcess.uid,
         formToProcess
       );
 
       const updatedInsights = OntologicalStore.getInsightsForClient(
-        selectedClient.uid
+        clientToProcess.uid
       );
       setInsights(updatedInsights);
 
@@ -623,6 +627,7 @@ export const CoachDashboard: React.FC<CoachDashboardProps> = ({
             />
           ) : selectedClient ? (
             <ClientWorkstationView
+              client={selectedClient}
               selectedClient={selectedClient}
               clients={clients}
               forms={forms}
@@ -633,11 +638,16 @@ export const CoachDashboard: React.FC<CoachDashboardProps> = ({
               onSelectClient={(clientId) => handleSelectClient(clientId, false)}
               onBackToDirectory={() => setClientsViewMode('directory')}
               onGenerateAI={handleGenerateAIAnalysis}
+              onGenerateAIAnalysis={handleGenerateAIAnalysis}
               onOpenNewSession={() => setShowNewSessionModal(true)}
-              onAdvanceStep={(clientId) => handleAdvanceStep(clientId)}
+              onOpenNewSessionModal={() => setShowNewSessionModal(true)}
+              onAdvanceStep={(clientId) => handleAdvanceStep(clientId || selectedClient.uid)}
               onUpdateStatus={handleUpdateClientStatus}
+              onUpdateClientStatus={(status) => handleUpdateClientStatus(selectedClient.uid, status)}
               onUpdateBreakdown={handleUpdateClientBreakdown}
+              onUpdateClientBreakdown={(breakdown) => handleUpdateClientBreakdown(selectedClient.uid, breakdown)}
               onUpdateInvested={handleUpdateClientInvested}
+              onUpdateClientInvested={(invested) => handleUpdateClientInvested(selectedClient.uid, invested)}
             />
           ) : (
             <div className="text-center py-16 bg-white dark:bg-[#151518] rounded-3xl border border-gray-100 dark:border-neutral-800">

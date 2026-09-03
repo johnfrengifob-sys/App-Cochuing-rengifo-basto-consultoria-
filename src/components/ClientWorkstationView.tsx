@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   User,
   FormSubmission,
@@ -42,43 +42,78 @@ import {
   Compass,
   Shield,
   Copy,
+  Users,
 } from 'lucide-react';
 
 interface ClientWorkstationViewProps {
-  client: User;
-  forms: FormSubmission[];
-  insights: AIInsight[];
-  sessions: Session[];
-  isGeneratingAI: boolean;
-  generationFeedback: {
+  client?: User;
+  selectedClient?: User;
+  clients?: User[];
+  forms?: FormSubmission[];
+  insights?: AIInsight[];
+  sessions?: Session[];
+  isGeneratingAI?: boolean;
+  generationFeedback?: {
     type: 'success' | 'info' | 'error';
     message: string;
     payloadPreview?: string;
   } | null;
-  onBackToDirectory: () => void;
-  onUpdateClientStatus: (status: ClientStatus) => void;
-  onUpdateClientBreakdown: (breakdown: string) => void;
-  onUpdateClientInvested: (invested: string) => void;
-  onAdvanceStep: () => void;
-  onOpenNewSessionModal: () => void;
-  onGenerateAIAnalysis: () => void;
+  onSelectClient?: (clientId: string) => void;
+  onBackToDirectory?: () => void;
+  onUpdateClientStatus?: (status: ClientStatus) => void;
+  onUpdateStatus?: (clientId: string, status: ClientStatus) => void;
+  onUpdateClientBreakdown?: (breakdown: string) => void;
+  onUpdateBreakdown?: (clientId: string, breakdown: string) => void;
+  onUpdateClientInvested?: (invested: string) => void;
+  onUpdateInvested?: (clientId: string, invested: string) => void;
+  onAdvanceStep?: (clientId?: string) => void;
+  onOpenNewSessionModal?: () => void;
+  onOpenNewSession?: () => void;
+  onGenerateAIAnalysis?: (clientId?: string, customForm?: any) => void;
+  onGenerateAI?: (clientId?: string, customForm?: any) => void;
 }
 
 export const ClientWorkstationView: React.FC<ClientWorkstationViewProps> = ({
-  client,
-  forms,
-  insights,
-  sessions,
-  isGeneratingAI,
-  generationFeedback,
+  client: propClient,
+  selectedClient,
+  forms = [],
+  insights = [],
+  sessions = [],
+  isGeneratingAI = false,
+  generationFeedback = null,
   onBackToDirectory,
   onUpdateClientStatus,
+  onUpdateStatus,
   onUpdateClientBreakdown,
+  onUpdateBreakdown,
   onUpdateClientInvested,
+  onUpdateInvested,
   onAdvanceStep,
   onOpenNewSessionModal,
+  onOpenNewSession,
   onGenerateAIAnalysis,
+  onGenerateAI,
 }) => {
+  const client = propClient || selectedClient;
+
+  if (!client) {
+    return (
+      <div className="text-center py-16 bg-white dark:bg-[#151518] rounded-3xl border border-gray-100 dark:border-neutral-800">
+        <Users className="w-8 h-8 text-gray-300 dark:text-neutral-600 mx-auto mb-2" />
+        <p className="text-sm font-medium text-black dark:text-white">No se encontró información del cliente.</p>
+        {onBackToDirectory && (
+          <button
+            type="button"
+            onClick={onBackToDirectory}
+            className="mt-3 text-xs font-medium text-black dark:text-white underline cursor-pointer"
+          >
+            Volver al Directorio
+          </button>
+        )}
+      </div>
+    );
+  }
+
   const [activeTab, setActiveTab] = useState<'diagnosis' | 'sessions' | 'workbook' | 'forms' | 'nodes' | 'report' | 'gemini'>('diagnosis');
   const [isEditingBreakdown, setIsEditingBreakdown] = useState(false);
   const [tempBreakdown, setTempBreakdown] = useState(client.primaryBreakdown || '');
@@ -93,12 +128,21 @@ export const ClientWorkstationView: React.FC<ClientWorkstationViewProps> = ({
   );
   const [copiedCalendar, setCopiedCalendar] = useState(false);
 
+  // Synchronize state when active client changes
+  useEffect(() => {
+    if (client) {
+      setTempBreakdown(client.primaryBreakdown || '');
+      setTempInvested(client.totalInvested || client.programFee || '$1.500.000 COP');
+      setPostSessionForms(OntologicalStore.getPostSessionFormsForClient(client.uid));
+    }
+  }, [client.uid, client.primaryBreakdown, client.totalInvested, client.programFee]);
+
   const handleOpenWorkbookForSession = (sess: Session) => {
     setSelectedSessionForWorkbook(sess);
     setIsWorkbookModalOpen(true);
   };
 
-  const handleWorkbookSaved = (savedForm: PostSessionForm) => {
+  const handleWorkbookSaved = () => {
     setPostSessionForms(OntologicalStore.getPostSessionFormsForClient(client.uid));
   };
 
@@ -108,13 +152,34 @@ export const ClientWorkstationView: React.FC<ClientWorkstationViewProps> = ({
   const currentNodeInfo = PROGRAM_NODES.find((n) => n.step === currentStep) || PROGRAM_NODES[0];
 
   const handleSaveBreakdown = () => {
-    onUpdateClientBreakdown(tempBreakdown);
+    if (onUpdateClientBreakdown) onUpdateClientBreakdown(tempBreakdown);
+    if (onUpdateBreakdown) onUpdateBreakdown(client.uid, tempBreakdown);
     setIsEditingBreakdown(false);
   };
 
   const handleSaveInvested = () => {
-    onUpdateClientInvested(tempInvested);
+    if (onUpdateClientInvested) onUpdateClientInvested(tempInvested);
+    if (onUpdateInvested) onUpdateInvested(client.uid, tempInvested);
     setIsEditingInvested(false);
+  };
+
+  const handleStatusChange = (status: ClientStatus) => {
+    if (onUpdateClientStatus) onUpdateClientStatus(status);
+    if (onUpdateStatus) onUpdateStatus(client.uid, status);
+  };
+
+  const handleAdvanceStep = () => {
+    if (onAdvanceStep) onAdvanceStep(client.uid);
+  };
+
+  const handleOpenNewSession = () => {
+    if (onOpenNewSessionModal) onOpenNewSessionModal();
+    else if (onOpenNewSession) onOpenNewSession();
+  };
+
+  const handleTriggerAI = (customForm?: any) => {
+    if (onGenerateAIAnalysis) onGenerateAIAnalysis(client.uid, customForm);
+    else if (onGenerateAI) onGenerateAI(client.uid, customForm);
   };
 
   const handleDownloadPDF = () => {
@@ -169,7 +234,7 @@ export const ClientWorkstationView: React.FC<ClientWorkstationViewProps> = ({
           <span className="text-xs text-gray-400 font-light">Estado del Proceso:</span>
           <ClientTrafficStatusBadge
             status={client.status || 'active'}
-            onChangeStatus={onUpdateClientStatus}
+            onChangeStatus={handleStatusChange}
             size="md"
           />
         </div>
@@ -218,7 +283,7 @@ export const ClientWorkstationView: React.FC<ClientWorkstationViewProps> = ({
           <div className="flex flex-wrap items-center gap-2.5 shrink-0">
             <button
               type="button"
-              onClick={onOpenNewSessionModal}
+              onClick={handleOpenNewSession}
               className="px-4 py-2.5 rounded-2xl border border-gray-200/90 dark:border-neutral-700 bg-white dark:bg-[#1A1A1E] hover:bg-gray-50 dark:hover:bg-neutral-800 text-black dark:text-white text-xs font-semibold transition-all flex items-center gap-2 cursor-pointer shadow-2xs hover:border-black dark:hover:border-neutral-500"
             >
               <Calendar className="w-3.5 h-3.5" />
@@ -226,7 +291,7 @@ export const ClientWorkstationView: React.FC<ClientWorkstationViewProps> = ({
             </button>
 
             <LiquidGlassButton
-              onClick={onGenerateAIAnalysis}
+              onClick={() => handleTriggerAI()}
               isLoading={isGeneratingAI}
               size="sm"
               icon={<Sparkles className="w-3.5 h-3.5 stroke-[1.5]" />}
@@ -368,7 +433,7 @@ export const ClientWorkstationView: React.FC<ClientWorkstationViewProps> = ({
             {currentStep < 6 && (
               <button
                 type="button"
-                onClick={() => onAdvanceStep(client.uid)}
+                onClick={handleAdvanceStep}
                 className="text-[11px] px-3 py-1 rounded-xl bg-black dark:bg-white text-white dark:text-black font-semibold hover:bg-neutral-800 dark:hover:bg-neutral-200 transition-colors cursor-pointer"
               >
                 Avanzar a Sesión {currentStep + 1}
@@ -637,7 +702,7 @@ export const ClientWorkstationView: React.FC<ClientWorkstationViewProps> = ({
                 Haz clic en el botón superior &ldquo;Generar Diagnóstico IA&rdquo; para analizar la corporalidad, lenguaje y quiebres inconscientes del cliente.
               </p>
               <LiquidGlassButton
-                onClick={onGenerateAIAnalysis}
+                onClick={() => handleTriggerAI()}
                 isLoading={isGeneratingAI}
                 size="sm"
                 icon={<Sparkles className="w-3.5 h-3.5" />}
@@ -700,7 +765,7 @@ export const ClientWorkstationView: React.FC<ClientWorkstationViewProps> = ({
 
               <button
                 type="button"
-                onClick={onOpenNewSessionModal}
+                onClick={handleOpenNewSession}
                 className="px-3.5 py-2 rounded-xl bg-black dark:bg-white text-white dark:text-black text-xs font-semibold flex items-center gap-1.5 cursor-pointer shadow-2xs"
               >
                 <Plus className="w-3.5 h-3.5" />
@@ -1139,7 +1204,7 @@ export const ClientWorkstationView: React.FC<ClientWorkstationViewProps> = ({
             currentClient={client}
             userRole="coach"
             onApplyInsightToClient={(diag) => {
-              onGenerateAIAnalysis(client.uid, {
+              handleTriggerAI({
                 id: 'form-' + client.uid + '-' + Date.now(),
                 clientId: client.uid,
                 sessionId: 'session-live',

@@ -651,6 +651,39 @@ const INITIAL_SESSIONS: Session[] = [
     notes: 'Sesión 3: Decodificación somática de la presencia directiva y acuerdos de equipo.',
   },
   {
+    id: 'sess-andres-4',
+    clientId: 'client-andres',
+    sessionNumber: 4,
+    date: new Date(Date.now() + 1000 * 60 * 60 * 24 * 25).toISOString(),
+    meetLink: 'https://meet.google.com/rbc-andres-ses4',
+    status: 'scheduled',
+    isPaid: true,
+    paymentValidatedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 30).toISOString(),
+    notes: 'Sesión 4: Distinción ontológica entre hechos y juicios en la toma de decisiones estratégicas.',
+  },
+  {
+    id: 'sess-andres-5',
+    clientId: 'client-andres',
+    sessionNumber: 5,
+    date: new Date(Date.now() + 1000 * 60 * 60 * 24 * 39).toISOString(),
+    meetLink: 'https://meet.google.com/rbc-andres-ses5',
+    status: 'scheduled',
+    isPaid: true,
+    paymentValidatedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 30).toISOString(),
+    notes: 'Sesión 5: Rediseño de la soberanía emocional, límites impecables y autonomía directiva.',
+  },
+  {
+    id: 'sess-andres-6',
+    clientId: 'client-andres',
+    sessionNumber: 6,
+    date: new Date(Date.now() + 1000 * 60 * 60 * 24 * 53).toISOString(),
+    meetLink: 'https://meet.google.com/rbc-andres-ses6',
+    status: 'scheduled',
+    isPaid: true,
+    paymentValidatedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 30).toISOString(),
+    notes: 'Sesión 6: Cierre del ciclo, consolidación de la nueva identidad y plan de sostenibilidad.',
+  },
+  {
     id: 'sess-103',
     clientId: 'client-1',
     sessionNumber: 3,
@@ -763,6 +796,33 @@ export const INITIAL_POST_SESSION_FORMS: PostSessionForm[] = [
     ],
     somaticHomework:
       'Práctica de enraizamiento y soltura: 5 minutos al iniciar la jornada conectando los pies al suelo, abriendo el pecho y soltando la mandíbula antes de encender el ordenador.',
+  },
+  {
+    id: 'psf-andres-2',
+    sessionId: 'sess-andres-2',
+    sessionNumber: 2,
+    clientId: 'client-andres',
+    clientName: 'Andrés Quintero',
+    sessionDate: new Date(Date.now() - 1000 * 60 * 60 * 3).toISOString(),
+    submittedAt: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
+    coacheeEmotionAndOpenness:
+      'Llegó con sensación de alivio tras haber soltado la coordinación del comité de los martes, pero experimentando culpa residual e inquietud por no saber el minuto a minuto. Apertura alta para indagar de dónde viene esa culpa y redefinir su noción de responsabilidad directiva.',
+    masterJudgmentAndNarrative:
+      'Juicio Maestro: "Si no me siento culpable o agotado al final del día, siento que no estoy trabajando lo suficiente". Deconstrucción de la narrativa de que el valor profesional es proporcional al nivel de desgaste físico y mental.',
+    perspectiveShiftEvidence:
+      'Expresó con claridad: "Entiendo que el descanso y la confianza son actos de liderazgo estratégico, no de negligencia". Definió con convicción su primer protocolo de pedidos y promesas con su socia operativa.',
+    directivenessAndIcfCompetency:
+      'Cuidé el ritmo de la conversación y sostuve las pausas necesarias cuando él conectaba con la emoción del alivio. Competencia ICF 6 (Escucha Activa) y Competencia ICF 8 (Facilita el Crecimiento del Cliente) aplicadas con consistencia.',
+    workbookTitle: 'Deconstrucción de la Culpa & Diseño de Conversaciones de Confianza',
+    coacheeKeyDeclaration:
+      'Elijo liderar desde la serenidad, fundar mis pedidos con claridad y confiar en la capacidad de mi equipo sin castigarme con la culpa.',
+    agreedActionItems: [
+      'Establecer acuerdos de retroalimentación quincenales en lugar de revisiones diarias imprevistas.',
+      'Sostener la desconexión total después de las 7:00 PM sin responder mensajes no críticos.',
+      'Documentar en la bitácora los momentos de serenidad y eficacia experimentados durante la semana.',
+    ],
+    somaticHomework:
+      'Práctica de respiración en cuatro tiempos (box breathing) antes de responder solicitudes complejas.',
   },
 ];
 
@@ -2130,9 +2190,58 @@ export class OntologicalStore {
     this.saveSessions([...current.filter((s) => s.id !== session.id), session]);
   }
 
+  static generateDefaultSessionsForClient(clientId: string): Session[] {
+    const user = this.getUsers().find((u) => u.uid === clientId);
+    const progress = user?.programProgress || 1;
+    const now = Date.now();
+    const sessions: Session[] = [];
+
+    const sessionThemes = [
+      'Mapeo de la transparencia cotidiana, quiebres no declarados y autoexigencia.',
+      'Deconstrucción del juicio maestro y diseño de conversaciones de oferta y confianza.',
+      'Decodificación somática de la presencia directiva, límites y acuerdos de equipo.',
+      'Distinción ontológica entre hechos y juicios en la toma de decisiones estratégicas.',
+      'Rediseño de la soberanía emocional, límites impecables y autonomía directiva.',
+      'Cierre del ciclo, consolidación de la nueva identidad y plan de sostenibilidad.',
+    ];
+
+    for (let num = 1; num <= 6; num++) {
+      const isPast = num < progress;
+      const diffDays = (num - progress) * 14;
+      const sessionDate = new Date(now + diffDays * 24 * 60 * 60 * 1000).toISOString();
+      const status: 'completed' | 'scheduled' = isPast ? 'completed' : 'scheduled';
+
+      sessions.push({
+        id: `sess-${clientId}-${num}`,
+        clientId: clientId,
+        sessionNumber: num,
+        date: sessionDate,
+        meetLink: `https://meet.google.com/rbc-${clientId.replace(/[^a-zA-Z0-9]/g, '')}-s${num}`,
+        status: status,
+        isPaid: true,
+        durationMinutes: 60,
+        notes: `Sesión ${num}: ${sessionThemes[num - 1]}`,
+        programNodeStep: num,
+      });
+    }
+
+    const allSessions = this.getSessions();
+    const merged = [...allSessions.filter((s) => s.clientId !== clientId), ...sessions];
+    this.saveSessions(merged);
+    return sessions;
+  }
+
   static getSessionsForClient(clientId: string): Session[] {
     const sessions = this.getSessions();
-    return Array.isArray(sessions) ? sessions.filter((s) => s.clientId === clientId) : [];
+    const clientSessions = Array.isArray(sessions) ? sessions.filter((s) => s.clientId === clientId) : [];
+    if (clientSessions.length > 0) {
+      return clientSessions.sort((a, b) => (a.sessionNumber || 1) - (b.sessionNumber || 1));
+    }
+    const user = this.getUsers().find((u) => u.uid === clientId);
+    if (user && user.role === 'client') {
+      return this.generateDefaultSessionsForClient(clientId);
+    }
+    return [];
   }
 
   static getNextSessionForClient(clientId: string): Session | null {
