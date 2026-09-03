@@ -203,12 +203,12 @@ export const PromotionalEventBanner: React.FC<PromotionalEventBannerProps> = ({
       <>
         <div
           id="participant-promotional-banner"
-          className={`relative w-full rounded-3xl overflow-hidden border border-gray-200/80 dark:border-neutral-800 shadow-[0_8px_30px_rgba(0,0,0,0.06)] bg-[#0D0D0E] group transition-all duration-300 ${className}`}
+          className={`relative w-full rounded-3xl overflow-hidden border border-white/20 dark:border-white/10 shadow-2xl bg-[#0D0D0E]/80 backdrop-blur-2xl group transition-all duration-300 ${className}`}
         >
           {/* Balanced 2-Zone Grid: Left Workshop Poster Image | Right Counter & Info */}
           <div className="grid grid-cols-1 lg:grid-cols-12 items-stretch">
             {/* 1. PRIMERO LA IMAGEN DEL AFICHE */}
-            <div className="lg:col-span-5 relative bg-[#09090B] flex items-center justify-center p-3 sm:p-5 border-b lg:border-b-0 lg:border-r border-white/10">
+            <div className="lg:col-span-5 relative bg-black/40 backdrop-blur-md flex items-center justify-center p-3 sm:p-5 border-b lg:border-b-0 lg:border-r border-white/10">
               <div
                 onClick={() => setShowImageModal(true)}
                 className="relative group/poster cursor-pointer overflow-hidden rounded-2xl w-full h-full min-h-[220px] sm:min-h-[260px] max-h-[340px] flex items-center justify-center shadow-lg border border-white/10 bg-black/40"
@@ -392,12 +392,12 @@ export const PromotionalEventBanner: React.FC<PromotionalEventBannerProps> = ({
     <>
       <div
         id="promotional-event-banner"
-        className={`w-full rounded-3xl overflow-hidden border border-gray-200/80 dark:border-neutral-800 shadow-[0_8px_30px_rgba(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgba(0,0,0,0.3)] bg-[#0D0D0E] group transition-all duration-300 ${className}`}
+        className={`w-full rounded-3xl overflow-hidden border border-white/20 dark:border-white/10 shadow-2xl bg-[#0D0D0E]/80 backdrop-blur-2xl group transition-all duration-300 ${className}`}
       >
         {/* Balanced Split Layout: Left Workshop Image | Right Counter & Info */}
         <div className="grid grid-cols-1 lg:grid-cols-12 items-stretch">
           {/* 1. PRIMERO LA IMAGEN DEL AFICHE */}
-          <div className="lg:col-span-5 relative bg-[#09090B] flex items-center justify-center p-3 sm:p-6 border-b lg:border-b-0 lg:border-r border-white/10">
+          <div className="lg:col-span-5 relative bg-black/40 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 border-b lg:border-b-0 lg:border-r border-white/10">
             <div
               onClick={() => setShowImageModal(true)}
               className="relative group/poster cursor-pointer overflow-hidden rounded-2xl w-full h-full min-h-[240px] sm:min-h-[300px] max-h-[420px] flex items-center justify-center shadow-lg border border-white/10 bg-black/40"

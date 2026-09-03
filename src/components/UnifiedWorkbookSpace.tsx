@@ -266,7 +266,7 @@ export const UnifiedWorkbookSpace: React.FC<UnifiedWorkbookSpaceProps> = ({
   return (
     <div id="unified-workbook-space" className="space-y-6">
       {/* Space Hero & Unified Navigation Selector */}
-      <div className="p-5 sm:p-6 rounded-3xl bg-[#F9F9F9] dark:bg-[#18181B] border border-gray-200/80 dark:border-neutral-800 shadow-2xs space-y-4">
+      <div className="p-5 sm:p-6 rounded-3xl bg-white/70 dark:bg-[#151518]/70 backdrop-blur-xl border border-white/75 dark:border-white/10 shadow-sm space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <div className="w-11 h-11 rounded-2xl bg-black dark:bg-white text-white dark:text-black flex items-center justify-center shrink-0 shadow-xs">
@@ -298,7 +298,7 @@ export const UnifiedWorkbookSpace: React.FC<UnifiedWorkbookSpaceProps> = ({
         </div>
 
         {/* PRIMARY TOGGLE: UNIFIES WORKSHOP AND 1-ON-1 SESSION WORKBOOKS */}
-        <div className="flex items-center p-1.5 rounded-2xl bg-white dark:bg-[#121214] border border-gray-200/90 dark:border-neutral-800 gap-1.5 flex-wrap">
+        <div className="flex items-center p-1.5 rounded-2xl bg-white/60 dark:bg-[#121214]/60 backdrop-blur-md border border-white/75 dark:border-white/10 gap-1.5 flex-wrap">
           <button
             type="button"
             onClick={() => setActiveMode('workshop')}
@@ -369,7 +369,7 @@ export const UnifiedWorkbookSpace: React.FC<UnifiedWorkbookSpaceProps> = ({
       {activeMode === 'workshop' && (
         <div className="space-y-6 animate-fade-in">
           {/* Workshop Step Selector */}
-          <div className="p-4 rounded-2xl bg-[#F9F9F9] dark:bg-[#18181B] border border-gray-200/80 dark:border-neutral-800 space-y-2.5">
+          <div className="p-4 rounded-2xl bg-white/70 dark:bg-[#18181B]/70 backdrop-blur-md border border-white/75 dark:border-white/10 space-y-2.5 shadow-xs">
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold text-black dark:text-white uppercase tracking-wider flex items-center gap-1.5">
                 <Layers className="w-3.5 h-3.5 text-emerald-600" />
@@ -464,7 +464,7 @@ export const UnifiedWorkbookSpace: React.FC<UnifiedWorkbookSpaceProps> = ({
 
           {/* Locked Step Notice */}
           {isNodeLocked ? (
-            <div className="py-12 px-6 rounded-3xl bg-[#F9F9F9] dark:bg-[#18181B] border border-gray-200/80 dark:border-neutral-800 text-center space-y-4 max-w-lg mx-auto">
+            <div className="py-12 px-6 rounded-3xl bg-white/70 dark:bg-[#18181B]/70 backdrop-blur-xl border border-white/75 dark:border-white/10 text-center space-y-4 max-w-lg mx-auto shadow-sm">
               <div className="w-12 h-12 rounded-full bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 flex items-center justify-center mx-auto">
                 <Lock className="w-6 h-6 stroke-[1.5]" />
               </div>
@@ -487,7 +487,7 @@ export const UnifiedWorkbookSpace: React.FC<UnifiedWorkbookSpaceProps> = ({
             </div>
           ) : (
             /* Active Workshop Form & Download Workspace */
-            <div className="p-6 sm:p-7 rounded-3xl bg-white dark:bg-[#18181B] border border-gray-200/80 dark:border-neutral-800 space-y-6 shadow-2xs">
+            <div className="p-6 sm:p-7 rounded-3xl bg-white/70 dark:bg-[#18181B]/70 backdrop-blur-xl border border-white/75 dark:border-white/10 space-y-6 shadow-sm">
               {/* Header Bar of the Selected Workshop */}
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-gray-100 dark:border-neutral-800">
                 <div>
@@ -876,7 +876,7 @@ export const UnifiedWorkbookSpace: React.FC<UnifiedWorkbookSpaceProps> = ({
       {activeMode === 'session' && (
         <div className="space-y-6 animate-fade-in">
           {/* Session Selector */}
-          <div className="p-4 rounded-2xl bg-[#F9F9F9] dark:bg-[#18181B] border border-gray-200/80 dark:border-neutral-800 space-y-2.5">
+          <div className="p-4 rounded-2xl bg-white/70 dark:bg-[#18181B]/70 backdrop-blur-md border border-white/75 dark:border-white/10 space-y-2.5 shadow-xs">
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold text-black dark:text-white uppercase tracking-wider flex items-center gap-1.5">
                 <BookOpen className="w-3.5 h-3.5 text-blue-600" />
@@ -972,7 +972,7 @@ export const UnifiedWorkbookSpace: React.FC<UnifiedWorkbookSpaceProps> = ({
           )}
 
           {/* 1-on-1 Session Form & Download Card */}
-          <div className="p-6 sm:p-7 rounded-3xl bg-white dark:bg-[#18181B] border border-gray-200/80 dark:border-neutral-800 space-y-6 shadow-2xs">
+          <div className="p-6 sm:p-7 rounded-3xl bg-white/70 dark:bg-[#18181B]/70 backdrop-blur-xl border border-white/75 dark:border-white/10 space-y-6 shadow-sm">
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-gray-100 dark:border-neutral-800">
               <div>
@@ -1302,7 +1302,7 @@ export const UnifiedWorkbookSpace: React.FC<UnifiedWorkbookSpaceProps> = ({
       {activeMode === 'all' && (
         <div className="space-y-6 animate-fade-in">
           {/* Summary Banner */}
-          <div className="p-6 rounded-3xl bg-white dark:bg-[#18181B] border border-gray-200/80 dark:border-neutral-800 space-y-4">
+          <div className="p-6 rounded-3xl bg-white/70 dark:bg-[#18181B]/70 backdrop-blur-xl border border-white/75 dark:border-white/10 space-y-4 shadow-sm">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-gray-100 dark:border-neutral-800">
               <div>
                 <h3 className="text-base font-bold text-black dark:text-white flex items-center gap-2">
@@ -1322,7 +1322,7 @@ export const UnifiedWorkbookSpace: React.FC<UnifiedWorkbookSpaceProps> = ({
             {/* Grid of Workbooks */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Box 1: Cuadernos de los 6 Talleres */}
-              <div className="p-4 rounded-2xl bg-[#F9F9F9] dark:bg-[#202024] border border-gray-200/80 dark:border-neutral-800 space-y-3">
+              <div className="p-4 rounded-2xl bg-white/70 dark:bg-[#202024]/70 backdrop-blur-md border border-white/80 dark:border-neutral-800 space-y-3 shadow-xs">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-bold text-black dark:text-white uppercase tracking-wider flex items-center gap-1.5">
                     <Layers className="w-3.5 h-3.5 text-emerald-600" />
@@ -1390,7 +1390,7 @@ export const UnifiedWorkbookSpace: React.FC<UnifiedWorkbookSpaceProps> = ({
               </div>
 
               {/* Box 2: Cuadernos de Sesiones 1 a 1 */}
-              <div className="p-4 rounded-2xl bg-[#F9F9F9] dark:bg-[#202024] border border-gray-200/80 dark:border-neutral-800 space-y-3">
+              <div className="p-4 rounded-2xl bg-white/70 dark:bg-[#202024]/70 backdrop-blur-md border border-white/80 dark:border-neutral-800 space-y-3 shadow-xs">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-bold text-black dark:text-white uppercase tracking-wider flex items-center gap-1.5">
                     <BookOpen className="w-3.5 h-3.5 text-blue-600" />

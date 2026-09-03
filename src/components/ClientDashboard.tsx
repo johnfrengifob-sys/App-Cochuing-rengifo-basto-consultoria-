@@ -365,10 +365,10 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
   ];
 
   return (
-    <div className="min-h-screen bg-white dark:bg-[#0D0D0E] text-black dark:text-neutral-100 py-10 px-4 sm:px-6 max-w-7xl mx-auto space-y-12 transition-colors duration-200">
+    <div className="min-h-screen bg-transparent text-black dark:text-neutral-100 py-10 px-4 sm:px-6 max-w-7xl mx-auto space-y-12 transition-colors duration-200">
       {/* Personalized Greeting & Program Status Banner with Participant Account Dropdown */}
       <section className="pt-2">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-6 border-b border-gray-100 dark:border-neutral-800">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-6 border-b border-black/5 dark:border-white/10">
           <div className="flex items-start sm:items-center gap-4 sm:gap-5">
             {/* Participant Photo & Dropdown Container */}
             <div ref={participantMenuRef} className="relative shrink-0">
@@ -393,9 +393,9 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
               {isParticipantMenuOpen && (
                 <div
                   id="dashboard-participant-account-dropdown"
-                  className="absolute left-0 top-full mt-2 w-72 sm:w-80 rounded-2xl bg-white dark:bg-[#18181B] border border-gray-200/90 dark:border-neutral-800 shadow-2xl z-50 overflow-hidden animate-fade-in text-black dark:text-white"
+                  className="absolute left-0 top-full mt-2 w-72 sm:w-80 rounded-2xl bg-white/85 dark:bg-[#18181B]/85 backdrop-blur-2xl border border-white/80 dark:border-neutral-800 shadow-2xl z-50 overflow-hidden animate-fade-in text-black dark:text-white"
                 >
-                  <div className="p-4 bg-gray-50/80 dark:bg-[#1E1E22]/60 border-b border-gray-100 dark:border-neutral-800">
+                  <div className="p-4 bg-white/60 dark:bg-[#1E1E22]/60 border-b border-gray-100 dark:border-neutral-800">
                     <div className="text-xs font-bold truncate">{client.name}</div>
                     <div className="text-[11px] text-gray-500 dark:text-neutral-400 font-mono truncate">{client.email}</div>
                     <div className="mt-2 flex items-center gap-2">
@@ -477,7 +477,7 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
 
             {/* Greeting and Quick Account Menu Toggle */}
             <div className="space-y-1">
-              <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#F9F9F9] dark:bg-[#18181B] border border-gray-100 dark:border-neutral-800 text-xs font-light text-gray-500 dark:text-neutral-400 mb-1">
+              <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-white/60 dark:bg-[#18181B]/60 backdrop-blur-md border border-white/60 dark:border-neutral-800 text-xs font-light text-gray-500 dark:text-neutral-400 mb-1">
                 <span className="w-1.5 h-1.5 rounded-full bg-black dark:bg-white" />
                 Programa 1 a 1 • 12 Semanas
               </div>
@@ -514,7 +514,7 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
 
           {/* Payment Status and Roadmap Progress Pill */}
           <div className="flex flex-wrap items-center gap-3 self-start md:self-auto">
-            <div className="px-4 py-2 rounded-2xl bg-[#F9F9F9] dark:bg-[#18181B] border border-gray-100 dark:border-neutral-800 text-xs">
+            <div className="px-4 py-2 rounded-2xl bg-white/65 dark:bg-[#18181B]/65 backdrop-blur-xl border border-white/70 dark:border-white/10 text-xs shadow-xs">
               <span className="text-[10px] font-medium uppercase tracking-wider text-gray-400 dark:text-neutral-500 block">
                 Estado del Programa
               </span>
@@ -524,7 +524,7 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
               </span>
             </div>
 
-            <div className="px-4 py-2 rounded-2xl bg-black dark:bg-white text-white dark:text-black text-xs">
+            <div className="px-4 py-2 rounded-2xl bg-black/80 dark:bg-white/85 backdrop-blur-xl text-white dark:text-black text-xs shadow-xs">
               <span className="text-[10px] font-medium uppercase tracking-wider text-gray-400 dark:text-neutral-500 block">
                 Avance Ontológico
               </span>
@@ -581,7 +581,7 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
       )}
 
       {/* BARRA DE ACCESO RÁPIDO: ESPACIO ÚNICO DE CUADERNO DE TRABAJO & CUESTIONARIOS */}
-      <section className="p-4 sm:p-5 rounded-2xl bg-[#F9F9F9] dark:bg-[#18181B] border border-gray-200/80 dark:border-neutral-800 shadow-2xs flex flex-col md:flex-row md:items-center justify-between gap-4 transition-all">
+      <section className="p-4 sm:p-5 rounded-2xl bg-white/70 dark:bg-[#18181B]/70 backdrop-blur-xl border border-white/75 dark:border-white/10 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4 transition-all">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-black dark:bg-white text-white dark:text-black flex items-center justify-center shrink-0 shadow-2xs">
             <BookOpen className="w-4 h-4 text-emerald-400 dark:text-emerald-600" />
@@ -614,7 +614,7 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
           <button
             type="button"
             onClick={() => openUnifiedWorkbook('session')}
-            className="px-3 py-2 rounded-xl bg-white dark:bg-[#202024] border border-gray-200 dark:border-neutral-700 text-xs font-medium text-black dark:text-white hover:bg-gray-50 dark:hover:bg-neutral-800 transition-colors cursor-pointer flex items-center gap-1.5 shadow-2xs"
+            className="px-3 py-2 rounded-xl bg-white/80 dark:bg-[#202024]/80 backdrop-blur-md border border-white/80 dark:border-neutral-700 text-xs font-medium text-black dark:text-white hover:bg-white dark:hover:bg-neutral-800 transition-colors cursor-pointer flex items-center gap-1.5 shadow-2xs"
           >
             <FileText className="w-3.5 h-3.5 text-blue-500" />
             <span>Cuaderno Sesión 1 a 1</span>
@@ -623,7 +623,7 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
           <button
             type="button"
             onClick={() => openUnifiedWorkbook('all')}
-            className="px-3 py-2 rounded-xl bg-white dark:bg-[#202024] border border-gray-200 dark:border-neutral-700 text-xs font-medium text-black dark:text-white hover:bg-gray-50 dark:hover:bg-neutral-800 transition-colors cursor-pointer flex items-center gap-1.5 shadow-2xs"
+            className="px-3 py-2 rounded-xl bg-white/80 dark:bg-[#202024]/80 backdrop-blur-md border border-white/80 dark:border-neutral-700 text-xs font-medium text-black dark:text-white hover:bg-white dark:hover:bg-neutral-800 transition-colors cursor-pointer flex items-center gap-1.5 shadow-2xs"
             title="Ver catálogo de descargas PDF"
           >
             <Download className="w-3.5 h-3.5 text-gray-500" />
@@ -637,7 +637,7 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
         {/* LEFT COLUMN: Next Session & 12-Week Roadmap Explorer (5 Cols) */}
         <div className="lg:col-span-5 space-y-6">
           {/* Card: Próxima Sesión */}
-          <div className="bg-[#F9F9F9] dark:bg-[#18181B] rounded-3xl p-7 border border-gray-100 dark:border-neutral-800 shadow-[0_4px_24px_rgba(0,0,0,0.02)] transition-all">
+          <div className="bg-white/70 dark:bg-[#18181B]/70 backdrop-blur-xl rounded-3xl p-7 border border-white/75 dark:border-white/10 shadow-sm transition-all">
             <div className="flex items-center justify-between mb-5">
               <span className="text-xs font-medium uppercase tracking-widest text-gray-400 dark:text-neutral-500">
                 Próxima Sesión Quincenal
@@ -694,7 +694,7 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
                   </a>
 
                   {/* Acceso ágil al Cuaderno de la Sesión en el Espacio Unificado */}
-                  <div className="p-3 rounded-2xl bg-white dark:bg-[#202024] border border-gray-200/80 dark:border-neutral-800 flex items-center justify-between gap-2">
+                  <div className="p-3 rounded-2xl bg-white/70 dark:bg-[#202024]/70 backdrop-blur-md border border-white/70 dark:border-neutral-800 flex items-center justify-between gap-2 shadow-2xs">
                     <div className="flex items-center gap-2 min-w-0">
                       <BookOpen className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400 shrink-0" />
                       <span className="text-xs font-semibold text-black dark:text-white truncate">
@@ -716,7 +716,7 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
                   </div>
 
                   {/* Acceso ágil al Registro y Documentos del Taller Vinculado */}
-                  <div className="p-3 rounded-2xl bg-white dark:bg-[#202024] border border-gray-200/80 dark:border-neutral-800 flex items-center justify-between gap-2">
+                  <div className="p-3 rounded-2xl bg-white/70 dark:bg-[#202024]/70 backdrop-blur-md border border-white/70 dark:border-neutral-800 flex items-center justify-between gap-2 shadow-2xs">
                     <div className="flex items-center gap-2 min-w-0">
                       <Layers className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
                       <div className="truncate">
@@ -744,7 +744,7 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
                     href={calendarUrl}
                     target="_blank"
                     rel="noreferrer"
-                    className="w-full py-2 px-3 rounded-xl bg-gray-50 dark:bg-[#202024] border border-gray-200 dark:border-neutral-700 hover:bg-gray-100 dark:hover:bg-neutral-800 text-xs font-semibold text-black dark:text-white transition-colors flex items-center justify-center gap-2 cursor-pointer shadow-2xs"
+                    className="w-full py-2 px-3 rounded-xl bg-white/60 dark:bg-[#202024]/60 backdrop-blur-md border border-white/60 dark:border-neutral-700 hover:bg-white/80 dark:hover:bg-neutral-800 text-xs font-semibold text-black dark:text-white transition-colors flex items-center justify-center gap-2 cursor-pointer shadow-2xs"
                     title="Abrir página oficial de agendamiento de sesiones uno a uno"
                   >
                     <Calendar className="w-3.5 h-3.5 text-blue-500" />
@@ -796,7 +796,7 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
           </div>
 
           {/* Card: 12-Week Roadmap Level Explorer */}
-          <div className="bg-white dark:bg-[#18181B] rounded-3xl p-7 border border-gray-100 dark:border-neutral-800 shadow-[0_4px_24px_rgba(0,0,0,0.02)] space-y-6">
+          <div className="bg-white/70 dark:bg-[#18181B]/70 backdrop-blur-xl rounded-3xl p-7 border border-white/75 dark:border-white/10 shadow-sm space-y-6">
             <div className="flex items-center justify-between pb-3 border-b border-gray-100 dark:border-neutral-800">
               <div className="flex items-center gap-2">
                 <Layers className="w-4 h-4 text-black dark:text-white stroke-[1.5]" />
@@ -980,11 +980,11 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
 
         {/* RIGHT COLUMN: Interactive Level Workspace & Work Materials (7 Cols) */}
         <div className="lg:col-span-7" id="session-workspace-content">
-          <div className="bg-white dark:bg-[#18181B] rounded-3xl p-6 sm:p-9 border border-gray-100 dark:border-neutral-800 shadow-[0_4px_24px_rgba(0,0,0,0.02)] space-y-7">
+          <div className="bg-white/75 dark:bg-[#18181B]/75 backdrop-blur-xl rounded-3xl p-6 sm:p-9 border border-white/75 dark:border-white/10 shadow-sm space-y-7">
             {/* Header: Selected Session & Level Information */}
-            <div className="pb-6 border-b border-gray-100 dark:border-neutral-800 space-y-4">
+            <div className="pb-6 border-b border-black/5 dark:border-white/10 space-y-4">
               <div className="flex flex-wrap items-center justify-between gap-2">
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#F9F9F9] dark:bg-[#202024] border border-gray-100 dark:border-neutral-800 text-[11px] font-medium text-gray-500 dark:text-neutral-400 uppercase tracking-widest">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/60 dark:bg-[#202024]/60 backdrop-blur-md border border-white/60 dark:border-neutral-800 text-[11px] font-medium text-gray-500 dark:text-neutral-400 uppercase tracking-widest">
                   <span>{activeNodeInfo.level}: {activeNodeInfo.levelTitle}</span>
                   <span>•</span>
                   <span>{activeNodeInfo.weekLabel}</span>
@@ -1008,7 +1008,7 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
                 <h2 className="text-2xl sm:text-3xl font-semibold tracking-tight text-black dark:text-white">
                   Sesión {activeNodeInfo.step}: {activeNodeInfo.sessionTitle}
                 </h2>
-                <p className="text-xs sm:text-sm font-light text-gray-600 dark:text-neutral-300 mt-2 leading-relaxed bg-[#F9F9F9] dark:bg-[#202024] p-4 rounded-2xl border border-gray-100 dark:border-neutral-800">
+                <p className="text-xs sm:text-sm font-light text-gray-600 dark:text-neutral-300 mt-2 leading-relaxed bg-white/50 dark:bg-[#202024]/50 backdrop-blur-md p-4 rounded-2xl border border-white/60 dark:border-neutral-800">
                   <strong className="font-medium text-black dark:text-white block mb-1">
                     Propósito ontológico de esta etapa:
                   </strong>
@@ -1590,9 +1590,9 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
       {isCancelModalOpen && (
         <div
           id="dashboard-cancel-subscription-modal"
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fade-in"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in"
         >
-          <div className="w-full max-w-md bg-white dark:bg-[#18181B] rounded-3xl border border-gray-200 dark:border-neutral-800 shadow-2xl p-6 sm:p-7 space-y-5 text-black dark:text-white">
+          <div className="w-full max-w-md bg-white/90 dark:bg-[#18181B]/90 backdrop-blur-2xl rounded-3xl border border-white/80 dark:border-neutral-800 shadow-2xl p-6 sm:p-7 space-y-5 text-black dark:text-white">
             <div className="flex items-start justify-between">
               <div
                 className={`w-12 h-12 rounded-2xl flex items-center justify-center ${
@@ -1782,9 +1782,9 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
       {isDeleteModalOpen && (
         <div
           id="dashboard-delete-account-modal"
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/65 backdrop-blur-xs animate-fade-in"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/65 backdrop-blur-sm animate-fade-in"
         >
-          <div className="w-full max-w-md bg-white dark:bg-[#18181B] rounded-3xl border border-rose-200 dark:border-rose-900/60 shadow-2xl p-6 sm:p-7 space-y-5 text-black dark:text-white">
+          <div className="w-full max-w-md bg-white/90 dark:bg-[#18181B]/90 backdrop-blur-2xl rounded-3xl border border-rose-200/80 dark:border-rose-900/60 shadow-2xl p-6 sm:p-7 space-y-5 text-black dark:text-white">
             <div className="flex items-start justify-between">
               <div className="w-12 h-12 rounded-2xl bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400 flex items-center justify-center">
                 <ShieldAlert className="w-6 h-6" />

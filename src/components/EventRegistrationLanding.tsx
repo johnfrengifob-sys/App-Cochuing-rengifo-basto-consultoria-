@@ -161,9 +161,9 @@ export const EventRegistrationLanding: React.FC<EventRegistrationLandingProps> =
   };
 
   return (
-    <div className="min-h-screen bg-white dark:bg-[#0D0D0E] text-black dark:text-neutral-100 flex flex-col justify-between selection:bg-black selection:text-white dark:selection:bg-white dark:selection:text-black transition-colors duration-200">
+    <div className="min-h-screen bg-transparent text-black dark:text-neutral-100 flex flex-col justify-between selection:bg-black selection:text-white dark:selection:bg-white dark:selection:text-black transition-colors duration-200">
       {/* Top Header / Bar */}
-      <header className="w-full border-b border-gray-100 dark:border-neutral-800 bg-white/80 dark:bg-[#0D0D0E]/80 backdrop-blur-md sticky top-0 z-30">
+      <header className="w-full border-b border-white/60 dark:border-white/10 bg-white/70 dark:bg-[#0D0D0E]/70 backdrop-blur-xl sticky top-0 z-30">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 h-18 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <BrandLogo
@@ -209,7 +209,7 @@ export const EventRegistrationLanding: React.FC<EventRegistrationLandingProps> =
             {/* Event Showcase & Registration Form Grid */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
               {/* Left Column: Event Banner & Live Countdown */}
-              <div className="lg:col-span-6 bg-white dark:bg-[#18181B] rounded-3xl border border-gray-100 dark:border-neutral-800 shadow-[0_10px_35px_rgba(0,0,0,0.03)] dark:shadow-[0_10px_35px_rgba(0,0,0,0.3)] overflow-hidden flex flex-col">
+              <div className="lg:col-span-6 bg-white/70 dark:bg-[#18181B]/70 backdrop-blur-xl rounded-3xl border border-white/75 dark:border-white/10 shadow-sm overflow-hidden flex flex-col">
                 <div className="relative bg-black overflow-hidden group flex flex-col items-center justify-center border-b border-gray-100 dark:border-neutral-800">
                   <img
                     src={event.imageUrl}
@@ -229,9 +229,9 @@ export const EventRegistrationLanding: React.FC<EventRegistrationLandingProps> =
                 </div>
 
                 {/* Event Key Facts */}
-                <div className="p-5 sm:p-6 space-y-5 bg-white dark:bg-[#18181B]">
+                <div className="p-5 sm:p-6 space-y-5 bg-transparent">
                   {/* Countdown Timer */}
-                  <div className="p-4 rounded-2xl bg-[#F9F9F9] dark:bg-[#202024] border border-gray-100 dark:border-neutral-800 space-y-2">
+                  <div className="p-4 rounded-2xl bg-white/50 dark:bg-[#202024]/50 backdrop-blur-md border border-white/60 dark:border-neutral-800 space-y-2">
                     <span className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 dark:text-neutral-500 block">
                       El Conversatorio Inicia En:
                     </span>
@@ -274,7 +274,7 @@ export const EventRegistrationLanding: React.FC<EventRegistrationLandingProps> =
               </div>
 
               {/* Right Column: 2-Step Registration Form */}
-              <div className="lg:col-span-6 bg-[#F9F9F9] dark:bg-[#18181B] rounded-3xl p-6 sm:p-8 border border-gray-200/70 dark:border-neutral-800 shadow-[0_4px_24px_rgba(0,0,0,0.02)] space-y-6">
+              <div className="lg:col-span-6 bg-white/75 dark:bg-[#18181B]/75 backdrop-blur-xl rounded-3xl p-6 sm:p-8 border border-white/75 dark:border-white/10 shadow-sm space-y-6">
                 <div className="flex items-center justify-between border-b border-gray-200/60 dark:border-neutral-800 pb-4">
                   <div>
                     <span className="text-[10px] font-semibold uppercase tracking-wider text-gray-400 dark:text-neutral-500">
@@ -463,7 +463,7 @@ export const EventRegistrationLanding: React.FC<EventRegistrationLandingProps> =
             </div>
 
             {/* Visual Digital VIP Ticket Card */}
-            <div className="bg-white dark:bg-[#18181B] rounded-3xl border border-gray-200 dark:border-neutral-700 shadow-xl overflow-hidden relative">
+            <div className="bg-white/80 dark:bg-[#18181B]/80 backdrop-blur-xl rounded-3xl border border-white/80 dark:border-white/10 shadow-xl overflow-hidden relative">
               {/* Top Accent Band */}
               <div className="bg-black dark:bg-[#242428] text-white p-6 sm:p-7 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div className="space-y-1">

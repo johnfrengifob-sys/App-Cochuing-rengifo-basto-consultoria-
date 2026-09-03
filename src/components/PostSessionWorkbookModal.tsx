@@ -219,10 +219,10 @@ export const PostSessionWorkbookModal: React.FC<PostSessionWorkbookModalProps> =
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/60 backdrop-blur-xs overflow-y-auto">
-      <div className="relative w-full max-w-4xl bg-white dark:bg-[#151518] rounded-3xl border border-gray-200 dark:border-neutral-800 shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/60 backdrop-blur-md overflow-y-auto">
+      <div className="relative w-full max-w-4xl bg-white/90 dark:bg-[#151518]/90 backdrop-blur-2xl rounded-3xl border border-white/80 dark:border-white/10 shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
         {/* Modal Header */}
-        <div className="px-6 py-5 border-b border-gray-100 dark:border-neutral-800 flex items-start justify-between gap-4 bg-gray-50/70 dark:bg-neutral-900/50 shrink-0">
+        <div className="px-6 py-5 border-b border-black/5 dark:border-white/10 flex items-start justify-between gap-4 bg-white/40 dark:bg-neutral-900/40 shrink-0">
           <div className="space-y-1">
             <div className="flex flex-wrap items-center gap-2">
               <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-black text-white dark:bg-white dark:text-black">

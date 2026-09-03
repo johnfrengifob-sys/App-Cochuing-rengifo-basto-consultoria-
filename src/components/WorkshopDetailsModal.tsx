@@ -69,15 +69,15 @@ export const WorkshopDetailsModal: React.FC<WorkshopDetailsModalProps> = ({
   return (
     <div
       id="workshop-details-modal-overlay"
-      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/70 backdrop-blur-xs overflow-y-auto animate-fade-in"
+      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/70 backdrop-blur-md overflow-y-auto animate-fade-in"
     >
       <div
         id="workshop-details-modal-container"
-        className="relative w-full max-w-3xl max-h-[92vh] bg-white dark:bg-[#161618] rounded-3xl border border-gray-200/90 dark:border-neutral-800 shadow-2xl flex flex-col overflow-hidden text-left"
+        className="relative w-full max-w-3xl max-h-[92vh] bg-white/90 dark:bg-[#161618]/90 backdrop-blur-2xl rounded-3xl border border-white/80 dark:border-white/10 shadow-2xl flex flex-col overflow-hidden text-left"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="p-5 sm:p-6 pb-4 border-b border-gray-100 dark:border-neutral-800 flex items-start justify-between gap-4 shrink-0 bg-[#FBFBFB] dark:bg-[#1A1A1E]">
+        <div className="p-5 sm:p-6 pb-4 border-b border-black/5 dark:border-white/10 flex items-start justify-between gap-4 shrink-0 bg-white/40 dark:bg-[#1A1A1E]/40">
           <div className="space-y-1.5 min-w-0">
             <div className="flex flex-wrap items-center gap-2">
               <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-black text-white dark:bg-white dark:text-black">

@@ -241,7 +241,7 @@ export const ClientWorkstationView: React.FC<ClientWorkstationViewProps> = ({
       </div>
 
       {/* Main Client Profile Header & Strategic Cards */}
-      <div className="bg-white dark:bg-[#151518] rounded-3xl p-6 sm:p-8 border border-gray-200/80 dark:border-neutral-800 shadow-2xs space-y-6">
+      <div className="bg-white/70 dark:bg-[#151518]/70 backdrop-blur-xl rounded-3xl p-6 sm:p-8 border border-white/75 dark:border-white/10 shadow-sm space-y-6">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
           {/* Avatar & Identifiers */}
           <div className="flex items-start sm:items-center gap-4 sm:gap-6">
@@ -304,7 +304,7 @@ export const ClientWorkstationView: React.FC<ClientWorkstationViewProps> = ({
         {/* Row 2: Inversión en Progreso & Quiebre Principal Sintético */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-6 border-t border-gray-100 dark:border-neutral-800">
           {/* Card 1: Inversión Total Invertida */}
-          <div className="bg-gray-50 dark:bg-neutral-900 rounded-2xl p-4 border border-gray-100 dark:border-neutral-800 flex items-center justify-between">
+          <div className="bg-white/70 dark:bg-[#18181B]/70 backdrop-blur-md rounded-2xl p-4 border border-white/80 dark:border-white/10 shadow-xs flex items-center justify-between">
             <div className="space-y-1">
               <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-neutral-500 flex items-center gap-1">
                 <DollarSign className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
@@ -361,7 +361,7 @@ export const ClientWorkstationView: React.FC<ClientWorkstationViewProps> = ({
           </div>
 
           {/* Card 2: Quiebre Principal Sintético (Corto y sustancioso) */}
-          <div className="bg-gray-50 dark:bg-neutral-900 rounded-2xl p-4 border border-gray-100 dark:border-neutral-800 flex items-start justify-between">
+          <div className="bg-white/70 dark:bg-[#18181B]/70 backdrop-blur-md rounded-2xl p-4 border border-white/80 dark:border-white/10 shadow-xs flex items-start justify-between">
             <div className="space-y-1 flex-1 pr-2">
               <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-neutral-500 flex items-center gap-1">
                 <Brain className="w-3 h-3 text-black dark:text-white" />
@@ -494,7 +494,7 @@ export const ClientWorkstationView: React.FC<ClientWorkstationViewProps> = ({
       )}
 
       {/* Tab Selector for grouped functions */}
-      <div className="flex flex-wrap items-center gap-1.5 p-1 bg-gray-100 dark:bg-neutral-900 rounded-2xl border border-gray-200/80 dark:border-neutral-800">
+      <div className="flex flex-wrap items-center gap-1.5 p-1.5 bg-white/70 dark:bg-[#18181B]/70 backdrop-blur-md rounded-2xl border border-white/75 dark:border-white/10 shadow-xs">
         <button
           type="button"
           onClick={() => setActiveTab('diagnosis')}
@@ -609,7 +609,7 @@ export const ClientWorkstationView: React.FC<ClientWorkstationViewProps> = ({
           {latestInsight ? (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Coherencia Somática & Emocional */}
-              <div className="bg-white dark:bg-[#151518] rounded-3xl p-6 border border-gray-200/80 dark:border-neutral-800 shadow-2xs space-y-4">
+              <div className="bg-white/70 dark:bg-[#151518]/70 backdrop-blur-xl rounded-3xl p-6 border border-white/75 dark:border-white/10 shadow-sm space-y-4">
                 <div className="flex items-center gap-2 pb-3 border-b border-gray-100 dark:border-neutral-800">
                   <HeartPulse className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                   <h3 className="font-semibold text-sm text-black dark:text-white">
@@ -639,7 +639,7 @@ export const ClientWorkstationView: React.FC<ClientWorkstationViewProps> = ({
               </div>
 
               {/* Barreras Lingüísticas & Creencias Limitantes */}
-              <div className="bg-white dark:bg-[#151518] rounded-3xl p-6 border border-gray-200/80 dark:border-neutral-800 shadow-2xs space-y-4">
+              <div className="bg-white/70 dark:bg-[#151518]/70 backdrop-blur-xl rounded-3xl p-6 border border-white/75 dark:border-white/10 shadow-sm space-y-4">
                 <div className="flex items-center gap-2 pb-3 border-b border-gray-100 dark:border-neutral-800">
                   <Brain className="w-4 h-4 text-black dark:text-white" />
                   <h3 className="font-semibold text-sm text-black dark:text-white">
@@ -669,7 +669,7 @@ export const ClientWorkstationView: React.FC<ClientWorkstationViewProps> = ({
               </div>
 
               {/* Preguntas de Quiebre Ontológico */}
-              <div className="lg:col-span-2 bg-white dark:bg-[#151518] rounded-3xl p-6 border border-gray-200/80 dark:border-neutral-800 shadow-2xs space-y-4">
+              <div className="lg:col-span-2 bg-white/70 dark:bg-[#151518]/70 backdrop-blur-xl rounded-3xl p-6 border border-white/75 dark:border-white/10 shadow-sm space-y-4">
                 <div className="flex items-center gap-2 pb-3 border-b border-gray-100 dark:border-neutral-800">
                   <Quote className="w-4 h-4 text-black dark:text-white" />
                   <h3 className="font-semibold text-sm text-black dark:text-white">
@@ -716,7 +716,7 @@ export const ClientWorkstationView: React.FC<ClientWorkstationViewProps> = ({
 
       {/* Tab 2: Sesiones & Calendario */}
       {activeTab === 'sessions' && (
-        <div className="bg-white dark:bg-[#151518] rounded-3xl p-6 border border-gray-200/80 dark:border-neutral-800 shadow-2xs space-y-6">
+        <div className="bg-white/35 dark:bg-[#151518]/35 backdrop-blur-2xl rounded-3xl p-6 border border-white/50 dark:border-white/10 shadow-sm space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-gray-100 dark:border-neutral-800">
             <div>
               <h3 className="font-semibold text-sm text-black dark:text-white">
@@ -780,7 +780,7 @@ export const ClientWorkstationView: React.FC<ClientWorkstationViewProps> = ({
               return (
                 <div
                   key={sess.id}
-                  className="p-4 rounded-2xl bg-gray-50 dark:bg-neutral-900 border border-gray-100 dark:border-neutral-800 flex flex-col lg:flex-row lg:items-center justify-between gap-4"
+                  className="p-4 rounded-2xl bg-white/70 dark:bg-[#18181B]/70 backdrop-blur-md border border-white/80 dark:border-white/10 shadow-xs flex flex-col lg:flex-row lg:items-center justify-between gap-4"
                 >
                   <div className="space-y-1">
                     <div className="flex flex-wrap items-center gap-2">
@@ -870,7 +870,7 @@ export const ClientWorkstationView: React.FC<ClientWorkstationViewProps> = ({
 
       {/* Tab: Cuaderno de Trabajo Post-Sesión */}
       {activeTab === 'workbook' && (
-        <div className="bg-white dark:bg-[#151518] rounded-3xl p-6 border border-gray-200/80 dark:border-neutral-800 shadow-2xs space-y-6">
+        <div className="bg-white/35 dark:bg-[#151518]/35 backdrop-blur-2xl rounded-3xl p-6 border border-white/50 dark:border-white/10 shadow-sm space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-gray-100 dark:border-neutral-800">
             <div>
               <div className="flex items-center gap-2 mb-1">
@@ -913,7 +913,7 @@ export const ClientWorkstationView: React.FC<ClientWorkstationViewProps> = ({
                 return (
                   <div
                     key={pForm.id}
-                    className="p-5 sm:p-6 rounded-2xl bg-gray-50 dark:bg-neutral-900 border border-gray-200/80 dark:border-neutral-800 space-y-4"
+                    className="p-5 sm:p-6 rounded-2xl bg-white/70 dark:bg-[#18181B]/70 backdrop-blur-md border border-white/80 dark:border-white/10 space-y-4 shadow-xs"
                   >
                     {/* Form Card Header */}
                     <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 pb-3 border-b border-gray-200 dark:border-neutral-800">
@@ -1063,7 +1063,7 @@ export const ClientWorkstationView: React.FC<ClientWorkstationViewProps> = ({
 
       {/* Tab 3: Reflexiones & Formularios */}
       {activeTab === 'forms' && (
-        <div className="bg-white dark:bg-[#151518] rounded-3xl p-6 border border-gray-200/80 dark:border-neutral-800 shadow-2xs space-y-6">
+        <div className="bg-white/35 dark:bg-[#151518]/35 backdrop-blur-2xl rounded-3xl p-6 border border-white/50 dark:border-white/10 shadow-sm space-y-6">
           <div className="pb-4 border-b border-gray-100 dark:border-neutral-800">
             <h3 className="font-semibold text-sm text-black dark:text-white">
               Respuestas y Bitácoras Entregadas por el Cliente
@@ -1078,7 +1078,7 @@ export const ClientWorkstationView: React.FC<ClientWorkstationViewProps> = ({
               {forms.map((f, idx) => (
                 <div
                   key={f.id || idx}
-                  className="p-5 rounded-2xl bg-gray-50 dark:bg-neutral-900 border border-gray-100 dark:border-neutral-800 space-y-3"
+                  className="p-5 rounded-2xl bg-white/70 dark:bg-[#18181B]/70 backdrop-blur-md border border-white/80 dark:border-white/10 space-y-3 shadow-xs"
                 >
                   <div className="flex items-center justify-between">
                     <span className="font-semibold text-xs text-black dark:text-white">
@@ -1117,7 +1117,7 @@ export const ClientWorkstationView: React.FC<ClientWorkstationViewProps> = ({
 
       {/* Tab 4: Materiales del Nodo */}
       {activeTab === 'nodes' && (
-        <div className="bg-white dark:bg-[#151518] rounded-3xl p-6 sm:p-8 border border-gray-200/80 dark:border-neutral-800 shadow-2xs space-y-6">
+        <div className="bg-white/35 dark:bg-[#151518]/35 backdrop-blur-2xl rounded-3xl p-6 sm:p-8 border border-white/50 dark:border-white/10 shadow-sm space-y-6">
           <div className="pb-4 border-b border-gray-100 dark:border-neutral-800">
             <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-neutral-500 block">
               {currentNodeInfo.level} • {currentNodeInfo.levelTitle}
@@ -1154,7 +1154,7 @@ export const ClientWorkstationView: React.FC<ClientWorkstationViewProps> = ({
 
       {/* Tab 5: Reporte PDF */}
       {activeTab === 'report' && (
-        <div className="bg-white dark:bg-[#151518] rounded-3xl p-8 border border-gray-200/80 dark:border-neutral-800 shadow-2xs text-center space-y-4 max-w-xl mx-auto">
+        <div className="bg-white/70 dark:bg-[#151518]/70 backdrop-blur-xl rounded-3xl p-8 border border-white/75 dark:border-white/10 shadow-sm text-center space-y-4 max-w-xl mx-auto">
           <div className="w-14 h-14 rounded-full bg-gray-100 dark:bg-neutral-800 flex items-center justify-center mx-auto text-black dark:text-white">
             <FileDown className="w-7 h-7" />
           </div>

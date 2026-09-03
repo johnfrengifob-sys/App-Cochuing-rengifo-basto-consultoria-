@@ -123,7 +123,7 @@ export const Header: React.FC<HeaderProps> = ({
   const isInactive = currentUser.status === 'inactive';
 
   return (
-    <header className="sticky top-0 z-40 w-full bg-white/85 dark:bg-[#0D0D0E]/85 backdrop-blur-xl border-b border-gray-100 dark:border-neutral-800 transition-all duration-200">
+    <header className="sticky top-0 z-40 w-full bg-white/70 dark:bg-[#0D0D0E]/70 backdrop-blur-xl border-b border-white/50 dark:border-white/10 transition-all duration-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 h-20 flex items-center justify-between">
         {/* Brand identity */}
         <div className="flex items-center gap-3">
@@ -159,7 +159,7 @@ export const Header: React.FC<HeaderProps> = ({
 
           {/* Role switcher: STRICTLY EXCLUSIVE to Coach / Administrator */}
           {isCoach && allUsers.length > 0 && onSwitchUser && (
-            <div className="hidden xl:flex items-center gap-1.5 p-1 bg-[#F9F9F9] dark:bg-[#18181B] rounded-full border border-gray-100 dark:border-neutral-800 text-xs">
+            <div className="hidden xl:flex items-center gap-1.5 p-1 bg-white/50 dark:bg-[#18181B]/50 backdrop-blur-md rounded-full border border-white/60 dark:border-white/10 text-xs">
               <span className="text-[10px] uppercase font-medium tracking-wider text-gray-400 dark:text-neutral-500 px-2.5 flex items-center gap-1">
                 <Lock className="w-3 h-3" />
                 Supervisión Admin:
@@ -240,7 +240,7 @@ export const Header: React.FC<HeaderProps> = ({
             {isMenuOpen && (
               <div
                 id="participant-account-dropdown"
-                className="absolute right-0 top-full mt-2 w-72 sm:w-80 rounded-2xl bg-white dark:bg-[#18181B] border border-gray-200/90 dark:border-neutral-800 shadow-2xl z-50 overflow-hidden animate-fade-in text-black dark:text-white"
+                className="absolute right-0 top-full mt-2 w-72 sm:w-80 rounded-2xl bg-white/85 dark:bg-[#18181B]/85 backdrop-blur-2xl border border-white/80 dark:border-neutral-800 shadow-2xl z-50 overflow-hidden animate-fade-in text-black dark:text-white"
               >
                 {/* User details header inside dropdown */}
                 <div className="p-4 bg-gray-50/70 dark:bg-[#1E1E22]/60 border-b border-gray-100 dark:border-neutral-800/80">
@@ -376,7 +376,7 @@ export const Header: React.FC<HeaderProps> = ({
           id="cancel-subscription-modal"
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fade-in"
         >
-          <div className="w-full max-w-md bg-white dark:bg-[#18181B] rounded-3xl border border-gray-200 dark:border-neutral-800 shadow-2xl p-6 sm:p-7 space-y-5 text-black dark:text-white">
+          <div className="w-full max-w-md bg-white/90 dark:bg-[#18181B]/90 backdrop-blur-2xl rounded-3xl border border-white/80 dark:border-neutral-800 shadow-2xl p-6 sm:p-7 space-y-5 text-black dark:text-white">
             <div className="flex items-start justify-between">
               <div className="flex items-center gap-3">
                 <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${
@@ -542,7 +542,7 @@ export const Header: React.FC<HeaderProps> = ({
           id="delete-account-modal"
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/65 backdrop-blur-xs animate-fade-in"
         >
-          <div className="w-full max-w-md bg-white dark:bg-[#18181B] rounded-3xl border border-rose-200 dark:border-rose-900/60 shadow-2xl p-6 sm:p-7 space-y-5 text-black dark:text-white">
+          <div className="w-full max-w-md bg-white/90 dark:bg-[#18181B]/90 backdrop-blur-2xl rounded-3xl border border-rose-200/80 dark:border-rose-900/60 shadow-2xl p-6 sm:p-7 space-y-5 text-black dark:text-white">
             <div className="flex items-start justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 rounded-2xl bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400 flex items-center justify-center">

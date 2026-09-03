@@ -347,9 +347,9 @@ export const CoachDashboard: React.FC<CoachDashboardProps> = ({
   };
 
   return (
-    <div className="min-h-screen bg-white dark:bg-[#0D0D0E] text-black dark:text-neutral-100 flex flex-col transition-colors duration-200">
+    <div className="min-h-screen bg-transparent text-black dark:text-neutral-100 flex flex-col transition-colors duration-200">
       {/* Sub-Header Navigation: Consola del Consultor Ontológico */}
-      <div className="border-b border-gray-100 dark:border-neutral-800 bg-[#F9F9F9] dark:bg-[#151518] px-4 sm:px-10 py-3.5 transition-colors">
+      <div className="border-b border-white/60 dark:border-white/10 bg-white/60 dark:bg-[#151518]/60 backdrop-blur-xl px-4 sm:px-10 py-3.5 transition-colors">
         <div className="max-w-7xl mx-auto flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div className="flex items-center gap-3 flex-wrap">
             <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
@@ -392,7 +392,7 @@ export const CoachDashboard: React.FC<CoachDashboardProps> = ({
           </div>
 
           {/* Master View Switcher (Homogenized Appearance) */}
-          <div className="flex items-center gap-1 p-1 bg-white dark:bg-[#1E1E22] rounded-2xl border border-gray-200/80 dark:border-neutral-700 shadow-2xs self-stretch lg:self-auto overflow-x-auto no-scrollbar">
+          <div className="flex items-center gap-1 p-1 bg-white/70 dark:bg-[#1E1E22]/70 backdrop-blur-md rounded-2xl border border-white/60 dark:border-neutral-700 shadow-2xs self-stretch lg:self-auto overflow-x-auto no-scrollbar">
             <button
               onClick={() => setActiveMainTab('crm')}
               className={`px-3.5 py-2 rounded-xl text-xs font-medium transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap shrink-0 ${

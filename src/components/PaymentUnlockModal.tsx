@@ -172,8 +172,8 @@ export const PaymentUnlockModal: React.FC<PaymentUnlockModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/70 backdrop-blur-xs overflow-y-auto">
-      <div className="relative w-full max-w-2xl bg-white dark:bg-[#151518] rounded-3xl p-5 sm:p-8 border border-gray-100 dark:border-neutral-800 shadow-2xl space-y-6 my-6 animate-fade-in">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/70 backdrop-blur-md overflow-y-auto">
+      <div className="relative w-full max-w-2xl bg-white/90 dark:bg-[#151518]/90 backdrop-blur-2xl rounded-3xl p-5 sm:p-8 border border-white/80 dark:border-white/10 shadow-2xl space-y-6 my-6 animate-fade-in">
         {/* Close Button */}
         <button
           onClick={onClose}

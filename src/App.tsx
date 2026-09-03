@@ -14,6 +14,7 @@ import { CoachDashboard } from './components/CoachDashboard';
 import { WebhookConfigModal } from './components/WebhookConfigModal';
 import { EventRegistrationLanding } from './components/EventRegistrationLanding';
 import { VideoConferenceModal } from './components/VideoConferenceModal';
+import whiteWavesBg from './assets/images/white_waves_bg_1788461168119.jpg';
 
 export default function App() {
   const [allUsers, setAllUsers] = useState<User[]>(() => OntologicalStore.getUsers());
@@ -79,87 +80,103 @@ export default function App() {
     refreshUsers();
   };
 
-  // If user requested the dedicated Pre-Event Registration Landing Page
-  if (viewMode === 'register') {
-    return (
-      <EventRegistrationLanding
-        onEnterPlatform={(user) => {
-          if (user) {
-            handleLogin(user);
-          } else {
-            setViewMode('app');
-          }
-        }}
-        onNavigateToLogin={() => setViewMode('app')}
-      />
-    );
-  }
+  const renderContent = () => {
+    if (viewMode === 'register') {
+      return (
+        <EventRegistrationLanding
+          onEnterPlatform={(user) => {
+            if (user) {
+              handleLogin(user);
+            } else {
+              setViewMode('app');
+            }
+          }}
+          onNavigateToLogin={() => setViewMode('app')}
+        />
+      );
+    }
 
-  if (!currentUser) {
+    if (!currentUser) {
+      return (
+        <>
+          <LoginView
+            onLogin={handleLogin}
+            availableUsers={allUsers}
+            onNavigateToRegister={() => setViewMode('register')}
+            onOpenVideoConferences={() => setIsVideoConferencesOpen(true)}
+          />
+          <VideoConferenceModal
+            isOpen={isVideoConferencesOpen}
+            onClose={() => setIsVideoConferencesOpen(false)}
+            currentUser={null}
+          />
+        </>
+      );
+    }
+
+    const safeAllUsers = Array.isArray(allUsers) ? allUsers : [];
+    const clients = safeAllUsers.filter((u) => u && u.role === 'client');
+    const isCoach = currentUser.role === 'coach';
+
     return (
       <>
-        <LoginView
-          onLogin={handleLogin}
-          availableUsers={allUsers}
-          onNavigateToRegister={() => setViewMode('register')}
+        <Header
+          currentUser={currentUser}
+          onLogout={handleLogout}
+          onSwitchUser={isCoach ? handleSwitchUser : undefined}
+          allUsers={isCoach ? allUsers : []}
+          onOpenSettings={isCoach ? () => setIsSettingsOpen(true) : undefined}
+          onOpenRegistrationPortal={isCoach ? () => setViewMode('register') : undefined}
           onOpenVideoConferences={() => setIsVideoConferencesOpen(true)}
+          onNavigateHome={handleNavigateHome}
+          onUserUpdated={refreshUsers}
         />
+
+        <div className="flex-1">
+          {currentUser.role === 'coach' ? (
+            <CoachDashboard
+              key={`coach-${currentUser.uid}-${dashboardKey}`}
+              coach={currentUser}
+              clients={clients}
+              onRefreshClients={refreshUsers}
+              onOpenRegistrationPortal={() => setViewMode('register')}
+            />
+          ) : (
+            <ClientDashboard
+              key={`client-${currentUser.uid}-${dashboardKey}`}
+              client={currentUser}
+              onLogout={handleLogout}
+              onUserUpdated={refreshUsers}
+            />
+          )}
+        </div>
+
+        <WebhookConfigModal
+          isOpen={isSettingsOpen}
+          onClose={() => setIsSettingsOpen(false)}
+        />
+
         <VideoConferenceModal
           isOpen={isVideoConferencesOpen}
           onClose={() => setIsVideoConferencesOpen(false)}
-          currentUser={null}
+          currentUser={currentUser}
         />
       </>
     );
-  }
-
-  const safeAllUsers = Array.isArray(allUsers) ? allUsers : [];
-  const clients = safeAllUsers.filter((u) => u && u.role === 'client');
-  const isCoach = currentUser.role === 'coach';
+  };
 
   return (
-    <div className="min-h-screen bg-white dark:bg-[#0D0D0E] text-black dark:text-neutral-100 font-sans selection:bg-black selection:text-white dark:selection:bg-white dark:selection:text-black flex flex-col transition-colors duration-200">
-      <Header
-        currentUser={currentUser}
-        onLogout={handleLogout}
-        onSwitchUser={isCoach ? handleSwitchUser : undefined}
-        allUsers={isCoach ? allUsers : []}
-        onOpenSettings={isCoach ? () => setIsSettingsOpen(true) : undefined}
-        onOpenRegistrationPortal={isCoach ? () => setViewMode('register') : undefined}
-        onOpenVideoConferences={() => setIsVideoConferencesOpen(true)}
-        onNavigateHome={handleNavigateHome}
-        onUserUpdated={refreshUsers}
-      />
-
-      <div className="flex-1">
-        {currentUser.role === 'coach' ? (
-          <CoachDashboard
-            key={`coach-${currentUser.uid}-${dashboardKey}`}
-            coach={currentUser}
-            clients={clients}
-            onRefreshClients={refreshUsers}
-            onOpenRegistrationPortal={() => setViewMode('register')}
-          />
-        ) : (
-          <ClientDashboard
-            key={`client-${currentUser.uid}-${dashboardKey}`}
-            client={currentUser}
-            onLogout={handleLogout}
-            onUserUpdated={refreshUsers}
-          />
-        )}
+    <div className="min-h-screen bg-transparent text-black dark:text-neutral-100 font-sans selection:bg-black selection:text-white dark:selection:bg-white dark:selection:text-black flex flex-col transition-colors duration-200 relative isolate">
+      {/* Full-space artistic sculptural white waves background image covering everything */}
+      <div
+        className="fixed inset-0 pointer-events-none -z-50 overflow-hidden select-none bg-cover bg-center bg-no-repeat transition-all duration-700"
+        style={{ backgroundImage: `url(${whiteWavesBg})` }}
+      >
+        {/* Subtle layered adaptive overlay ensuring optimal contrast for text & dark mode */}
+        <div className="absolute inset-0 bg-white/20 dark:bg-black/65 transition-colors duration-500 backdrop-blur-[0.5px]" />
       </div>
 
-      <WebhookConfigModal
-        isOpen={isSettingsOpen}
-        onClose={() => setIsSettingsOpen(false)}
-      />
-
-      <VideoConferenceModal
-        isOpen={isVideoConferencesOpen}
-        onClose={() => setIsVideoConferencesOpen(false)}
-        currentUser={currentUser}
-      />
+      {renderContent()}
     </div>
   );
 }

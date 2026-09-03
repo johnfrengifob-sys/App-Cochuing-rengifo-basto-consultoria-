@@ -129,9 +129,9 @@ export const LoginView: React.FC<LoginViewProps> = ({
   };
 
   return (
-    <div className="min-h-screen bg-white dark:bg-[#0D0D0E] text-black dark:text-neutral-100 flex flex-col justify-between items-center px-4 sm:px-6 py-8 sm:py-12 selection:bg-black selection:text-white dark:selection:bg-white dark:selection:text-black space-y-10 transition-colors duration-200">
+    <div className="min-h-screen bg-transparent text-black dark:text-neutral-100 flex flex-col justify-between items-center px-4 sm:px-6 py-8 sm:py-12 selection:bg-black selection:text-white dark:selection:bg-white dark:selection:text-black space-y-10 transition-colors duration-200">
       {/* Subtle top branding mark & theme toggle */}
-      <div className="w-full max-w-5xl flex justify-between items-center text-xs font-light text-gray-400 dark:text-neutral-500 tracking-wider uppercase">
+      <div className="w-full max-w-5xl flex justify-between items-center text-xs font-light text-gray-700 dark:text-neutral-300 tracking-wider uppercase bg-white/45 dark:bg-black/35 backdrop-blur-md px-4 py-2.5 rounded-2xl border border-white/60 dark:border-white/10 shadow-xs">
         <span className="flex items-center gap-2">
           <span className="w-2 h-2 rounded-full bg-black dark:bg-white inline-block" />
           RBC Ontología del Lenguaje
@@ -149,7 +149,7 @@ export const LoginView: React.FC<LoginViewProps> = ({
           <BrandLogo layout="hero" className="hover:opacity-95 transition-opacity" />
         </div>
 
-        <p className="text-sm sm:text-base font-normal tracking-wide text-gray-600 dark:text-neutral-300 max-w-lg mx-auto leading-relaxed mb-4">
+        <p className="text-sm sm:text-base font-normal tracking-wide text-gray-700 dark:text-neutral-200 max-w-lg mx-auto leading-relaxed mb-4">
           Acompañamiento ontológico profesional & Espacio Privado Confidencial
         </p>
       </div>
@@ -159,11 +159,11 @@ export const LoginView: React.FC<LoginViewProps> = ({
         <PromotionalEventBanner onRegisterInterest={onNavigateToRegister} />
       </div>
 
-      {/* Main Authentication Card - Equalized in width with the banner and top modules (max-w-5xl) */}
+      {/* Main Authentication Card - Translucent glass container */}
       <div className="w-full max-w-5xl mx-auto flex flex-col items-center">
-        <div className="w-full bg-[#F9F9F9] dark:bg-[#18181B] rounded-3xl p-6 sm:p-8 lg:p-10 border border-gray-200/80 dark:border-neutral-800 shadow-[0_8px_30px_rgba(0,0,0,0.04)] text-left transition-colors">
+        <div className="w-full bg-white/75 dark:bg-[#18181B]/75 backdrop-blur-2xl rounded-3xl p-6 sm:p-8 lg:p-10 border border-white/80 dark:border-white/10 shadow-2xl text-left transition-colors">
           {/* Segmented Tab Switcher */}
-          <div className="flex items-center p-1 bg-gray-200/70 dark:bg-neutral-800/80 rounded-2xl mb-8 max-w-md">
+          <div className="flex items-center p-1 bg-black/5 dark:bg-white/5 backdrop-blur-md rounded-2xl mb-8 max-w-md border border-black/5 dark:border-white/10">
             <button
               type="button"
               onClick={() => {
@@ -172,7 +172,7 @@ export const LoginView: React.FC<LoginViewProps> = ({
               }}
               className={`flex-1 py-2.5 px-3 rounded-xl text-xs font-medium transition-all flex items-center justify-center gap-2 cursor-pointer ${
                 activeTab === 'participant'
-                  ? 'bg-white dark:bg-[#27272A] text-black dark:text-white shadow-xs font-semibold'
+                  ? 'bg-white/95 dark:bg-[#27272A]/95 text-black dark:text-white shadow-xs font-semibold backdrop-blur-xs'
                   : 'text-gray-600 dark:text-neutral-400 hover:text-black dark:hover:text-white'
               }`}
             >
@@ -188,7 +188,7 @@ export const LoginView: React.FC<LoginViewProps> = ({
               }}
               className={`flex-1 py-2.5 px-3 rounded-xl text-xs font-medium transition-all flex items-center justify-center gap-2 cursor-pointer ${
                 activeTab === 'admin'
-                  ? 'bg-white dark:bg-[#27272A] text-black dark:text-white shadow-xs font-semibold'
+                  ? 'bg-white/95 dark:bg-[#27272A]/95 text-black dark:text-white shadow-xs font-semibold backdrop-blur-xs'
                   : 'text-gray-600 dark:text-neutral-400 hover:text-black dark:hover:text-white'
               }`}
             >
@@ -356,7 +356,7 @@ export const LoginView: React.FC<LoginViewProps> = ({
               <div className="lg:col-span-5 space-y-4">
                 {/* Discrete testing helper: Quick fill with existing accounts in Google Sheets */}
                 {registeredClients.length > 0 && (
-                  <div className="p-4 sm:p-5 rounded-2xl bg-white dark:bg-[#202024] border border-gray-200/80 dark:border-neutral-700/80 shadow-2xs space-y-3">
+                  <div className="p-4 sm:p-5 rounded-2xl bg-white/60 dark:bg-[#202024]/60 backdrop-blur-xl border border-white/65 dark:border-white/10 shadow-sm space-y-3">
                     <div className="flex items-center gap-1.5 text-xs font-semibold text-black dark:text-white">
                       <FileSpreadsheet className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                       <span>Participantes de Demostración (Google Sheets):</span>
@@ -376,7 +376,7 @@ export const LoginView: React.FC<LoginViewProps> = ({
                           className={`text-xs px-3 py-2 rounded-xl border transition-all cursor-pointer flex items-center justify-between text-left ${
                             emailInput.toLowerCase() === client.email.toLowerCase()
                               ? 'bg-black text-white dark:bg-white dark:text-black border-black dark:border-white shadow-xs font-semibold'
-                              : 'bg-[#F9F9F9] dark:bg-[#18181B] text-gray-700 dark:text-neutral-300 border-gray-200 dark:border-neutral-700 hover:border-gray-400 dark:hover:border-neutral-500'
+                              : 'bg-white/50 dark:bg-[#18181B]/50 backdrop-blur-xs text-gray-700 dark:text-neutral-300 border-white/60 dark:border-neutral-700 hover:border-gray-400 dark:hover:border-neutral-500'
                           }`}
                           title={`Haz clic para probar el acceso con ${client.name}`}
                         >
@@ -394,7 +394,7 @@ export const LoginView: React.FC<LoginViewProps> = ({
                 )}
 
                 {/* Confidentiality & Platform Benefits */}
-                <div className="p-4 sm:p-5 rounded-2xl bg-emerald-50/50 dark:bg-emerald-950/20 border border-emerald-200/60 dark:border-emerald-800/40 text-xs text-gray-700 dark:text-neutral-300 space-y-2">
+                <div className="p-4 sm:p-5 rounded-2xl bg-emerald-50/40 dark:bg-emerald-950/30 backdrop-blur-md border border-emerald-500/20 text-xs text-gray-700 dark:text-neutral-300 space-y-2">
                   <div className="font-semibold text-emerald-900 dark:text-emerald-300 flex items-center gap-1.5">
                     <ShieldCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                     <span>Espacio Privado & Beneficios del Participante</span>
@@ -430,7 +430,7 @@ export const LoginView: React.FC<LoginViewProps> = ({
                 </div>
 
                 {/* Coach identity card */}
-                <div className="p-4 rounded-2xl bg-white dark:bg-[#202024] border border-gray-200 dark:border-neutral-700 flex items-center gap-3.5 shadow-2xs">
+                <div className="p-4 rounded-2xl bg-white/70 dark:bg-[#202024]/70 backdrop-blur-xl border border-white/75 dark:border-white/10 flex items-center gap-3.5 shadow-sm">
                   <img
                     src={coachUser.avatarUrl}
                     alt={coachUser.name}
@@ -467,7 +467,7 @@ export const LoginView: React.FC<LoginViewProps> = ({
 
               {/* Right Column: Administrative Powers & Capacities */}
               <div className="lg:col-span-5 space-y-4">
-                <div className="p-4 sm:p-5 rounded-2xl bg-white dark:bg-[#202024] border border-gray-200/80 dark:border-neutral-700/80 shadow-2xs space-y-2.5 text-xs text-gray-600 dark:text-neutral-300">
+                <div className="p-4 sm:p-5 rounded-2xl bg-white/60 dark:bg-[#202024]/60 backdrop-blur-xl border border-white/65 dark:border-white/10 shadow-sm space-y-2.5 text-xs text-gray-600 dark:text-neutral-300">
                   <div className="font-semibold text-black dark:text-white flex items-center gap-1.5">
                     <ShieldCheck className="w-4 h-4 text-emerald-500" />
                     <span>Facultades de la Consola RBC:</span>
@@ -482,7 +482,7 @@ export const LoginView: React.FC<LoginViewProps> = ({
                   </ul>
                 </div>
 
-                <div className="p-3.5 rounded-2xl bg-amber-50/60 dark:bg-amber-950/20 border border-amber-200/60 dark:border-amber-800/40 text-[11px] text-amber-800 dark:text-amber-300">
+                <div className="p-3.5 rounded-2xl bg-amber-50/50 dark:bg-amber-950/20 backdrop-blur-md border border-amber-200/60 dark:border-amber-800/40 text-[11px] text-amber-800 dark:text-amber-300">
                   <strong>Credencial de Demostración:</strong> Acceso pre-configurado para validación integral de la plataforma de consultoría.
                 </div>
               </div>
@@ -514,7 +514,7 @@ export const LoginView: React.FC<LoginViewProps> = ({
       {/* Bottom Information & Footer */}
       <footer className="w-full max-w-5xl flex flex-col items-center gap-6 pt-6 pb-2 border-t border-gray-100 dark:border-neutral-800 text-center">
         {/* Dedicated Contact Information Block */}
-        <div className="w-full bg-gray-50/80 dark:bg-neutral-900/60 border border-gray-200/70 dark:border-neutral-800/80 rounded-2xl p-4 sm:p-5 shadow-2xs">
+        <div className="w-full bg-white/60 dark:bg-neutral-900/60 backdrop-blur-xl border border-white/60 dark:border-white/10 rounded-2xl p-4 sm:p-5 shadow-sm">
           <div className="text-[11px] font-semibold uppercase tracking-wider text-gray-500 dark:text-neutral-400 mb-3">
             Información de Contacto & Sede
           </div>

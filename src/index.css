@@ -6,4 +6,44 @@
   html {
     transition: background-color 0.25s ease, color 0.25s ease;
   }
+
+  body {
+    background-color: transparent !important;
+    min-height: 100vh;
+  }
 }
+
+/* Glassmorphic Container Opacity Tiers for background image translucency */
+.glass-panel-sheer {
+  background-color: rgba(255, 255, 255, 0.4);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+.dark .glass-panel-sheer {
+  background-color: rgba(18, 18, 22, 0.4);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.glass-panel-medium {
+  background-color: rgba(255, 255, 255, 0.65);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+.dark .glass-panel-medium {
+  background-color: rgba(20, 20, 24, 0.65);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+.glass-panel-solid {
+  background-color: rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+.dark .glass-panel-solid {
+  background-color: rgba(24, 24, 28, 0.82);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+

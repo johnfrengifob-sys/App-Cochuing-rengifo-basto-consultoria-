@@ -200,7 +200,7 @@ export const ClientDirectoryTable: React.FC<ClientDirectoryTableProps> = ({
   return (
     <div className="space-y-6 w-full">
       {/* Top Controls: Search, Filters & View Switcher */}
-      <div className="bg-white dark:bg-[#151518] rounded-3xl p-5 sm:p-6 border border-gray-200/80 dark:border-neutral-800 shadow-2xs space-y-4">
+      <div className="bg-white/70 dark:bg-[#151518]/70 backdrop-blur-xl rounded-3xl p-5 sm:p-6 border border-white/75 dark:border-white/10 shadow-sm space-y-4">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           {/* Search Box */}
           <div className="relative flex-1 max-w-lg">
@@ -344,7 +344,7 @@ export const ClientDirectoryTable: React.FC<ClientDirectoryTableProps> = ({
 
       {/* Main Content: Table or Cards */}
       {filteredClients.length === 0 ? (
-        <div className="bg-white dark:bg-[#151518] rounded-3xl p-12 text-center border border-gray-200/80 dark:border-neutral-800 space-y-3">
+        <div className="bg-white/70 dark:bg-[#151518]/70 backdrop-blur-xl rounded-3xl p-12 text-center border border-white/75 dark:border-white/10 space-y-3">
           <div className="w-12 h-12 rounded-full bg-gray-100 dark:bg-neutral-800 flex items-center justify-center mx-auto text-gray-400">
             <Search className="w-5 h-5" />
           </div>
@@ -369,7 +369,7 @@ export const ClientDirectoryTable: React.FC<ClientDirectoryTableProps> = ({
         /* ========================================================================= */
         /* EXECUTIVE DATA TABLE (Minimalist & High-Scan Density) */
         /* ========================================================================= */
-        <div className="bg-white dark:bg-[#151518] rounded-3xl border border-gray-200/80 dark:border-neutral-800 shadow-2xs overflow-hidden">
+        <div className="bg-white/70 dark:bg-[#151518]/70 backdrop-blur-xl rounded-3xl border border-white/75 dark:border-white/10 shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs border-collapse">
               <thead>
@@ -618,7 +618,7 @@ export const ClientDirectoryTable: React.FC<ClientDirectoryTableProps> = ({
               <div
                 key={client.uid}
                 onClick={() => onSelectClient(client.uid)}
-                className="bg-white dark:bg-[#151518] rounded-3xl p-5 border border-gray-200/80 dark:border-neutral-800 shadow-2xs hover:border-black dark:hover:border-neutral-600 transition-all cursor-pointer flex flex-col justify-between space-y-4 group"
+                className="bg-white/70 dark:bg-[#151518]/70 backdrop-blur-xl rounded-3xl p-5 border border-white/75 dark:border-white/10 shadow-sm hover:border-black dark:hover:border-neutral-600 transition-all cursor-pointer flex flex-col justify-between space-y-4 group"
               >
                 <div className="space-y-3.5">
                   {/* Top Bar: Avatar, Name and Traffic Light Status */}

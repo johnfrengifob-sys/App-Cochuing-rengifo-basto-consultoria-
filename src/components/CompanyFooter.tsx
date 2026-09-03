@@ -16,7 +16,7 @@ export const CompanyFooter: React.FC<CompanyFooterProps> = ({
 }) => {
   if (minimal) {
     return (
-      <footer className={`py-6 px-4 border-t border-gray-100 dark:border-neutral-800 text-xs text-gray-500 dark:text-neutral-400 ${className}`}>
+      <footer className={`py-6 px-4 bg-white/40 dark:bg-[#0D0D0E]/40 backdrop-blur-md border-t border-white/50 dark:border-white/10 text-xs text-gray-500 dark:text-neutral-400 ${className}`}>
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <BrandLogo size="xs" layout="full" />
@@ -43,7 +43,7 @@ export const CompanyFooter: React.FC<CompanyFooterProps> = ({
   }
 
   return (
-    <footer className={`bg-[#FAFAFA] dark:bg-[#0D0D0E] border-t border-gray-200/80 dark:border-neutral-800/90 py-10 px-6 sm:px-8 transition-colors ${className}`}>
+    <footer className={`bg-white/60 dark:bg-[#0D0D0E]/60 backdrop-blur-xl border-t border-white/60 dark:border-white/10 py-10 px-6 sm:px-8 transition-colors ${className}`}>
       <div className="max-w-7xl mx-auto space-y-8">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-start">
           {/* Logo & Manifesto */}
