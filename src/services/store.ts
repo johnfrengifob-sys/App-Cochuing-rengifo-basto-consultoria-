@@ -15,6 +15,10 @@ import {
   PaymentRequest,
   PaymentMethodType,
   PaymentApprovalStatus,
+  WorkshopRoadmapStep,
+  QuestionnaireQuestion,
+  DynamicQuestionnaire,
+  QuestionType,
 } from '../types';
 import promotionalEventBannerImg from '../assets/images/proximo_evento_banner_1788270380574.jpg';
 import coachAvatarImg from '../assets/images/regenerated_image_1788287101599.jpg';
@@ -42,7 +46,7 @@ export const BRE_B_NU_CONFIG = {
   whatsappRaw: '573234642257',
 };
 
-export const PROGRAM_NODES: ProgramNodeInfo[] = [
+export let PROGRAM_NODES: ProgramNodeInfo[] = [
   {
     step: 1,
     weekLabel: 'Semanas 1-2',
@@ -1064,6 +1068,8 @@ const STORAGE_KEYS = {
   CRONOGRAMA_EVENTS: 'rbc_cronograma_events_v2',
   PROGRAMS: 'rbc_programs_v2',
   PAYMENT_REQUESTS: 'rbc_payment_requests_v2',
+  PROGRAM_NODES: 'rbc_program_nodes_v2',
+  QUESTIONNAIRES: 'rbc_dynamic_questionnaires_v2',
   WEBHOOK_URL: 'rbc_webhook_url_v2',
   MAKE_PHASE1_WEBHOOK_URL: 'rbc_make_phase1_webhook_url_v2',
   MAKE_PHASE2_CALENDLY_WEBHOOK_URL: 'rbc_make_phase2_calendly_webhook_url_v2',
@@ -1076,6 +1082,707 @@ const STORAGE_KEYS = {
   NEXT_LEVEL_PAYMENT_URL: 'rbc_next_level_payment_url_v2',
   WORKSHOPS_VIEWED: 'rbc_workshops_viewed_v2',
 };
+
+export const DEFAULT_ROADMAP_STEPS: Record<number, WorkshopRoadmapStep[]> = {
+  1: [
+    {
+      id: 'step-1-1',
+      stepNumber: 1,
+      title: 'Centramiento Somático y Apertura en Coherencia',
+      durationMinutes: 10,
+      phaseType: 'Centramiento & Apertura',
+      description: 'Respiración diafragmática 4-2-6, escaneo corporal y fijación de intención para suspender el juicio automático.',
+      keyInstructions: [
+        'Guiar 5 minutos de respiración diafragmática y silencio reflexivo.',
+        'Invitar al participante a soltar la exigencia operativa y conectar con el presente.',
+      ],
+    },
+    {
+      id: 'step-1-2',
+      stepNumber: 2,
+      title: 'Distinción Ontológica: Transparencia vs Quiebre',
+      durationMinutes: 20,
+      phaseType: 'Marco Teórico Ontológico',
+      description: 'Explicación del fluir transparente en la rutina cotidiana y la aparición del quiebre como oportunidad reflexiva.',
+      keyInstructions: [
+        'Diferenciar entre "lo que pasa fáctico" y "la narrativa reactiva que construyo".',
+        'Analizar la transparencia ontológica según Martín Heidegger y Rafael Echeverría.',
+      ],
+    },
+    {
+      id: 'step-1-3',
+      stepNumber: 3,
+      title: 'Mapeo de Fugas de Energía y Costos Invisibles',
+      durationMinutes: 25,
+      phaseType: 'Dinámica Vivencial',
+      description: 'Auditoría en vivo de acuerdos tácitos y automatismos que drenan la energía vital del participante.',
+      keyInstructions: [
+        'Identificar los 3 mayores drenajes de energía en la última semana laboral.',
+        'Registrar quiebres no declarados en la matriz personal.',
+      ],
+    },
+    {
+      id: 'step-1-4',
+      stepNumber: 4,
+      title: 'Calibración Postural de la Decisión Lúcida',
+      durationMinutes: 15,
+      phaseType: 'Práctica Somática',
+      description: 'Registro de tensiones en mandíbula, trapecios y diafragma al tomar compromisos apresurados.',
+      keyInstructions: [
+        'Ponerse de pie y calibrar el peso en las plantas de los pies.',
+        'Sentir la diferencia física entre una postura reactiva y una receptiva soberana.',
+      ],
+    },
+    {
+      id: 'step-1-5',
+      stepNumber: 5,
+      title: 'Declaración de Quiebres y Acuerdos de Bitácora',
+      durationMinutes: 10,
+      phaseType: 'Cierre & Acuerdos',
+      description: 'Formalización del quiebre fundamental a trabajar en el ciclo quincenal y micro-práctica diaria.',
+      keyInstructions: [
+        'Redactar la declaración de quiebre en una sola frase contundente.',
+        'Consensuar la micro-práctica de pausa de 90 segundos 3 veces al día.',
+      ],
+    },
+  ],
+  2: [
+    {
+      id: 'step-2-1',
+      stepNumber: 1,
+      title: 'Alineación de Columna y Arraigo Territorial',
+      durationMinutes: 10,
+      phaseType: 'Centramiento & Apertura',
+      description: 'Activación del plexo solar y enraizamiento para sostener límites sin hostilidad ni culpa.',
+      keyInstructions: [
+        'Postura de arraigo con pies al ancho de hombros y pelvis relajada.',
+        'Respirar hacia el bajo vientre sintiendo la estabilidad territorial.',
+      ],
+    },
+    {
+      id: 'step-2-2',
+      stepNumber: 2,
+      title: 'Los Actos Declarativos: La Declaración del "Basta"',
+      durationMinutes: 20,
+      phaseType: 'Marco Teórico Ontológico',
+      description: 'El "No" como acto fundacional de dignidad, soberanía personal y cuidado del vínculo.',
+      keyInstructions: [
+        'Explicar por qué quien no puede decir no, tampoco puede dar un sí genuino.',
+        'Desmontar la creencia aprendida de que poner límites equivale a desamor o egoísmo.',
+      ],
+    },
+    {
+      id: 'step-2-3',
+      stepNumber: 3,
+      title: 'Auditoría de Conversaciones Postergadas',
+      durationMinutes: 25,
+      phaseType: 'Dinámica Vivencial',
+      description: 'Mapeo de la persona y situación específica donde se requiere proclamar un límite claro.',
+      keyInstructions: [
+        'Elegir una conversación postergada por más de 1 mes.',
+        'Redactar el guion de la frontera con honestidad impecable.',
+      ],
+    },
+    {
+      id: 'step-2-4',
+      stepNumber: 4,
+      title: 'Somática de la Firmeza sin Agresión',
+      durationMinutes: 15,
+      phaseType: 'Práctica Somática',
+      description: 'Ensayo del "No" con contacto visual sereno, tono de voz pausado y sin justificarse.',
+      keyInstructions: [
+        'Practicar la frase: "Agradezco la oferta, pero elijo no asumirla".',
+        'Evitar explicaciones defensivas o disculpas automáticas.',
+      ],
+    },
+    {
+      id: 'step-2-5',
+      stepNumber: 5,
+      title: 'Pacto de Soberanía y Plan de Aplicación',
+      durationMinutes: 10,
+      phaseType: 'Cierre & Acuerdos',
+      description: 'Fijar fecha, hora y contexto para tener la conversación de frontera.',
+      keyInstructions: [
+        'Agendar en Google Calendar el momento exacto para la conversación.',
+        'Registrar el compromiso en el cuaderno de trabajo.',
+      ],
+    },
+  ],
+  3: [
+    {
+      id: 'step-3-1',
+      stepNumber: 1,
+      title: 'Silencio Reflexivo y Toma de Consciencia',
+      durationMinutes: 10,
+      phaseType: 'Centramiento & Apertura',
+      description: 'Revisión del estado interior y suspensión del juicio de autocrítica destructiva.',
+      keyInstructions: ['Observar pensamientos como nubes sin aferrarse a ninguno.'],
+    },
+    {
+      id: 'step-3-2',
+      stepNumber: 2,
+      title: 'Arqueología del Juicio Maestro',
+      durationMinutes: 25,
+      phaseType: 'Marco Teórico Ontológico',
+      description: 'Identificar la narrativa troncal que condiciona el comportamiento y la autovaloración.',
+      keyInstructions: ['Detectar mandatos familiares y culturales introyectados.'],
+    },
+    {
+      id: 'step-3-3',
+      stepNumber: 3,
+      title: 'Laboratorio: Hechos vs Interpretaciones',
+      durationMinutes: 25,
+      phaseType: 'Dinámica Vivencial',
+      description: 'Someter a juicio crítico la creencia limitante y contrastarla con hechos observables.',
+      keyInstructions: ['Escribir el juicio en una columna y los hechos verificables en otra.'],
+    },
+    {
+      id: 'step-3-4',
+      stepNumber: 4,
+      title: 'Postura de Certeza vs Postura de Indecisión',
+      durationMinutes: 15,
+      phaseType: 'Práctica Somática',
+      description: 'Experimentar en el cuerpo la solidez de una convicción frente a la vacilación reactiva.',
+      keyInstructions: ['Caminar habitando el espacio con dignidad y mirada al horizonte.'],
+    },
+    {
+      id: 'step-3-5',
+      stepNumber: 5,
+      title: 'Declaración del Nuevo Observador',
+      durationMinutes: 15,
+      phaseType: 'Cierre & Acuerdos',
+      description: 'Enunciar la nueva afirmación ontológica habilitante y fijar prácticas de higiene mental.',
+      keyInstructions: ['Sellar el nuevo pacto de interpretación ante el grupo.'],
+    },
+  ],
+  4: [
+    {
+      id: 'step-4-1',
+      stepNumber: 1,
+      title: 'Escaneo Somático en 5 Ejes',
+      durationMinutes: 10,
+      phaseType: 'Centramiento & Apertura',
+      description: 'Auditoría física de la tensión en cabeza, garganta, pecho, diafragma y pelvis.',
+      keyInstructions: ['Respirar llevando luz y distensión a cada zona contraída.'],
+    },
+    {
+      id: 'step-4-2',
+      stepNumber: 2,
+      title: 'La Biología del Compromiso Directivo',
+      durationMinutes: 20,
+      phaseType: 'Marco Teórico Ontológico',
+      description: 'Cómo el cuerpo comunica liderazgo, autoridad moral y apertura antes que la voz.',
+      keyInstructions: ['Comprender la relación entre postura corporal y química cerebral.'],
+    },
+    {
+      id: 'step-4-3',
+      stepNumber: 3,
+      title: 'Laboratorio de Presencia e Impacto Verbal',
+      durationMinutes: 25,
+      phaseType: 'Dinámica Vivencial',
+      description: 'Práctica de proyectar la voz desde el centro corporal en lugar de la garganta apretada.',
+      keyInstructions: ['Hablar sosteniendo el aire en el diafragma con volumen natural.'],
+    },
+    {
+      id: 'step-4-4',
+      stepNumber: 4,
+      title: 'Reseteo Somático en 90 Segundos',
+      durationMinutes: 20,
+      phaseType: 'Práctica Somática',
+      description: 'Técnica de regulación del nervio vago para antes de juntas y presentaciones complejas.',
+      keyInstructions: ['Exhalación prolongada con sonido "S" para bajar la frecuencia cardíaca.'],
+    },
+    {
+      id: 'step-4-5',
+      stepNumber: 5,
+      title: 'Protocolo Diario de Encarnación Directiva',
+      durationMinutes: 15,
+      phaseType: 'Cierre & Acuerdos',
+      description: 'Establecer disparadores diarios para recordar la postura centrada y serena.',
+      keyInstructions: ['Elegir una alarma o recordatorio visual en el escritorio.'],
+    },
+  ],
+  5: [
+    {
+      id: 'step-5-1',
+      stepNumber: 1,
+      title: 'Centramiento en el Horizonte de Posibilidad',
+      durationMinutes: 10,
+      phaseType: 'Centramiento & Apertura',
+      description: 'Conectar con la visión de largo plazo sin la ansiedad ni el apremio del corto plazo.',
+      keyInstructions: ['Visualizar el escenario deseado con todos los sentidos despiertos.'],
+    },
+    {
+      id: 'step-5-2',
+      stepNumber: 2,
+      title: 'Anatomía de Peticiones, Ofertas y Promesas',
+      durationMinutes: 25,
+      phaseType: 'Marco Teórico Ontológico',
+      description: 'Las 4 fases de la coordinación de acciones y cómo evitar promesas rotas o malentendidos.',
+      keyInstructions: ['Explicar el ciclo: Preparación, Negociación, Ejecución y Evaluación.'],
+    },
+    {
+      id: 'step-5-3',
+      stepNumber: 3,
+      title: 'Diseño de la Red de Ayuda y Conversaciones de Futuro',
+      durationMinutes: 25,
+      phaseType: 'Dinámica Vivencial',
+      description: 'Identificar a las personas clave a quienes solicitar colaboración estratégica impecable.',
+      keyInstructions: ['Redactar 2 peticiones formales con fecha y condiciones exactas.'],
+    },
+    {
+      id: 'step-5-4',
+      stepNumber: 4,
+      title: 'Corporalidad de la Oferta Impecable',
+      durationMinutes: 15,
+      phaseType: 'Práctica Somática',
+      description: 'Habitar la generosidad y el valor propio al proponer acuerdos y proyectos de impacto.',
+      keyInstructions: ['Apertura de brazos y mirada limpia sin suplicar ni exigir.'],
+    },
+    {
+      id: 'step-5-5',
+      stepNumber: 5,
+      title: 'Acuerdos de Ejecución y Renegociación',
+      durationMinutes: 15,
+      phaseType: 'Cierre & Acuerdos',
+      description: 'Compromisos de entrega y protocolo de aviso temprano ante cualquier imprevisto.',
+      keyInstructions: ['Fijar el estándar de cumplimiento y respeto a la palabra empeñada.'],
+    },
+  ],
+  6: [
+    {
+      id: 'step-6-1',
+      stepNumber: 1,
+      title: 'Centramiento en la Gratitud y la Presencia',
+      durationMinutes: 10,
+      phaseType: 'Centramiento & Apertura',
+      description: 'Reconocer el camino recorrido, los quiebres superados y la nueva coherencia alcanzada.',
+      keyInstructions: ['Agradecer al propio proceso y a los compañeros de viaje.'],
+    },
+    {
+      id: 'step-6-2',
+      stepNumber: 2,
+      title: 'La Soberanía Ontológica como Manera de Ser',
+      durationMinutes: 20,
+      phaseType: 'Marco Teórico Ontológico',
+      description: 'Cómo sostener al nuevo observador en contextos cambiantes, exigentes y de alta presión.',
+      keyInstructions: ['Integrar lenguaje, cuerpo y emoción como una tríada indivisible.'],
+    },
+    {
+      id: 'step-6-3',
+      stepNumber: 3,
+      title: 'Proclamación del Manifiesto de Soberanía Personal',
+      durationMinutes: 30,
+      phaseType: 'Dinámica Vivencial',
+      description: 'Lectura y firma del compromiso ontológico con la propia vida y liderazgo.',
+      keyInstructions: ['Cada participante lee su manifiesto en voz alta ante la comunidad.'],
+    },
+    {
+      id: 'step-6-4',
+      stepNumber: 4,
+      title: 'Arquetipo Somático del Soberano',
+      durationMinutes: 15,
+      phaseType: 'Práctica Somática',
+      description: 'Anclar corporalmente la serenidad inquebrantable ante cualquier circunstancia.',
+      keyInstructions: ['Postura de arraigo profundo, pecho espacioso y respiración calmada.'],
+    },
+    {
+      id: 'step-6-5',
+      stepNumber: 5,
+      title: 'Cierre del Ciclo y Plan de Sostenibilidad Vital',
+      durationMinutes: 15,
+      phaseType: 'Cierre & Acuerdos',
+      description: 'Fijar el cronograma de revisiones trimestrales y entrega de certificado de logro.',
+      keyInstructions: ['Declarar el inicio formal de la nueva etapa de vida.'],
+    },
+  ],
+};
+
+export const INITIAL_QUESTIONNAIRES: DynamicQuestionnaire[] = [
+  {
+    id: 'questionnaire-workshop-1',
+    targetType: 'workshop_node',
+    targetStep: 1,
+    title: 'Cuestionario Ontológico - Taller 1: Transparencia y Quiebres',
+    description: 'Autodiagnóstico para identificar automatismos cotidianos, costos invisibles y quiebres no declarados.',
+    updatedAt: new Date().toISOString(),
+    questions: [
+      {
+        id: 'q-w1-1',
+        questionnaireId: 'questionnaire-workshop-1',
+        order: 1,
+        label: '¿Qué emoción o sensación física identificas hoy en tu cuerpo antes de iniciar el taller?',
+        placeholder: 'Ej: Percibo una tensión constante en los hombros, respiración superficial y aceleración...',
+        helperText: 'Describe el estado somático presente: mandíbula apretada, pesadez, inquietud o serenidad.',
+        type: 'textarea',
+        required: true,
+        category: 'somático',
+      },
+      {
+        id: 'q-w1-2',
+        questionnaireId: 'questionnaire-workshop-1',
+        order: 2,
+        label: '¿En qué áreas de tu vida estás operando en piloto automático tolerando costos ocultos?',
+        placeholder: 'Ej: Acepto tareas adicionales en el trabajo sin evaluar mi capacidad real...',
+        helperText: 'Identifica la rutina donde actúas sin reflexionar y que genera desgaste silencioso.',
+        type: 'textarea',
+        required: true,
+        category: 'lingüístico',
+      },
+      {
+        id: 'q-w1-3',
+        questionnaireId: 'questionnaire-workshop-1',
+        order: 3,
+        label: 'Registra los límites que has omitido declarar y los acuerdos tácitos que drenan tu energía',
+        placeholder: 'Ej: No he aclarado el alcance de mi disponibilidad fuera de horario laboral...',
+        helperText: 'Nombra con precisión la conversación no dicha.',
+        type: 'textarea',
+        required: false,
+        category: 'acuerdos',
+      },
+      {
+        id: 'q-w1-4',
+        questionnaireId: 'questionnaire-workshop-1',
+        order: 4,
+        label: 'Nivel de coherencia somática y claridad mental actual (Escala 1 a 10)',
+        type: 'rating_scale',
+        required: true,
+        category: 'somático',
+        scaleMin: 1,
+        scaleMax: 10,
+        scaleMinLabel: 'Muy disperso / tenso',
+        scaleMaxLabel: 'Plena presencia y serenidad',
+      },
+    ],
+  },
+  {
+    id: 'questionnaire-workshop-2',
+    targetType: 'workshop_node',
+    targetStep: 2,
+    title: 'Cuestionario Ontológico - Taller 2: Fronteras y Límites No Dichos',
+    description: 'Diagnóstico de la capacidad de emitir el "Basta" ontológico y proclamar límites sin culpa.',
+    updatedAt: new Date().toISOString(),
+    questions: [
+      {
+        id: 'q-w2-1',
+        questionnaireId: 'questionnaire-workshop-2',
+        order: 1,
+        label: '¿En qué parte de tu cuerpo registras la culpa o vacilación al poner límites?',
+        placeholder: 'Ej: Siento un nudo en la garganta y opresión en el plexo solar...',
+        helperText: 'La culpa se manifiesta corporalmente antes de convertirse en narrativa de duda.',
+        type: 'textarea',
+        required: true,
+        category: 'somático',
+      },
+      {
+        id: 'q-w2-2',
+        questionnaireId: 'questionnaire-workshop-2',
+        order: 2,
+        label: '¿Qué conversación difícil has estado postergando y qué límite requieres proclamar?',
+        placeholder: 'Ej: Conversación con mi socio sobre la redistribución equitativa de cargas directivas...',
+        helperText: 'Estructura el límite con firmeza, serenidad y respeto por ti mismo.',
+        type: 'textarea',
+        required: true,
+        category: 'lingüístico',
+      },
+      {
+        id: 'q-w2-3',
+        questionnaireId: 'questionnaire-workshop-2',
+        order: 3,
+        label: '¿A qué le estás diciendo "Sí" cuando tu cuerpo te pide un rotundo "No"?',
+        placeholder: 'Ej: A solicitudes de reuniones no productivas que sacrifican mi tiempo reflexivo...',
+        helperText: 'Explora el costo de la sobre-adaptación en tu bienestar.',
+        type: 'textarea',
+        required: false,
+        category: 'emocional',
+      },
+      {
+        id: 'q-w2-4',
+        questionnaireId: 'questionnaire-workshop-2',
+        order: 4,
+        label: 'Firmeza postural para sostener un "Basta" sin agresión ni disculpa (Escala 1 a 10)',
+        type: 'rating_scale',
+        required: true,
+        category: 'somático',
+        scaleMin: 1,
+        scaleMax: 10,
+        scaleMinLabel: 'Me quiebro con facilidad',
+        scaleMaxLabel: 'Soberanía y serenidad total',
+      },
+    ],
+  },
+  {
+    id: 'questionnaire-workshop-3',
+    targetType: 'workshop_node',
+    targetStep: 3,
+    title: 'Cuestionario Ontológico - Taller 3: El Juicio Maestro y Narrativas',
+    description: 'Deconstrucción de mandatos y creencias limitantes que condicionan tu toma de decisiones.',
+    updatedAt: new Date().toISOString(),
+    questions: [
+      {
+        id: 'q-w3-1',
+        questionnaireId: 'questionnaire-workshop-3',
+        order: 1,
+        label: '¿Cuál es el juicio maestro o creencia limitante que más se repite bajo presión?',
+        placeholder: 'Ej: "Si no tengo el control absoluto, todo colapsará y seré juzgado"...',
+        helperText: 'Aquella frase interna que opera como verdad incuestionable.',
+        type: 'textarea',
+        required: true,
+        category: 'lingüístico',
+      },
+      {
+        id: 'q-w3-2',
+        questionnaireId: 'questionnaire-workshop-3',
+        order: 2,
+        label: '¿Qué evidencias concretas sustentan ese juicio y qué hechos observables lo desmienten?',
+        placeholder: 'Ej: En el proyecto anterior delegué y el equipo respondió de forma brillante...',
+        helperText: 'Separa los hechos fácticos de las interpretaciones subjetivas.',
+        type: 'textarea',
+        required: true,
+        category: 'lingüístico',
+      },
+      {
+        id: 'q-w3-3',
+        questionnaireId: 'questionnaire-workshop-3',
+        order: 3,
+        label: 'Nueva narrativa o declaración de confianza que eliges adoptar',
+        placeholder: 'Ej: "Confío en la capacidad colectiva y lidero desde la visión lúcida"...',
+        helperText: 'Construye la afirmación fundacional del nuevo observador.',
+        type: 'textarea',
+        required: false,
+        category: 'acuerdos',
+      },
+      {
+        id: 'q-w3-4',
+        questionnaireId: 'questionnaire-workshop-3',
+        order: 4,
+        label: 'Capacidad de suspender juicios automáticos en momentos críticos (Escala 1 a 10)',
+        type: 'rating_scale',
+        required: true,
+        category: 'metodológico',
+        scaleMin: 1,
+        scaleMax: 10,
+        scaleMinLabel: 'Reacción impulsiva',
+        scaleMaxLabel: 'Pausa reflexiva lúcida',
+      },
+    ],
+  },
+  {
+    id: 'questionnaire-workshop-4',
+    targetType: 'workshop_node',
+    targetStep: 4,
+    title: 'Cuestionario Ontológico - Taller 4: Corporalidad y Decodificación Somática',
+    description: 'Análisis de la coherencia entre cuerpo, lenguaje y emoción en el liderazgo directivo.',
+    updatedAt: new Date().toISOString(),
+    questions: [
+      {
+        id: 'q-w4-1',
+        questionnaireId: 'questionnaire-workshop-4',
+        order: 1,
+        label: '¿Cuál es tu disposición corporal predominante en escenarios de conflicto o tensión?',
+        placeholder: 'Selecciona la postura física habitual...',
+        type: 'select',
+        options: [
+          'Presencia centrada, vertical y respiración profunda',
+          'Tensión en hombros y tendencia a la confrontación defensiva',
+          'Repliegue, encorvamiento y respiración contenida',
+          'Hiperactividad motora y aceleración verbal',
+        ],
+        required: true,
+        category: 'somático',
+      },
+      {
+        id: 'q-w4-2',
+        questionnaireId: 'questionnaire-workshop-4',
+        order: 2,
+        label: 'Describe la micro-pausa o ritual corporal que aplicarás antes de conversaciones clave',
+        placeholder: 'Ej: 90 segundos de respiración diafragmática y arraigo en planta de pies...',
+        helperText: 'Un hábito somático de fácil aplicación en tu rutina profesional.',
+        type: 'textarea',
+        required: true,
+        category: 'somático',
+      },
+      {
+        id: 'q-w4-3',
+        questionnaireId: 'questionnaire-workshop-4',
+        order: 3,
+        label: 'Conexión consciente con tu cuerpo a lo largo de la jornada (Escala 1 a 10)',
+        type: 'rating_scale',
+        required: true,
+        category: 'somático',
+        scaleMin: 1,
+        scaleMax: 10,
+        scaleMinLabel: 'Desconexión total (cabeza pura)',
+        scaleMaxLabel: 'Consciencia somática continua',
+      },
+    ],
+  },
+  {
+    id: 'questionnaire-workshop-5',
+    targetType: 'workshop_node',
+    targetStep: 5,
+    title: 'Cuestionario Ontológico - Taller 5: Conversaciones de Posibilidad y Diseño de Futuro',
+    description: 'Estructuración de ofertas, peticiones y promesas para materializar horizontes estratégicos.',
+    updatedAt: new Date().toISOString(),
+    questions: [
+      {
+        id: 'q-w5-1',
+        questionnaireId: 'questionnaire-workshop-5',
+        order: 1,
+        label: '¿Qué conversación de futuro necesitas abrir y con quién?',
+        placeholder: 'Ej: Con mi comité de dirección para redefinir el modelo de expansión...',
+        helperText: 'Abre el espacio lingüístico para lo que aún no existe en el presente.',
+        type: 'textarea',
+        required: true,
+        category: 'lingüístico',
+      },
+      {
+        id: 'q-w5-2',
+        questionnaireId: 'questionnaire-workshop-5',
+        order: 2,
+        label: 'Diseño de la petición: ¿Qué pides con precisión, para cuándo y bajo qué condiciones de satisfacción?',
+        placeholder: 'Ej: Solicito la confirmación de presupuesto antes del 15 del mes próximo...',
+        helperText: 'Una petición impecable elimina la ambigüedad y el resentimiento posterior.',
+        type: 'textarea',
+        required: true,
+        category: 'acuerdos',
+      },
+      {
+        id: 'q-w5-3',
+        questionnaireId: 'questionnaire-workshop-5',
+        order: 3,
+        label: 'Nivel de confianza en tu capacidad para coordinar acciones estratégicas (1 a 10)',
+        type: 'rating_scale',
+        required: true,
+        category: 'metodológico',
+        scaleMin: 1,
+        scaleMax: 10,
+        scaleMinLabel: 'Dudas e inseguridad',
+        scaleMaxLabel: 'Certeza ejecutiva',
+      },
+    ],
+  },
+  {
+    id: 'questionnaire-workshop-6',
+    targetType: 'workshop_node',
+    targetStep: 6,
+    title: 'Cuestionario Ontológico - Taller 6: Soberanía, Integración y Cierre de Ciclo',
+    description: 'Consolidación de la nueva identidad directiva y sostenibilidad del nuevo observador.',
+    updatedAt: new Date().toISOString(),
+    questions: [
+      {
+        id: 'q-w6-1',
+        questionnaireId: 'questionnaire-workshop-6',
+        order: 1,
+        label: '¿Cuál ha sido la transformación ontológica más profunda que experimentaste en este viaje?',
+        placeholder: 'Ej: Dejé de actuar desde la complacencia y ahora elijo mis compromisos con dignidad...',
+        helperText: 'Sintetiza la evolución de tu ser en lenguaje, emoción y cuerpo.',
+        type: 'textarea',
+        required: true,
+        category: 'emocional',
+      },
+      {
+        id: 'q-w6-2',
+        questionnaireId: 'questionnaire-workshop-6',
+        order: 2,
+        label: 'Tu Declaración Fundacional de Soberanía Directiva y Personal',
+        placeholder: 'Ej: "Declaro habitar mi liderazgo con límites impecables, presencia somática y serenidad"...',
+        helperText: 'La proclama que sella y protege tu proceso de crecimiento.',
+        type: 'textarea',
+        required: true,
+        category: 'acuerdos',
+      },
+      {
+        id: 'q-w6-3',
+        questionnaireId: 'questionnaire-workshop-6',
+        order: 3,
+        label: 'Nivel de apropiación y certeza en tu plan de sostenibilidad (Escala 1 a 10)',
+        type: 'rating_scale',
+        required: true,
+        category: 'metodológico',
+        scaleMin: 1,
+        scaleMax: 10,
+        scaleMinLabel: 'Riesgo de recaída',
+        scaleMaxLabel: 'Integración permanente',
+      },
+    ],
+  },
+  {
+    id: 'questionnaire-post-session-general',
+    targetType: 'post_session',
+    title: 'Cuestionario de Evaluación Post-Sesión 1 a 1 (Bitácora del Consultor)',
+    description: 'Protocolo formal para registrar el progreso ontológico del coachee tras cada sesión individual.',
+    updatedAt: new Date().toISOString(),
+    questions: [
+      {
+        id: 'q-ps-1',
+        questionnaireId: 'questionnaire-post-session-general',
+        order: 1,
+        label: '¿Qué emoción principal habitó al coachee hoy y cuál fue su nivel de resistencia o apertura?',
+        placeholder: 'Ej: Inició en resignación y sobrecarga; tras el quiebre emergió vulnerabilidad y alivio...',
+        helperText: 'Registra la transición emocional y la disposición corporal a la indagación ontológica.',
+        type: 'textarea',
+        required: true,
+        category: 'emocional',
+      },
+      {
+        id: 'q-ps-2',
+        questionnaireId: 'questionnaire-post-session-general',
+        order: 2,
+        label: '¿Cuál fue el juicio maestro o narrativa limitante que estructuró su discurso?',
+        placeholder: 'Ej: "Tengo que cargar con el peso de la organización porque nadie más lo hará con mi estándar"...',
+        helperText: 'Identifica la estructura de creencias arraigada en su modelo mental.',
+        type: 'textarea',
+        required: true,
+        category: 'lingüístico',
+      },
+      {
+        id: 'q-ps-3',
+        questionnaireId: 'questionnaire-post-session-general',
+        order: 3,
+        label: '¿Qué evidencia de cambio de perspectiva o nuevo nivel de consciencia demostró?',
+        placeholder: 'Ej: Declaró un quiebre formal y reconoció el costo en salud de su sobre-adaptación...',
+        helperText: 'Hechos verificables del quiebre cognitivo y somático.',
+        type: 'textarea',
+        required: true,
+        category: 'lingüístico',
+      },
+      {
+        id: 'q-ps-4',
+        questionnaireId: 'questionnaire-post-session-general',
+        order: 4,
+        label: '¿En qué momento fui más directivo de lo necesario y qué competencia ICF debo cuidar más?',
+        placeholder: 'Ej: Cuidar competencia 7 (Evoca conciencia): permitir silencios más prolongados sin apresurar...',
+        helperText: 'Reflexión deontológica y mejora continua del consultor ontológico.',
+        type: 'textarea',
+        required: true,
+        category: 'metodológico',
+      },
+      {
+        id: 'q-ps-5',
+        questionnaireId: 'questionnaire-post-session-general',
+        order: 5,
+        label: 'Declaración clave o compromiso fundamental co-creado en la sesión',
+        placeholder: 'Ej: "Declaro poner fin a la jornada laboral a las 6:30 PM sin justificaciones"...',
+        helperText: 'El acuerdo principal que el coachee integrará a su vida.',
+        type: 'text',
+        required: false,
+        category: 'acuerdos',
+      },
+      {
+        id: 'q-ps-6',
+        questionnaireId: 'questionnaire-post-session-general',
+        order: 6,
+        label: 'Tarea o micro-práctica somática acordada para la quincena',
+        placeholder: 'Ej: 5 minutos diarios de centramiento y respiración consciente al iniciar la mañana...',
+        helperText: 'Práctica corporal de arraigo y presencia.',
+        type: 'textarea',
+        required: false,
+        category: 'somático',
+      },
+    ],
+  },
+];
 
 export const DEFAULT_WEBHOOK_URL =
   'https://hook.us1.make.com/WEBHOOK_PLACEHOLDER';
@@ -1155,7 +1862,266 @@ export class OntologicalStore {
   }
 
   static getProgramNodes(): ProgramNodeInfo[] {
-    return PROGRAM_NODES;
+    const list = this.load<ProgramNodeInfo[]>(
+      STORAGE_KEYS.PROGRAM_NODES,
+      PROGRAM_NODES
+    );
+    const safe = Array.isArray(list) && list.length > 0 ? list : PROGRAM_NODES;
+    safe.forEach((node) => {
+      if (!node.roadmapSteps || node.roadmapSteps.length === 0) {
+        node.roadmapSteps = DEFAULT_ROADMAP_STEPS[node.step] || [];
+      }
+    });
+    return safe;
+  }
+
+  static saveProgramNodes(nodes: ProgramNodeInfo[]): void {
+    this.save(STORAGE_KEYS.PROGRAM_NODES, nodes);
+    PROGRAM_NODES.length = 0;
+    PROGRAM_NODES.push(...nodes);
+  }
+
+  static updateProgramNode(
+    step: number,
+    updates: Partial<ProgramNodeInfo>
+  ): ProgramNodeInfo | null {
+    const nodes = this.getProgramNodes();
+    let updatedNode: ProgramNodeInfo | null = null;
+    const updated = nodes.map((n) => {
+      if (n.step === step) {
+        updatedNode = { ...n, ...updates };
+        return updatedNode;
+      }
+      return n;
+    });
+    this.saveProgramNodes(updated);
+    return updatedNode;
+  }
+
+  static addRoadmapStep(
+    nodeStep: number,
+    stepData: Omit<WorkshopRoadmapStep, 'id' | 'stepNumber'>
+  ): WorkshopRoadmapStep {
+    const nodes = this.getProgramNodes();
+    const targetNode = nodes.find((n) => n.step === nodeStep) || nodes[0];
+    const currentSteps = targetNode.roadmapSteps || [];
+    const newStep: WorkshopRoadmapStep = {
+      ...stepData,
+      id: `step-${nodeStep}-${Date.now()}`,
+      stepNumber: currentSteps.length + 1,
+    };
+    const updatedSteps = [...currentSteps, newStep];
+    this.updateProgramNode(nodeStep, { roadmapSteps: updatedSteps });
+    return newStep;
+  }
+
+  static updateRoadmapStep(
+    nodeStep: number,
+    stepId: string,
+    updates: Partial<WorkshopRoadmapStep>
+  ): WorkshopRoadmapStep | null {
+    const nodes = this.getProgramNodes();
+    const targetNode = nodes.find((n) => n.step === nodeStep);
+    if (!targetNode) return null;
+    let updatedStep: WorkshopRoadmapStep | null = null;
+    const updatedSteps = (targetNode.roadmapSteps || []).map((s) => {
+      if (s.id === stepId) {
+        updatedStep = { ...s, ...updates };
+        return updatedStep;
+      }
+      return s;
+    });
+    if (updatedStep) {
+      this.updateProgramNode(nodeStep, { roadmapSteps: updatedSteps });
+    }
+    return updatedStep;
+  }
+
+  static deleteRoadmapStep(nodeStep: number, stepId: string): void {
+    const nodes = this.getProgramNodes();
+    const targetNode = nodes.find((n) => n.step === nodeStep);
+    if (!targetNode) return;
+    const filtered = (targetNode.roadmapSteps || [])
+      .filter((s) => s.id !== stepId)
+      .map((s, idx) => ({ ...s, stepNumber: idx + 1 }));
+    this.updateProgramNode(nodeStep, { roadmapSteps: filtered });
+  }
+
+  static reorderRoadmapSteps(nodeStep: number, stepIds: string[]): void {
+    const nodes = this.getProgramNodes();
+    const targetNode = nodes.find((n) => n.step === nodeStep);
+    if (!targetNode) return;
+    const map = new Map((targetNode.roadmapSteps || []).map((s) => [s.id, s]));
+    const ordered: WorkshopRoadmapStep[] = [];
+    stepIds.forEach((id, idx) => {
+      const step = map.get(id);
+      if (step) {
+        ordered.push({ ...step, stepNumber: idx + 1 });
+      }
+    });
+    (targetNode.roadmapSteps || []).forEach((s) => {
+      if (!stepIds.includes(s.id)) {
+        ordered.push({ ...s, stepNumber: ordered.length + 1 });
+      }
+    });
+    this.updateProgramNode(nodeStep, { roadmapSteps: ordered });
+  }
+
+  static resetProgramNodesToDefault(): ProgramNodeInfo[] {
+    const fresh = PROGRAM_NODES.map((n) => ({
+      ...n,
+      roadmapSteps: DEFAULT_ROADMAP_STEPS[n.step] || [],
+    }));
+    this.saveProgramNodes(fresh);
+    return fresh;
+  }
+
+  // --- DYNAMIC QUESTIONNAIRES METHODS ---
+  static getQuestionnaires(): DynamicQuestionnaire[] {
+    const list = this.load<DynamicQuestionnaire[]>(
+      STORAGE_KEYS.QUESTIONNAIRES,
+      INITIAL_QUESTIONNAIRES
+    );
+    return Array.isArray(list) && list.length > 0 ? list : INITIAL_QUESTIONNAIRES;
+  }
+
+  static saveQuestionnaires(questionnaires: DynamicQuestionnaire[]): void {
+    this.save(STORAGE_KEYS.QUESTIONNAIRES, questionnaires);
+  }
+
+  static getQuestionnaireById(id: string): DynamicQuestionnaire | undefined {
+    const all = this.getQuestionnaires();
+    return all.find((q) => q.id === id);
+  }
+
+  static getQuestionnaireForWorkshop(step: number): DynamicQuestionnaire {
+    const all = this.getQuestionnaires();
+    const matched = all.find(
+      (q) => q.targetType === 'workshop_node' && q.targetStep === step
+    );
+    if (matched) return matched;
+    const fallback = INITIAL_QUESTIONNAIRES.find(
+      (q) => q.targetType === 'workshop_node' && q.targetStep === step
+    );
+    return fallback || all[0] || INITIAL_QUESTIONNAIRES[0];
+  }
+
+  static saveQuestionnaire(questionnaire: DynamicQuestionnaire): void {
+    const all = this.getQuestionnaires();
+    const exists = all.some((q) => q.id === questionnaire.id);
+    const updated = exists
+      ? all.map((q) =>
+          q.id === questionnaire.id
+            ? { ...questionnaire, updatedAt: new Date().toISOString() }
+            : q
+        )
+      : [...all, { ...questionnaire, updatedAt: new Date().toISOString() }];
+    this.saveQuestionnaires(updated);
+  }
+
+  static addQuestionToQuestionnaire(
+    questionnaireId: string,
+    questionData: Omit<QuestionnaireQuestion, 'id' | 'order' | 'questionnaireId'>
+  ): QuestionnaireQuestion {
+    const all = this.getQuestionnaires();
+    const target = all.find((q) => q.id === questionnaireId);
+    const newQuestion: QuestionnaireQuestion = {
+      ...questionData,
+      id: `q-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+      questionnaireId,
+      order: (target?.questions?.length || 0) + 1,
+    };
+
+    const updatedList = all.map((q) => {
+      if (q.id === questionnaireId) {
+        return {
+          ...q,
+          questions: [...(q.questions || []), newQuestion],
+          updatedAt: new Date().toISOString(),
+        };
+      }
+      return q;
+    });
+
+    this.saveQuestionnaires(updatedList);
+    return newQuestion;
+  }
+
+  static updateQuestionInQuestionnaire(
+    questionnaireId: string,
+    questionId: string,
+    updates: Partial<QuestionnaireQuestion>
+  ): QuestionnaireQuestion | null {
+    const all = this.getQuestionnaires();
+    let updatedQuestion: QuestionnaireQuestion | null = null;
+
+    const updatedList = all.map((q) => {
+      if (q.id === questionnaireId) {
+        const questions = (q.questions || []).map((ques) => {
+          if (ques.id === questionId) {
+            updatedQuestion = { ...ques, ...updates };
+            return updatedQuestion;
+          }
+          return ques;
+        });
+        return { ...q, questions, updatedAt: new Date().toISOString() };
+      }
+      return q;
+    });
+
+    if (updatedQuestion) {
+      this.saveQuestionnaires(updatedList);
+    }
+    return updatedQuestion;
+  }
+
+  static deleteQuestionFromQuestionnaire(
+    questionnaireId: string,
+    questionId: string
+  ): void {
+    const all = this.getQuestionnaires();
+    const updatedList = all.map((q) => {
+      if (q.id === questionnaireId) {
+        const filtered = (q.questions || [])
+          .filter((ques) => ques.id !== questionId)
+          .map((ques, idx) => ({ ...ques, order: idx + 1 }));
+        return { ...q, questions: filtered, updatedAt: new Date().toISOString() };
+      }
+      return q;
+    });
+    this.saveQuestionnaires(updatedList);
+  }
+
+  static reorderQuestionsInQuestionnaire(
+    questionnaireId: string,
+    questionIds: string[]
+  ): void {
+    const all = this.getQuestionnaires();
+    const updatedList = all.map((q) => {
+      if (q.id === questionnaireId) {
+        const map = new Map((q.questions || []).map((item) => [item.id, item]));
+        const ordered: QuestionnaireQuestion[] = [];
+        questionIds.forEach((id, idx) => {
+          const item = map.get(id);
+          if (item) {
+            ordered.push({ ...item, order: idx + 1 });
+          }
+        });
+        (q.questions || []).forEach((item) => {
+          if (!questionIds.includes(item.id)) {
+            ordered.push({ ...item, order: ordered.length + 1 });
+          }
+        });
+        return { ...q, questions: ordered, updatedAt: new Date().toISOString() };
+      }
+      return q;
+    });
+    this.saveQuestionnaires(updatedList);
+  }
+
+  static resetQuestionnairesToDefault(): DynamicQuestionnaire[] {
+    this.saveQuestionnaires(INITIAL_QUESTIONNAIRES);
+    return INITIAL_QUESTIONNAIRES;
   }
 
   static getCronogramaEvents(): CronogramaEvent[] {
@@ -1277,6 +2243,28 @@ export class OntologicalStore {
 
   static saveEventRegistrations(registrations: EventRegistration[]): void {
     this.save(STORAGE_KEYS.EVENT_REGISTRATIONS, registrations);
+  }
+
+  static updateEventRegistration(id: string, updates: Partial<EventRegistration>): void {
+    const list = this.getEventRegistrations();
+    const updated = list.map((r) => (r.id === id || r.ticketCode === id ? { ...r, ...updates } : r));
+    this.saveEventRegistrations(updated);
+  }
+
+  static addEventRegistration(params: {
+    eventId: string;
+    name: string;
+    email: string;
+    phone?: string;
+    attended?: boolean;
+  }): EventRegistration {
+    return this.addManualEventRegistration({
+      eventId: params.eventId,
+      name: params.name,
+      email: params.email,
+      phone: params.phone || '',
+      attended: params.attended,
+    });
   }
 
   static deleteEventRegistration(id: string): void {

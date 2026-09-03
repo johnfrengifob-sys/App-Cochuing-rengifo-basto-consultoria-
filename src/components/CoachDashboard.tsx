@@ -28,6 +28,7 @@ import { GeminiOntologicalCopilot } from './GeminiOntologicalCopilot';
 import { CrmPipelineManager } from './CrmPipelineManager';
 import { ProgramsAndEventsManager } from './ProgramsAndEventsManager';
 import { PaymentValidationManager } from './PaymentValidationManager';
+import { AdminAcademicManager, AcademicAdminSubTab } from './admin/AdminAcademicManager';
 import {
   Users,
   Sparkles,
@@ -69,6 +70,7 @@ import {
   BookOpen,
   Banknote,
   Smartphone,
+  GraduationCap,
 } from 'lucide-react';
 
 interface CoachDashboardProps {
@@ -84,8 +86,9 @@ export const CoachDashboard: React.FC<CoachDashboardProps> = ({
   onRefreshClients,
   onOpenRegistrationPortal,
 }) => {
-  // Navigation tabs: CRM Funnel vs Clientes Ancla vs Validación de Pagos vs Eventos & Cronograma vs Google Workspace Hub vs Gemini AI
-  const [activeMainTab, setActiveMainTab] = useState<'crm' | 'clients' | 'payments' | 'events' | 'workspace' | 'gemini'>('clients');
+  // Navigation tabs: CRM Funnel vs Clientes Ancla vs Validación de Pagos vs Eventos & Cronograma vs Google Workspace Hub vs Gemini AI vs Admin Académico
+  const [activeMainTab, setActiveMainTab] = useState<'crm' | 'clients' | 'payments' | 'events' | 'workspace' | 'gemini' | 'academic'>('clients');
+  const [academicInitialSubTab, setAcademicInitialSubTab] = useState<AcademicAdminSubTab>('courses');
 
   // Sub-view inside 'clients' tab: Directory (table/scale 20-30+) vs Workstation (1 on 1 session view)
   const [clientsViewMode, setClientsViewMode] = useState<'directory' | 'workstation'>('directory');
@@ -345,38 +348,66 @@ export const CoachDashboard: React.FC<CoachDashboardProps> = ({
 
   return (
     <div className="min-h-screen bg-white dark:bg-[#0D0D0E] text-black dark:text-neutral-100 flex flex-col transition-colors duration-200">
-      {/* Sub-Header Navigation: CRM Funnel vs Clientes Ancla */}
-      <div className="border-b border-gray-100 dark:border-neutral-800 bg-[#F9F9F9] dark:bg-[#151518] px-4 sm:px-10 py-4 transition-colors">
-        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="w-2.5 h-2.5 rounded-full bg-black dark:bg-white" />
+      {/* Sub-Header Navigation: Consola del Consultor Ontológico */}
+      <div className="border-b border-gray-100 dark:border-neutral-800 bg-[#F9F9F9] dark:bg-[#151518] px-4 sm:px-10 py-3.5 transition-colors">
+        <div className="max-w-7xl mx-auto flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+          <div className="flex items-center gap-3 flex-wrap">
+            <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
             <div>
-              <h1 className="text-base font-semibold text-black dark:text-white tracking-tight">
+              <h1 className="text-base font-semibold text-black dark:text-white tracking-tight leading-tight">
                 Consola del Consultor Ontológico
               </h1>
-              <p className="text-xs font-light text-gray-500 dark:text-neutral-400">
-                Embudo Comercial & Gestión del Programa Certeza (12 Semanas)
+              <p className="text-[11px] text-gray-500 dark:text-neutral-400 font-light">
+                Sistema Ejecutivo RBC • John Fredy Rengifo Basto
               </p>
             </div>
+
+            {/* Botón de acceso directo en la Consola del Consultor para el Espacio Académico */}
+            <button
+              id="coach-academic-space-header-btn"
+              type="button"
+              onClick={() => {
+                setAcademicInitialSubTab('courses');
+                setActiveMainTab('academic');
+              }}
+              className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer border shadow-2xs ${
+                activeMainTab === 'academic'
+                  ? 'bg-black text-white dark:bg-white dark:text-black border-black dark:border-white shadow-xs font-bold ring-2 ring-indigo-500/20'
+                  : 'bg-indigo-50/90 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-300 border-indigo-200/80 dark:border-indigo-800/60 hover:bg-indigo-100 dark:hover:bg-indigo-900/60'
+              }`}
+              title="Espacio Académico (Cursos, Capacidad, Temarios, Pasos, Sala Meet & Automatizaciones)"
+            >
+              <GraduationCap className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+              <span>Espacio Académico</span>
+              <span
+                className={`text-[10px] px-2 py-0.5 rounded-full font-mono font-medium ${
+                  activeMainTab === 'academic'
+                    ? 'bg-white/20 dark:bg-black/20 text-white dark:text-black'
+                    : 'bg-indigo-100 dark:bg-indigo-900/60 text-indigo-800 dark:text-indigo-200'
+                }`}
+              >
+                6 Módulos
+              </span>
+            </button>
           </div>
 
-          {/* Master View Switcher */}
-          <div className="flex items-center gap-1 p-1 bg-white dark:bg-[#1E1E22] rounded-2xl sm:rounded-full border border-gray-200/80 dark:border-neutral-700 shadow-2xs self-stretch sm:self-auto overflow-x-auto">
+          {/* Master View Switcher (Homogenized Appearance) */}
+          <div className="flex items-center gap-1 p-1 bg-white dark:bg-[#1E1E22] rounded-2xl border border-gray-200/80 dark:border-neutral-700 shadow-2xs self-stretch lg:self-auto overflow-x-auto no-scrollbar">
             <button
               onClick={() => setActiveMainTab('crm')}
-              className={`px-3.5 py-1.5 rounded-xl sm:rounded-full text-xs font-medium transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap shrink-0 ${
+              className={`px-3.5 py-2 rounded-xl text-xs font-medium transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap shrink-0 ${
                 activeMainTab === 'crm'
-                  ? 'bg-black dark:bg-white text-white dark:text-black shadow-xs'
-                  : 'text-gray-600 dark:text-neutral-400 hover:text-black dark:hover:text-white hover:bg-gray-100/60 dark:hover:bg-neutral-800/60'
+                  ? 'bg-black dark:bg-white text-white dark:text-black shadow-xs font-semibold'
+                  : 'text-neutral-600 dark:text-neutral-400 hover:text-black dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-neutral-800'
               }`}
             >
               <Kanban className="w-3.5 h-3.5" />
               <span>Pipeline CRM</span>
               <span
-                className={`text-[10px] px-1.5 py-0.5 rounded-full font-semibold ${
+                className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono font-medium ${
                   activeMainTab === 'crm'
                     ? 'bg-white/20 dark:bg-black/20 text-white dark:text-black'
-                    : 'bg-gray-100 dark:bg-neutral-800 text-gray-600 dark:text-neutral-400'
+                    : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400'
                 }`}
               >
                 {prospects.length}
@@ -385,19 +416,19 @@ export const CoachDashboard: React.FC<CoachDashboardProps> = ({
 
             <button
               onClick={() => setActiveMainTab('clients')}
-              className={`px-3.5 py-1.5 rounded-xl sm:rounded-full text-xs font-medium transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap shrink-0 ${
+              className={`px-3.5 py-2 rounded-xl text-xs font-medium transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap shrink-0 ${
                 activeMainTab === 'clients'
-                  ? 'bg-black dark:bg-white text-white dark:text-black shadow-xs'
-                  : 'text-gray-600 dark:text-neutral-400 hover:text-black dark:hover:text-white hover:bg-gray-100/60 dark:hover:bg-neutral-800/60'
+                  ? 'bg-black dark:bg-white text-white dark:text-black shadow-xs font-semibold'
+                  : 'text-neutral-600 dark:text-neutral-400 hover:text-black dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-neutral-800'
               }`}
             >
               <Users className="w-3.5 h-3.5" />
               <span>Clientes Ancla</span>
               <span
-                className={`text-[10px] px-1.5 py-0.5 rounded-full font-semibold ${
+                className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono font-medium ${
                   activeMainTab === 'clients'
                     ? 'bg-white/20 dark:bg-black/20 text-white dark:text-black'
-                    : 'bg-gray-100 dark:bg-neutral-800 text-gray-600 dark:text-neutral-400'
+                    : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400'
                 }`}
               >
                 {clients.length}
@@ -406,70 +437,55 @@ export const CoachDashboard: React.FC<CoachDashboardProps> = ({
 
             <button
               onClick={() => setActiveMainTab('payments')}
-              className={`px-3.5 py-1.5 rounded-xl sm:rounded-full text-xs font-medium transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap shrink-0 ${
+              className={`px-3.5 py-2 rounded-xl text-xs font-medium transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap shrink-0 ${
                 activeMainTab === 'payments'
                   ? 'bg-black dark:bg-white text-white dark:text-black shadow-xs font-semibold'
-                  : 'text-gray-600 dark:text-neutral-400 hover:text-black dark:hover:text-white hover:bg-gray-100/60 dark:hover:bg-neutral-800/60'
+                  : 'text-neutral-600 dark:text-neutral-400 hover:text-black dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-neutral-800'
               }`}
             >
               <Banknote className="w-3.5 h-3.5 text-amber-500" />
               <span>Validación Pagos</span>
               {pendingPaymentCount > 0 ? (
-                <span className="text-[10px] px-1.5 py-0.5 rounded-full font-bold bg-amber-500 text-white animate-pulse">
+                <span className="text-[10px] px-1.5 py-0.2 rounded-full font-mono font-bold bg-amber-500 text-white animate-pulse">
                   {pendingPaymentCount}
                 </span>
               ) : (
-                <span className="text-[10px] px-1.5 py-0.5 rounded-full font-semibold bg-gray-100 dark:bg-neutral-800 text-gray-600 dark:text-neutral-400">
+                <span className="text-[10px] px-1.5 py-0.2 rounded-full font-mono font-medium bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400">
                   {paymentRequests.length}
                 </span>
               )}
             </button>
 
             <button
-              onClick={() => setActiveMainTab('events')}
-              className={`px-3.5 py-1.5 rounded-xl sm:rounded-full text-xs font-medium transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap shrink-0 ${
-                activeMainTab === 'events'
-                  ? 'bg-black dark:bg-white text-white dark:text-black shadow-xs'
-                  : 'text-gray-600 dark:text-neutral-400 hover:text-black dark:hover:text-white hover:bg-gray-100/60 dark:hover:bg-neutral-800/60'
-              }`}
-            >
-              <Calendar className="w-3.5 h-3.5" />
-              <span>Programas & Eventos</span>
-              <span
-                className={`text-[10px] px-1.5 py-0.5 rounded-full font-semibold ${
-                  activeMainTab === 'events'
-                    ? 'bg-white/20 dark:bg-black/20 text-white dark:text-black'
-                    : 'bg-gray-100 dark:bg-neutral-800 text-gray-600 dark:text-neutral-400'
-                }`}
-              >
-                {programs.length + cronogramaEvents.length}
-              </span>
-            </button>
-
-            <button
               onClick={() => setActiveMainTab('workspace')}
-              className={`px-3.5 py-1.5 rounded-xl sm:rounded-full text-xs font-medium transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap shrink-0 ${
+              className={`px-3.5 py-2 rounded-xl text-xs font-medium transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap shrink-0 ${
                 activeMainTab === 'workspace'
                   ? 'bg-black dark:bg-white text-white dark:text-black shadow-xs font-semibold'
-                  : 'text-gray-600 dark:text-neutral-400 hover:text-black dark:hover:text-white hover:bg-gray-100/60 dark:hover:bg-neutral-800/60'
+                  : 'text-neutral-600 dark:text-neutral-400 hover:text-black dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-neutral-800'
               }`}
             >
               <HardDrive className="w-3.5 h-3.5 text-emerald-500" />
-              <span>Google Workspace Hub</span>
+              <span>Google Workspace</span>
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
             </button>
 
             <button
               onClick={() => setActiveMainTab('gemini')}
-              className={`px-3.5 py-1.5 rounded-xl sm:rounded-full text-xs font-medium transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap shrink-0 ${
+              className={`px-3.5 py-2 rounded-xl text-xs font-medium transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap shrink-0 ${
                 activeMainTab === 'gemini'
                   ? 'bg-black dark:bg-white text-white dark:text-black shadow-xs font-semibold'
-                  : 'text-gray-600 dark:text-neutral-400 hover:text-black dark:hover:text-white hover:bg-gray-100/60 dark:hover:bg-neutral-800/60'
+                  : 'text-neutral-600 dark:text-neutral-400 hover:text-black dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-neutral-800'
               }`}
             >
-              <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+              <Sparkles className="w-3.5 h-3.5 text-purple-500" />
               <span>Gemini 3.7 Copiloto</span>
-              <span className="px-1.5 py-0.2 rounded-full bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 text-[10px] font-bold">
+              <span
+                className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono font-bold ${
+                  activeMainTab === 'gemini'
+                    ? 'bg-white/20 dark:bg-black/20 text-white dark:text-black'
+                    : 'bg-purple-100 dark:bg-purple-950/60 text-purple-800 dark:text-purple-300'
+                }`}
+              >
                 IA
               </span>
             </button>
@@ -519,7 +535,10 @@ export const CoachDashboard: React.FC<CoachDashboardProps> = ({
             setActiveMainTab('clients');
             setClientsViewMode('workstation');
           }}
-          onOpenMakeModal={() => setShowMakeModal(true)}
+          onOpenMakeModal={() => {
+            setAcademicInitialSubTab('automations');
+            setActiveMainTab('academic');
+          }}
           onOpenRegistrationPortal={onOpenRegistrationPortal}
         />
       ) : activeMainTab === 'payments' ? (
@@ -556,7 +575,10 @@ export const CoachDashboard: React.FC<CoachDashboardProps> = ({
               setClientsViewMode('directory');
             }}
             onGoToCRM={() => setActiveMainTab('crm')}
-            onGoToEvents={() => setActiveMainTab('events')}
+            onGoToEvents={() => {
+              setAcademicInitialSubTab('meet_workshops');
+              setActiveMainTab('academic');
+            }}
           />
 
           {/* View Mode Switcher Header */}
@@ -665,17 +687,11 @@ export const CoachDashboard: React.FC<CoachDashboardProps> = ({
         </div>
       ) : activeMainTab === 'events' ? (
         /* ========================================================================= */
-        /* VIEW 3: GESTIÓN INTEGRAL DE PROGRAMAS, CUPOS, PARTICIPANTES Y EVENTOS   */
+        /* VIEW 3: GESTIÓN INTEGRAL DE SALA MEET & TALLERES (ACADÉMICO)              */
         /* ========================================================================= */
-        <ProgramsAndEventsManager
-          events={cronogramaEvents}
-          programs={programs}
-          registrations={eventRegistrations}
-          onRefreshEvents={handleRefreshEvents}
-          onRefreshPrograms={handleRefreshPrograms}
-          onRefreshRegistrations={handleRefreshRegistrations}
-          onOpenRegistrationPortal={onOpenRegistrationPortal}
-        />
+        <div className="flex-1 flex flex-col p-4 sm:p-8 lg:p-10 max-w-7xl mx-auto w-full space-y-6">
+          <AdminAcademicManager initialSubTab="meet_workshops" />
+        </div>
       ) : activeMainTab === 'workspace' ? (
         /* ========================================================================= */
         /* VIEW 4: GOOGLE WORKSPACE HUB (DRIVE, SHEETS, FORMS, CALENDAR & MEET)     */
@@ -748,6 +764,13 @@ export const CoachDashboard: React.FC<CoachDashboardProps> = ({
               }
             }}
           />
+        </div>
+      ) : activeMainTab === 'academic' ? (
+        /* ========================================================================= */
+        /* VIEW 6: ESPACIO ADMINISTRADOR ACADÉMICO (CURSOS, TEMARIOS, PASOS, PREGUNTAS) */
+        /* ========================================================================= */
+        <div className="flex-1 flex flex-col p-4 sm:p-8 lg:p-10 max-w-7xl mx-auto w-full space-y-6">
+          <AdminAcademicManager initialSubTab={academicInitialSubTab} />
         </div>
       ) : null}
 

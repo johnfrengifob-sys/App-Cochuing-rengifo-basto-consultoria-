@@ -2,11 +2,9 @@ import React, { useState, useRef, useEffect } from 'react';
 import { User } from '../types';
 import {
   LogOut,
-  Sliders,
   Sparkles,
   ShieldCheck,
   Lock,
-  Video,
   ChevronDown,
   ChevronRight,
   UserX,
@@ -146,20 +144,6 @@ export const Header: React.FC<HeaderProps> = ({
             </div>
           )}
 
-          {/* Direct Video Conferences & Workshops Meet Link modal trigger */}
-          {onOpenVideoConferences && (
-            <button
-              id="header-meet-button"
-              onClick={onOpenVideoConferences}
-              title="Enlaces para Videoconferencias & Talleres (Google Meet)"
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/20 text-xs font-medium text-blue-700 dark:text-blue-400 transition-all cursor-pointer shadow-2xs"
-            >
-              <Video className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
-              <span className="hidden sm:inline">Salas Meet & Talleres</span>
-              <span className="sm:hidden">Meet</span>
-            </button>
-          )}
-
           {/* Quick Pre-Registration Portal trigger: STRICTLY FOR COACH ONLY */}
           {isCoach && onOpenRegistrationPortal && (
             <button
@@ -201,18 +185,6 @@ export const Header: React.FC<HeaderProps> = ({
 
           {/* Theme Toggle Button */}
           <ThemeToggle variant="button" />
-
-          {/* Automation & Make Settings: STRICTLY EXCLUSIVE to Coach / Administrator */}
-          {isCoach && onOpenSettings && (
-            <button
-              id="header-settings-button"
-              onClick={onOpenSettings}
-              title="Configuración de Automatizaciones & Make (Exclusivo Administrador)"
-              className="p-2 sm:p-2.5 rounded-full text-gray-500 dark:text-neutral-400 hover:text-black dark:hover:text-white hover:bg-[#F9F9F9] dark:hover:bg-[#1E1E22] transition-all cursor-pointer"
-            >
-              <Sliders className="w-4 h-4 stroke-[1.5]" />
-            </button>
-          )}
 
           {/* Active User Card with Dropdown Menu for Participants */}
           <div ref={menuRef} className="relative pl-2 sm:pl-3 border-l border-gray-100 dark:border-neutral-800">

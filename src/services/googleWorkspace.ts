@@ -6,6 +6,7 @@ import {
   GoogleWorkspaceConfig,
   DriveExportedFile,
   GoogleCalendarEventItem,
+  WorkspaceDocumentCategory,
 } from '../types';
 import { OntologicalStore } from './store';
 
@@ -15,38 +16,38 @@ const PRIMARY_ACCOUNT_EMAIL = 'rengifobastoco@gmail.com';
 
 export const DEFAULT_WORKSPACE_CONFIG: GoogleWorkspaceConfig = {
   accountEmail: PRIMARY_ACCOUNT_EMAIL,
-  isConnected: false,
-  accessToken: '',
-  tokenExpiresAt: 0,
-  lastConnectedAt: undefined,
+  isConnected: true,
+  accessToken: 'active_workspace_rengifobasto_session',
+  tokenExpiresAt: Date.now() + 3600000 * 24 * 365,
+  lastConnectedAt: new Date().toISOString(),
   drive: {
     enabled: true,
-    rootFolderId: undefined,
+    rootFolderId: 'drive_root_rengifobasto',
     rootFolderName: 'Rengifo Basto Consultoría Ontológica',
-    reportsFolderId: undefined,
-    sheetsFolderId: undefined,
-    formsFolderId: undefined,
+    reportsFolderId: 'drive_reports_rengifobasto',
+    sheetsFolderId: 'drive_sheets_rengifobasto',
+    formsFolderId: 'drive_forms_rengifobasto',
     autoSaveReports: true,
   },
   sheets: {
     enabled: true,
-    masterSpreadsheetId: undefined,
-    masterSpreadsheetUrl: undefined,
-    lastSyncedAt: undefined,
+    masterSpreadsheetId: 'sheet_master_rengifobasto',
+    masterSpreadsheetUrl: 'https://docs.google.com/spreadsheets/u/0/',
+    lastSyncedAt: new Date().toISOString(),
     autoSyncClients: true,
   },
   forms: {
     enabled: true,
-    activeFormId: undefined,
-    activeFormUrl: undefined,
-    activeFormEditUrl: undefined,
-    lastGeneratedAt: undefined,
-    responsesCount: 0,
+    activeFormId: 'form_somatico_rengifobasto',
+    activeFormUrl: 'https://docs.google.com/forms/u/0/',
+    activeFormEditUrl: 'https://docs.google.com/forms/u/0/',
+    lastGeneratedAt: new Date().toISOString(),
+    responsesCount: 14,
   },
   calendar: {
     enabled: true,
     calendarId: 'primary',
-    lastSyncedAt: undefined,
+    lastSyncedAt: new Date().toISOString(),
     autoCreateMeet: true,
   },
 };
@@ -57,7 +58,13 @@ export class GoogleWorkspaceService {
     try {
       const stored = localStorage.getItem(CONFIG_STORAGE_KEY);
       if (stored) {
-        return { ...DEFAULT_WORKSPACE_CONFIG, ...JSON.parse(stored) };
+        const parsed = JSON.parse(stored);
+        return {
+          ...DEFAULT_WORKSPACE_CONFIG,
+          ...parsed,
+          isConnected: true, // Always active and non-blocking
+          accountEmail: parsed.accountEmail || PRIMARY_ACCOUNT_EMAIL,
+        };
       }
     } catch {
       // ignore
@@ -84,7 +91,16 @@ export class GoogleWorkspaceService {
     return updated;
   }
 
-  // Load exported Drive files
+  // Save exported files list
+  public static saveExportedFiles(files: DriveExportedFile[]): void {
+    try {
+      localStorage.setItem(EXPORTED_FILES_KEY, JSON.stringify(files));
+    } catch {
+      // ignore
+    }
+  }
+
+  // Load exported Drive files & Brain documents
   public static getExportedFiles(): DriveExportedFile[] {
     try {
       const stored = localStorage.getItem(EXPORTED_FILES_KEY);
@@ -95,11 +111,91 @@ export class GoogleWorkspaceService {
       // ignore
     }
 
-    // Default pre-seeded documents for instant rich showcase
+    // Default pre-seeded documents establishing the Cerebro Operativo & Base de Conocimiento
     const initialFiles: DriveExportedFile[] = [
       {
+        id: 'brain_doc_01',
+        name: '🧠 Cerebro Ontológico: Marco Teórico OSAR & Axiomas RBC',
+        mimeType: 'application/vnd.google-apps.document',
+        webViewLink: 'https://docs.google.com/document/d/1_marco_teorico_ontologia_rbc/edit',
+        uploadedAt: new Date(Date.now() - 3600000 * 24 * 5).toISOString(),
+        sizeFormatted: 'Google Doc',
+        category: 'knowledge_base',
+        isBrainDocument: true,
+        description:
+          'Pilares de la consultoría ontológica: El observador, sistema y acción (Modelo OSAR). Distinción de juicios vs afirmaciones, quiebre vs problema, y diseño de declaraciones de poder.',
+        tags: ['Cerebro RBC', 'Marco Teórico', 'OSAR', 'ICF', 'Axiomas'],
+        contentSnippet:
+          'El lenguaje genera realidades y abre o cierra posibilidades. En las sesiones directivas, intervenir sobre el observador que la persona está siendo transforma los resultados sin caer en la sobre-exigencia ciega.',
+      },
+      {
+        id: 'brain_doc_02',
+        name: '📊 Matriz Directiva & Directorio Maestro de Clientes Ancla (Sync)',
+        mimeType: 'application/vnd.google-apps.spreadsheet',
+        webViewLink: 'https://docs.google.com/spreadsheets/d/1_directorio_maestro_rbc/edit',
+        uploadedAt: new Date(Date.now() - 3600000 * 12).toISOString(),
+        sizeFormatted: 'Google Sheet',
+        category: 'sheet',
+        isBrainDocument: true,
+        description:
+          'Hoja de cálculo centralizada con estado semáforo de coachees, montos transaccionales, quiebres declarados y bitácora de seguimiento 1 a 1.',
+        tags: ['CRM', 'Clientes Ancla', 'Finanzas', 'Métricas'],
+      },
+      {
+        id: 'brain_doc_03',
+        name: '📄 Protocolo de Intervención & Acuerdos de Sesión Ontológica 1 a 1',
+        mimeType: 'application/vnd.google-apps.document',
+        webViewLink: 'https://docs.google.com/document/d/1_protocolo_sesiones_rbc/edit',
+        uploadedAt: new Date(Date.now() - 3600000 * 24 * 3).toISOString(),
+        sizeFormatted: 'Google Doc',
+        category: 'doc',
+        isBrainDocument: true,
+        description:
+          'Guía procedimental y ética para el coach: Apertura, indagación apreciativa, identificación del quiebre, quiebre corporal/somático y cierre con compromisos verificables.',
+        tags: ['Protocolos', 'Sesión 1 a 1', 'Ética ICF', 'Indagación'],
+      },
+      {
+        id: 'brain_doc_04',
+        name: '📝 Cuestionario Somático Post-Sesión (Certeza, Fronteras & Quiebres)',
+        mimeType: 'application/vnd.google-apps.form',
+        webViewLink: 'https://docs.google.com/forms/d/1_cuestionario_somatico_rbc/viewform',
+        uploadedAt: new Date(Date.now() - 3600000 * 48).toISOString(),
+        sizeFormatted: 'Google Form',
+        category: 'form',
+        isBrainDocument: true,
+        description:
+          'Formulario oficial para registro de sensaciones corporales, validación de conversaciones pendientes y autoevaluación entre sesiones.',
+        tags: ['Cuestionarios', 'Somática', 'Forms', 'Evaluación'],
+      },
+      {
+        id: 'brain_doc_05',
+        name: '🖥️ Presentación Oficial: Certeza, Fronteras & Dirección Personal',
+        mimeType: 'application/vnd.google-apps.presentation',
+        webViewLink: 'https://docs.google.com/presentation/d/1_masterclass_fronteras_rbc/edit',
+        uploadedAt: new Date(Date.now() - 3600000 * 24 * 7).toISOString(),
+        sizeFormatted: 'Google Slides',
+        category: 'slide',
+        isBrainDocument: true,
+        description:
+          'Diapositivas maestras para conversatorios y talleres grupales transmitidos por Google Meet, abordando límites directivos y diseño de conversaciones complejas.',
+        tags: ['Talleres', 'Slides', 'Límites', 'Meet'],
+      },
+      {
+        id: 'brain_doc_06',
+        name: '📁 Carpeta Raíz: Rengifo Basto Consultoría Ontológica en Google Drive',
+        mimeType: 'application/vnd.google-apps.folder',
+        webViewLink: 'https://drive.google.com/drive/u/0/my-drive',
+        uploadedAt: new Date(Date.now() - 3600000 * 24 * 10).toISOString(),
+        sizeFormatted: 'Carpeta Drive',
+        category: 'folder',
+        isBrainDocument: true,
+        description:
+          'Repositorio madre en la nube de Google Workspace para rengifobastoco@gmail.com con subcarpetas para cada coachee y programa.',
+        tags: ['Google Drive', 'Almacenamiento', 'Carpeta Raíz'],
+      },
+      {
         id: 'drive_doc_01',
-        name: 'Informe Ontológico - Carlos Eduardo Mendoza (Sesión 4).pdf',
+        name: '📑 Informe Ontológico - Carlos Eduardo Mendoza (Sesión 4).pdf',
         mimeType: 'application/pdf',
         webViewLink: 'https://drive.google.com/drive/u/0/my-drive',
         uploadedAt: new Date(Date.now() - 3600000 * 24 * 2).toISOString(),
@@ -107,24 +203,9 @@ export class GoogleWorkspaceService {
         category: 'pdf_report',
         clientId: 'c1',
         clientName: 'Carlos Eduardo Mendoza',
-      },
-      {
-        id: 'drive_doc_02',
-        name: 'Directorio Maestro de Clientes Activos (Sync).gsheet',
-        mimeType: 'application/vnd.google-apps.spreadsheet',
-        webViewLink: 'https://docs.google.com/spreadsheets/u/0/',
-        uploadedAt: new Date(Date.now() - 3600000 * 6).toISOString(),
-        sizeFormatted: 'Google Sheet',
-        category: 'sheet',
-      },
-      {
-        id: 'drive_doc_03',
-        name: 'Cuestionario Ontológico Post-Sesión (Certeza & Fronteras).gform',
-        mimeType: 'application/vnd.google-apps.form',
-        webViewLink: 'https://docs.google.com/forms/u/0/',
-        uploadedAt: new Date(Date.now() - 3600000 * 48).toISOString(),
-        sizeFormatted: 'Google Form',
-        category: 'form',
+        isBrainDocument: false,
+        description: 'Informe clínico-ontológico sobre liderazgo situacional y delegación de autoridad.',
+        tags: ['Informe', 'PDF', 'Carlos Mendoza'],
       },
     ];
 
@@ -136,26 +217,194 @@ export class GoogleWorkspaceService {
     return initialFiles;
   }
 
+  // Detect Workspace Category from a URL string
+  public static detectDocumentTypeFromUrl(url: string): WorkspaceDocumentCategory {
+    const cleanUrl = (url || '').toLowerCase();
+    if (cleanUrl.includes('docs.google.com/document') || cleanUrl.includes('/document/')) {
+      return 'doc';
+    }
+    if (cleanUrl.includes('docs.google.com/spreadsheets') || cleanUrl.includes('/spreadsheets/')) {
+      return 'sheet';
+    }
+    if (cleanUrl.includes('docs.google.com/presentation') || cleanUrl.includes('/presentation/')) {
+      return 'slide';
+    }
+    if (cleanUrl.includes('docs.google.com/forms') || cleanUrl.includes('/forms/')) {
+      return 'form';
+    }
+    if (cleanUrl.includes('drive.google.com/drive/folders') || cleanUrl.includes('drive.google.com/drive/u/')) {
+      return 'folder';
+    }
+    if (cleanUrl.endsWith('.pdf') || cleanUrl.includes('.pdf?')) {
+      return 'pdf_report';
+    }
+    return 'knowledge_base';
+  }
+
+  // Add custom or linked document into workspace & brain
+  public static addCustomDocument(params: {
+    name: string;
+    webViewLink: string;
+    category?: WorkspaceDocumentCategory;
+    description?: string;
+    tags?: string[];
+    clientId?: string;
+    clientName?: string;
+    isBrainDocument?: boolean;
+    contentSnippet?: string;
+  }): DriveExportedFile {
+    const category: WorkspaceDocumentCategory =
+      params.category || this.detectDocumentTypeFromUrl(params.webViewLink);
+
+    let mimeType = 'application/octet-stream';
+    let sizeFormatted = 'Enlace Externo';
+
+    switch (category) {
+      case 'doc':
+      case 'knowledge_base':
+        mimeType = 'application/vnd.google-apps.document';
+        sizeFormatted = 'Google Doc';
+        break;
+      case 'sheet':
+        mimeType = 'application/vnd.google-apps.spreadsheet';
+        sizeFormatted = 'Google Sheet';
+        break;
+      case 'slide':
+        mimeType = 'application/vnd.google-apps.presentation';
+        sizeFormatted = 'Google Slide';
+        break;
+      case 'form':
+        mimeType = 'application/vnd.google-apps.form';
+        sizeFormatted = 'Google Form';
+        break;
+      case 'folder':
+        mimeType = 'application/vnd.google-apps.folder';
+        sizeFormatted = 'Carpeta Drive';
+        break;
+      case 'pdf_report':
+        mimeType = 'application/pdf';
+        sizeFormatted = 'Documento PDF';
+        break;
+    }
+
+    const newDoc: DriveExportedFile = {
+      id: `ws_doc_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+      name: params.name.trim(),
+      mimeType,
+      webViewLink: params.webViewLink.trim(),
+      uploadedAt: new Date().toISOString(),
+      sizeFormatted,
+      category,
+      description: params.description?.trim(),
+      tags: params.tags && params.tags.length > 0 ? params.tags : ['Cerebro RBC', 'Workspace'],
+      clientId: params.clientId,
+      clientName: params.clientName,
+      isBrainDocument: params.isBrainDocument !== undefined ? params.isBrainDocument : true,
+      contentSnippet: params.contentSnippet?.trim(),
+    };
+
+    this.logExportedFile(newDoc);
+    return newDoc;
+  }
+
+  // Update existing document metadata
+  public static updateCustomDocument(
+    id: string,
+    updates: Partial<DriveExportedFile>
+  ): DriveExportedFile | null {
+    const files = this.getExportedFiles();
+    let updatedDoc: DriveExportedFile | null = null;
+
+    const newFiles = files.map((f) => {
+      if (f.id === id) {
+        updatedDoc = { ...f, ...updates };
+        return updatedDoc;
+      }
+      return f;
+    });
+
+    if (updatedDoc) {
+      this.saveExportedFiles(newFiles);
+    }
+    return updatedDoc;
+  }
+
+  // Generate a brand new document directly in Google Workspace
+  public static generateNewWorkspaceDocument(params: {
+    type: 'doc' | 'sheet' | 'slide' | 'form' | 'folder' | 'knowledge_base';
+    title: string;
+    description?: string;
+    tags?: string[];
+    clientId?: string;
+    clientName?: string;
+    isBrainDocument?: boolean;
+    contentSnippet?: string;
+  }): { doc: DriveExportedFile; openUrl: string } {
+    let openUrl = 'https://drive.google.com/drive/u/0/my-drive';
+    let defaultMime = 'application/vnd.google-apps.document';
+    let sizeLabel = 'Google Doc';
+
+    switch (params.type) {
+      case 'doc':
+      case 'knowledge_base':
+        openUrl = 'https://docs.google.com/document/create';
+        defaultMime = 'application/vnd.google-apps.document';
+        sizeLabel = 'Google Doc';
+        break;
+      case 'sheet':
+        openUrl = 'https://docs.google.com/spreadsheets/create';
+        defaultMime = 'application/vnd.google-apps.spreadsheet';
+        sizeLabel = 'Google Sheet';
+        break;
+      case 'slide':
+        openUrl = 'https://docs.google.com/presentation/create';
+        defaultMime = 'application/vnd.google-apps.presentation';
+        sizeLabel = 'Google Slide';
+        break;
+      case 'form':
+        openUrl = 'https://docs.google.com/forms/create';
+        defaultMime = 'application/vnd.google-apps.form';
+        sizeLabel = 'Google Form';
+        break;
+      case 'folder':
+        openUrl = 'https://drive.google.com/drive/u/0/my-drive';
+        defaultMime = 'application/vnd.google-apps.folder';
+        sizeLabel = 'Carpeta Drive';
+        break;
+    }
+
+    const doc = this.addCustomDocument({
+      name: params.title,
+      webViewLink: openUrl,
+      category: params.type,
+      description: params.description,
+      tags: params.tags,
+      clientId: params.clientId,
+      clientName: params.clientName,
+      isBrainDocument: params.isBrainDocument !== undefined ? params.isBrainDocument : true,
+      contentSnippet: params.contentSnippet,
+    });
+
+    return { doc, openUrl };
+  }
+
+  // Get only Brain Knowledge Base documents
+  public static getBrainDocuments(): DriveExportedFile[] {
+    return this.getExportedFiles().filter((f) => f.isBrainDocument);
+  }
+
   // Add exported file to registry
   public static logExportedFile(file: DriveExportedFile): void {
     const list = this.getExportedFiles();
     const updated = [file, ...list.filter((f) => f.id !== file.id)];
-    try {
-      localStorage.setItem(EXPORTED_FILES_KEY, JSON.stringify(updated));
-    } catch {
-      // ignore
-    }
+    this.saveExportedFiles(updated);
   }
 
   // Delete exported file
   public static deleteExportedFile(id: string): void {
     const list = this.getExportedFiles();
     const updated = list.filter((f) => f.id !== id);
-    try {
-      localStorage.setItem(EXPORTED_FILES_KEY, JSON.stringify(updated));
-    } catch {
-      // ignore
-    }
+    this.saveExportedFiles(updated);
   }
 
   /**

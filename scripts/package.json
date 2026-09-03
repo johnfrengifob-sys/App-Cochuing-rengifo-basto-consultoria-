@@ -1,0 +1,19 @@
+{
+  "name": "firebase-drive-archiver-pipeline",
+  "version": "1.0.0",
+  "description": "Pipeline de archivado para cuestionarios PDF desde Cloud Storage & Firestore hacia Google Drive API",
+  "main": "firebase-gcs-drive-archiver.ts",
+  "scripts": {
+    "archive:run": "tsx firebase-gcs-drive-archiver.ts",
+    "archive:cron": "RUN_ARCHIVER_CLI=true tsx firebase-gcs-drive-archiver.ts"
+  },
+  "dependencies": {
+    "firebase-admin": "^13.1.0",
+    "googleapis": "^146.0.0",
+    "@google-cloud/storage": "^7.15.0"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.0",
+    "typescript": "^5.8.0"
+  }
+}

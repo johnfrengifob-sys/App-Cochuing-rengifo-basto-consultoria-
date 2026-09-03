@@ -98,6 +98,7 @@ export interface FormSubmission {
   bodyEmotion: string; // Respuesta a "¿Qué emoción tiene una fuerte presencia en tu cuerpo hoy?"
   reflections: string;
   levelSpecificAnswer?: string; // Respuesta a la pregunta específica del nivel
+  dynamicAnswers?: Record<string, string | number>; // Dynamic questionnaire responses
   submittedAt: string; // ISO string
 }
 
@@ -111,6 +112,21 @@ export interface LevelReinforcementPack {
   keyPractices: string[];
   selfCareProtocol: string;
   reflectiveQuestions: string[];
+}
+
+export interface WorkshopRoadmapStep {
+  id: string;
+  stepNumber: number;
+  title: string;
+  durationMinutes: number;
+  phaseType:
+    | 'Centramiento & Apertura'
+    | 'Marco Teórico Ontológico'
+    | 'Dinámica Vivencial'
+    | 'Práctica Somática'
+    | 'Cierre & Acuerdos';
+  description: string;
+  keyInstructions?: string[];
 }
 
 export interface ProgramNodeInfo {
@@ -140,6 +156,41 @@ export interface ProgramNodeInfo {
     pages: string;
     description: string;
   }[];
+  roadmapSteps?: WorkshopRoadmapStep[];
+}
+
+export type QuestionType =
+  | 'textarea'
+  | 'text'
+  | 'rating_scale'
+  | 'select'
+  | 'boolean';
+
+export interface QuestionnaireQuestion {
+  id: string;
+  questionnaireId: string;
+  order: number;
+  label: string;
+  placeholder?: string;
+  helperText?: string;
+  type: QuestionType;
+  required: boolean;
+  category?: 'lingüístico' | 'emocional' | 'somático' | 'metodológico' | 'acuerdos' | 'general';
+  options?: string[];
+  scaleMin?: number;
+  scaleMax?: number;
+  scaleMinLabel?: string;
+  scaleMaxLabel?: string;
+}
+
+export interface DynamicQuestionnaire {
+  id: string;
+  targetType: 'workshop_node' | 'session' | 'post_session' | 'general';
+  targetStep?: number;
+  title: string;
+  description: string;
+  questions: QuestionnaireQuestion[];
+  updatedAt: string;
 }
 
 export type PulseFlag = 'Green' | 'Yellow' | 'Red';
@@ -201,13 +252,13 @@ export interface OntologicalProgram {
   totalCapacity: number; // cupos máximos totales
   availableSpots: number; // cupos disponibles restantes
   enrolledCount?: number; // cantidad de participantes activos
-  status: 'active' | 'enrolling' | 'completed' | 'draft';
+  status: 'active' | 'enrolling' | 'completed' | 'draft' | string;
   description: string;
   keyOutcomes: string[];
   startDate?: string;
   displaySchedule?: string;
-  facilitator: string;
-  totalNodes: number;
+  facilitator?: string;
+  totalNodes?: number;
 }
 
 export interface CronogramaEvent {
@@ -270,6 +321,16 @@ export interface GoogleWorkspaceConfig {
   };
 }
 
+export type WorkspaceDocumentCategory =
+  | 'doc'
+  | 'sheet'
+  | 'slide'
+  | 'form'
+  | 'pdf_report'
+  | 'client_summary'
+  | 'folder'
+  | 'knowledge_base';
+
 export interface DriveExportedFile {
   id: string;
   name: string;
@@ -277,9 +338,13 @@ export interface DriveExportedFile {
   webViewLink: string;
   uploadedAt: string;
   sizeFormatted?: string;
-  category: 'pdf_report' | 'client_summary' | 'sheet' | 'form';
+  category: WorkspaceDocumentCategory;
+  description?: string;
+  tags?: string[];
   clientId?: string;
   clientName?: string;
+  isBrainDocument?: boolean;
+  contentSnippet?: string;
 }
 
 export interface GoogleCalendarEventItem {

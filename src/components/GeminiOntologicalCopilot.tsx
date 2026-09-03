@@ -18,8 +18,10 @@ import {
   FileText,
   Activity,
   HeartPulse,
+  Brain,
 } from 'lucide-react';
 import { GeminiService, GeminiChatMessage, GeminiRoleplayResult, GeminiMarketingResult } from '../services/geminiService';
+import { GoogleWorkspaceService } from '../services/googleWorkspace';
 import { User as UserType } from '../types';
 
 interface GeminiOntologicalCopilotProps {
@@ -211,6 +213,8 @@ export const GeminiOntologicalCopilot: React.FC<GeminiOntologicalCopilotProps> =
     'Ayúdame a redactar un "No" directivo limpio sin disculpas innecesarias.',
   ];
 
+  const brainDocs = GoogleWorkspaceService.getBrainDocuments();
+
   return (
     <div
       className={`bg-white dark:bg-[#151518] rounded-3xl border border-gray-200/80 dark:border-neutral-800 shadow-xs flex flex-col overflow-hidden ${className}`}
@@ -360,13 +364,33 @@ export const GeminiOntologicalCopilot: React.FC<GeminiOntologicalCopilotProps> =
             <div ref={messagesEndRef} />
           </div>
 
-          {/* Quick Prompts */}
-          <div className="px-4 py-2 bg-gray-50/50 dark:bg-neutral-900/30 border-t border-gray-100 dark:border-neutral-800/60 overflow-x-auto flex gap-2">
+          {/* Quick Prompts & Brain Knowledge pills */}
+          <div className="px-4 py-2 bg-gray-50/50 dark:bg-neutral-900/30 border-t border-gray-100 dark:border-neutral-800/60 overflow-x-auto flex items-center gap-2">
+            {brainDocs.length > 0 && (
+              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-purple-100 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 text-[10px] font-bold shrink-0 border border-purple-200 dark:border-purple-800/60">
+                <Brain className="w-3 h-3" />
+                <span>Cerebro Workspace ({brainDocs.length}):</span>
+              </span>
+            )}
+            {brainDocs.slice(0, 3).map((doc) => (
+              <button
+                key={doc.id}
+                onClick={() =>
+                  handleSendMessage(
+                    `Analiza este caso aplicando los axiomas y distinciones del documento "${doc.name}": ${doc.contentSnippet || doc.description || ''}`
+                  )
+                }
+                className="px-3 py-1 rounded-full bg-purple-50 dark:bg-purple-900/30 border border-purple-200 dark:border-purple-800 text-[11px] text-purple-800 dark:text-purple-200 hover:bg-purple-100 dark:hover:bg-purple-900/50 whitespace-nowrap cursor-pointer transition-all flex items-center gap-1 shrink-0"
+                title={`Consultar axiomas de ${doc.name}`}
+              >
+                <span>🧠 {doc.name.split(':')[0] || doc.name}</span>
+              </button>
+            ))}
             {PROMPT_SUGGESTIONS.map((p, idx) => (
               <button
                 key={idx}
                 onClick={() => handleSendMessage(p)}
-                className="px-3 py-1 rounded-full bg-white dark:bg-neutral-800 border border-gray-200/80 dark:border-neutral-700 text-[11px] text-gray-600 dark:text-neutral-300 hover:border-black dark:hover:border-white whitespace-nowrap cursor-pointer transition-all shadow-2xs"
+                className="px-3 py-1 rounded-full bg-white dark:bg-neutral-800 border border-gray-200/80 dark:border-neutral-700 text-[11px] text-gray-600 dark:text-neutral-300 hover:border-black dark:hover:border-white whitespace-nowrap cursor-pointer transition-all shadow-2xs shrink-0"
               >
                 {p}
               </button>

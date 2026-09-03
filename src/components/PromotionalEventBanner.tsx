@@ -205,9 +205,34 @@ export const PromotionalEventBanner: React.FC<PromotionalEventBannerProps> = ({
           id="participant-promotional-banner"
           className={`relative w-full rounded-3xl overflow-hidden border border-gray-200/80 dark:border-neutral-800 shadow-[0_8px_30px_rgba(0,0,0,0.06)] bg-[#0D0D0E] group transition-all duration-300 ${className}`}
         >
-          {/* Balanced 2-Zone Grid: Left Controls & Double-Sized Counter | Right Visible Workshop Poster Image */}
+          {/* Balanced 2-Zone Grid: Left Workshop Poster Image | Right Counter & Info */}
           <div className="grid grid-cols-1 lg:grid-cols-12 items-stretch">
-            {/* Left 7 Columns: Double-Sized Countdown, Short Legible Explanation, Minimalist Meet Button */}
+            {/* 1. PRIMERO LA IMAGEN DEL AFICHE */}
+            <div className="lg:col-span-5 relative bg-[#09090B] flex items-center justify-center p-3 sm:p-5 border-b lg:border-b-0 lg:border-r border-white/10">
+              <div
+                onClick={() => setShowImageModal(true)}
+                className="relative group/poster cursor-pointer overflow-hidden rounded-2xl w-full h-full min-h-[220px] sm:min-h-[260px] max-h-[340px] flex items-center justify-center shadow-lg border border-white/10 bg-black/40"
+                title="Clic para ver el afiche completo en alta resolución"
+              >
+                {/* Complete, Natural Unobscured Image */}
+                <img
+                  src={event.imageUrl}
+                  alt={event.title}
+                  referrerPolicy="no-referrer"
+                  className="w-full h-full object-cover sm:object-contain object-center group-hover/poster:scale-[1.02] transition-transform duration-500"
+                />
+
+                {/* Subtle Hover Action Pill */}
+                <div className="absolute inset-0 bg-black/20 group-hover/poster:bg-black/10 transition-colors pointer-events-none" />
+                
+                <div className="absolute bottom-3 right-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-black/75 group-hover/poster:bg-black/90 backdrop-blur-md border border-white/20 text-white text-[11px] font-medium shadow-md transition-all">
+                  <Maximize2 className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>Ampliar afiche</span>
+                </div>
+              </div>
+            </div>
+
+            {/* 2. LUEGO EL CONTADOR Y LA INFORMACIÓN */}
             <div className="lg:col-span-7 p-6 sm:p-7 md:p-8 flex flex-col justify-between space-y-6 text-left">
               {/* Header Badges */}
               <div className="flex items-center gap-2 flex-wrap">
@@ -220,10 +245,10 @@ export const PromotionalEventBanner: React.FC<PromotionalEventBannerProps> = ({
                 </span>
               </div>
 
-              {/* CONTADOR EN ESQUINA LATERAL IZQUIERDA: DOBLE DE TAMAÑO & MINIMALISTA */}
+              {/* CONTADOR EN VIVO */}
               {renderCountdown()}
 
-              {/* EXPLICACIÓN CORTA, MINIMALISTA, LEGIBLE Y PRECISA */}
+              {/* EXPLICACIÓN E INFORMACIÓN */}
               <div className="space-y-1.5 pt-1 border-t border-white/10">
                 <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-white tracking-tight leading-snug">
                   {event.title}
@@ -275,31 +300,6 @@ export const PromotionalEventBanner: React.FC<PromotionalEventBannerProps> = ({
                     ✓ Enlace de Meet copiado
                   </span>
                 )}
-              </div>
-            </div>
-
-            {/* Right 5 Columns: The Workshop Poster Image Displayed in Crisp, Balanced Clarity */}
-            <div className="lg:col-span-5 relative bg-[#09090B] flex items-center justify-center p-3 sm:p-5 border-t lg:border-t-0 lg:border-l border-white/10">
-              <div
-                onClick={() => setShowImageModal(true)}
-                className="relative group/poster cursor-pointer overflow-hidden rounded-2xl w-full h-full min-h-[200px] sm:min-h-[240px] max-h-[320px] flex items-center justify-center shadow-lg border border-white/10 bg-black/40"
-                title="Clic para ver el afiche completo en alta resolución"
-              >
-                {/* Complete, Natural Unobscured Image */}
-                <img
-                  src={event.imageUrl}
-                  alt={event.title}
-                  referrerPolicy="no-referrer"
-                  className="w-full h-full object-cover sm:object-contain object-center group-hover/poster:scale-[1.02] transition-transform duration-500"
-                />
-
-                {/* Subtle Hover Action Pill */}
-                <div className="absolute inset-0 bg-black/20 group-hover/poster:bg-black/10 transition-colors pointer-events-none" />
-                
-                <div className="absolute bottom-3 right-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-black/75 group-hover/poster:bg-black/90 backdrop-blur-md border border-white/20 text-white text-[11px] font-medium shadow-md transition-all">
-                  <Maximize2 className="w-3.5 h-3.5 text-emerald-400" />
-                  <span>Ampliar afiche</span>
-                </div>
               </div>
             </div>
           </div>
@@ -394,9 +394,34 @@ export const PromotionalEventBanner: React.FC<PromotionalEventBannerProps> = ({
         id="promotional-event-banner"
         className={`w-full rounded-3xl overflow-hidden border border-gray-200/80 dark:border-neutral-800 shadow-[0_8px_30px_rgba(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgba(0,0,0,0.3)] bg-[#0D0D0E] group transition-all duration-300 ${className}`}
       >
-        {/* Balanced Split Layout: Left Controls & 2x Counter | Right Visible Workshop Image */}
+        {/* Balanced Split Layout: Left Workshop Image | Right Counter & Info */}
         <div className="grid grid-cols-1 lg:grid-cols-12 items-stretch">
-          {/* Left 7 Columns: Double-sized counter + short precise explanation + Meet button */}
+          {/* 1. PRIMERO LA IMAGEN DEL AFICHE */}
+          <div className="lg:col-span-5 relative bg-[#09090B] flex items-center justify-center p-3 sm:p-6 border-b lg:border-b-0 lg:border-r border-white/10">
+            <div
+              onClick={() => setShowImageModal(true)}
+              className="relative group/poster cursor-pointer overflow-hidden rounded-2xl w-full h-full min-h-[240px] sm:min-h-[300px] max-h-[420px] flex items-center justify-center shadow-lg border border-white/10 bg-black/40"
+              title="Clic para ampliar y ver toda la información del afiche"
+            >
+              {/* Unobscured Workshop Poster Image */}
+              <img
+                src={event.imageUrl}
+                alt={event.title}
+                referrerPolicy="no-referrer"
+                className="w-full h-full object-cover sm:object-contain object-center group-hover/poster:scale-[1.02] transition-transform duration-500"
+              />
+
+              {/* Hover Badge */}
+              <div className="absolute inset-0 bg-black/20 group-hover/poster:bg-black/10 transition-colors pointer-events-none" />
+
+              <div className="absolute bottom-3.5 right-3.5 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-black/75 group-hover/poster:bg-black/90 backdrop-blur-md border border-white/20 text-white text-[11px] font-medium shadow-md transition-all">
+                <Maximize2 className="w-3.5 h-3.5 text-emerald-400" />
+                <span>Ampliar afiche completo</span>
+              </div>
+            </div>
+          </div>
+
+          {/* 2. LUEGO EL CONTADOR Y LA INFORMACIÓN */}
           <div className="lg:col-span-7 p-6 sm:p-8 flex flex-col justify-between space-y-6 text-left">
             {/* Top Badges */}
             <div className="flex items-center justify-between gap-3 flex-wrap">
@@ -411,10 +436,10 @@ export const PromotionalEventBanner: React.FC<PromotionalEventBannerProps> = ({
               </div>
             </div>
 
-            {/* CONTADOR EN ESQUINA LATERAL IZQUIERDA: DOBLE DE TAMAÑO & MINIMALISTA */}
+            {/* CONTADOR EN VIVO */}
             {renderCountdown()}
 
-            {/* EXPLICACIÓN CORTA, MINIMALISTA, LEGIBLE Y PRECISA */}
+            {/* INFORMACIÓN DEL EVENTO */}
             <div className="space-y-2 pt-1 border-t border-white/10">
               <div className="flex items-center gap-2 text-xs text-emerald-300 font-medium">
                 <Calendar className="w-3.5 h-3.5 text-emerald-400" />
@@ -490,31 +515,6 @@ export const PromotionalEventBanner: React.FC<PromotionalEventBannerProps> = ({
                 ✓ Enlace de Meet copiado al portapapeles
               </span>
             )}
-          </div>
-
-          {/* Right 5 Columns: The Workshop Poster Image Displayed Clearly */}
-          <div className="lg:col-span-5 relative bg-[#09090B] flex items-center justify-center p-3 sm:p-5 border-t lg:border-t-0 lg:border-l border-white/10">
-            <div
-              onClick={() => setShowImageModal(true)}
-              className="relative group/poster cursor-pointer overflow-hidden rounded-2xl w-full h-full min-h-[220px] sm:min-h-[280px] max-h-[380px] flex items-center justify-center shadow-lg border border-white/10 bg-black/40"
-              title="Clic para ampliar y ver toda la información del afiche"
-            >
-              {/* Unobscured Workshop Poster Image */}
-              <img
-                src={event.imageUrl}
-                alt={event.title}
-                referrerPolicy="no-referrer"
-                className="w-full h-full object-cover sm:object-contain object-center group-hover/poster:scale-[1.02] transition-transform duration-500"
-              />
-
-              {/* Hover Badge */}
-              <div className="absolute inset-0 bg-black/20 group-hover/poster:bg-black/10 transition-colors pointer-events-none" />
-
-              <div className="absolute bottom-3.5 right-3.5 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-black/75 group-hover/poster:bg-black/90 backdrop-blur-md border border-white/20 text-white text-[11px] font-medium shadow-md transition-all">
-                <Maximize2 className="w-3.5 h-3.5 text-emerald-400" />
-                <span>Ampliar afiche completo</span>
-              </div>
-            </div>
           </div>
         </div>
 

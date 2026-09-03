@@ -62,14 +62,17 @@ export const UnifiedWorkbookSpace: React.FC<UnifiedWorkbookSpaceProps> = ({
   const [activeMode, setActiveMode] = useState<'workshop' | 'session' | 'all'>(initialMode);
 
   // Workshop Questionnaire State
+  const programNodes = OntologicalStore.getProgramNodes();
   const activeNodeInfo: ProgramNodeInfo =
-    PROGRAM_NODES.find((n) => n.step === selectedStep) || PROGRAM_NODES[0];
+    programNodes.find((n) => n.step === selectedStep) || programNodes[0] || PROGRAM_NODES[0];
   const isNodeLocked = activeNodeInfo.step > currentProgress;
   const existingWorkshopForm = OntologicalStore.getFormForStep(client.uid, activeNodeInfo.step);
+  const dynamicQuestionnaire = OntologicalStore.getQuestionnaireForWorkshop(activeNodeInfo.step);
 
   const [bodyEmotion, setBodyEmotion] = useState('');
   const [reflections, setReflections] = useState('');
   const [levelSpecificAnswer, setLevelSpecificAnswer] = useState('');
+  const [dynamicAnswers, setDynamicAnswers] = useState<Record<string, string | number>>({});
   const [isEditingWorkshopForm, setIsEditingWorkshopForm] = useState(false);
   const [workshopSavedSuccess, setWorkshopSavedSuccess] = useState(false);
   const [isSubmittingWorkshop, setIsSubmittingWorkshop] = useState(false);
@@ -80,11 +83,13 @@ export const UnifiedWorkbookSpace: React.FC<UnifiedWorkbookSpaceProps> = ({
       setBodyEmotion(existingWorkshopForm.bodyEmotion || '');
       setReflections(existingWorkshopForm.reflections || '');
       setLevelSpecificAnswer(existingWorkshopForm.levelSpecificAnswer || '');
+      setDynamicAnswers(existingWorkshopForm.dynamicAnswers || {});
       setIsEditingWorkshopForm(false);
     } else {
       setBodyEmotion('');
       setReflections('');
       setLevelSpecificAnswer('');
+      setDynamicAnswers({});
       setIsEditingWorkshopForm(true);
     }
     setWorkshopSavedSuccess(false);
@@ -197,6 +202,7 @@ export const UnifiedWorkbookSpace: React.FC<UnifiedWorkbookSpaceProps> = ({
         bodyEmotion: bodyEmotion.trim(),
         reflections: reflections.trim(),
         levelSpecificAnswer: levelSpecificAnswer.trim(),
+        dynamicAnswers: dynamicAnswers,
       });
 
       setIsSubmittingWorkshop(false);
@@ -561,6 +567,43 @@ export const UnifiedWorkbookSpace: React.FC<UnifiedWorkbookSpaceProps> = ({
                 </span>
               </div>
 
+              {/* Workshop Roadmap Steps (Estructura Cronológica del Taller) */}
+              {activeNodeInfo.roadmapSteps && activeNodeInfo.roadmapSteps.length > 0 && (
+                <div className="p-4 rounded-2xl bg-indigo-50/40 dark:bg-indigo-950/20 border border-indigo-100 dark:border-indigo-900/40 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-black dark:text-white flex items-center gap-1.5">
+                      <Layers className="w-3.5 h-3.5 text-indigo-600" />
+                      <span>Estructura & Pasos de la Sesión ({activeNodeInfo.roadmapSteps.length} Fases)</span>
+                    </span>
+                    <span className="text-[10px] text-indigo-700 dark:text-indigo-300 font-mono">
+                      {activeNodeInfo.roadmapSteps.reduce((acc, s) => acc + (s.durationMinutes || 0), 0)} min total
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
+                    {activeNodeInfo.roadmapSteps.map((step, sIdx) => (
+                      <div
+                        key={step.id}
+                        className="p-2.5 rounded-xl bg-white dark:bg-[#202024] border border-gray-100 dark:border-neutral-800 space-y-1 text-xs"
+                      >
+                        <div className="flex items-center justify-between gap-1">
+                          <span className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 font-mono">
+                            Paso {sIdx + 1} • {step.durationMinutes} min
+                          </span>
+                          <span className="text-[9px] px-1.5 py-0.2 rounded bg-gray-100 dark:bg-neutral-800 text-gray-500 truncate max-w-[90px]">
+                            {step.phaseType}
+                          </span>
+                        </div>
+                        <h5 className="font-semibold text-black dark:text-white text-[11px] line-clamp-1">{step.title}</h5>
+                        <p className="text-[10px] text-gray-500 dark:text-neutral-400 line-clamp-2 leading-relaxed font-light">
+                          {step.description}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {/* IF ALREADY SUBMITTED AND NOT EDITING: SHOW CLEAN READ VIEW */}
               {existingWorkshopForm && !isEditingWorkshopForm ? (
                 <div className="space-y-4 text-xs">
@@ -592,6 +635,31 @@ export const UnifiedWorkbookSpace: React.FC<UnifiedWorkbookSpaceProps> = ({
                       </p>
                     </div>
                   )}
+
+                  {/* Read view for dynamic questions */}
+                  {existingWorkshopForm.dynamicAnswers &&
+                    Object.keys(existingWorkshopForm.dynamicAnswers).length > 0 &&
+                    dynamicQuestionnaire?.questions && (
+                      <div className="space-y-3 pt-2">
+                        {dynamicQuestionnaire.questions.map((q, idx) => {
+                          const val = existingWorkshopForm.dynamicAnswers?.[q.id];
+                          if (val === undefined || val === '') return null;
+                          return (
+                            <div
+                              key={q.id}
+                              className="p-4 rounded-2xl bg-[#F9F9F9] dark:bg-[#202024] border border-gray-100 dark:border-neutral-800 space-y-1.5"
+                            >
+                              <span className="font-bold text-black dark:text-white uppercase tracking-wider block text-[11px]">
+                                {idx + 4}. {q.label}
+                              </span>
+                              <p className="text-gray-700 dark:text-neutral-300 font-light leading-relaxed whitespace-pre-wrap">
+                                {String(val)}
+                              </p>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
 
                   <div className="flex justify-end pt-2">
                     <button
@@ -668,6 +736,103 @@ export const UnifiedWorkbookSpace: React.FC<UnifiedWorkbookSpaceProps> = ({
                       className="w-full p-3.5 rounded-2xl bg-[#F9F9F9] dark:bg-[#202024] border border-gray-200 dark:border-neutral-700 text-black dark:text-white focus:outline-none focus:ring-1 focus:ring-black dark:focus:ring-white font-light text-xs"
                     />
                   </div>
+
+                  {/* Dynamic Questions configured by Coach in Admin Académico */}
+                  {dynamicQuestionnaire?.questions && dynamicQuestionnaire.questions.length > 0 && (
+                    <div className="space-y-4 pt-4 border-t border-gray-100 dark:border-neutral-800">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[11px] font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400 block">
+                          Preguntas de Profundización (Configuradas por el Coach)
+                        </span>
+                        <span className="text-[10px] text-gray-400 dark:text-neutral-500 font-light">
+                          {dynamicQuestionnaire.questions.length} preguntas adicionales
+                        </span>
+                      </div>
+                      {dynamicQuestionnaire.questions.map((q, idx) => (
+                        <div key={q.id} className="space-y-1.5">
+                          <label className="font-bold text-black dark:text-white flex items-center gap-1.5">
+                            <span className="w-5 h-5 rounded-full bg-indigo-100 text-indigo-800 dark:bg-indigo-950 dark:text-indigo-300 font-mono text-[10px] flex items-center justify-center font-bold">
+                              {idx + 4}
+                            </span>
+                            <span>{q.label}</span>
+                            {q.required && <span className="text-rose-500 font-normal">*</span>}
+                          </label>
+                          {q.helperText && (
+                            <p className="text-[11px] font-light text-gray-400 dark:text-neutral-500 pl-6">
+                              {q.helperText}
+                            </p>
+                          )}
+
+                          {q.type === 'textarea' && (
+                            <textarea
+                              rows={3}
+                              required={q.required}
+                              value={(dynamicAnswers[q.id] as string) || ''}
+                              onChange={(e) =>
+                                setDynamicAnswers({ ...dynamicAnswers, [q.id]: e.target.value })
+                              }
+                              placeholder={q.placeholder || 'Escribe tu respuesta...'}
+                              className="w-full p-3.5 rounded-2xl bg-[#F9F9F9] dark:bg-[#202024] border border-gray-200 dark:border-neutral-700 text-black dark:text-white focus:outline-none focus:ring-1 focus:ring-black dark:focus:ring-white font-light text-xs"
+                            />
+                          )}
+
+                          {q.type === 'text' && (
+                            <input
+                              type="text"
+                              required={q.required}
+                              value={(dynamicAnswers[q.id] as string) || ''}
+                              onChange={(e) =>
+                                setDynamicAnswers({ ...dynamicAnswers, [q.id]: e.target.value })
+                              }
+                              placeholder={q.placeholder || 'Respuesta breve...'}
+                              className="w-full p-2.5 rounded-xl bg-[#F9F9F9] dark:bg-[#202024] border border-gray-200 dark:border-neutral-700 text-black dark:text-white font-light text-xs"
+                            />
+                          )}
+
+                          {q.type === 'rating_scale' && (
+                            <div className="flex items-center gap-1 pl-6 pt-1">
+                              {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((num) => {
+                                const isSelected = dynamicAnswers[q.id] === num;
+                                return (
+                                  <button
+                                    key={num}
+                                    type="button"
+                                    onClick={() =>
+                                      setDynamicAnswers({ ...dynamicAnswers, [q.id]: num })
+                                    }
+                                    className={`w-7 h-7 rounded-lg text-xs font-bold transition-all cursor-pointer border ${
+                                      isSelected
+                                        ? 'bg-black text-white dark:bg-white dark:text-black border-black dark:border-white shadow-xs'
+                                        : 'bg-white dark:bg-[#202024] text-gray-700 dark:text-neutral-300 border-gray-200 dark:border-neutral-700 hover:border-black'
+                                    }`}
+                                  >
+                                    {num}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          )}
+
+                          {q.type === 'select' && q.options && (
+                            <select
+                              value={(dynamicAnswers[q.id] as string) || ''}
+                              onChange={(e) =>
+                                setDynamicAnswers({ ...dynamicAnswers, [q.id]: e.target.value })
+                              }
+                              className="w-full p-2.5 rounded-xl bg-[#F9F9F9] dark:bg-[#202024] border border-gray-200 dark:border-neutral-700 text-black dark:text-white text-xs font-light"
+                            >
+                              <option value="">Selecciona una opción...</option>
+                              {q.options.map((opt, i) => (
+                                <option key={i} value={opt}>
+                                  {opt}
+                                </option>
+                              ))}
+                            </select>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
 
                   {/* Bottom Action Buttons */}
                   <div className="flex items-center justify-between gap-3 pt-3 border-t border-gray-100 dark:border-neutral-800">
