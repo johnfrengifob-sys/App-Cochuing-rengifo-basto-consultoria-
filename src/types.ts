@@ -62,6 +62,8 @@ export interface Session {
   paymentValidatedAt?: string;
   unlockedByPaymentId?: string;
   unlockedPaymentPlan?: 'level' | 'full';
+  durationMinutes?: number;
+  programNodeStep?: number;
 }
 
 export interface PostSessionForm {
