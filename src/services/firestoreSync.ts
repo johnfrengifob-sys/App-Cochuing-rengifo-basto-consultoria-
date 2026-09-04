@@ -239,4 +239,74 @@ export class FirestoreSyncService {
       return [];
     }
   }
+
+  // Full synchronization sweep across all collections
+  static async syncAllLocalToFirestore(params: {
+    users: User[];
+    sessions: Session[];
+    forms: FormSubmission[];
+    prospects: Prospect[];
+    payments: PaymentRequest[];
+    eventRegistrations: EventRegistration[];
+  }): Promise<{ syncedCount: number; errors: number }> {
+    let syncedCount = 0;
+    let errors = 0;
+
+    for (const u of params.users) {
+      try {
+        await this.syncUserProfile(u);
+        syncedCount++;
+      } catch {
+        errors++;
+      }
+    }
+
+    for (const s of params.sessions) {
+      try {
+        await this.syncSession(s);
+        syncedCount++;
+      } catch {
+        errors++;
+      }
+    }
+
+    for (const f of params.forms) {
+      try {
+        await this.syncFormSubmission(f);
+        syncedCount++;
+      } catch {
+        errors++;
+      }
+    }
+
+    for (const p of params.prospects) {
+      try {
+        await this.syncProspect(p);
+        syncedCount++;
+      } catch {
+        errors++;
+      }
+    }
+
+    for (const pay of params.payments) {
+      try {
+        await this.syncPayment(pay);
+        syncedCount++;
+      } catch {
+        errors++;
+      }
+    }
+
+    for (const reg of params.eventRegistrations) {
+      try {
+        await this.syncEventRegistration(reg);
+        syncedCount++;
+      } catch {
+        errors++;
+      }
+    }
+
+    return { syncedCount, errors };
+  }
 }
+

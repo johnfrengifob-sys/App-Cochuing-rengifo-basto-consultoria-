@@ -43,6 +43,12 @@ import {
   Shield,
   Copy,
   Users,
+  Trash2,
+  Save,
+  Phone,
+  Mail,
+  Briefcase,
+  UserCircle2,
 } from 'lucide-react';
 
 interface ClientWorkstationViewProps {
@@ -71,15 +77,16 @@ interface ClientWorkstationViewProps {
   onOpenNewSession?: () => void;
   onGenerateAIAnalysis?: (clientId?: string, customForm?: any) => void;
   onGenerateAI?: (clientId?: string, customForm?: any) => void;
+  onRefreshClients?: () => void;
 }
 
 export const ClientWorkstationView: React.FC<ClientWorkstationViewProps> = ({
   client: propClient,
   selectedClient,
   clients = [],
-  forms = [],
+  forms: propForms = [],
   insights = [],
-  sessions = [],
+  sessions: propSessions = [],
   isGeneratingAI = false,
   generationFeedback = null,
   onSelectClient,
@@ -95,6 +102,7 @@ export const ClientWorkstationView: React.FC<ClientWorkstationViewProps> = ({
   onOpenNewSession,
   onGenerateAIAnalysis,
   onGenerateAI,
+  onRefreshClients,
 }) => {
   const client = propClient || selectedClient;
 
@@ -122,6 +130,57 @@ export const ClientWorkstationView: React.FC<ClientWorkstationViewProps> = ({
   const [isEditingInvested, setIsEditingInvested] = useState(false);
   const [tempInvested, setTempInvested] = useState(client.totalInvested || client.programFee || '$1.500.000 COP');
 
+  // Local state for forms and sessions so edits reflect immediately in view
+  const [localForms, setLocalForms] = useState<FormSubmission[]>(propForms);
+  const [localSessions, setLocalSessions] = useState<Session[]>(propSessions);
+
+  useEffect(() => {
+    setLocalForms(propForms);
+  }, [propForms]);
+
+  useEffect(() => {
+    setLocalSessions(propSessions);
+  }, [propSessions]);
+
+  const forms = localForms;
+  const sessions = localSessions;
+
+  // Edit Client Profile Modal State
+  const [isEditClientModalOpen, setIsEditClientModalOpen] = useState(false);
+  const [editClientData, setEditClientData] = useState({
+    name: client.name || '',
+    title: client.title || '',
+    email: client.email || '',
+    phone: client.phone || '',
+    company: client.company || '',
+    programProgress: client.programProgress || 1,
+    paymentStatus: client.paymentStatus || 'Pago Único',
+    totalInvested: client.totalInvested || client.programFee || '$1.500.000 COP',
+    primaryBreakdown: client.primaryBreakdown || '',
+    status: (client.status || 'active') as ClientStatus,
+  });
+
+  // Edit Form Modal State
+  const [isEditFormModalOpen, setIsEditFormModalOpen] = useState(false);
+  const [formToEdit, setFormToEdit] = useState<FormSubmission | null>(null);
+  const [editFormFields, setEditFormFields] = useState({
+    bodyEmotion: '',
+    reflections: '',
+    levelSpecificAnswer: '',
+  });
+
+  // Edit Session Modal State
+  const [isEditSessionModalOpen, setIsEditSessionModalOpen] = useState(false);
+  const [sessionToEdit, setSessionToEdit] = useState<Session | null>(null);
+  const [editSessionFields, setEditSessionFields] = useState({
+    sessionNumber: 1,
+    date: '',
+    meetLink: '',
+    status: 'scheduled' as 'scheduled' | 'completed' | 'cancelled',
+    ontologicalFocus: '',
+    notes: '',
+  });
+
   // Post-session form & workbook state
   const [isWorkbookModalOpen, setIsWorkbookModalOpen] = useState(false);
   const [selectedSessionForWorkbook, setSelectedSessionForWorkbook] = useState<Session | null>(null);
@@ -136,8 +195,103 @@ export const ClientWorkstationView: React.FC<ClientWorkstationViewProps> = ({
       setTempBreakdown(client.primaryBreakdown || '');
       setTempInvested(client.totalInvested || client.programFee || '$1.500.000 COP');
       setPostSessionForms(OntologicalStore.getPostSessionFormsForClient(client.uid));
+      setEditClientData({
+        name: client.name || '',
+        title: client.title || '',
+        email: client.email || '',
+        phone: client.phone || '',
+        company: client.company || '',
+        programProgress: client.programProgress || 1,
+        paymentStatus: client.paymentStatus || 'Pago Único',
+        totalInvested: client.totalInvested || client.programFee || '$1.500.000 COP',
+        primaryBreakdown: client.primaryBreakdown || '',
+        status: (client.status || 'active') as ClientStatus,
+      });
     }
-  }, [client.uid, client.primaryBreakdown, client.totalInvested, client.programFee]);
+  }, [client.uid, client.primaryBreakdown, client.totalInvested, client.programFee, client.name, client.email, client.phone, client.company, client.status, client.paymentStatus, client.programProgress]);
+
+  const handleSaveClientProfile = (e: React.FormEvent) => {
+    e.preventDefault();
+    const updated = OntologicalStore.updateUser(client.uid, editClientData);
+    if (updated && onRefreshClients) {
+      onRefreshClients();
+    }
+    setIsEditClientModalOpen(false);
+  };
+
+  const handleOpenEditForm = (f: FormSubmission) => {
+    setFormToEdit(f);
+    setEditFormFields({
+      bodyEmotion: f.bodyEmotion || '',
+      reflections: f.reflections || '',
+      levelSpecificAnswer: f.levelSpecificAnswer || '',
+    });
+    setIsEditFormModalOpen(true);
+  };
+
+  const handleSaveFormEdit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formToEdit) return;
+    const updated = OntologicalStore.updateForm(formToEdit.id, editFormFields);
+    if (updated) {
+      setLocalForms(OntologicalStore.getFormsForClient(client.uid));
+    }
+    setIsEditFormModalOpen(false);
+    setFormToEdit(null);
+  };
+
+  const handleDeleteFormSubmission = (formId: string) => {
+    if (window.confirm('¿Confirmas eliminar este registro de formulario?')) {
+      OntologicalStore.deleteForm(formId);
+      setLocalForms(OntologicalStore.getFormsForClient(client.uid));
+    }
+  };
+
+  const handleOpenEditSession = (sess: Session) => {
+    setSessionToEdit(sess);
+    let localDateStr = '';
+    try {
+      const d = new Date(sess.date);
+      localDateStr = new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+    } catch {
+      localDateStr = '';
+    }
+    setEditSessionFields({
+      sessionNumber: sess.sessionNumber,
+      date: localDateStr,
+      meetLink: sess.meetLink || '',
+      status: sess.status,
+      ontologicalFocus: sess.ontologicalFocus || '',
+      notes: sess.notes || '',
+    });
+    setIsEditSessionModalOpen(true);
+  };
+
+  const handleSaveSessionEdit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!sessionToEdit) return;
+    const patch: Partial<Session> = {
+      sessionNumber: Number(editSessionFields.sessionNumber),
+      date: editSessionFields.date ? new Date(editSessionFields.date).toISOString() : sessionToEdit.date,
+      meetLink: editSessionFields.meetLink,
+      status: editSessionFields.status,
+      ontologicalFocus: editSessionFields.ontologicalFocus,
+      notes: editSessionFields.notes,
+    };
+    const updated = OntologicalStore.updateSession(sessionToEdit.id, patch);
+    if (updated) {
+      setLocalSessions(OntologicalStore.getSessionsForClient(client.uid));
+    }
+    setIsEditSessionModalOpen(false);
+    setSessionToEdit(null);
+  };
+
+  const handleDeleteSessionItem = (sessionId: string) => {
+    if (window.confirm('¿Confirmas eliminar esta sesión del registro?')) {
+      OntologicalStore.deleteSession(sessionId);
+      setLocalSessions(OntologicalStore.getSessionsForClient(client.uid));
+    }
+  };
 
   const handleOpenWorkbookForSession = (sess: Session) => {
     setSelectedSessionForWorkbook(sess);
@@ -303,6 +457,16 @@ export const ClientWorkstationView: React.FC<ClientWorkstationViewProps> = ({
 
           {/* Action Buttons */}
           <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+            <button
+              type="button"
+              onClick={() => setIsEditClientModalOpen(true)}
+              className="px-4 py-2.5 rounded-2xl border border-gray-200/90 dark:border-neutral-700 bg-white dark:bg-[#1A1A1E] hover:bg-gray-50 dark:hover:bg-neutral-800 text-black dark:text-white text-xs font-semibold transition-all flex items-center gap-2 cursor-pointer shadow-2xs hover:border-black dark:hover:border-neutral-500"
+              title="Editar datos, avances y perfil del participante"
+            >
+              <Edit2 className="w-3.5 h-3.5 text-blue-600" />
+              <span>Editar Ficha Participante</span>
+            </button>
+
             <button
               type="button"
               onClick={handleOpenNewSession}
@@ -797,7 +961,7 @@ export const ClientWorkstationView: React.FC<ClientWorkstationViewProps> = ({
           </div>
 
           <div className="space-y-3">
-            {sessions.map((sess) => {
+            {localSessions.map((sess) => {
               const postForm = postSessionForms.find((f) => f.sessionId === sess.id);
               return (
                 <div
@@ -837,6 +1001,17 @@ export const ClientWorkstationView: React.FC<ClientWorkstationViewProps> = ({
                   </div>
 
                   <div className="flex flex-wrap items-center gap-2 shrink-0">
+                    {/* Botón Editar Sesión */}
+                    <button
+                      type="button"
+                      onClick={() => handleOpenEditSession(sess)}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white dark:bg-[#1A1A1E] border border-gray-200 dark:border-neutral-700 text-xs font-medium text-black dark:text-white hover:bg-gray-50 dark:hover:bg-neutral-800 transition-colors cursor-pointer shadow-2xs"
+                      title="Editar número de sesión, fecha, enlace Meet y notas"
+                    >
+                      <Edit2 className="w-3 h-3 text-indigo-600" />
+                      <span>Editar Sesión</span>
+                    </button>
+
                     {/* Botones de Cuaderno Post-Sesión */}
                     {postForm ? (
                       <>
@@ -882,6 +1057,15 @@ export const ClientWorkstationView: React.FC<ClientWorkstationViewProps> = ({
                         <ExternalLink className="w-3 h-3 text-gray-400" />
                       </a>
                     )}
+
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteSessionItem(sess.id)}
+                      className="p-1.5 rounded-xl border border-red-200 dark:border-red-900/40 hover:bg-red-50 dark:hover:bg-red-950/30 text-red-600 dark:text-red-400 transition-colors cursor-pointer"
+                      title="Eliminar sesión"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
                   </div>
                 </div>
               );
@@ -1095,9 +1279,9 @@ export const ClientWorkstationView: React.FC<ClientWorkstationViewProps> = ({
             </p>
           </div>
 
-          {forms.length > 0 ? (
+          {localForms.length > 0 ? (
             <div className="space-y-4">
-              {forms.map((f, idx) => (
+              {localForms.map((f, idx) => (
                 <div
                   key={f.id || idx}
                   className="p-5 rounded-2xl card-solid-white space-y-3 shadow-xs"
@@ -1106,9 +1290,28 @@ export const ClientWorkstationView: React.FC<ClientWorkstationViewProps> = ({
                     <span className="font-semibold text-xs text-black dark:text-white">
                       Entrega para {f.level} (Sesión {f.sessionStep})
                     </span>
-                    <span className="text-[10px] text-gray-400">
-                      {f.submittedAt ? formatDate(f.submittedAt) : 'Registrado'}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] text-gray-400">
+                        {f.submittedAt ? formatDate(f.submittedAt) : 'Registrado'}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => handleOpenEditForm(f)}
+                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-gray-200 dark:border-neutral-700 hover:bg-gray-50 dark:hover:bg-neutral-800 text-xs font-medium text-black dark:text-white transition-colors cursor-pointer"
+                        title="Editar respuestas de la bitácora"
+                      >
+                        <Edit2 className="w-3 h-3 text-blue-600" />
+                        <span>Editar</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteFormSubmission(f.id)}
+                        className="p-1 rounded-lg border border-red-200 dark:border-red-900/40 hover:bg-red-50 dark:hover:bg-red-950/30 text-red-600 dark:text-red-400 transition-colors cursor-pointer"
+                        title="Eliminar entrega"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </button>
+                    </div>
                   </div>
 
                   <div className="space-y-2 text-xs text-gray-700 dark:text-neutral-300">
@@ -1125,6 +1328,15 @@ export const ClientWorkstationView: React.FC<ClientWorkstationViewProps> = ({
                       </span>
                       <p className="font-light">{f.reflections}</p>
                     </div>
+
+                    {f.levelSpecificAnswer && (
+                      <div className="bg-white dark:bg-[#151518] p-3 rounded-xl border border-gray-200/70 dark:border-neutral-700">
+                        <span className="font-semibold text-black dark:text-white block text-[11px] mb-0.5">
+                          Respuesta Específica de Nivel:
+                        </span>
+                        <p className="font-light">{f.levelSpecificAnswer}</p>
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}
@@ -1253,6 +1465,397 @@ export const ClientWorkstationView: React.FC<ClientWorkstationViewProps> = ({
         client={client}
         onFormSaved={handleWorkbookSaved}
       />
+
+      {/* Modal: Editar Ficha Completa del Participante */}
+      {isEditClientModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
+          <div className="bg-white dark:bg-[#1A1A1E] rounded-3xl p-6 sm:p-8 max-w-xl w-full border border-gray-200 dark:border-neutral-800 shadow-2xl space-y-6 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-gray-100 dark:border-neutral-800 pb-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 rounded-2xl bg-blue-50 dark:bg-blue-950/40 text-blue-600">
+                  <UserCircle2 className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-black dark:text-white">
+                    Editar Ficha de Participante
+                  </h3>
+                  <p className="text-xs text-gray-400">
+                    Modifica datos, avance del programa (1-6) e inversión financiera
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsEditClientModalOpen(false)}
+                className="p-1.5 rounded-xl hover:bg-gray-100 dark:hover:bg-neutral-800 text-gray-400"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveClientProfile} className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold text-gray-700 dark:text-neutral-300 mb-1">
+                    Nombre Completo
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={editClientData.name}
+                    onChange={(e) => setEditClientData({ ...editClientData, name: e.target.value })}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 dark:border-neutral-700 bg-gray-50/50 dark:bg-[#151518] text-xs font-medium text-black dark:text-white focus:outline-hidden focus:border-black dark:focus:border-white"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-gray-700 dark:text-neutral-300 mb-1">
+                    Cargo / Rol Profesional
+                  </label>
+                  <input
+                    type="text"
+                    value={editClientData.title}
+                    onChange={(e) => setEditClientData({ ...editClientData, title: e.target.value })}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 dark:border-neutral-700 bg-gray-50/50 dark:bg-[#151518] text-xs font-medium text-black dark:text-white focus:outline-hidden focus:border-black dark:focus:border-white"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-gray-700 dark:text-neutral-300 mb-1">
+                    Correo Electrónico
+                  </label>
+                  <input
+                    type="email"
+                    required
+                    value={editClientData.email}
+                    onChange={(e) => setEditClientData({ ...editClientData, email: e.target.value })}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 dark:border-neutral-700 bg-gray-50/50 dark:bg-[#151518] text-xs font-medium text-black dark:text-white focus:outline-hidden focus:border-black dark:focus:border-white"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-gray-700 dark:text-neutral-300 mb-1">
+                    Teléfono / WhatsApp
+                  </label>
+                  <input
+                    type="text"
+                    value={editClientData.phone}
+                    onChange={(e) => setEditClientData({ ...editClientData, phone: e.target.value })}
+                    placeholder="+57 300 000 0000"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 dark:border-neutral-700 bg-gray-50/50 dark:bg-[#151518] text-xs font-medium text-black dark:text-white focus:outline-hidden focus:border-black dark:focus:border-white"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-gray-700 dark:text-neutral-300 mb-1">
+                    Organización / Empresa
+                  </label>
+                  <input
+                    type="text"
+                    value={editClientData.company}
+                    onChange={(e) => setEditClientData({ ...editClientData, company: e.target.value })}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 dark:border-neutral-700 bg-gray-50/50 dark:bg-[#151518] text-xs font-medium text-black dark:text-white focus:outline-hidden focus:border-black dark:focus:border-white"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-gray-700 dark:text-neutral-300 mb-1">
+                    Avance de Nodos (1 al 6)
+                  </label>
+                  <select
+                    value={editClientData.programProgress}
+                    onChange={(e) => setEditClientData({ ...editClientData, programProgress: Number(e.target.value) })}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 dark:border-neutral-700 bg-gray-50/50 dark:bg-[#151518] text-xs font-medium text-black dark:text-white focus:outline-hidden"
+                  >
+                    {[1, 2, 3, 4, 5, 6].map((st) => (
+                      <option key={st} value={st}>
+                        Nodo {st}: {PROGRAM_NODES.find((n) => n.step === st)?.sessionTitle || `Paso ${st}`}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-gray-700 dark:text-neutral-300 mb-1">
+                    Estado de Pago
+                  </label>
+                  <select
+                    value={editClientData.paymentStatus}
+                    onChange={(e) => setEditClientData({ ...editClientData, paymentStatus: e.target.value as any })}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 dark:border-neutral-700 bg-gray-50/50 dark:bg-[#151518] text-xs font-medium text-black dark:text-white focus:outline-hidden"
+                  >
+                    <option value="Pago Único">Pago Único (Completo)</option>
+                    <option value="Cuota 1 de 2">Cuota 1 de 2 (Nivel I)</option>
+                    <option value="Completado">Completado</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-gray-700 dark:text-neutral-300 mb-1">
+                    Inversión Total Acumulada
+                  </label>
+                  <input
+                    type="text"
+                    value={editClientData.totalInvested}
+                    onChange={(e) => setEditClientData({ ...editClientData, totalInvested: e.target.value })}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 dark:border-neutral-700 bg-gray-50/50 dark:bg-[#151518] text-xs font-mono font-medium text-black dark:text-white focus:outline-hidden"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 dark:text-neutral-300 mb-1">
+                  Quiebre Principal Ontológico (Diagnóstico Semántico)
+                </label>
+                <textarea
+                  rows={2}
+                  value={editClientData.primaryBreakdown}
+                  onChange={(e) => setEditClientData({ ...editClientData, primaryBreakdown: e.target.value })}
+                  placeholder="Ej: Quiebre de autoexigencia extrema, dificultad para delegar..."
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 dark:border-neutral-700 bg-gray-50/50 dark:bg-[#151518] text-xs font-medium text-black dark:text-white focus:outline-hidden"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 dark:text-neutral-300 mb-1">
+                  Estado en el Proceso (Semáforo)
+                </label>
+                <div className="grid grid-cols-3 gap-2">
+                  {[
+                    { val: 'active', label: '🟢 Activo / Fluido' },
+                    { val: 'waiting', label: '🟡 En Espera / Revisión' },
+                    { val: 'inactive', label: '⚪ Pausado / Inactivo' },
+                  ].map((opt) => (
+                    <button
+                      key={opt.val}
+                      type="button"
+                      onClick={() => setEditClientData({ ...editClientData, status: opt.val as ClientStatus })}
+                      className={`p-2 rounded-xl text-xs font-medium border text-center transition-all ${
+                        editClientData.status === opt.val
+                          ? 'border-black bg-black text-white dark:border-white dark:bg-white dark:text-black font-semibold'
+                          : 'border-gray-200 dark:border-neutral-700 bg-white dark:bg-[#151518] text-gray-700 dark:text-neutral-300'
+                      }`}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-100 dark:border-neutral-800">
+                <button
+                  type="button"
+                  onClick={() => setIsEditClientModalOpen(false)}
+                  className="px-4 py-2 rounded-xl border border-gray-200 dark:border-neutral-700 text-xs font-medium text-gray-600 dark:text-neutral-400 hover:bg-gray-50 dark:hover:bg-neutral-800"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 rounded-xl bg-black text-white dark:bg-white dark:text-black text-xs font-bold shadow-md hover:bg-neutral-800 dark:hover:bg-neutral-200 inline-flex items-center gap-2"
+                >
+                  <Save className="w-3.5 h-3.5" />
+                  <span>Guardar Cambios</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal: Editar Respuestas de Formulario */}
+      {isEditFormModalOpen && formToEdit && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
+          <div className="bg-white dark:bg-[#1A1A1E] rounded-3xl p-6 sm:p-8 max-w-lg w-full border border-gray-200 dark:border-neutral-800 shadow-2xl space-y-6">
+            <div className="flex items-center justify-between border-b border-gray-100 dark:border-neutral-800 pb-4">
+              <div>
+                <h3 className="text-base font-bold text-black dark:text-white">
+                  Editar Bitácora de Formulario
+                </h3>
+                <p className="text-xs text-gray-400">
+                  {formToEdit.level} • Sesión {formToEdit.sessionStep}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsEditFormModalOpen(false)}
+                className="p-1.5 rounded-xl hover:bg-gray-100 dark:hover:bg-neutral-800 text-gray-400"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveFormEdit} className="space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 dark:text-neutral-300 mb-1">
+                  Corporalidad y Emoción
+                </label>
+                <textarea
+                  rows={3}
+                  required
+                  value={editFormFields.bodyEmotion}
+                  onChange={(e) => setEditFormFields({ ...editFormFields, bodyEmotion: e.target.value })}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 dark:border-neutral-700 bg-gray-50/50 dark:bg-[#151518] text-xs text-black dark:text-white focus:outline-hidden"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 dark:text-neutral-300 mb-1">
+                  Reflexiones del Quiebre
+                </label>
+                <textarea
+                  rows={3}
+                  required
+                  value={editFormFields.reflections}
+                  onChange={(e) => setEditFormFields({ ...editFormFields, reflections: e.target.value })}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 dark:border-neutral-700 bg-gray-50/50 dark:bg-[#151518] text-xs text-black dark:text-white focus:outline-hidden"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 dark:text-neutral-300 mb-1">
+                  Respuesta Específica de Nivel (Opcional)
+                </label>
+                <textarea
+                  rows={2}
+                  value={editFormFields.levelSpecificAnswer}
+                  onChange={(e) => setEditFormFields({ ...editFormFields, levelSpecificAnswer: e.target.value })}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 dark:border-neutral-700 bg-gray-50/50 dark:bg-[#151518] text-xs text-black dark:text-white focus:outline-hidden"
+                />
+              </div>
+
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-100 dark:border-neutral-800">
+                <button
+                  type="button"
+                  onClick={() => setIsEditFormModalOpen(false)}
+                  className="px-4 py-2 rounded-xl border border-gray-200 dark:border-neutral-700 text-xs font-medium text-gray-600 dark:text-neutral-400 hover:bg-gray-50 dark:hover:bg-neutral-800"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 rounded-xl bg-black text-white dark:bg-white dark:text-black text-xs font-bold shadow-md hover:bg-neutral-800 dark:hover:bg-neutral-200 inline-flex items-center gap-2"
+                >
+                  <Save className="w-3.5 h-3.5" />
+                  <span>Guardar Bitácora</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal: Editar Sesión */}
+      {isEditSessionModalOpen && sessionToEdit && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
+          <div className="bg-white dark:bg-[#1A1A1E] rounded-3xl p-6 sm:p-8 max-w-lg w-full border border-gray-200 dark:border-neutral-800 shadow-2xl space-y-6">
+            <div className="flex items-center justify-between border-b border-gray-100 dark:border-neutral-800 pb-4">
+              <div>
+                <h3 className="text-base font-bold text-black dark:text-white">
+                  Editar Sesión de Acompañamiento
+                </h3>
+                <p className="text-xs text-gray-400">
+                  Sesión #{sessionToEdit.sessionNumber} para {client.name}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsEditSessionModalOpen(false)}
+                className="p-1.5 rounded-xl hover:bg-gray-100 dark:hover:bg-neutral-800 text-gray-400"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveSessionEdit} className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold text-gray-700 dark:text-neutral-300 mb-1">
+                    Número de Sesión
+                  </label>
+                  <input
+                    type="number"
+                    min={1}
+                    max={12}
+                    value={editSessionFields.sessionNumber}
+                    onChange={(e) => setEditSessionFields({ ...editSessionFields, sessionNumber: Number(e.target.value) })}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 dark:border-neutral-700 bg-gray-50/50 dark:bg-[#151518] text-xs font-medium text-black dark:text-white focus:outline-hidden"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-gray-700 dark:text-neutral-300 mb-1">
+                    Estado de la Sesión
+                  </label>
+                  <select
+                    value={editSessionFields.status}
+                    onChange={(e) => setEditSessionFields({ ...editSessionFields, status: e.target.value as any })}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 dark:border-neutral-700 bg-gray-50/50 dark:bg-[#151518] text-xs font-medium text-black dark:text-white focus:outline-hidden"
+                  >
+                    <option value="scheduled">Programada / Abierta</option>
+                    <option value="completed">Completada</option>
+                    <option value="cancelled">Cancelada</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 dark:text-neutral-300 mb-1">
+                  Fecha y Hora
+                </label>
+                <input
+                  type="datetime-local"
+                  value={editSessionFields.date}
+                  onChange={(e) => setEditSessionFields({ ...editSessionFields, date: e.target.value })}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 dark:border-neutral-700 bg-gray-50/50 dark:bg-[#151518] text-xs font-medium text-black dark:text-white focus:outline-hidden"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 dark:text-neutral-300 mb-1">
+                  Enlace Google Meet
+                </label>
+                <input
+                  type="url"
+                  placeholder="https://meet.google.com/..."
+                  value={editSessionFields.meetLink}
+                  onChange={(e) => setEditSessionFields({ ...editSessionFields, meetLink: e.target.value })}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 dark:border-neutral-700 bg-gray-50/50 dark:bg-[#151518] text-xs font-medium text-black dark:text-white focus:outline-hidden"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 dark:text-neutral-300 mb-1">
+                  Enfoque Ontológico / Notas
+                </label>
+                <textarea
+                  rows={2}
+                  value={editSessionFields.notes}
+                  onChange={(e) => setEditSessionFields({ ...editSessionFields, notes: e.target.value })}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 dark:border-neutral-700 bg-gray-50/50 dark:bg-[#151518] text-xs font-medium text-black dark:text-white focus:outline-hidden"
+                />
+              </div>
+
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-100 dark:border-neutral-800">
+                <button
+                  type="button"
+                  onClick={() => setIsEditSessionModalOpen(false)}
+                  className="px-4 py-2 rounded-xl border border-gray-200 dark:border-neutral-700 text-xs font-medium text-gray-600 dark:text-neutral-400 hover:bg-gray-50 dark:hover:bg-neutral-800"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 rounded-xl bg-black text-white dark:bg-white dark:text-black text-xs font-bold shadow-md hover:bg-neutral-800 dark:hover:bg-neutral-200 inline-flex items-center gap-2"
+                >
+                  <Save className="w-3.5 h-3.5" />
+                  <span>Guardar Sesión</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

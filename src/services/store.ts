@@ -3427,6 +3427,30 @@ export class OntologicalStore {
     return updated;
   }
 
+  static updateSession(
+    sessionId: string,
+    patch: Partial<Session>
+  ): Session | null {
+    const sessions = this.getSessions();
+    let updated: Session | null = null;
+    const updatedList = sessions.map((s) => {
+      if (s.id === sessionId) {
+        updated = { ...s, ...patch };
+        return updated;
+      }
+      return s;
+    });
+    if (updated) {
+      this.saveSessions(updatedList);
+    }
+    return updated;
+  }
+
+  static deleteSession(sessionId: string): void {
+    const sessions = this.getSessions();
+    this.saveSessions(sessions.filter((s) => s.id !== sessionId));
+  }
+
   // --- POST-SESSION FORMS (EVALUACIÓN POST-SESIÓN & CUADERNO DE TRABAJO) ---
   static getPostSessionForms(): PostSessionForm[] {
     const list = this.load<PostSessionForm[]>(

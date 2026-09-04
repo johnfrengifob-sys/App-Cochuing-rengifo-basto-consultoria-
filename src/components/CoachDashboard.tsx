@@ -28,6 +28,7 @@ import { CrmPipelineManager } from './CrmPipelineManager';
 import { ProgramsAndEventsManager } from './ProgramsAndEventsManager';
 import { PaymentValidationManager } from './PaymentValidationManager';
 import { AdminAcademicManager, AcademicAdminSubTab } from './admin/AdminAcademicManager';
+import { FirebaseFirestoreMonitor } from './FirebaseFirestoreMonitor';
 import {
   Users,
   Sparkles,
@@ -85,12 +86,12 @@ export const CoachDashboard: React.FC<CoachDashboardProps> = ({
   onRefreshClients,
   onOpenRegistrationPortal,
 }) => {
-  // Navigation tabs: CRM Funnel vs Clientes Ancla vs Validación de Pagos vs Eventos & Cronograma vs Google Workspace Hub vs Gemini AI vs Admin Académico
-  const [activeMainTab, setActiveMainTab] = useState<'crm' | 'clients' | 'payments' | 'events' | 'workspace' | 'gemini' | 'academic'>('clients');
-  const [academicInitialSubTab, setAcademicInitialSubTab] = useState<AcademicAdminSubTab>('courses');
+  // Navigation tabs: Clientes vs Eventos y sesiones vs Validación de Pagos vs Google Workspace Hub vs Gemini AI
+  const [activeMainTab, setActiveMainTab] = useState<'clients' | 'crm' | 'events_sessions' | 'academic' | 'events' | 'payments' | 'workspace' | 'gemini'>('clients');
+  const [academicInitialSubTab, setAcademicInitialSubTab] = useState<AcademicAdminSubTab>('events');
 
-  // Sub-view inside 'clients' tab: Directory (table/scale 20-30+) vs Workstation (1 on 1 session view)
-  const [clientsViewMode, setClientsViewMode] = useState<'directory' | 'workstation'>('directory');
+  // Sub-view inside 'clients' tab: Pipeline (CRM Kan-Ban) vs Directory (table/scale 20-30+) vs Workstation (1 on 1 session view)
+  const [clientsViewMode, setClientsViewMode] = useState<'pipeline' | 'directory' | 'workstation'>('directory');
 
   // Payment Requests (Cash & Bre-B Nu Validation)
   const [paymentRequests, setPaymentRequests] = useState<PaymentRequest[]>(() =>
@@ -375,57 +376,22 @@ export const CoachDashboard: React.FC<CoachDashboardProps> = ({
 
           {/* Funciones de la Consola: Botones delgados, lineales y con altura compacta */}
           <div className="w-full pt-1">
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-2 sm:gap-2.5 w-full max-w-7xl mx-auto">
-              {/* Función 1: Pipeline CRM */}
-              <button
-                id="coach-nav-crm-btn"
-                type="button"
-                onClick={() => setActiveMainTab('crm')}
-                className={`group px-3 py-2 sm:py-2.5 rounded-xl transition-all cursor-pointer text-left flex items-center gap-2.5 w-full ${
-                  activeMainTab === 'crm'
-                    ? 'bg-black text-white dark:bg-white dark:text-black shadow-sm ring-1 ring-black/10 dark:ring-white/20'
-                    : 'glass-panel-opal hover:bg-white/90 dark:hover:bg-[#202026] text-neutral-800 dark:text-neutral-200 border border-white/60 dark:border-white/10 shadow-2xs hover:border-black/20 dark:hover:border-white/20'
-                }`}
-              >
-                <div className={`p-1.5 rounded-lg shrink-0 ${
-                  activeMainTab === 'crm'
-                    ? 'bg-white/20 dark:bg-black/20 text-white dark:text-black'
-                    : 'bg-sky-50 dark:bg-sky-950/50 text-sky-600 dark:text-sky-400'
-                }`}>
-                  <Kanban className="w-3.5 h-3.5" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between gap-1">
-                    <span className="text-xs font-semibold truncate leading-tight">Pipeline CRM</span>
-                    <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono font-bold shrink-0 ${
-                      activeMainTab === 'crm'
-                        ? 'bg-white/20 dark:bg-black/20 text-white dark:text-black'
-                        : 'bg-sky-100 dark:bg-sky-900/60 text-sky-800 dark:text-sky-200'
-                    }`}>
-                      {prospects.length}
-                    </span>
-                  </div>
-                  <span className={`text-[10px] block truncate font-light leading-tight mt-0.5 ${
-                    activeMainTab === 'crm' ? 'text-white/80 dark:text-black/70' : 'text-gray-500 dark:text-neutral-400'
-                  }`}>
-                    Embudo & Registros
-                  </span>
-                </div>
-              </button>
-
-              {/* Función 2: Clientes Ancla */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-2.5 w-full max-w-7xl mx-auto">
+              {/* Función 1: Clientes (Unifica Pipeline CRM & Clientes Ancla) */}
               <button
                 id="coach-nav-clients-btn"
                 type="button"
-                onClick={() => setActiveMainTab('clients')}
+                onClick={() => {
+                  setActiveMainTab('clients');
+                }}
                 className={`group px-3 py-2 sm:py-2.5 rounded-xl transition-all cursor-pointer text-left flex items-center gap-2.5 w-full ${
-                  activeMainTab === 'clients'
+                  activeMainTab === 'clients' || activeMainTab === 'crm'
                     ? 'bg-black text-white dark:bg-white dark:text-black shadow-sm ring-1 ring-black/10 dark:ring-white/20'
                     : 'glass-panel-opal hover:bg-white/90 dark:hover:bg-[#202026] text-neutral-800 dark:text-neutral-200 border border-white/60 dark:border-white/10 shadow-2xs hover:border-black/20 dark:hover:border-white/20'
                 }`}
               >
                 <div className={`p-1.5 rounded-lg shrink-0 ${
-                  activeMainTab === 'clients'
+                  activeMainTab === 'clients' || activeMainTab === 'crm'
                     ? 'bg-white/20 dark:bg-black/20 text-white dark:text-black'
                     : 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400'
                 }`}>
@@ -433,86 +399,49 @@ export const CoachDashboard: React.FC<CoachDashboardProps> = ({
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between gap-1">
-                    <span className="text-xs font-semibold truncate leading-tight">Clientes Ancla</span>
+                    <span className="text-xs font-semibold truncate leading-tight">Clientes</span>
                     <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono font-bold shrink-0 ${
-                      activeMainTab === 'clients'
+                      activeMainTab === 'clients' || activeMainTab === 'crm'
                         ? 'bg-white/20 dark:bg-black/20 text-white dark:text-black'
                         : 'bg-emerald-100 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-200'
                     }`}>
-                      {clients.length}
+                      {clients.length} Act.
                     </span>
                   </div>
                   <span className={`text-[10px] block truncate font-light leading-tight mt-0.5 ${
-                    activeMainTab === 'clients' ? 'text-white/80 dark:text-black/70' : 'text-gray-500 dark:text-neutral-400'
+                    activeMainTab === 'clients' || activeMainTab === 'crm' ? 'text-white/80 dark:text-black/70' : 'text-gray-500 dark:text-neutral-400'
                   }`}>
-                    Directorio & 1 a 1
+                    Pipeline ({prospects.length}) & Activos
                   </span>
                 </div>
               </button>
 
-              {/* Función 3: Espacio Académico */}
-              <button
-                id="coach-nav-academic-btn"
-                type="button"
-                onClick={() => {
-                  setAcademicInitialSubTab('courses');
-                  setActiveMainTab('academic');
-                }}
-                className={`group px-3 py-2 sm:py-2.5 rounded-xl transition-all cursor-pointer text-left flex items-center gap-2.5 w-full ${
-                  activeMainTab === 'academic'
-                    ? 'bg-black text-white dark:bg-white dark:text-black shadow-sm ring-1 ring-black/10 dark:ring-white/20'
-                    : 'glass-panel-opal hover:bg-white/90 dark:hover:bg-[#202026] text-neutral-800 dark:text-neutral-200 border border-white/60 dark:border-white/10 shadow-2xs hover:border-black/20 dark:hover:border-white/20'
-                }`}
-              >
-                <div className={`p-1.5 rounded-lg shrink-0 ${
-                  activeMainTab === 'academic'
-                    ? 'bg-white/20 dark:bg-black/20 text-white dark:text-black'
-                    : 'bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400'
-                }`}>
-                  <GraduationCap className="w-3.5 h-3.5" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between gap-1">
-                    <span className="text-xs font-semibold truncate leading-tight">Académico</span>
-                    <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono font-bold shrink-0 ${
-                      activeMainTab === 'academic'
-                        ? 'bg-white/20 dark:bg-black/20 text-white dark:text-black'
-                        : 'bg-indigo-100 dark:bg-indigo-900/60 text-indigo-800 dark:text-indigo-200'
-                    }`}>
-                      {programs.length} Prog.
-                    </span>
-                  </div>
-                  <span className={`text-[10px] block truncate font-light leading-tight mt-0.5 ${
-                    activeMainTab === 'academic' ? 'text-white/80 dark:text-black/70' : 'text-gray-500 dark:text-neutral-400'
-                  }`}>
-                    Syllabus & Cursos
-                  </span>
-                </div>
-              </button>
-
-              {/* Función 4: Eventos & Talleres */}
+              {/* Función 2: Eventos y sesiones (Unifica Académico & Eventos Meet) */}
               <button
                 id="coach-nav-events-btn"
                 type="button"
-                onClick={() => setActiveMainTab('events')}
+                onClick={() => {
+                  setAcademicInitialSubTab('events');
+                  setActiveMainTab('academic');
+                }}
                 className={`group px-3 py-2 sm:py-2.5 rounded-xl transition-all cursor-pointer text-left flex items-center gap-2.5 w-full ${
-                  activeMainTab === 'events'
+                  activeMainTab === 'events' || activeMainTab === 'academic'
                     ? 'bg-black text-white dark:bg-white dark:text-black shadow-sm ring-1 ring-black/10 dark:ring-white/20'
                     : 'glass-panel-opal hover:bg-white/90 dark:hover:bg-[#202026] text-neutral-800 dark:text-neutral-200 border border-white/60 dark:border-white/10 shadow-2xs hover:border-black/20 dark:hover:border-white/20'
                 }`}
               >
                 <div className={`p-1.5 rounded-lg shrink-0 ${
-                  activeMainTab === 'events'
+                  activeMainTab === 'events' || activeMainTab === 'academic'
                     ? 'bg-white/20 dark:bg-black/20 text-white dark:text-black'
                     : 'bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400'
                 }`}>
-                  <Ticket className="w-3.5 h-3.5" />
+                  <Calendar className="w-3.5 h-3.5" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between gap-1">
-                    <span className="text-xs font-semibold truncate leading-tight">Eventos</span>
+                    <span className="text-xs font-semibold truncate leading-tight">Eventos y sesiones</span>
                     <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono font-bold shrink-0 ${
-                      activeMainTab === 'events'
+                      activeMainTab === 'events' || activeMainTab === 'academic'
                         ? 'bg-white/20 dark:bg-black/20 text-white dark:text-black'
                         : 'bg-rose-100 dark:bg-rose-900/60 text-rose-800 dark:text-rose-200'
                     }`}>
@@ -520,9 +449,9 @@ export const CoachDashboard: React.FC<CoachDashboardProps> = ({
                     </span>
                   </div>
                   <span className={`text-[10px] block truncate font-light leading-tight mt-0.5 ${
-                    activeMainTab === 'events' ? 'text-white/80 dark:text-black/70' : 'text-gray-500 dark:text-neutral-400'
+                    activeMainTab === 'events' || activeMainTab === 'academic' ? 'text-white/80 dark:text-black/70' : 'text-gray-500 dark:text-neutral-400'
                   }`}>
-                    Meet & Talleres
+                    Meet en vivo, Programas & Talleres
                   </span>
                 </div>
               </button>
@@ -645,6 +574,11 @@ export const CoachDashboard: React.FC<CoachDashboardProps> = ({
         </div>
       </div>
 
+      {/* FIREBASE FIRESTORE REAL-TIME MONITOR */}
+      <div className="mx-4 sm:mx-10 mt-4 max-w-7xl mx-auto w-full">
+        <FirebaseFirestoreMonitor />
+      </div>
+
       {/* PENDING PAYMENTS NOTIFICATION BANNER */}
       {pendingPaymentCount > 0 && activeMainTab !== 'payments' && (
         <div className="mx-4 sm:mx-10 mt-4 max-w-7xl mx-auto p-3 sm:p-4 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800/70 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs shadow-2xs">
@@ -673,50 +607,12 @@ export const CoachDashboard: React.FC<CoachDashboardProps> = ({
       )}
 
       {/* ========================================================================= */}
-      {/* VIEW 1: CRM ONTO-KANBAN PIPELINE (COMPACTO, AGRUPADO Y CONVERSIÓN)        */}
+      {/* VIEW 1: CLIENTES (UNIFICADO: PIPELINE CRM, DIRECTORIO ACTIVO & 1 A 1)      */}
       {/* ========================================================================= */}
-      {activeMainTab === 'crm' ? (
-        <CrmPipelineManager
-          prospects={prospects}
-          clients={clients}
-          eventRegistrations={eventRegistrations}
-          onRefreshProspects={handleRefreshProspects}
-          onRefreshClients={handleRefreshClientsList}
-          onSelectClientAndOpenWorkstation={(cid) => {
-            handleSelectClient(cid, true);
-            setActiveMainTab('clients');
-          }}
-          onOpenMakeModal={() => {
-            setAcademicInitialSubTab('automations');
-            setActiveMainTab('academic');
-          }}
-          onOpenRegistrationPortal={onOpenRegistrationPortal}
-        />
-      ) : activeMainTab === 'payments' ? (
-        /* ========================================================================= */
-        /* VIEW: GESTIÓN & VALIDACIÓN DE PAGOS (EFECTIVO & BRE-B NU)                  */
-        /* ========================================================================= */
+      {activeMainTab === 'clients' || activeMainTab === 'crm' ? (
         <div className="flex-1 flex flex-col p-4 sm:p-8 lg:p-10 max-w-7xl mx-auto w-full space-y-6">
-          <PaymentValidationManager
-            requests={paymentRequests}
-            clients={clients}
-            coachName={coach.name}
-            onRequestUpdated={() => {
-              setPaymentRequests(OntologicalStore.getPaymentRequests());
-              handleRefreshClientsList();
-            }}
-            onClientUnlocked={() => {
-              handleRefreshClientsList();
-            }}
-          />
-        </div>
-      ) : activeMainTab === 'clients' ? (
-        /* ========================================================================= */
-        /* VIEW 2: CLIENTES ANCLA (DIRECTORIO GERENCIAL & FICHA DE TRABAJO 1 A 1)    */
-        /* ========================================================================= */
-        <div className="flex-1 flex flex-col p-4 sm:p-8 lg:p-10 max-w-7xl mx-auto w-full space-y-6">
-          {/* Executive KPI & Health Barometer (Visible ONLY in Directory mode for macro view, avoiding clutter in 1-on-1 session) */}
-          {clientsViewMode === 'directory' && (
+          {/* Executive KPI & Health Barometer */}
+          {(clientsViewMode === 'directory' || clientsViewMode === 'pipeline') && (
             <ExecutiveMetricsBar
               clients={clients}
               prospects={prospects}
@@ -726,41 +622,80 @@ export const CoachDashboard: React.FC<CoachDashboardProps> = ({
                 setActiveMainTab('clients');
                 setClientsViewMode('directory');
               }}
-              onGoToCRM={() => setActiveMainTab('crm')}
-              onGoToEvents={() => setActiveMainTab('events')}
+              onGoToCRM={() => {
+                setActiveMainTab('clients');
+                setClientsViewMode('pipeline');
+              }}
+              onGoToEvents={() => {
+                setAcademicInitialSubTab('events');
+                setActiveMainTab('academic');
+              }}
             />
           )}
 
-          {/* View Mode Switcher Header */}
+          {/* View Mode Switcher Header with Title Clientes */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-gray-100 dark:border-neutral-800">
             <div>
               <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full bg-[#F5F5F7] dark:bg-neutral-800 border border-gray-200/80 dark:border-neutral-700 text-[10px] font-semibold text-gray-700 dark:text-neutral-300 uppercase tracking-wider mb-1">
-                <Users className="w-3 h-3 text-black dark:text-white" />
-                Programa Certeza, Fronteras & Dirección
+                <Users className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
+                Ecosistema Directivo de Clientes & Conversión
               </div>
               <h2 className="text-xl sm:text-2xl font-light text-black dark:text-white tracking-tight">
-                {clientsViewMode === 'directory' ? (
-                  <>Directorio Central de <strong className="font-semibold">Clientes Activos ({clients.length})</strong></>
+                {clientsViewMode === 'pipeline' ? (
+                  <>Clientes: <strong className="font-semibold">Pipeline CRM & Embudo ({prospects.length})</strong></>
+                ) : clientsViewMode === 'directory' ? (
+                  <>Clientes: <strong className="font-semibold">Directorio Activo ({clients.length})</strong></>
                 ) : (
-                  <>Ficha de Consulta 1 a 1: <strong className="font-semibold">{selectedClient?.name || 'Cliente'}</strong></>
+                  <>Clientes: Ficha 1 a 1 de <strong className="font-semibold">{selectedClient?.name || 'Cliente'}</strong></>
                 )}
               </h2>
+              <p className="text-xs text-gray-500 dark:text-neutral-400 font-light mt-0.5">
+                {clientsViewMode === 'pipeline'
+                  ? 'Embudo comercial ontológico, prospección de talleres y conversión al programa ejecutivo.'
+                  : clientsViewMode === 'directory'
+                  ? 'Directorio central de clientes ancla con seguimiento de quiebres, estados e inversión.'
+                  : 'Ficha de intervención ontológica, bitácora de sesiones y copiloto interpretativo con IA.'}
+              </p>
             </div>
 
-            {/* Toggle Modes */}
-            <div className="inline-flex items-center p-1 rounded-xl bg-[#F5F5F7] dark:bg-neutral-800 border border-gray-200/60 dark:border-neutral-700">
+            {/* Toggle Modes: 1. Pipeline CRM vs 2. Directorio Activos vs 3. Ficha 1 a 1 */}
+            <div className="inline-flex items-center p-1 rounded-xl bg-[#F5F5F7] dark:bg-neutral-800 border border-gray-200/60 dark:border-neutral-700 overflow-x-auto">
+              <button
+                type="button"
+                onClick={() => setClientsViewMode('pipeline')}
+                className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer shrink-0 ${
+                  clientsViewMode === 'pipeline'
+                    ? 'bg-white dark:bg-[#1A1A1E] text-black dark:text-white shadow-2xs font-semibold'
+                    : 'text-gray-500 dark:text-neutral-400 hover:text-black dark:hover:text-white'
+                }`}
+              >
+                <Kanban className="w-3.5 h-3.5 text-sky-500" />
+                <span>1. Pipeline CRM</span>
+                <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono font-medium ${
+                  clientsViewMode === 'pipeline'
+                    ? 'bg-sky-500 text-white'
+                    : 'bg-sky-100 dark:bg-sky-950 text-sky-700 dark:text-sky-300'
+                }`}>
+                  {prospects.length}
+                </span>
+              </button>
+
               <button
                 type="button"
                 onClick={() => setClientsViewMode('directory')}
-                className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${
+                className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer shrink-0 ${
                   clientsViewMode === 'directory'
                     ? 'bg-white dark:bg-[#1A1A1E] text-black dark:text-white shadow-2xs font-semibold'
                     : 'text-gray-500 dark:text-neutral-400 hover:text-black dark:hover:text-white'
                 }`}
               >
-                <LayoutList className="w-3.5 h-3.5" />
-                <span>Directorio (Escala)</span>
-                <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-gray-100 dark:bg-neutral-700 text-gray-600 dark:text-neutral-300">
+                <LayoutList className="w-3.5 h-3.5 text-emerald-500" />
+                <span>2. Directorio Activos</span>
+                <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono font-medium ${
+                  clientsViewMode === 'directory'
+                    ? 'bg-emerald-500 text-white'
+                    : 'bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300'
+                }`}>
                   {clients.length}
                 </span>
               </button>
@@ -769,21 +704,39 @@ export const CoachDashboard: React.FC<CoachDashboardProps> = ({
                 <button
                   type="button"
                   onClick={() => setClientsViewMode('workstation')}
-                  className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${
+                  className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer shrink-0 ${
                     clientsViewMode === 'workstation'
                       ? 'bg-white dark:bg-[#1A1A1E] text-black dark:text-white shadow-2xs font-semibold'
                       : 'text-gray-500 dark:text-neutral-400 hover:text-black dark:hover:text-white'
                   }`}
                 >
-                  <UserCircle2 className="w-3.5 h-3.5" />
-                  <span>Ficha 1 a 1 ({selectedClient.name.split(' ')[0]})</span>
+                  <UserCircle2 className="w-3.5 h-3.5 text-indigo-500" />
+                  <span>3. Ficha 1 a 1 ({selectedClient.name.split(' ')[0]})</span>
                 </button>
               )}
             </div>
           </div>
 
           {/* Sub-View Content */}
-          {clientsViewMode === 'directory' ? (
+          {clientsViewMode === 'pipeline' ? (
+            <CrmPipelineManager
+              embedded={true}
+              prospects={prospects}
+              clients={clients}
+              eventRegistrations={eventRegistrations}
+              onRefreshProspects={handleRefreshProspects}
+              onRefreshClients={handleRefreshClientsList}
+              onSelectClientAndOpenWorkstation={(cid) => {
+                handleSelectClient(cid, true);
+                setClientsViewMode('workstation');
+              }}
+              onOpenMakeModal={() => {
+                setAcademicInitialSubTab('automations');
+                setActiveMainTab('academic');
+              }}
+              onOpenRegistrationPortal={onOpenRegistrationPortal}
+            />
+          ) : clientsViewMode === 'directory' ? (
             <ClientDirectoryTable
               clients={clients}
               selectedClientId={selectedClientId}
@@ -807,6 +760,7 @@ export const CoachDashboard: React.FC<CoachDashboardProps> = ({
               sessions={sessions}
               isGeneratingAI={isGeneratingAI}
               generationFeedback={generationFeedback}
+              onRefreshClients={handleRefreshClientsList}
               onSelectClient={(clientId) => handleSelectClient(clientId, true)}
               onBackToDirectory={() => setClientsViewMode('directory')}
               onGenerateAI={handleGenerateAIAnalysis}
@@ -835,12 +789,31 @@ export const CoachDashboard: React.FC<CoachDashboardProps> = ({
             </div>
           )}
         </div>
-      ) : activeMainTab === 'events' ? (
+      ) : activeMainTab === 'payments' ? (
         /* ========================================================================= */
-        /* VIEW 3: GESTIÓN INTEGRAL DE EVENTOS, TALLERES & CONVOCATORIA (AGENDA)      */
+        /* VIEW 2: GESTIÓN & VALIDACIÓN DE PAGOS (EFECTIVO & BRE-B NU)                */
         /* ========================================================================= */
         <div className="flex-1 flex flex-col p-4 sm:p-8 lg:p-10 max-w-7xl mx-auto w-full space-y-6">
-          <ProgramsAndEventsManager
+          <PaymentValidationManager
+            requests={paymentRequests}
+            clients={clients}
+            coachName={coach.name}
+            onRequestUpdated={() => {
+              setPaymentRequests(OntologicalStore.getPaymentRequests());
+              handleRefreshClientsList();
+            }}
+            onClientUnlocked={() => {
+              handleRefreshClientsList();
+            }}
+          />
+        </div>
+      ) : activeMainTab === 'events' || activeMainTab === 'academic' || activeMainTab === 'events_sessions' ? (
+        /* ========================================================================= */
+        /* VIEW 3: EVENTOS Y SESIONES (MEET EN VIVO, PROGRAMAS, FORMACIÓN & AGENDA)  */
+        /* ========================================================================= */
+        <div className="flex-1 flex flex-col p-4 sm:p-8 lg:p-10 max-w-7xl mx-auto w-full space-y-6">
+          <AdminAcademicManager
+            initialSubTab={academicInitialSubTab || 'events'}
             cronogramaEvents={cronogramaEvents}
             programs={programs}
             eventRegistrations={eventRegistrations}
@@ -921,13 +894,6 @@ export const CoachDashboard: React.FC<CoachDashboardProps> = ({
               }
             }}
           />
-        </div>
-      ) : activeMainTab === 'academic' ? (
-        /* ========================================================================= */
-        /* VIEW 6: ESPACIO ADMINISTRADOR ACADÉMICO (CURSOS, TEMARIOS, PASOS, PREGUNTAS) */
-        /* ========================================================================= */
-        <div className="flex-1 flex flex-col p-4 sm:p-8 lg:p-10 max-w-7xl mx-auto w-full space-y-6">
-          <AdminAcademicManager initialSubTab={academicInitialSubTab} />
         </div>
       ) : null}
 

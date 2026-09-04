@@ -43,6 +43,7 @@ interface ProgramsAndEventsManagerProps {
   onRefreshPrograms: () => void;
   onRefreshRegistrations: () => void;
   onOpenRegistrationPortal?: () => void;
+  initialSubTab?: 'events' | 'participants' | 'banner';
 }
 
 export const ProgramsAndEventsManager: React.FC<ProgramsAndEventsManagerProps> = ({
@@ -53,12 +54,19 @@ export const ProgramsAndEventsManager: React.FC<ProgramsAndEventsManagerProps> =
   onRefreshPrograms,
   onRefreshRegistrations,
   onOpenRegistrationPortal,
+  initialSubTab = 'events',
 }) => {
   const safeEvents = Array.isArray(cronogramaEvents) ? cronogramaEvents : [];
   const safePrograms = Array.isArray(programs) ? programs : [];
   const safeRegistrations = Array.isArray(eventRegistrations) ? eventRegistrations : [];
 
-  const [activeSubTab, setActiveSubTab] = useState<'events' | 'participants' | 'banner'>('events');
+  const [activeSubTab, setActiveSubTab] = useState<'events' | 'participants' | 'banner'>(initialSubTab);
+
+  React.useEffect(() => {
+    if (initialSubTab) {
+      setActiveSubTab(initialSubTab);
+    }
+  }, [initialSubTab]);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedEventFilter, setSelectedEventFilter] = useState<string>('all');
   const [copiedLinkFeedback, setCopiedLinkFeedback] = useState(false);

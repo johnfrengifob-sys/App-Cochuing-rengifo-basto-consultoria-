@@ -39,6 +39,7 @@ interface CrmPipelineManagerProps {
   onSelectClientAndOpenWorkstation?: (clientId: string) => void;
   onOpenMakeModal: () => void;
   onOpenRegistrationPortal?: () => void;
+  embedded?: boolean;
 }
 
 export const CrmPipelineManager: React.FC<CrmPipelineManagerProps> = ({
@@ -50,6 +51,7 @@ export const CrmPipelineManager: React.FC<CrmPipelineManagerProps> = ({
   onSelectClientAndOpenWorkstation,
   onOpenMakeModal,
   onOpenRegistrationPortal,
+  embedded = false,
 }) => {
   const safeProspects = Array.isArray(prospects) ? prospects : [];
   const safeClients = Array.isArray(clients) ? clients : [];
@@ -273,7 +275,7 @@ export const CrmPipelineManager: React.FC<CrmPipelineManagerProps> = ({
   };
 
   return (
-    <div className="p-4 sm:p-8 lg:p-10 max-w-7xl mx-auto w-full flex-1 flex flex-col space-y-6">
+    <div className={embedded ? "w-full flex-1 flex flex-col space-y-6" : "p-4 sm:p-8 lg:p-10 max-w-7xl mx-auto w-full flex-1 flex flex-col space-y-6"}>
       {/* 1. Header with Compact Summary Metrics */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between pb-5 border-b border-gray-100 dark:border-neutral-800 gap-4">
         <div>
