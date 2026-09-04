@@ -9,14 +9,12 @@ import {
   Settings,
   ShieldCheck,
   GraduationCap,
-  Video,
   Workflow,
 } from 'lucide-react';
 import { AdminCoursesManager } from './AdminCoursesManager';
 import { AdminTemariosManager } from './AdminTemariosManager';
 import { AdminRoadmapStepsManager } from './AdminRoadmapStepsManager';
 import { AdminQuestionnairesManager } from './AdminQuestionnairesManager';
-import { AdminMeetWorkshopsManager } from './AdminMeetWorkshopsManager';
 import { AdminAutomationsManager } from './AdminAutomationsManager';
 import { OntologicalStore } from '../../services/store';
 
@@ -25,29 +23,31 @@ export type AcademicAdminSubTab =
   | 'temarios'
   | 'steps'
   | 'questionnaires'
-  | 'meet_workshops'
   | 'automations';
 
 interface AdminAcademicManagerProps {
-  initialSubTab?: AcademicAdminSubTab;
+  initialSubTab?: AcademicAdminSubTab | string;
 }
 
 export const AdminAcademicManager: React.FC<AdminAcademicManagerProps> = ({
   initialSubTab = 'courses',
 }) => {
-  const [currentTab, setCurrentTab] = useState<AcademicAdminSubTab>(initialSubTab);
+  const [currentTab, setCurrentTab] = useState<AcademicAdminSubTab>(
+    (initialSubTab === 'meet_workshops' ? 'courses' : initialSubTab) as AcademicAdminSubTab
+  );
   const [version, setVersion] = useState(0);
 
   useEffect(() => {
     if (initialSubTab) {
-      setCurrentTab(initialSubTab);
+      setCurrentTab(
+        (initialSubTab === 'meet_workshops' ? 'courses' : initialSubTab) as AcademicAdminSubTab
+      );
     }
   }, [initialSubTab]);
 
   const programs = OntologicalStore.getPrograms();
   const nodes = OntologicalStore.getProgramNodes();
   const questionnaires = OntologicalStore.getQuestionnaires();
-  const events = OntologicalStore.getCronogramaEvents();
 
   const totalCapacity = programs.reduce((acc, p) => acc + (p.totalCapacity || 15), 0);
   const totalAvailable = programs.reduce(
@@ -73,10 +73,10 @@ export const AdminAcademicManager: React.FC<AdminAcademicManagerProps> = ({
               <span>Espacio Administrador Académico</span>
             </div>
             <h2 className="text-xl md:text-2xl font-black tracking-tight text-white flex items-center gap-2.5">
-              <span>Gestión Pedagógica, Cursos, Talleres & Automatizaciones</span>
+              <span>Gestión Pedagógica, Programas, Temarios & Automatizaciones</span>
             </h2>
             <p className="text-xs md:text-sm text-neutral-300 font-light max-w-2xl leading-relaxed">
-              Panel unificado para administrar oferta de programas, aforo y cupos, temarios y syllabus, pasos de taller, preguntas reflexivas, sala Meet de conversatorios y configuración de Make.com.
+              Panel unificado para administrar la oferta formativa, aforo y cupos, temarios y syllabus, pasos de taller, preguntas reflexivas de cuadernos y automatizaciones Make.com.
             </p>
           </div>
 
@@ -92,18 +92,18 @@ export const AdminAcademicManager: React.FC<AdminAcademicManagerProps> = ({
 
             <div className="p-3 rounded-2xl bg-white/10 backdrop-blur-md border border-white/10 text-center">
               <span className="text-[10px] text-neutral-400 block font-medium uppercase tracking-wider">
-                Cursos & Nodos
+                Programas
               </span>
               <span className="text-lg font-black font-mono text-white">{programs.length}</span>
-              <span className="text-[10px] text-indigo-300 block">6 Módulos</span>
+              <span className="text-[10px] text-indigo-300 block">Activos</span>
             </div>
 
             <div className="p-3 rounded-2xl bg-white/10 backdrop-blur-md border border-white/10 text-center">
               <span className="text-[10px] text-neutral-400 block font-medium uppercase tracking-wider">
-                Talleres Meet
+                Nodos & Pasos
               </span>
-              <span className="text-lg font-black font-mono text-white">{events.length}</span>
-              <span className="text-[10px] text-emerald-300 block">En Vivo</span>
+              <span className="text-lg font-black font-mono text-white">{nodes.length}</span>
+              <span className="text-[10px] text-emerald-300 block">{totalSteps} Pasos</span>
             </div>
 
             <div className="p-3 rounded-2xl bg-white/10 backdrop-blur-md border border-white/10 text-center">
@@ -128,7 +128,7 @@ export const AdminAcademicManager: React.FC<AdminAcademicManagerProps> = ({
           }`}
         >
           <Users className="w-3.5 h-3.5" />
-          <span>1. Cursos & Capacidad</span>
+          <span>1. Cursos & Programas</span>
           <span
             className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono font-medium ${
               currentTab === 'courses'
@@ -204,27 +204,6 @@ export const AdminAcademicManager: React.FC<AdminAcademicManagerProps> = ({
         </button>
 
         <button
-          onClick={() => setCurrentTab('meet_workshops')}
-          className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-medium transition-all cursor-pointer shrink-0 ${
-            currentTab === 'meet_workshops'
-              ? 'bg-black text-white dark:bg-white dark:text-black shadow-xs font-semibold'
-              : 'text-neutral-600 dark:text-neutral-400 hover:text-black dark:hover:text-white hover:bg-white/70 dark:hover:bg-neutral-800/70'
-          }`}
-        >
-          <Video className="w-3.5 h-3.5 text-indigo-500" />
-          <span>5. Sala Meet & Talleres</span>
-          <span
-            className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono font-medium ${
-              currentTab === 'meet_workshops'
-                ? 'bg-white/20 dark:bg-black/20 text-white dark:text-black'
-                : 'bg-neutral-200/80 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400'
-            }`}
-          >
-            {events.length}
-          </span>
-        </button>
-
-        <button
           onClick={() => setCurrentTab('automations')}
           className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-medium transition-all cursor-pointer shrink-0 ${
             currentTab === 'automations'
@@ -233,7 +212,7 @@ export const AdminAcademicManager: React.FC<AdminAcademicManagerProps> = ({
           }`}
         >
           <Workflow className="w-3.5 h-3.5 text-amber-500" />
-          <span>6. Automatizaciones & Make</span>
+          <span>5. Automatizaciones & Make</span>
           <span
             className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono font-medium ${
               currentTab === 'automations'
@@ -253,9 +232,6 @@ export const AdminAcademicManager: React.FC<AdminAcademicManagerProps> = ({
         {currentTab === 'steps' && <AdminRoadmapStepsManager onRefresh={handleRefresh} />}
         {currentTab === 'questionnaires' && (
           <AdminQuestionnairesManager onRefresh={handleRefresh} />
-        )}
-        {currentTab === 'meet_workshops' && (
-          <AdminMeetWorkshopsManager onRefresh={handleRefresh} />
         )}
         {currentTab === 'automations' && (
           <AdminAutomationsManager onRefresh={handleRefresh} />

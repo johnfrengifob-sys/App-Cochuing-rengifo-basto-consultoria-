@@ -2,6 +2,7 @@ import React from 'react';
 import { BrandLogo } from './BrandLogo';
 import { MapPin, Phone, MessageSquare, ShieldCheck, Mail, ExternalLink } from 'lucide-react';
 import { COMPANY_INFO } from '../services/store';
+import { SocialLinksBar } from './SocialLinksBar';
 
 interface CompanyFooterProps {
   minimal?: boolean;
@@ -21,7 +22,7 @@ export const CompanyFooter: React.FC<CompanyFooterProps> = ({
           <div className="flex items-center gap-3">
             <BrandLogo size="xs" layout="full" />
           </div>
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] font-light">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-[11px] font-light">
             <a
               href={COMPANY_INFO.mapsUrl}
               target="_blank"
@@ -43,6 +44,11 @@ export const CompanyFooter: React.FC<CompanyFooterProps> = ({
               <Phone className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
               Cel: {COMPANY_INFO.phone}
             </a>
+            <span className="opacity-40 hidden sm:inline">•</span>
+            <div className="flex items-center gap-1.5">
+              <span className="text-gray-400 dark:text-neutral-500 font-medium">Redes:</span>
+              <SocialLinksBar variant="compact" />
+            </div>
           </div>
         </div>
       </footer>
@@ -148,6 +154,21 @@ export const CompanyFooter: React.FC<CompanyFooterProps> = ({
                 </button>
               )}
             </div>
+          </div>
+        </div>
+
+        {/* Dedicated Social Media Channels Section */}
+        <div className="pt-6 border-t border-gray-200/60 dark:border-neutral-800/80">
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+            <div className="space-y-1">
+              <div className="text-xs font-semibold uppercase tracking-wider text-black dark:text-white flex items-center gap-2">
+                <span>Redes Sociales Oficiales</span>
+              </div>
+              <p className="text-xs font-light text-gray-500 dark:text-neutral-400">
+                Conéctate con nosotros en Facebook, TikTok y YouTube para transmisiones en vivo y microprácticas:
+              </p>
+            </div>
+            <SocialLinksBar variant="pills" />
           </div>
         </div>
 

@@ -1,0 +1,394 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "Perfil de usuario del sistema (Coach o Participante)",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "name": {
+          "type": "string",
+          "maxLength": 100
+        },
+        "email": {
+          "type": "string",
+          "maxLength": 120
+        },
+        "role": {
+          "type": "string",
+          "enum": ["coach", "client"]
+        },
+        "avatarUrl": {
+          "type": "string",
+          "maxLength": 500
+        },
+        "phone": {
+          "type": "string",
+          "maxLength": 30
+        },
+        "status": {
+          "type": "string",
+          "enum": ["active", "waiting", "inactive"]
+        },
+        "programProgress": {
+          "type": "number"
+        },
+        "programStep": {
+          "type": "number"
+        },
+        "company": {
+          "type": "string",
+          "maxLength": 120
+        },
+        "primaryBreakdown": {
+          "type": "string",
+          "maxLength": 255
+        },
+        "updatedAt": {
+          "type": "string",
+          "maxLength": 50
+        }
+      },
+      "required": ["uid", "name", "email", "role"]
+    },
+    "Prospect": {
+      "title": "Prospect",
+      "description": "Prospecto en el pipeline CRM derivado de conversatorios o Make.com",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "name": {
+          "type": "string",
+          "maxLength": 100
+        },
+        "whatsapp": {
+          "type": "string",
+          "maxLength": 30
+        },
+        "email": {
+          "type": "string",
+          "maxLength": 120
+        },
+        "status": {
+          "type": "string",
+          "enum": ["matriz_enviada", "sesion_20min_agendada", "convertido", "descartado"]
+        },
+        "origin": {
+          "type": "string",
+          "maxLength": 150
+        },
+        "notes": {
+          "type": "string",
+          "maxLength": 1000
+        },
+        "createdAt": {
+          "type": "string",
+          "maxLength": 50
+        }
+      },
+      "required": ["id", "name", "whatsapp", "status", "origin"]
+    },
+    "Session": {
+      "title": "Session",
+      "description": "Sesión quincenal de coaching ontológico del programa de 12 semanas",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "clientId": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "sessionNumber": {
+          "type": "number"
+        },
+        "date": {
+          "type": "string",
+          "maxLength": 50
+        },
+        "meetLink": {
+          "type": "string",
+          "maxLength": 300
+        },
+        "status": {
+          "type": "string",
+          "enum": ["scheduled", "completed", "cancelled"]
+        },
+        "notes": {
+          "type": "string",
+          "maxLength": 2000
+        },
+        "isPaid": {
+          "type": "boolean"
+        },
+        "durationMinutes": {
+          "type": "number"
+        }
+      },
+      "required": ["id", "clientId", "status", "date"]
+    },
+    "FormSubmission": {
+      "title": "FormSubmission",
+      "description": "Bitácora reflexiva y somática completada por el coachee antes de cada sesión",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "clientId": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "sessionId": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "sessionStep": {
+          "type": "number"
+        },
+        "level": {
+          "type": "string",
+          "enum": ["Nivel I", "Nivel II", "Nivel III"]
+        },
+        "bodyEmotion": {
+          "type": "string",
+          "maxLength": 500
+        },
+        "reflections": {
+          "type": "string",
+          "maxLength": 4000
+        },
+        "submittedAt": {
+          "type": "string",
+          "maxLength": 50
+        }
+      },
+      "required": ["id", "clientId", "sessionId", "bodyEmotion", "reflections"]
+    },
+    "PostSessionForm": {
+      "title": "PostSessionForm",
+      "description": "Evaluación directiva de competencias ICF realizada por el Coach tras la sesión",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "sessionId": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "sessionNumber": {
+          "type": "number"
+        },
+        "clientId": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "clientName": {
+          "type": "string",
+          "maxLength": 100
+        },
+        "coacheeEmotionAndOpenness": {
+          "type": "string",
+          "maxLength": 2000
+        },
+        "masterJudgmentAndNarrative": {
+          "type": "string",
+          "maxLength": 2000
+        },
+        "perspectiveShiftEvidence": {
+          "type": "string",
+          "maxLength": 2000
+        },
+        "directivenessAndIcfCompetency": {
+          "type": "string",
+          "maxLength": 2000
+        },
+        "submittedAt": {
+          "type": "string",
+          "maxLength": 50
+        }
+      },
+      "required": ["id", "sessionId", "clientId", "submittedAt"]
+    },
+    "EventRegistration": {
+      "title": "EventRegistration",
+      "description": "Pre-inscripción oficial y ticket para talleres y conversatorios",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "ticketCode": {
+          "type": "string",
+          "maxLength": 50
+        },
+        "eventId": {
+          "type": "string",
+          "maxLength": 100
+        },
+        "eventTitle": {
+          "type": "string",
+          "maxLength": 150
+        },
+        "name": {
+          "type": "string",
+          "maxLength": 100
+        },
+        "email": {
+          "type": "string",
+          "maxLength": 120
+        },
+        "phone": {
+          "type": "string",
+          "maxLength": 30
+        },
+        "registeredAt": {
+          "type": "string",
+          "maxLength": 50
+        },
+        "icfTermsAccepted": {
+          "type": "boolean"
+        },
+        "privacyTermsAccepted": {
+          "type": "boolean"
+        },
+        "attendedEvent": {
+          "type": "boolean"
+        }
+      },
+      "required": ["id", "ticketCode", "name", "email", "phone"]
+    },
+    "CronogramaEvent": {
+      "title": "CronogramaEvent",
+      "description": "Evento oficial del cronograma ontológico quincenal",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "title": {
+          "type": "string",
+          "maxLength": 150
+        },
+        "subtitle": {
+          "type": "string",
+          "maxLength": 200
+        },
+        "date": {
+          "type": "string",
+          "maxLength": 50
+        },
+        "time": {
+          "type": "string",
+          "maxLength": 50
+        },
+        "meetUrl": {
+          "type": "string",
+          "maxLength": 300
+        },
+        "facilitator": {
+          "type": "string",
+          "maxLength": 100
+        },
+        "spotsLeft": {
+          "type": "number"
+        },
+        "totalSpots": {
+          "type": "number"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["upcoming", "live", "completed"]
+        }
+      },
+      "required": ["id", "title", "date", "status"]
+    },
+    "PaymentValidation": {
+      "title": "PaymentValidation",
+      "description": "Registro de validación de pago Bre-B Nu o transferencia directa",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "clientId": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "voucherCode": {
+          "type": "string",
+          "maxLength": 50
+        },
+        "amount": {
+          "type": "string",
+          "maxLength": 50
+        },
+        "method": {
+          "type": "string",
+          "maxLength": 50
+        },
+        "status": {
+          "type": "string",
+          "enum": ["pending", "verified", "rejected"]
+        },
+        "unlockedModule": {
+          "type": "string",
+          "maxLength": 50
+        },
+        "timestamp": {
+          "type": "string",
+          "maxLength": 50
+        }
+      },
+      "required": ["id", "clientId", "voucherCode", "status"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "Colección de participantes y coaches del sistema"
+    },
+    "/prospects/{prospectId}": {
+      "schema": "Prospect",
+      "description": "Colección de prospectos del CRM y conversatorios"
+    },
+    "/sessions/{sessionId}": {
+      "schema": "Session",
+      "description": "Sesiones individuales de coaching ontológico"
+    },
+    "/formSubmissions/{submissionId}": {
+      "schema": "FormSubmission",
+      "description": "Cuadernos y reflexiones previas de los participantes"
+    },
+    "/postSessionForms/{formId}": {
+      "schema": "PostSessionForm",
+      "description": "Auditorías ICF y evaluaciones del coach"
+    },
+    "/eventRegistrations/{regId}": {
+      "schema": "EventRegistration",
+      "description": "Tickets y pre-inscripciones de eventos"
+    },
+    "/cronogramaEvents/{eventId}": {
+      "schema": "CronogramaEvent",
+      "description": "Eventos públicos y conversatorios quincenales"
+    },
+    "/payments/{paymentId}": {
+      "schema": "PaymentValidation",
+      "description": "Comprobantes y verificaciones de pago Bre-B Nu"
+    }
+  }
+}

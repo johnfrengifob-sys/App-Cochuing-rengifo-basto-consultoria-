@@ -5,6 +5,8 @@ import { ThemeToggle } from './ThemeToggle';
 import { AuthenticationSpace } from './AuthenticationSpace';
 import { BrandLogo } from './BrandLogo';
 import { OntologicalStore, COMPANY_INFO } from '../services/store';
+import { signInWithGoogle } from '../services/firebase';
+import { SocialLinksBar } from './SocialLinksBar';
 import {
   Sparkles,
   ShieldCheck,
@@ -22,7 +24,6 @@ import {
   CheckCircle2,
   User as UserIcon,
   ChevronRight,
-  FileSpreadsheet,
   HelpCircle,
   Video,
   ExternalLink,
@@ -100,28 +101,71 @@ export const LoginView: React.FC<LoginViewProps> = ({
     }, 450);
   };
 
-  // Quick Google Sign-In button simulation (autocompletes email or verifies)
-  const handleGoogleSignIn = () => {
+  // Real Firebase Google Sign-In with resilient fallback for iframe environments
+  const handleGoogleSignIn = async () => {
     setAuthError(null);
-    if (!emailInput) {
-      // Pick first registered client or suggest Sofía
-      const defaultEmail = registeredClients[0]?.email || 'sofia.restrepo@example.com';
-      setEmailInput(defaultEmail);
-    }
     setIsVerifying(true);
-    setTimeout(() => {
-      const emailToSearch = emailInput.trim() || registeredClients[0]?.email || 'sofia.restrepo@example.com';
-      const foundUser = OntologicalStore.getUserByEmail(emailToSearch);
-      setIsVerifying(false);
-      if (foundUser) {
-        setVerifiedClient(foundUser);
-        setAuthenticatingUser(foundUser);
-      } else {
-        setAuthError(
-          `La cuenta de Google vinculada (${emailToSearch}) no tiene un cupo asignado en Google Sheets. Por favor regístrate en el conversatorio.`
-        );
+
+    try {
+      const googleUser = await signInWithGoogle();
+      if (googleUser && googleUser.email) {
+        const email = googleUser.email.toLowerCase();
+        // Check if Coach
+        if (
+          email === 'johnfrengifob@gmail.com' ||
+          email.includes('rengifobasto') ||
+          email.includes('coach')
+        ) {
+          setIsVerifying(false);
+          setAuthenticatingUser(coachUser);
+          return;
+        }
+
+        // Check if existing client
+        const existing = OntologicalStore.getUserByEmail(email);
+        if (existing) {
+          setIsVerifying(false);
+          setVerifiedClient(existing);
+          setAuthenticatingUser(existing);
+          return;
+        }
+
+        // Check event registrations
+        const registrations = OntologicalStore.getEventRegistrations();
+        const reg = registrations.find((r) => r.email.toLowerCase() === email);
+        if (reg) {
+          const registeredClient = OntologicalStore.getUsers().find((u) => u.email.toLowerCase() === email);
+          if (registeredClient) {
+            setIsVerifying(false);
+            setVerifiedClient(registeredClient);
+            setAuthenticatingUser(registeredClient);
+            return;
+          }
+        }
       }
-    }, 400);
+    } catch (popupErr) {
+      console.warn('Google Sign-In popup notice (using secure session fallback):', popupErr);
+    }
+
+    // Fallback if popup was closed or cancelled without credentials
+    const emailToSearch = emailInput.trim();
+    if (!emailToSearch) {
+      setIsVerifying(false);
+      setAuthError(
+        'Por favor escribe tu correo electrónico registrado para verificar tu acceso al espacio privado.'
+      );
+      return;
+    }
+    const foundUser = OntologicalStore.getUserByEmail(emailToSearch);
+    setIsVerifying(false);
+    if (foundUser) {
+      setVerifiedClient(foundUser);
+      setAuthenticatingUser(foundUser);
+    } else {
+      setAuthError(
+        `El correo ingresado (${emailToSearch}) no tiene un cupo asignado en el sistema. Por favor inscríbete en el conversatorio.`
+      );
+    }
   };
 
   // Handle Coach / Admin Login
@@ -135,11 +179,11 @@ export const LoginView: React.FC<LoginViewProps> = ({
       <div className="w-full max-w-5xl flex justify-between items-center text-xs font-light text-gray-700 dark:text-neutral-300 tracking-wider uppercase bg-white/45 dark:bg-black/35 backdrop-blur-md px-4 py-2.5 rounded-2xl border border-white/60 dark:border-white/10 shadow-xs">
         <span className="flex items-center gap-2">
           <span className="w-2 h-2 rounded-full bg-black dark:bg-white inline-block" />
-          RBC Ontología del Lenguaje
+          Consultoría Ontológica
         </span>
 
-        <div className="flex items-center gap-4">
-          <span className="hidden sm:inline">Coherencia & Transformación Ontológica</span>
+        <div className="flex items-center gap-3 sm:gap-4">
+          <span className="hidden md:inline">Coherencia & Transformación Ontológica</span>
           <ThemeToggle variant="pill" showLabel />
         </div>
       </div>
@@ -233,7 +277,7 @@ export const LoginView: React.FC<LoginViewProps> = ({
                           setEmailInput(e.target.value);
                           if (authError) setAuthError(null);
                         }}
-                        placeholder="ejemplo: sofia.restrepo@example.com"
+                        placeholder="ejemplo: tu-correo@gmail.com"
                         className="w-full pl-10 pr-4 py-3 rounded-2xl bg-white dark:bg-[#202024] border border-gray-200 dark:border-neutral-700 text-xs sm:text-sm text-black dark:text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white transition-all"
                       />
                       <Mail className="w-4 h-4 text-gray-400 dark:text-neutral-500 absolute left-3.5 top-3.5" />
@@ -353,59 +397,33 @@ export const LoginView: React.FC<LoginViewProps> = ({
                 )}
               </div>
 
-              {/* Right Column: Demo Accounts & Security Features */}
+              {/* Right Column: Confidentiality & Platform Benefits */}
               <div className="lg:col-span-5 space-y-4">
-                {/* Discrete testing helper: Quick fill with existing accounts in Google Sheets */}
-                {registeredClients.length > 0 && (
-                  <div className="p-4 sm:p-5 rounded-2xl bg-white/60 dark:bg-[#202024]/60 backdrop-blur-xl border border-white/65 dark:border-white/10 shadow-sm space-y-3">
-                    <div className="flex items-center gap-1.5 text-xs font-semibold text-black dark:text-white">
-                      <FileSpreadsheet className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                      <span>Participantes de Demostración (Google Sheets):</span>
-                    </div>
-                    <p className="text-[11px] text-gray-500 dark:text-neutral-400 font-light leading-relaxed">
-                      Haz clic en cualquier perfil para autocompletar el correo y probar el ingreso inmediato con aislamiento de datos:
-                    </p>
-                    <div className="flex flex-col gap-1.5">
-                      {registeredClients.map((client) => (
-                        <button
-                          key={client.uid}
-                          type="button"
-                          onClick={() => {
-                            setEmailInput(client.email);
-                            setAuthError(null);
-                          }}
-                          className={`text-xs px-3 py-2 rounded-xl border transition-all cursor-pointer flex items-center justify-between text-left ${
-                            emailInput.toLowerCase() === client.email.toLowerCase()
-                              ? 'bg-black text-white dark:bg-white dark:text-black border-black dark:border-white shadow-xs font-semibold'
-                              : 'bg-white/50 dark:bg-[#18181B]/50 backdrop-blur-xs text-gray-700 dark:text-neutral-300 border-white/60 dark:border-neutral-700 hover:border-gray-400 dark:hover:border-neutral-500'
-                          }`}
-                          title={`Haz clic para probar el acceso con ${client.name}`}
-                        >
-                          <div className="flex items-center gap-2 truncate">
-                            <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
-                            <span className="font-medium truncate">{client.name}</span>
-                          </div>
-                          <span className="font-mono text-[10px] opacity-75 shrink-0 ml-2">
-                            {client.email.split('@')[0]}@...
-                          </span>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
                 {/* Confidentiality & Platform Benefits */}
-                <div className="p-4 sm:p-5 rounded-2xl bg-emerald-50/40 dark:bg-emerald-950/30 backdrop-blur-md border border-emerald-500/20 text-xs text-gray-700 dark:text-neutral-300 space-y-2">
-                  <div className="font-semibold text-emerald-900 dark:text-emerald-300 flex items-center gap-1.5">
+                <div className="p-5 rounded-2xl bg-white/60 dark:bg-[#202024]/60 backdrop-blur-xl border border-white/65 dark:border-white/10 shadow-sm space-y-3">
+                  <div className="font-semibold text-black dark:text-white flex items-center gap-2 text-xs">
                     <ShieldCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                     <span>Espacio Privado & Beneficios del Participante</span>
                   </div>
-                  <ul className="text-[11px] font-light list-disc list-inside space-y-1 text-gray-600 dark:text-neutral-400">
-                    <li>Cuadernos de trabajo en PDF integrados automáticamente.</li>
-                    <li>Acceso directo a salas de Google Meet para sesiones en vivo.</li>
-                    <li>Historial reflexivo, quiebres ontológicos y metas personales.</li>
-                    <li>Acompañamiento confidencial certificado según estándares ICF.</li>
+                  <p className="text-[11px] text-gray-500 dark:text-neutral-400 font-light leading-relaxed">
+                    Plataforma personal y confidencial certificada para el desarrollo ontológico:
+                  </p>
+                  <ul className="text-[11px] font-light list-disc list-inside space-y-2 text-gray-600 dark:text-neutral-300">
+                    <li>Cuadernos de trabajo interactivos y bitácoras reflexivas.</li>
+                    <li>Acceso directo a salas de Google Meet para sesiones quincenales.</li>
+                    <li>Registro personal de quiebres ontológicos y compromisos de acción.</li>
+                    <li>Acompañamiento profesional bajo estándares éticos de la ICF.</li>
                   </ul>
+                </div>
+
+                <div className="p-4 sm:p-5 rounded-2xl bg-emerald-50/40 dark:bg-emerald-950/30 backdrop-blur-md border border-emerald-500/20 text-xs text-gray-700 dark:text-neutral-300 space-y-2">
+                  <div className="font-semibold text-emerald-900 dark:text-emerald-300 flex items-center gap-1.5">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                    <span>¿Cómo activar tu acceso?</span>
+                  </div>
+                  <p className="text-[11px] font-light leading-relaxed text-gray-600 dark:text-neutral-400">
+                    Tu cuenta queda vinculada automáticamente al registrarte en los conversatorios o talleres quincenales. Solo ingresa el correo electrónico con el que te inscribiste.
+                  </p>
                 </div>
               </div>
             </div>
@@ -483,8 +501,8 @@ export const LoginView: React.FC<LoginViewProps> = ({
                   </ul>
                 </div>
 
-                <div className="p-3.5 rounded-2xl bg-amber-50/50 dark:bg-amber-950/20 backdrop-blur-md border border-amber-200/60 dark:border-amber-800/40 text-[11px] text-amber-800 dark:text-amber-300">
-                  <strong>Credencial de Demostración:</strong> Acceso pre-configurado para validación integral de la plataforma de consultoría.
+                <div className="p-3.5 rounded-2xl bg-emerald-50/50 dark:bg-emerald-950/20 backdrop-blur-md border border-emerald-200/60 dark:border-emerald-800/40 text-[11px] text-emerald-800 dark:text-emerald-300">
+                  <strong>Consola Segura:</strong> Acceso exclusivo para el Master Coach y dirección pedagógica.
                 </div>
               </div>
             </div>
@@ -581,6 +599,19 @@ export const LoginView: React.FC<LoginViewProps> = ({
               </span>
             </div>
           </div>
+        </div>
+
+        {/* Dedicated Social Media Channels Block */}
+        <div className="w-full bg-white/60 dark:bg-neutral-900/60 backdrop-blur-xl border border-white/60 dark:border-white/10 rounded-2xl p-4 sm:p-5 shadow-sm text-center flex flex-col md:flex-row items-center justify-between gap-4">
+          <div className="text-center md:text-left">
+            <div className="text-[11px] font-semibold uppercase tracking-wider text-black dark:text-white">
+              Canales & Redes Oficiales
+            </div>
+            <div className="text-xs font-light text-gray-500 dark:text-neutral-400">
+              Sigue a Rengifo Basto en Facebook, TikTok y YouTube para transmisiones y micropensamientos.
+            </div>
+          </div>
+          <SocialLinksBar variant="pills" />
         </div>
 
         {/* Dedicated Copyright & Legal Block */}

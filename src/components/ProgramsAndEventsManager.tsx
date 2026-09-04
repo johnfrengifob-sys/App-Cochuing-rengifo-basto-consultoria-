@@ -30,6 +30,9 @@ import {
   Copy,
   CheckCheck,
   Award,
+  Radio,
+  Link as LinkIcon,
+  Check,
 } from 'lucide-react';
 
 interface ProgramsAndEventsManagerProps {
@@ -55,10 +58,33 @@ export const ProgramsAndEventsManager: React.FC<ProgramsAndEventsManagerProps> =
   const safePrograms = Array.isArray(programs) ? programs : [];
   const safeRegistrations = Array.isArray(eventRegistrations) ? eventRegistrations : [];
 
-  const [activeSubTab, setActiveSubTab] = useState<'events' | 'programs' | 'participants' | 'banner'>('events');
+  const [activeSubTab, setActiveSubTab] = useState<'events' | 'participants' | 'banner'>('events');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedEventFilter, setSelectedEventFilter] = useState<string>('all');
   const [copiedLinkFeedback, setCopiedLinkFeedback] = useState(false);
+
+  // Master Google Meet Room State
+  const defaultMeet = cronogramaEvents[0]?.meetUrl || 'https://meet.google.com/rbc-conversatorio-ontologico';
+  const [masterMeetUrl, setMasterMeetUrl] = useState(() => {
+    return localStorage.getItem('rbc_master_meet_url') || defaultMeet;
+  });
+  const [isEditingMasterMeet, setIsEditingMasterMeet] = useState(false);
+  const [tempMasterMeet, setTempMasterMeet] = useState(masterMeetUrl);
+  const [copiedMeetFeedback, setCopiedMeetFeedback] = useState(false);
+
+  const handleCopyMasterMeet = () => {
+    navigator.clipboard.writeText(masterMeetUrl);
+    setCopiedMeetFeedback(true);
+    setTimeout(() => setCopiedMeetFeedback(false), 2500);
+  };
+
+  const handleSaveMasterMeet = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!tempMasterMeet.trim()) return;
+    localStorage.setItem('rbc_master_meet_url', tempMasterMeet.trim());
+    setMasterMeetUrl(tempMasterMeet.trim());
+    setIsEditingMasterMeet(false);
+  };
 
   // Modal: Create / Edit Event
   const [isEventModalOpen, setIsEventModalOpen] = useState(false);
@@ -71,7 +97,7 @@ export const ProgramsAndEventsManager: React.FC<ProgramsAndEventsManagerProps> =
     displayDate: '',
     time: '7:00 PM - 9:00 PM (GMT-5)',
     mode: 'Online (Google Meet)',
-    meetUrl: 'https://meet.google.com/rbc-conversatorio-ontologico',
+    meetUrl: masterMeetUrl,
     description: '',
     imageUrl: '',
     aiPromptUsed: '',
@@ -82,28 +108,6 @@ export const ProgramsAndEventsManager: React.FC<ProgramsAndEventsManagerProps> =
     status: 'upcoming',
     price: 'Acceso Libre con Pre-Registro',
   });
-
-  // Modal: Create / Edit Program
-  const [isProgramModalOpen, setIsProgramModalOpen] = useState(false);
-  const [editingProgramId, setEditingProgramId] = useState<string | null>(null);
-  const [programFormData, setProgramFormData] = useState<Omit<OntologicalProgram, 'id'>>({
-    name: '',
-    subtitle: '',
-    category: 'Programa de Acompañamiento',
-    duration: '12 Semanas (6 Sesiones Quincenales)',
-    format: '1 a 1 Ejecutivo',
-    fee: '$1.500.000 COP',
-    totalCapacity: 10,
-    availableSpots: 4,
-    enrolledCount: 6,
-    status: 'active',
-    description: '',
-    keyOutcomes: [],
-    displaySchedule: 'Sesiones personalizadas de 60 min',
-    facilitator: 'John Fredy Rengifo Basto',
-    totalNodes: 6,
-  });
-  const [keyOutcomesText, setKeyOutcomesText] = useState('');
 
   // Modal: Manual Participant Registration
   const [isManualRegModalOpen, setIsManualRegModalOpen] = useState(false);
@@ -120,15 +124,6 @@ export const ProgramsAndEventsManager: React.FC<ProgramsAndEventsManagerProps> =
     const newSpotsLeft = Math.max(0, Math.min(target.totalSpots, target.spotsLeft + delta));
     OntologicalStore.updateCronogramaEvent(eventId, { spotsLeft: newSpotsLeft });
     onRefreshEvents();
-  };
-
-  // Quick Spot Adjustments for Programs
-  const handleAdjustProgramSpots = (progId: string, delta: number) => {
-    const target = programs.find((p) => p.id === progId);
-    if (!target) return;
-    const newAvailable = Math.max(0, Math.min(target.totalCapacity, target.availableSpots + delta));
-    OntologicalStore.updateProgram(progId, { availableSpots: newAvailable });
-    onRefreshPrograms();
   };
 
   // Open Event Modal for New
@@ -219,88 +214,6 @@ export const ProgramsAndEventsManager: React.FC<ProgramsAndEventsManagerProps> =
     onRefreshEvents();
   };
 
-  // Open Program Modal for New
-  const handleOpenNewProgramModal = () => {
-    setEditingProgramId(null);
-    setProgramFormData({
-      name: '',
-      subtitle: '',
-      category: 'Programa de Acompañamiento',
-      duration: '12 Semanas (6 Sesiones Quincenales)',
-      format: '1 a 1 Ejecutivo',
-      fee: '$1.500.000 COP',
-      totalCapacity: 10,
-      availableSpots: 10,
-      enrolledCount: 0,
-      status: 'active',
-      description: '',
-      keyOutcomes: [],
-      displaySchedule: 'Sesiones personalizadas de 60 min',
-      facilitator: 'John Fredy Rengifo Basto',
-      totalNodes: 6,
-    });
-    setKeyOutcomesText('');
-    setIsProgramModalOpen(true);
-  };
-
-  // Open Program Modal for Edit
-  const handleOpenEditProgramModal = (prog: OntologicalProgram) => {
-    setEditingProgramId(prog.id);
-    setProgramFormData({
-      name: prog.name,
-      subtitle: prog.subtitle,
-      category: prog.category,
-      duration: prog.duration,
-      format: prog.format,
-      fee: prog.fee,
-      totalCapacity: prog.totalCapacity,
-      availableSpots: prog.availableSpots,
-      enrolledCount: prog.enrolledCount || 0,
-      status: prog.status,
-      description: prog.description,
-      keyOutcomes: prog.keyOutcomes,
-      displaySchedule: prog.displaySchedule || '',
-      facilitator: prog.facilitator,
-      totalNodes: prog.totalNodes,
-    });
-    setKeyOutcomesText(prog.keyOutcomes.join('\n'));
-    setIsProgramModalOpen(true);
-  };
-
-  // Save Program
-  const handleSaveProgram = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!programFormData.name.trim()) return;
-
-    const parsedOutcomes = keyOutcomesText
-      .split('\n')
-      .map((line) => line.trim())
-      .filter(Boolean);
-
-    const payload = {
-      ...programFormData,
-      keyOutcomes: parsedOutcomes.length > 0 ? parsedOutcomes : programFormData.keyOutcomes,
-    };
-
-    if (editingProgramId) {
-      OntologicalStore.updateProgram(editingProgramId, payload);
-    } else {
-      OntologicalStore.addProgram(payload);
-    }
-
-    setIsProgramModalOpen(false);
-    setEditingProgramId(null);
-    onRefreshPrograms();
-  };
-
-  // Delete Program
-  const handleDeleteProgram = (id: string, name: string) => {
-    if (window.confirm(`¿Estás seguro de eliminar el programa "${name}"?`)) {
-      OntologicalStore.deleteProgram(id);
-      onRefreshPrograms();
-    }
-  };
-
   // Manual Registration
   const handleSaveManualRegistration = (e: React.FormEvent) => {
     e.preventDefault();
@@ -367,13 +280,13 @@ export const ProgramsAndEventsManager: React.FC<ProgramsAndEventsManagerProps> =
         <div>
           <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full bg-[#F5F5F7] dark:bg-neutral-800 border border-gray-200/80 dark:border-neutral-700 text-[10px] font-semibold text-gray-700 dark:text-neutral-300 uppercase tracking-wider mb-1.5">
             <Calendar className="w-3 h-3 text-black dark:text-white" />
-            Gestión Integral de Programas & Eventos
+            Gestión de Eventos & Conversatorios en Vivo
           </div>
           <h2 className="text-xl sm:text-2xl font-light text-black dark:text-white tracking-tight">
-            Cronograma, <strong className="font-semibold">Cupos & Catálogo Pedagógico</strong>
+            Agenda en Vivo, <strong className="font-semibold">Meet & Participantes</strong>
           </h2>
           <p className="text-xs font-light text-gray-500 dark:text-neutral-400 mt-0.5 max-w-2xl">
-            Crea y edita programas ontológicos, abre nuevos cupos, monitorea participantes y configura los conversatorios en vivo.
+            Gestiona los conversatorios y talleres en vivo, sala Google Meet central, monitorea participantes y configura el banner activo.
           </p>
         </div>
 
@@ -386,17 +299,6 @@ export const ProgramsAndEventsManager: React.FC<ProgramsAndEventsManagerProps> =
             >
               <Plus className="w-3.5 h-3.5 stroke-[2]" />
               <span>+ Nuevo Evento / Conversatorio</span>
-            </button>
-          )}
-
-          {activeSubTab === 'programs' && (
-            <button
-              type="button"
-              onClick={handleOpenNewProgramModal}
-              className="px-3.5 py-1.5 rounded-xl bg-black dark:bg-white text-white dark:text-black hover:bg-neutral-800 dark:hover:bg-neutral-200 text-xs font-medium transition-all flex items-center gap-1.5 cursor-pointer shadow-xs"
-            >
-              <Plus className="w-3.5 h-3.5 stroke-[2]" />
-              <span>+ Generar Nuevo Programa</span>
             </button>
           )}
 
@@ -430,19 +332,6 @@ export const ProgramsAndEventsManager: React.FC<ProgramsAndEventsManagerProps> =
           >
             <Calendar className="w-3.5 h-3.5" />
             <span>Eventos & Conversatorios ({cronogramaEvents.length})</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setActiveSubTab('programs')}
-            className={`px-3.5 py-2 rounded-xl text-xs font-medium transition-all flex items-center gap-2 cursor-pointer ${
-              activeSubTab === 'programs'
-                ? 'bg-white dark:bg-[#202024] text-black dark:text-white font-bold shadow-2xs border border-gray-200/80 dark:border-neutral-700'
-                : 'text-gray-500 dark:text-neutral-400 hover:text-black dark:hover:text-white'
-            }`}
-          >
-            <Layers className="w-3.5 h-3.5" />
-            <span>Catálogo de Programas ({programs.length})</span>
           </button>
 
           <button
@@ -483,6 +372,100 @@ export const ProgramsAndEventsManager: React.FC<ProgramsAndEventsManagerProps> =
       {/* ================= SUB-TAB 1: EVENTOS & CONVERSATORIOS ================= */}
       {activeSubTab === 'events' && (
         <div className="space-y-4">
+          {/* Master Google Meet Card */}
+          <div className="p-5 rounded-2xl bg-linear-to-r from-neutral-900 via-indigo-950 to-neutral-900 text-white shadow-lg relative overflow-hidden border border-indigo-900/50">
+            <div className="absolute right-0 top-0 w-72 h-72 bg-indigo-500/10 rounded-full blur-2xl pointer-events-none" />
+            <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div className="space-y-1.5">
+                <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full bg-indigo-500/20 border border-indigo-400/30 text-indigo-300 text-[11px] font-semibold">
+                  <Radio className="w-3 h-3 animate-pulse text-indigo-400" />
+                  <span>Sala Virtual Central Google Meet</span>
+                </div>
+                <h3 className="text-base sm:text-lg font-bold tracking-tight text-white flex items-center gap-2">
+                  <span>Enlace Maestro para Talleres y Conversatorios en Vivo</span>
+                </h3>
+                <p className="text-xs text-neutral-300 font-light max-w-xl">
+                  Enlace único sincronizado para los conversatorios quincenales, masterclasses y sesiones ontológicas grupales.
+                </p>
+                <div className="pt-1 flex items-center gap-2 text-xs font-mono text-indigo-200">
+                  <LinkIcon className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
+                  {isEditingMasterMeet ? (
+                    <form onSubmit={handleSaveMasterMeet} className="flex items-center gap-2">
+                      <input
+                        type="url"
+                        value={tempMasterMeet}
+                        onChange={(e) => setTempMasterMeet(e.target.value)}
+                        className="px-2.5 py-1 text-xs bg-white/20 rounded-lg text-white border border-white/30 focus:outline-none w-72"
+                      />
+                      <button
+                        type="submit"
+                        className="px-2 py-1 bg-white text-black text-[11px] font-bold rounded-lg hover:bg-gray-100"
+                      >
+                        Guardar
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setIsEditingMasterMeet(false)}
+                        className="px-2 py-1 bg-white/10 text-white text-[11px] rounded-lg hover:bg-white/20"
+                      >
+                        Cancelar
+                      </button>
+                    </form>
+                  ) : (
+                    <span className="truncate max-w-sm bg-white/10 px-2.5 py-1 rounded-lg border border-white/10">
+                      {masterMeetUrl}
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 shrink-0">
+                <a
+                  href={masterMeetUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white text-black hover:bg-neutral-100 text-xs font-bold transition-all shadow-xs"
+                >
+                  <Video className="w-3.5 h-3.5 text-indigo-600" />
+                  <span>Abrir Sala Meet</span>
+                  <ExternalLink className="w-3 h-3 text-neutral-400" />
+                </a>
+
+                <button
+                  type="button"
+                  onClick={handleCopyMasterMeet}
+                  className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 text-white text-xs font-medium transition-all cursor-pointer"
+                >
+                  {copiedMeetFeedback ? (
+                    <>
+                      <Check className="w-3.5 h-3.5 text-emerald-400" />
+                      <span>¡Copiado!</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-3.5 h-3.5" />
+                      <span>Copiar</span>
+                    </>
+                  )}
+                </button>
+
+                {!isEditingMasterMeet && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setTempMasterMeet(masterMeetUrl);
+                      setIsEditingMasterMeet(true);
+                    }}
+                    title="Editar enlace Google Meet maestro"
+                    className="p-2 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 text-white text-xs cursor-pointer"
+                  >
+                    <Edit3 className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {cronogramaEvents.map((event) => {
               const enrolledCount = Math.max(0, event.totalSpots - event.spotsLeft);
@@ -647,138 +630,6 @@ export const ProgramsAndEventsManager: React.FC<ProgramsAndEventsManagerProps> =
                           className="px-2.5 py-0.5 bg-black dark:bg-white text-white dark:text-black rounded-md text-[10px] font-bold hover:bg-neutral-800 dark:hover:bg-neutral-200 cursor-pointer"
                         >
                           Modificar Total
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* ================= SUB-TAB 2: CATÁLOGO DE PROGRAMAS ================= */}
-      {activeSubTab === 'programs' && (
-        <div className="space-y-4">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-            {programs.map((prog) => {
-              const enrolled = prog.enrolledCount || Math.max(0, prog.totalCapacity - prog.availableSpots);
-              const pct = Math.round((enrolled / prog.totalCapacity) * 100);
-
-              return (
-                <div
-                  key={prog.id}
-                  className="card-solid-white rounded-2xl p-5 shadow-2xs space-y-4 flex flex-col justify-between"
-                >
-                  <div className="space-y-3">
-                    {/* Header */}
-                    <div className="flex items-start justify-between gap-2">
-                      <span className="text-[10px] uppercase font-bold tracking-wider px-2.5 py-0.5 rounded-full bg-gray-100 dark:bg-neutral-800 text-gray-700 dark:text-neutral-300">
-                        {prog.format}
-                      </span>
-                      <div className="flex items-center gap-1">
-                        <button
-                          type="button"
-                          onClick={() => handleOpenEditProgramModal(prog)}
-                          title="Editar programa"
-                          className="p-1.5 rounded-lg border border-gray-200 dark:border-neutral-700 text-gray-600 dark:text-neutral-300 hover:bg-gray-50 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
-                        >
-                          <Edit3 className="w-3.5 h-3.5" />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleDeleteProgram(prog.id, prog.name)}
-                          title="Eliminar programa"
-                          className="p-1.5 rounded-lg border border-gray-200 dark:border-neutral-700 text-gray-400 hover:text-red-500 transition-colors cursor-pointer"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    </div>
-
-                    <div>
-                      <h3 className="text-base font-bold text-black dark:text-white leading-snug">
-                        {prog.name}
-                      </h3>
-                      <p className="text-xs font-light text-gray-500 dark:text-neutral-400 mt-1">
-                        {prog.subtitle}
-                      </p>
-                    </div>
-
-                    {/* Program Info Chips */}
-                    <div className="space-y-1.5 text-xs glass-panel-opal p-3 rounded-xl">
-                      <div className="flex items-center justify-between text-gray-700 dark:text-neutral-300">
-                        <span className="text-gray-400">Duración:</span>
-                        <span className="font-semibold">{prog.duration}</span>
-                      </div>
-                      <div className="flex items-center justify-between text-gray-700 dark:text-neutral-300">
-                        <span className="text-gray-400">Inversión:</span>
-                        <span className="font-semibold text-emerald-700 dark:text-emerald-400">{prog.fee}</span>
-                      </div>
-                      <div className="flex items-center justify-between text-gray-700 dark:text-neutral-300">
-                        <span className="text-gray-400">Nodos Pedagógicos:</span>
-                        <span className="font-semibold">{prog.totalNodes} Nodos</span>
-                      </div>
-                    </div>
-
-                    {/* Key outcomes preview */}
-                    {prog.keyOutcomes && prog.keyOutcomes.length > 0 && (
-                      <div className="space-y-1">
-                        <span className="text-[10px] uppercase font-bold text-gray-400 block">
-                          Resultados Tangibles:
-                        </span>
-                        <ul className="space-y-1 text-xs text-gray-600 dark:text-neutral-300">
-                          {prog.keyOutcomes.slice(0, 3).map((item, idx) => (
-                            <li key={idx} className="flex items-start gap-1.5">
-                              <CheckCircle2 className="w-3 h-3 text-emerald-500 shrink-0 mt-0.5" />
-                              <span className="line-clamp-1">{item}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* QUOTA CONTROL */}
-                  <div className="space-y-2 pt-3 border-t border-gray-100 dark:border-neutral-800">
-                    <div className="flex items-center justify-between text-xs">
-                      <div className="flex items-center gap-1.5">
-                        <Users className="w-3.5 h-3.5 text-black dark:text-white" />
-                        <span className="font-semibold text-black dark:text-white">
-                          Capacidad: {enrolled} / {prog.totalCapacity}
-                        </span>
-                      </div>
-                      <span className="font-bold text-emerald-600 dark:text-emerald-400">
-                        {prog.availableSpots} cupos abiertos
-                      </span>
-                    </div>
-
-                    <div className="w-full h-2 bg-gray-100 dark:bg-neutral-800 rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-black dark:bg-white transition-all duration-300"
-                        style={{ width: `${pct}%` }}
-                      />
-                    </div>
-
-                    <div className="flex items-center justify-between pt-1">
-                      <span className="text-[10px] text-gray-400">Control de apertura:</span>
-                      <div className="flex items-center gap-1.5">
-                        <button
-                          type="button"
-                          onClick={() => handleAdjustProgramSpots(prog.id, -1)}
-                          disabled={prog.availableSpots <= 0}
-                          className="px-2 py-0.5 bg-gray-100 dark:bg-neutral-800 text-black dark:text-white rounded-md text-[10px] font-bold hover:bg-gray-200 dark:hover:bg-neutral-700 disabled:opacity-30 cursor-pointer"
-                        >
-                          -1 Cupo
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleAdjustProgramSpots(prog.id, 1)}
-                          disabled={prog.availableSpots >= prog.totalCapacity}
-                          className="px-2 py-0.5 bg-gray-100 dark:bg-neutral-800 text-black dark:text-white rounded-md text-[10px] font-bold hover:bg-gray-200 dark:hover:bg-neutral-700 disabled:opacity-30 cursor-pointer"
-                        >
-                          +1 Cupo
                         </button>
                       </div>
                     </div>
@@ -1207,214 +1058,6 @@ export const ProgramsAndEventsManager: React.FC<ProgramsAndEventsManagerProps> =
                   className="px-5 py-2 rounded-xl bg-black dark:bg-white text-white dark:text-black font-semibold"
                 >
                   {editingEventId ? 'Guardar Cambios' : 'Crear Evento'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* ================= MODAL: CREATE / EDIT PROGRAM ================= */}
-      {isProgramModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs overflow-y-auto">
-          <div className="bg-white dark:bg-[#18181B] rounded-3xl max-w-xl w-full p-6 sm:p-7 border border-gray-100 dark:border-neutral-800 shadow-2xl space-y-4 my-8">
-            <div className="flex items-center justify-between pb-3 border-b border-gray-100 dark:border-neutral-800">
-              <h3 className="text-base font-bold text-black dark:text-white">
-                {editingProgramId ? 'Editar Programa Ontológico' : 'Generar Nuevo Programa Ontológico'}
-              </h3>
-              <button
-                type="button"
-                onClick={() => setIsProgramModalOpen(false)}
-                className="text-gray-400 hover:text-black dark:hover:text-white text-base"
-              >
-                ✕
-              </button>
-            </div>
-
-            <form onSubmit={handleSaveProgram} className="space-y-3.5 text-xs">
-              <div>
-                <label className="font-semibold text-black dark:text-white block mb-1">
-                  Nombre del Programa *
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="Ej: Certeza, Fronteras & Dirección Personal"
-                  value={programFormData.name}
-                  onChange={(e) => setProgramFormData({ ...programFormData, name: e.target.value })}
-                  className="w-full px-3 py-2 bg-gray-50 dark:bg-[#202024] border border-gray-200 dark:border-neutral-700 rounded-xl text-black dark:text-white focus:outline-none"
-                />
-              </div>
-
-              <div>
-                <label className="font-semibold text-black dark:text-white block mb-1">
-                  Subtítulo / Enfoque Pedagógico
-                </label>
-                <input
-                  type="text"
-                  placeholder="Ej: Programa de Acompañamiento Ontológico de 12 Semanas"
-                  value={programFormData.subtitle}
-                  onChange={(e) => setProgramFormData({ ...programFormData, subtitle: e.target.value })}
-                  className="w-full px-3 py-2 bg-gray-50 dark:bg-[#202024] border border-gray-200 dark:border-neutral-700 rounded-xl text-black dark:text-white focus:outline-none"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="font-semibold text-black dark:text-white block mb-1">
-                    Formato
-                  </label>
-                  <select
-                    value={programFormData.format}
-                    onChange={(e) =>
-                      setProgramFormData({
-                        ...programFormData,
-                        format: e.target.value as '1 a 1 Ejecutivo' | 'Grupal / Cohorte' | 'Taller Intensivo' | 'Híbrido',
-                      })
-                    }
-                    className="w-full px-3 py-2 bg-gray-50 dark:bg-[#202024] border border-gray-200 dark:border-neutral-700 rounded-xl text-black dark:text-white focus:outline-none"
-                  >
-                    <option value="1 a 1 Ejecutivo">1 a 1 Ejecutivo</option>
-                    <option value="Grupal / Cohorte">Grupal / Cohorte</option>
-                    <option value="Taller Intensivo">Taller Intensivo</option>
-                    <option value="Híbrido">Híbrido</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="font-semibold text-black dark:text-white block mb-1">
-                    Inversión / Tarifa
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="Ej: $1.500.000 COP"
-                    value={programFormData.fee}
-                    onChange={(e) => setProgramFormData({ ...programFormData, fee: e.target.value })}
-                    className="w-full px-3 py-2 bg-gray-50 dark:bg-[#202024] border border-gray-200 dark:border-neutral-700 rounded-xl text-black dark:text-white focus:outline-none font-medium"
-                  />
-                </div>
-              </div>
-
-              {/* CUPOS & CAPACIDAD PROGRAMA */}
-              <div className="p-3.5 bg-emerald-50/50 dark:bg-emerald-950/20 rounded-2xl border border-emerald-200/60 dark:border-emerald-900/40 space-y-3">
-                <span className="text-[10px] uppercase font-bold text-emerald-700 dark:text-emerald-300 block">
-                  Cupos & Control de Participantes
-                </span>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="font-semibold text-black dark:text-white block mb-1">
-                      Capacidad Máxima de Cupos *
-                    </label>
-                    <input
-                      type="number"
-                      required
-                      min={1}
-                      max={200}
-                      value={programFormData.totalCapacity}
-                      onChange={(e) => {
-                        const total = parseInt(e.target.value) || 1;
-                        setProgramFormData({
-                          ...programFormData,
-                          totalCapacity: total,
-                          availableSpots: Math.min(total, programFormData.availableSpots),
-                        });
-                      }}
-                      className="w-full px-3 py-2 bg-white dark:bg-[#202024] border border-gray-200 dark:border-neutral-700 rounded-xl text-black dark:text-white focus:outline-none font-bold"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="font-semibold text-black dark:text-white block mb-1">
-                      Cupos Abiertos Disponibles *
-                    </label>
-                    <input
-                      type="number"
-                      required
-                      min={0}
-                      max={programFormData.totalCapacity}
-                      value={programFormData.availableSpots}
-                      onChange={(e) =>
-                        setProgramFormData({
-                          ...programFormData,
-                          availableSpots: parseInt(e.target.value) || 0,
-                        })
-                      }
-                      className="w-full px-3 py-2 bg-white dark:bg-[#202024] border border-gray-200 dark:border-neutral-700 rounded-xl text-black dark:text-white focus:outline-none font-bold text-emerald-600 dark:text-emerald-400"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="font-semibold text-black dark:text-white block mb-1">
-                    Duración
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="12 Semanas (6 Sesiones)"
-                    value={programFormData.duration}
-                    onChange={(e) => setProgramFormData({ ...programFormData, duration: e.target.value })}
-                    className="w-full px-3 py-2 bg-gray-50 dark:bg-[#202024] border border-gray-200 dark:border-neutral-700 rounded-xl text-black dark:text-white focus:outline-none"
-                  />
-                </div>
-
-                <div>
-                  <label className="font-semibold text-black dark:text-white block mb-1">
-                    Número de Nodos Pedagógicos
-                  </label>
-                  <input
-                    type="number"
-                    min={1}
-                    max={12}
-                    value={programFormData.totalNodes}
-                    onChange={(e) =>
-                      setProgramFormData({ ...programFormData, totalNodes: parseInt(e.target.value) || 1 })
-                    }
-                    className="w-full px-3 py-2 bg-gray-50 dark:bg-[#202024] border border-gray-200 dark:border-neutral-700 rounded-xl text-black dark:text-white focus:outline-none font-medium"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="font-semibold text-black dark:text-white block mb-1">
-                  Resultados Clave / Competencias (1 por línea)
-                </label>
-                <textarea
-                  rows={3}
-                  placeholder="Mapeo de la transparencia y quiebres&#10;Declaración de fronteras y límites&#10;Decodificación somática y desactivación de autoexigencia"
-                  value={keyOutcomesText}
-                  onChange={(e) => setKeyOutcomesText(e.target.value)}
-                  className="w-full px-3 py-2 bg-gray-50 dark:bg-[#202024] border border-gray-200 dark:border-neutral-700 rounded-xl text-black dark:text-white focus:outline-none font-mono text-[11px]"
-                />
-              </div>
-
-              <div>
-                <label className="font-semibold text-black dark:text-white block mb-1">
-                  Descripción General
-                </label>
-                <textarea
-                  rows={2}
-                  placeholder="Resumen del programa ontológico..."
-                  value={programFormData.description}
-                  onChange={(e) => setProgramFormData({ ...programFormData, description: e.target.value })}
-                  className="w-full px-3 py-2 bg-gray-50 dark:bg-[#202024] border border-gray-200 dark:border-neutral-700 rounded-xl text-black dark:text-white focus:outline-none"
-                />
-              </div>
-
-              <div className="pt-3 flex items-center justify-end gap-2 border-t border-gray-100 dark:border-neutral-800">
-                <button
-                  type="button"
-                  onClick={() => setIsProgramModalOpen(false)}
-                  className="px-4 py-2 rounded-xl border border-gray-200 dark:border-neutral-700 text-black dark:text-white font-medium"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  className="px-5 py-2 rounded-xl bg-black dark:bg-white text-white dark:text-black font-semibold"
-                >
-                  {editingProgramId ? 'Guardar Cambios' : 'Crear Programa'}
                 </button>
               </div>
             </form>

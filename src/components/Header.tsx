@@ -17,6 +17,7 @@ import {
 import { ThemeToggle } from './ThemeToggle';
 import { BrandLogo } from './BrandLogo';
 import { OntologicalStore } from '../services/store';
+import { SocialLinksBar } from './SocialLinksBar';
 
 interface HeaderProps {
   currentUser: User;
@@ -347,6 +348,15 @@ export const Header: React.FC<HeaderProps> = ({
                       </button>
                     </>
                   )}
+                </div>
+
+                {/* Social Channels in Dropdown */}
+                <div className="p-3 border-t border-gray-100 dark:border-neutral-800/80 bg-gray-50/40 dark:bg-[#18181B]/40">
+                  <div className="text-[10px] font-semibold uppercase tracking-wider text-gray-400 dark:text-neutral-400 mb-2 px-1 flex items-center justify-between">
+                    <span>Redes Oficiales</span>
+                    <span className="text-[9px] lowercase opacity-60">Facebook • TikTok • YouTube</span>
+                  </div>
+                  <SocialLinksBar variant="pills" className="w-full justify-start" />
                 </div>
 
                 {/* Footer security note */}

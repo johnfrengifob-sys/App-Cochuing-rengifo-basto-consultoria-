@@ -479,13 +479,13 @@ export const CoachDashboard: React.FC<CoachDashboardProps> = ({
                         ? 'bg-white/20 dark:bg-black/20 text-white dark:text-black'
                         : 'bg-indigo-100 dark:bg-indigo-900/60 text-indigo-800 dark:text-indigo-200'
                     }`}>
-                      6 Mód.
+                      {programs.length} Prog.
                     </span>
                   </div>
                   <span className={`text-[10px] block truncate font-light leading-tight mt-0.5 ${
                     activeMainTab === 'academic' ? 'text-white/80 dark:text-black/70' : 'text-gray-500 dark:text-neutral-400'
                   }`}>
-                    Cursos & Meet
+                    Syllabus & Cursos
                   </span>
                 </div>
               </button>
@@ -516,13 +516,13 @@ export const CoachDashboard: React.FC<CoachDashboardProps> = ({
                         ? 'bg-white/20 dark:bg-black/20 text-white dark:text-black'
                         : 'bg-rose-100 dark:bg-rose-900/60 text-rose-800 dark:text-rose-200'
                     }`}>
-                      Agenda
+                      {cronogramaEvents.length} En Vivo
                     </span>
                   </div>
                   <span className={`text-[10px] block truncate font-light leading-tight mt-0.5 ${
                     activeMainTab === 'events' ? 'text-white/80 dark:text-black/70' : 'text-gray-500 dark:text-neutral-400'
                   }`}>
-                    Talleres & Registro
+                    Meet & Talleres
                   </span>
                 </div>
               </button>

@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { CronogramaEvent, User } from '../types';
-import { OntologicalStore } from '../services/store';
+import { OntologicalStore, COMPANY_INFO } from '../services/store';
 import { LiquidGlassButton } from './LiquidGlassButton';
 import { ThemeToggle } from './ThemeToggle';
 import { BrandLogo } from './BrandLogo';
+import { SocialLinksBar } from './SocialLinksBar';
 import {
   Calendar,
   Clock,
@@ -31,7 +32,6 @@ import {
   Phone,
   Mail,
 } from 'lucide-react';
-import { COMPANY_INFO } from '../services/store';
 
 interface EventRegistrationLandingProps {
   onEnterPlatform: (user?: User) => void;
@@ -636,6 +636,14 @@ export const EventRegistrationLanding: React.FC<EventRegistrationLandingProps> =
               <Mail className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
               <span>{COMPANY_INFO.email}</span>
             </span>
+          </div>
+
+          {/* Official Social Media Channels */}
+          <div className="flex flex-col items-center gap-2 py-1">
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-black dark:text-white">
+              Canales Oficiales & Redes Sociales
+            </span>
+            <SocialLinksBar variant="pills" className="justify-center" />
           </div>
 
           {/* Copyright Line */}

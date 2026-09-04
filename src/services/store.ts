@@ -22,6 +22,7 @@ import {
 } from '../types';
 import promotionalEventBannerImg from '../assets/images/proximo_evento_banner_1788270380574.jpg';
 import coachAvatarImg from '../assets/images/regenerated_image_1788287101599.jpg';
+import { FirestoreSyncService } from './firestoreSync';
 
 export const COMPANY_INFO = {
   fullName: 'Rengifo Basto Consultoría Ontológica',
@@ -34,6 +35,11 @@ export const COMPANY_INFO = {
   formattedPhone: '+57 323 464 2257',
   email: 'johnfrengifob@gmail.com',
   whatsappUrl: 'https://wa.me/573234642257',
+  socialLinks: {
+    facebook: 'https://www.facebook.com/profile.php?id=61592655869050',
+    tiktok: 'https://www.tiktok.com/@rengifobastoco',
+    youtube: 'https://www.youtube.com/@Rengifobastoco',
+  },
 };
 
 export const BRE_B_NU_CONFIG = {
@@ -609,7 +615,7 @@ const INITIAL_USERS: User[] = [
     role: 'client',
     title: 'Director de Innovación & Emprendimiento',
     avatarUrl:
-      'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=400&q=80',
+      'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=400&q=80',
     joinedAt: '2024-03-10',
     programProgress: 2,
     paymentStatus: 'Completado', // Supuestamente ya pagó todo el taller
@@ -928,49 +934,49 @@ const INITIAL_PROGRAMS: OntologicalProgram[] = [
   },
   {
     id: 'prog-2',
-    name: 'Conversatorio Raíz y Balance',
-    subtitle: 'Espacio Abierto de Indagación y Soberanía Directiva',
-    category: 'Conversatorio Quincenal',
-    duration: 'Encuentro Quincenal (90 min)',
+    name: 'Liderazgo Ontológico & Soberanía Directiva',
+    subtitle: 'Programa Ejecutivo Grupal de 8 Semanas para Equipos Directivos',
+    category: 'Programa de Acompañamiento',
+    duration: '8 Semanas (4 Módulos Quincenales)',
     format: 'Grupal / Cohorte',
-    fee: 'Acceso Libre / Pre-Registro',
-    totalCapacity: 30,
-    availableSpots: 12,
-    enrolledCount: 18,
+    fee: '$950.000 COP',
+    totalCapacity: 20,
+    availableSpots: 8,
+    enrolledCount: 12,
     status: 'active',
-    description: 'Encuentros reflexivos en vivo para explorar los patrones de exigencia, límites y coherencia ontológica.',
+    description: 'Acompañamiento de alto impacto para directores y líderes de equipo enfocado en conversaciones de poder, pedidos impecables y deconstrucción de la autoexigencia.',
     keyOutcomes: [
-      'Diagnóstico con Matriz Ontológica',
-      'Sesión de exploración de 20 min',
-      'Comunidad ejecutiva de aprendizaje',
+      'Arquitectura de confianza y pedidos efectivos en equipos',
+      'Gestión de quiebres colectivos y soberanía emocional',
+      'Diseño de acuerdos y compromisos innegociables',
     ],
-    startDate: '2026-09-17',
-    displaySchedule: 'Jueves quincenales 7:00 PM (GMT-5)',
+    startDate: '2026-10-01',
+    displaySchedule: 'Miércoles quincenales 6:30 PM (GMT-5)',
     facilitator: 'John Fredy Rengifo Basto',
-    totalNodes: 1,
+    totalNodes: 4,
   },
   {
     id: 'prog-3',
-    name: 'Masterclass: Sabiduría Adaptativa del Miedo y la Culpa',
-    subtitle: 'Autoasistencia Ontológica y Reencuadre Somático para Líderes',
-    category: 'Masterclass Ontológica',
-    duration: 'Sesión Intensiva de 2 Horas',
+    name: 'Certificación en Autoasistencia Somática',
+    subtitle: 'Inmersión de 6 Semanas en Decodificación Corporal y Regulación Emocional',
+    category: 'Especialización Ontológica',
+    duration: '6 Semanas (3 Módulos Bimensuales)',
     format: 'Taller Intensivo',
-    fee: '$250.000 COP',
-    totalCapacity: 25,
-    availableSpots: 14,
-    enrolledCount: 11,
+    fee: '$680.000 COP',
+    totalCapacity: 15,
+    availableSpots: 5,
+    enrolledCount: 10,
     status: 'enrolling',
-    description: 'Aprende a decodificar las emociones densas en tu cuerpo y transformarlas en decisiones lúcidas y acuerdos impecables.',
+    description: 'Protocolos vivenciales de autoasistencia somática, respiración diafragmática consciente y reencuadre corporal de juicios maestros.',
     keyOutcomes: [
-      'Protocolos somáticos de liberación de estrés',
-      'Reencuadre de juicios maestros limitantes',
-      'Guía de auto-asistencia y box breathing',
+      'Protocolos somáticos de liberación de estrés y tensión',
+      'Mapeo de la memoria corporal ante situaciones de crisis',
+      'Técnicas de centramiento ontológico para la toma de decisiones',
     ],
-    startDate: '2026-09-18',
-    displaySchedule: 'Viernes 7:00 PM a 9:00 PM',
+    startDate: '2026-10-15',
+    displaySchedule: 'Sábados 9:00 AM a 12:00 PM',
     facilitator: 'John Fredy Rengifo Basto',
-    totalNodes: 1,
+    totalNodes: 3,
   },
 ];
 
@@ -2193,7 +2199,18 @@ export class OntologicalStore {
       STORAGE_KEYS.PROGRAMS,
       INITIAL_PROGRAMS
     );
-    return Array.isArray(list) ? list : INITIAL_PROGRAMS;
+    if (!Array.isArray(list) || list.length === 0) return INITIAL_PROGRAMS;
+    // Sanitize in case old localStorage had duplicate events under programs
+    const hasLegacyDuplicates = list.some(
+      (p) =>
+        p.name.toLowerCase().includes('conversatorio raíz') ||
+        p.name.toLowerCase().includes('masterclass: sabiduría adaptativa')
+    );
+    if (hasLegacyDuplicates) {
+      this.savePrograms(INITIAL_PROGRAMS);
+      return INITIAL_PROGRAMS;
+    }
+    return list;
   }
 
   static savePrograms(programs: OntologicalProgram[]): void {
@@ -2391,6 +2408,8 @@ export class OntologicalStore {
       googleAuthConnected: Boolean(params.googleAuthConnected),
     };
     this.saveEventRegistrations([newRegistration, ...registrations]);
+    FirestoreSyncService.syncEventRegistration(newRegistration).catch(() => {});
+    FirestoreSyncService.syncUserProfile(existingUser).catch(() => {});
 
     // 3. Add to CRM Prospects
     const prospects = this.getProspects();
@@ -2737,6 +2756,7 @@ export class OntologicalStore {
       createdAt: new Date().toISOString(),
     };
     this.saveProspects([newProspect, ...prospects]);
+    FirestoreSyncService.syncProspect(newProspect).catch(() => {});
     return newProspect;
   }
 

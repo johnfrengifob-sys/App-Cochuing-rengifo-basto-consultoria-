@@ -7,6 +7,9 @@ import { useState, useEffect } from 'react';
 import { User } from './types';
 import { OntologicalStore } from './services/store';
 import { ThemeManager } from './services/theme';
+import { FirestoreSyncService } from './services/firestoreSync';
+import { auth } from './services/firebase';
+import { onAuthStateChanged } from 'firebase/auth';
 import { Header } from './components/Header';
 import { LoginView } from './components/LoginView';
 import { ClientDashboard } from './components/ClientDashboard';
@@ -42,6 +45,29 @@ export default function App() {
 
   useEffect(() => {
     ThemeManager.init();
+    FirestoreSyncService.init().catch(() => {});
+
+    // Listen for Firebase Auth user state changes
+    const unsubscribeAuth = onAuthStateChanged(auth, (firebaseUser) => {
+      if (firebaseUser && firebaseUser.email) {
+        const email = firebaseUser.email.toLowerCase();
+        const existing = OntologicalStore.getUserByEmail(email);
+        if (existing) {
+          OntologicalStore.setCurrentUser(existing.uid);
+          setCurrentUser(existing);
+        } else if (email === 'johnfrengifob@gmail.com') {
+          const coach = OntologicalStore.getUsers().find((u) => u.role === 'coach');
+          if (coach) {
+            OntologicalStore.setCurrentUser(coach.uid);
+            setCurrentUser(coach);
+          }
+        }
+      }
+    });
+
+    return () => {
+      unsubscribeAuth();
+    };
   }, []);
 
   const refreshUsers = () => {

@@ -1,0 +1,196 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // 1. GLOBAL DEFAULT-DENY CATCH-ALL
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // 2. REUSABLE GLOBAL HELPERS
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function isCoachEmail() {
+      return isSignedIn() && (
+        request.auth.token.email == 'johnfrengifob@gmail.com' ||
+        request.auth.token.email == 'rengifobastoco@gmail.com'
+      );
+    }
+
+    function isAdmin() {
+      return isCoachEmail() || (
+        isSignedIn() && (
+          exists(/databases/$(database)/documents/admins/$(request.auth.uid)) ||
+          (exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+           get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'coach')
+        )
+      );
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    // 3. ENTITY VALIDATORS
+    function isValidUser(data) {
+      return data.uid is string && data.uid.size() <= 128 &&
+             data.name is string && data.name.size() > 0 && data.name.size() <= 100 &&
+             data.email is string && data.email.size() > 0 && data.email.size() <= 120 &&
+             (data.role == 'coach' || data.role == 'client');
+    }
+
+    function isValidProspect(data) {
+      return data.id is string && data.id.size() <= 128 &&
+             data.name is string && data.name.size() > 0 && data.name.size() <= 100 &&
+             data.whatsapp is string && data.whatsapp.size() > 0 && data.whatsapp.size() <= 30 &&
+             data.status in ['matriz_enviada', 'sesion_20min_agendada', 'convertido', 'descartado'] &&
+             data.origin is string && data.origin.size() <= 150;
+    }
+
+    function isValidSession(data) {
+      return data.id is string && data.id.size() <= 128 &&
+             data.clientId is string && data.clientId.size() <= 128 &&
+             data.status in ['scheduled', 'completed', 'cancelled'] &&
+             data.date is string && data.date.size() <= 50;
+    }
+
+    function isValidFormSubmission(data) {
+      return data.id is string && data.id.size() <= 128 &&
+             data.clientId is string && data.clientId.size() <= 128 &&
+             data.sessionId is string && data.sessionId.size() <= 128 &&
+             data.bodyEmotion is string && data.bodyEmotion.size() <= 500 &&
+             data.reflections is string && data.reflections.size() <= 4000;
+    }
+
+    function isValidPostSessionForm(data) {
+      return data.id is string && data.id.size() <= 128 &&
+             data.sessionId is string && data.sessionId.size() <= 128 &&
+             data.clientId is string && data.clientId.size() <= 128 &&
+             data.submittedAt is string && data.submittedAt.size() <= 50;
+    }
+
+    function isValidEventRegistration(data) {
+      return data.id is string && data.id.size() <= 128 &&
+             data.ticketCode is string && data.ticketCode.size() > 0 && data.ticketCode.size() <= 50 &&
+             data.name is string && data.name.size() > 0 && data.name.size() <= 100 &&
+             data.email is string && data.email.size() > 0 && data.email.size() <= 120 &&
+             data.phone is string && data.phone.size() > 0 && data.phone.size() <= 30;
+    }
+
+    function isValidCronogramaEvent(data) {
+      return data.id is string && data.id.size() <= 128 &&
+             data.title is string && data.title.size() > 0 && data.title.size() <= 150 &&
+             data.date is string && data.date.size() <= 50 &&
+             data.status in ['upcoming', 'live', 'completed'];
+    }
+
+    function isValidPayment(data) {
+      return data.id is string && data.id.size() <= 128 &&
+             data.clientId is string && data.clientId.size() <= 128 &&
+             data.voucherCode is string && data.voucherCode.size() > 0 && data.voucherCode.size() <= 50 &&
+             data.status in ['pending', 'verified', 'rejected'];
+    }
+
+    // 4. COLLECTION SECURITY RULES
+
+    // USERS COLLECTION: PII Protected (Owner or Admin only)
+    match /users/{userId} {
+      allow get: if isOwner(userId) || isAdmin();
+      allow list: if isAdmin();
+      allow create: if (isAdmin() || isOwner(userId)) && isValidUser(incoming()) && (
+        // Coachee cannot grant self coach role
+        (incoming().role == 'client') || isAdmin()
+      );
+      allow update: if (isAdmin() || isOwner(userId)) && isValidUser(incoming()) && (
+        // Prevent role escalation by non-admins
+        (incoming().role == existing().role) || isAdmin()
+      );
+      allow delete: if isAdmin() || isOwner(userId);
+    }
+
+    // PROSPECTS COLLECTION: Inbound CRM from Events & Make.com
+    match /prospects/{prospectId} {
+      allow create: if isValidProspect(incoming());
+      allow get, list, update, delete: if isAdmin();
+    }
+
+    // SESSIONS COLLECTION: Workstation Quincenal
+    match /sessions/{sessionId} {
+      allow get: if isAdmin() || (isSignedIn() && existing().clientId == request.auth.uid);
+      allow list: if isAdmin() || (isSignedIn() && resource.data.clientId == request.auth.uid);
+      allow create, delete: if isAdmin();
+      allow update: if isValidSession(incoming()) && (
+        isAdmin() || (
+          isSignedIn() &&
+          existing().clientId == request.auth.uid &&
+          incoming().clientId == existing().clientId
+        )
+      );
+    }
+
+    // FORM SUBMISSIONS: Coachee Pre-Session Somatic & Linguistic Workbook
+    match /formSubmissions/{submissionId} {
+      allow get: if isAdmin() || (isSignedIn() && existing().clientId == request.auth.uid);
+      allow list: if isAdmin() || (isSignedIn() && resource.data.clientId == request.auth.uid);
+      allow create: if isSignedIn() && isValidFormSubmission(incoming()) && (
+        incoming().clientId == request.auth.uid || isAdmin()
+      );
+      allow update: if isSignedIn() && isValidFormSubmission(incoming()) && (
+        (existing().clientId == request.auth.uid && incoming().clientId == existing().clientId) ||
+        isAdmin()
+      );
+      allow delete: if isAdmin();
+    }
+
+    // POST SESSION FORMS: Coach ICF Professional Evaluations
+    match /postSessionForms/{formId} {
+      allow get: if isAdmin() || (isSignedIn() && existing().clientId == request.auth.uid);
+      allow list: if isAdmin() || (isSignedIn() && resource.data.clientId == request.auth.uid);
+      allow create, update, delete: if isAdmin() && isValidPostSessionForm(incoming());
+    }
+
+    // EVENT REGISTRATIONS: Public Passes and Attendance Records
+    match /eventRegistrations/{regId} {
+      allow create: if isValidEventRegistration(incoming());
+      allow get: if true; // Ticket verification page
+      allow list, delete: if isAdmin();
+      allow update: if isValidEventRegistration(incoming()) && (
+        isAdmin() || (
+          // Coachee confirms attendance for their ticket
+          incoming().id == existing().id &&
+          incoming().ticketCode == existing().ticketCode
+        )
+      );
+    }
+
+    // CRONOGRAMA EVENTS: Public Upcoming Workshops & Masterclasses
+    match /cronogramaEvents/{eventId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin() && isValidCronogramaEvent(incoming());
+    }
+
+    // PAYMENTS: Bre-B Nu Validation Records
+    match /payments/{paymentId} {
+      allow get: if isAdmin() || (isSignedIn() && existing().clientId == request.auth.uid);
+      allow list: if isAdmin() || (isSignedIn() && resource.data.clientId == request.auth.uid);
+      allow create: if isSignedIn() && isValidPayment(incoming()) && (
+        incoming().clientId == request.auth.uid || isAdmin()
+      );
+      allow update, delete: if isAdmin() && isValidPayment(incoming());
+    }
+  }
+}
