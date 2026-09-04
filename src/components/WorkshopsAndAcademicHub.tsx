@@ -156,6 +156,7 @@ export const WorkshopsAndAcademicHub: React.FC = () => {
     const targetNode = nodes.find((n) => n.level === generatedWorkshop.level) || nodes[0];
     if (targetNode) {
       OntologicalStore.updateProgramNode(targetNode.step, {
+        sessionTitle: generatedWorkshop.sessionTitle,
         title: generatedWorkshop.sessionTitle,
         objective: generatedWorkshop.objective,
         methodology: generatedWorkshop.methodology,

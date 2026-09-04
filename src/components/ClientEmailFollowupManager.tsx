@@ -180,7 +180,9 @@ export const ClientEmailFollowupManager: React.FC<ClientEmailFollowupManagerProp
       clientId: activeClient.uid,
       clientName: activeClient.name,
       clientEmail: activeClient.email,
+      templateType: (selectedTemplateId as any) || 'custom',
       subject: customSubject,
+      content: customBody,
       templateName:
         PRESET_TEMPLATES.find((t) => t.id === selectedTemplateId)?.name || 'Mensaje Personalizado',
       bodyPreview: customBody.slice(0, 180) + '...',

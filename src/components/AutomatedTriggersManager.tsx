@@ -60,7 +60,7 @@ export const AutomatedTriggersManager: React.FC = () => {
   };
 
   const handleSaveWebhook = () => {
-    OntologicalStore.saveWebhookUrl(tempWebhookUrl.trim());
+    OntologicalStore.setWebhookUrl(tempWebhookUrl.trim());
     setWebhookUrl(tempWebhookUrl.trim());
     setIsEditingWebhook(false);
   };

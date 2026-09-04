@@ -135,6 +135,7 @@ export interface ProgramNodeInfo {
   level: 'Nivel I' | 'Nivel II' | 'Nivel III';
   levelTitle: string;
   sessionTitle: string;
+  title?: string;
   objective: string;
   tangibleOutcomes: string[];
   keyQuestion: string;
@@ -156,6 +157,7 @@ export interface ProgramNodeInfo {
     pages: string;
     description: string;
   }[];
+  reflectiveQuestions?: string[];
   roadmapSteps?: WorkshopRoadmapStep[];
 }
 
@@ -389,9 +391,11 @@ export interface ClientEmailLog {
   clientId: string;
   clientName: string;
   clientEmail: string;
-  templateType: 'welcome' | 'meet_invitation' | 'post_session' | 'payment_unlocked' | 'reactivation' | 'custom';
+  templateType?: 'welcome' | 'meet_invitation' | 'post_session' | 'payment_unlocked' | 'reactivation' | 'custom' | string;
+  templateName?: string;
   subject: string;
-  content: string;
+  content?: string;
+  bodyPreview?: string;
   sentAt: string;
   status: 'sent' | 'draft';
 }

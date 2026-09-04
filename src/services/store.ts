@@ -3630,6 +3630,10 @@ export class OntologicalStore {
     localStorage.setItem(STORAGE_KEYS.WEBHOOK_URL, url);
   }
 
+  static saveWebhookUrl(url: string): void {
+    this.setWebhookUrl(url);
+  }
+
   /**
    * Generates or dispatches AI Ontological analysis based on the three ontological domains (Linguistic, Emotional, Somatic)
    * Calls Make.com webhook via POST with payload: { clientId, bodyEmotion, reflections }
