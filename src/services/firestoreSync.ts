@@ -6,7 +6,7 @@ import {
   onSnapshot,
 } from 'firebase/firestore';
 import { db, auth, handleFirestoreError, OperationType, testFirestoreConnection } from './firebase';
-import { Prospect, EventRegistration, Session, User, PaymentRequest } from '../types';
+import { Prospect, EventRegistration, Session, User, PaymentRequest, FormSubmission } from '../types';
 
 export class FirestoreSyncService {
   private static isInitialized = false;
@@ -154,6 +154,33 @@ export class FirestoreSyncService {
       );
     } catch (error) {
       console.warn('Firestore syncUserProfile notice:', error);
+    }
+  }
+
+  // Synchronize form submission into Firestore
+  static async syncFormSubmission(form: FormSubmission): Promise<void> {
+    const collectionPath = 'formSubmissions';
+    try {
+      const formRef = doc(db, collectionPath, form.id);
+      await setDoc(
+        formRef,
+        {
+          id: form.id,
+          clientId: form.clientId,
+          sessionId: form.sessionId || '',
+          sessionStep: form.sessionStep,
+          level: form.level,
+          bodyEmotion: form.bodyEmotion || '',
+          reflections: form.reflections || '',
+          levelSpecificAnswer: form.levelSpecificAnswer || '',
+          dynamicAnswers: form.dynamicAnswers || {},
+          submittedAt: form.submittedAt,
+          updatedAt: new Date().toISOString(),
+        },
+        { merge: true }
+      );
+    } catch (error) {
+      console.warn('Firestore syncFormSubmission notice:', error);
     }
   }
 

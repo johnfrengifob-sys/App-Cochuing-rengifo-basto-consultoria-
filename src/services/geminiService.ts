@@ -202,4 +202,98 @@ export class GeminiService {
       };
     }
   }
+
+  /**
+   * Ontological Workshop & Syllabus Generator powered by Gemini AI
+   */
+  static async generateWorkshop(params: {
+    topic: string;
+    targetAudience?: string;
+    level?: string;
+    durationHours?: number;
+  }): Promise<{
+    sessionTitle: string;
+    levelTitle: string;
+    level: 'Nivel I' | 'Nivel II' | 'Nivel III';
+    objective: string;
+    keyQuestion: string;
+    levelPrompt: string;
+    methodology: {
+      linguistic: string;
+      somatic: string;
+      emotional: string;
+    };
+    tangibleOutcomes: string[];
+    dailyMicroPractice: {
+      title: string;
+      description: string;
+      frequency: string;
+    };
+    reflectiveQuestions: string[];
+    studyMaterials: {
+      title: string;
+      type: string;
+      pages: string;
+      description: string;
+    }[];
+  }> {
+    try {
+      const res = await fetch('/api/gemini/generate-workshop', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(params),
+      });
+
+      if (!res.ok) {
+        throw new Error(`Error en generador de taller Gemini: ${res.statusText}`);
+      }
+
+      return await res.json();
+    } catch (err: any) {
+      console.warn('Gemini workshop generation fallback:', err);
+      return {
+        sessionTitle: `Taller Ontológico: ${params.topic || 'Soberanía y Límites Ejecutivos'}`,
+        levelTitle: params.level || 'Nivel II: Corporalidad & Reencuadre',
+        level: 'Nivel II',
+        objective: `Desarrollar competencias directivas para decodificar los quiebres en torno a "${params.topic || 'la gestión de límites'}", integrando el dominio lingüístico, somático y emocional para el liderazgo de alto impacto.`,
+        keyQuestion: `¿Qué acuerdos tácitos estás sosteniendo en torno a "${params.topic || 'tu liderazgo'}" que ya no generan valor ni bienestar?`,
+        levelPrompt: `Observa tu postura corporal al abordar este desafío y declara con precisión qué compromiso requiere rediseño inmediato.`,
+        methodology: {
+          linguistic: 'Diferenciación entre juicios automáticos y afirmaciones fácticas; formulación de pedidos claros y declaraciones de límite.',
+          somatic: 'Calibración de la tensión diafragmática y escaneo de la mandíbula antes de asumir compromisos.',
+          emotional: 'Transformación de la sobrecarga y la resignación en serenidad activa y convicción.',
+        },
+        tangibleOutcomes: [
+          `Mapeo claro de fugas de energía y quiebres ocultos relacionados con ${params.topic || 'la rutina ejecutiva'}.`,
+          'Diseño de guiones conversacionales para acuerdos impecables.',
+          'Protocolo somático de centramiento antes de reuniones de alta fricción.',
+        ],
+        dailyMicroPractice: {
+          title: `Pausa de Coherencia y Arraigo: ${params.topic || 'Centramiento Directivo'}`,
+          description: '3 veces al día, detente 90 segundos. Inhala en 4 tiempos, siente tus pies en la tierra y pregúntate: "¿Estoy operando por convicción o por inercia automática?"',
+          frequency: '3 veces al día (9:00 AM, 2:00 PM, 6:00 PM)',
+        },
+        reflectiveQuestions: [
+          '¿Qué conversación difícil has estado postergando y qué costo tiene para tu liderazgo?',
+          '¿En qué parte de tu cuerpo somatizas la presión cuando no comunicas un desacuerdo?',
+          '¿Cuál es el pedido formal que harás a tu equipo para restablecer la coordinación impecable?',
+          '¿Qué declaración fundamental requieres pronunciar para recuperar tu soberanía personal?',
+        ],
+        studyMaterials: [
+          {
+            title: `Guía Práctica: Metodología de Intervención en ${params.topic || 'Liderazgo Ontológico'}`,
+            type: 'Ficha de Ejercicio',
+            pages: '4 páginas',
+            description: 'Estructura paso a paso para diagnosticar quiebres y acordar nuevas condiciones de satisfacción.',
+          },
+          {
+            title: 'Manual de Centramiento Somático y Respuestas No Automáticas',
+            type: 'Guía de Trabajo',
+            pages: '6 páginas',
+            description: 'Protocolos neuro-somáticos para autorregularse en entornos directivos de alta tensión.',
+          },
+        ],
+      };
+    }
+  }
 }

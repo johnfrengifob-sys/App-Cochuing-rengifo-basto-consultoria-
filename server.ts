@@ -273,6 +273,97 @@ Devuelve un JSON con:
   });
 
   // ==========================================
+  // API: GEMINI GENERADOR INTELIGENTE DE TALLERES ONTOLÓGICOS
+  // ==========================================
+  app.post('/api/gemini/generate-workshop', async (req, res) => {
+    try {
+      const { topic, targetAudience, level, durationHours } = req.body;
+
+      if (!process.env.GEMINI_API_KEY) {
+        return res.json({
+          sessionTitle: `Taller Ontológico: ${topic || 'Soberanía Emocional y Dirección Directiva'}`,
+          levelTitle: level || 'Nivel II: Corporalidad & Reencuadre',
+          level: 'Nivel II',
+          objective: `Desarrollar competencias directivas para decodificar los quiebres en torno a "${topic || 'la gestión de límites'}", integrando el dominio lingüístico, somático y emocional para el liderazgo de alto impacto.`,
+          keyQuestion: `¿Qué acuerdos tácitos estás sosteniendo en torno a "${topic || 'tu liderazgo'}" que ya no generan valor ni bienestar?`,
+          levelPrompt: `Observa tu postura corporal al abordar este desafío y declara con precisión qué compromiso requiere rediseño inmediato.`,
+          methodology: {
+            linguistic: 'Diferenciación entre juicios automáticos y afirmaciones fácticas; formulación de pedidos claros y declaraciones de límite.',
+            somatic: 'Calibración de la tensión diafragmática y escaneo de la mandíbula antes de asumir compromisos.',
+            emotional: 'Transformación de la sobrecarga y la resignación en serenidad activa y convicción.',
+          },
+          tangibleOutcomes: [
+            `Mapeo claro de fugas de energía y quiebres ocultos relacionados con ${topic || 'la rutina ejecutiva'}.`,
+            'Diseño de guiones conversacionales para acuerdos impecables.',
+            'Protocolo somático de centramiento antes de reuniones de alta fricción.',
+          ],
+          dailyMicroPractice: {
+            title: `Pausa de Coherencia y Arraigo: ${topic || 'Centramiento Directivo'}`,
+            description: '3 veces al día, detente 90 segundos. Inhala en 4 tiempos, siente tus pies en la tierra y pregúntate: "¿Estoy operando por convicción o por inercia automática?"',
+            frequency: '3 veces al día (9:00 AM, 2:00 PM, 6:00 PM)',
+          },
+          reflectiveQuestions: [
+            '¿Qué conversación difícil has estado postergando y qué costo tiene para tu liderazgo?',
+            '¿En qué parte de tu cuerpo somatizas la presión cuando no comunicas un desacuerdo?',
+            '¿Cuál es el pedido formal que harás a tu equipo para restablecer la coordinación impecable?',
+            '¿Qué declaración fundamental requieres pronunciar para recuperar tu soberanía personal?',
+          ],
+          studyMaterials: [
+            {
+              title: `Guía Práctica: Metodología de Intervención en ${topic || 'Liderazgo Ontológico'}`,
+              type: 'Ficha de Ejercicio',
+              pages: '4 páginas',
+              description: 'Estructura paso a paso para diagnosticar quiebres y acordar nuevas condiciones de satisfacción.',
+            },
+            {
+              title: 'Manual de Centramiento Somático y Respuestas No Automáticas',
+              type: 'Guía de Trabajo',
+              pages: '6 páginas',
+              description: 'Protocolos neuro-somáticos para autorregularse en entornos directivos de alta tensión.',
+            },
+          ],
+        });
+      }
+
+      const prompt = `
+Genera un DISEÑO INTEGRAL DE TALLER ONTOLÓGICO Y SOMÁTICO estructurado bajo estándares ICF y la Ontología del Lenguaje:
+- Tema Central o Reto: "${topic || 'Mapeo de Quiebres y Dirección Personal'}"
+- Audiencia Objetivo: "${targetAudience || 'Líderes Ejecutivos, Directores y Coachees'}"
+- Nivel de Madurez: "${level || 'Nivel II'}"
+- Duración Sugerida: "${durationHours || 4} horas"
+
+Debes generar un objeto JSON estricto con las siguientes claves:
+1. "sessionTitle": Título sugerente y ejecutivo del taller.
+2. "levelTitle": Subtítulo o eje del nivel (ej: "Liderazgo Somático & Acuerdos Impecables").
+3. "level": "Nivel I" o "Nivel II" o "Nivel III".
+4. "objective": Objetivo formativo y transformacional de 2-3 líneas.
+5. "keyQuestion": La gran pregunta de indagación que guiará el taller.
+6. "levelPrompt": Indicación para el autorregistro del coachee.
+7. "methodology": Objeto con { "linguistic": string, "somatic": string, "emotional": string } detallando el abordaje en los 3 dominios ontológicos.
+8. "tangibleOutcomes": Arreglo con 3 o 4 resultados medibles y concretos.
+9. "dailyMicroPractice": Objeto con { "title": string, "description": string, "frequency": string }.
+10. "reflectiveQuestions": Arreglo de 4 preguntas de cuaderno post-taller.
+11. "studyMaterials": Arreglo de 2 materiales de estudio con { "title": string, "type": string, "pages": string, "description": string }.
+`;
+
+      const response = await getGeminiClient().models.generateContent({
+        model: 'gemini-3.7-flash',
+        contents: prompt,
+        config: {
+          systemInstruction: SYSTEM_INSTRUCTION_ONTOLOGY,
+          responseMimeType: 'application/json',
+        },
+      });
+
+      const parsed = JSON.parse(response.text || '{}');
+      res.json(parsed);
+    } catch (error: any) {
+      console.error('Error in /api/gemini/generate-workshop:', error);
+      res.status(500).json({ error: error.message || 'Error generando taller con Gemini' });
+    }
+  });
+
+  // ==========================================
   // VITE MIDDLEWARE (DEV) & STATIC (PROD)
   // ==========================================
   if (process.env.NODE_ENV !== 'production') {

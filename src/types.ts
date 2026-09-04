@@ -384,3 +384,38 @@ export interface PaymentRequest {
   openedSessionIds?: string[];
 }
 
+export interface ClientEmailLog {
+  id: string;
+  clientId: string;
+  clientName: string;
+  clientEmail: string;
+  templateType: 'welcome' | 'meet_invitation' | 'post_session' | 'payment_unlocked' | 'reactivation' | 'custom';
+  subject: string;
+  content: string;
+  sentAt: string;
+  status: 'sent' | 'draft';
+}
+
+export interface AutomatedTriggerConfig {
+  id: string;
+  name: string;
+  description: string;
+  event: 'form_submitted' | 'payment_validated' | 'session_scheduled' | 'inactivity_detected';
+  enabled: boolean;
+  actions: string[];
+  lastTriggeredAt?: string;
+  executionsCount: number;
+}
+
+export interface PricingPackage {
+  id: string;
+  name: string;
+  duration: string;
+  targetAudience: string;
+  sessionsCount: number;
+  basePriceCOP: number;
+  brebNuDiscountPercent: number; // e.g., 5%
+  includes: string[];
+  active: boolean;
+}
+

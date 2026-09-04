@@ -139,9 +139,9 @@ export const Header: React.FC<HeaderProps> = ({
         <div className="flex items-center gap-2 sm:gap-3">
           {/* Client Private Space Badge: Visible exclusively to participants */}
           {!isCoach && (
-            <div className="hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-xs font-medium text-emerald-700 dark:text-emerald-400">
+            <div className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-xs font-medium text-emerald-700 dark:text-emerald-400">
               <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-              <span>Espacio Privado & Confidencial ICF</span>
+              <span>Espacio Privado & Confidencial</span>
             </div>
           )}
 

@@ -40,6 +40,8 @@ interface UnifiedWorkbookSpaceProps {
   onOpenPaymentForNode: (node: ProgramNodeInfo) => void;
   initialMode?: 'workshop' | 'session' | 'all';
   initialSessionId?: string | null;
+  hideHeader?: boolean;
+  hideStepSelector?: boolean;
 }
 
 export const UnifiedWorkbookSpace: React.FC<UnifiedWorkbookSpaceProps> = ({
@@ -57,6 +59,8 @@ export const UnifiedWorkbookSpace: React.FC<UnifiedWorkbookSpaceProps> = ({
   onOpenPaymentForNode,
   initialMode = 'workshop',
   initialSessionId,
+  hideHeader = false,
+  hideStepSelector = false,
 }) => {
   // Main view mode: 'workshop' (Cuaderno del Taller) | 'session' (Cuaderno Sesión 1 a 1) | 'all' (Registro & Descargas)
   const [activeMode, setActiveMode] = useState<'workshop' | 'session' | 'all'>(initialMode);
@@ -266,59 +270,119 @@ export const UnifiedWorkbookSpace: React.FC<UnifiedWorkbookSpaceProps> = ({
   return (
     <div id="unified-workbook-space" className="space-y-6">
       {/* Space Hero & Unified Navigation Selector */}
-      <div className="p-5 sm:p-6 rounded-3xl bg-white/70 dark:bg-[#151518]/70 backdrop-blur-xl border border-white/75 dark:border-white/10 shadow-sm space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-2xl bg-black dark:bg-white text-white dark:text-black flex items-center justify-center shrink-0 shadow-xs">
-              <BookOpen className="w-5 h-5 text-emerald-400 dark:text-emerald-600" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h2 className="text-base sm:text-lg font-bold text-black dark:text-white">
-                  Espacio Único de Cuadernos & Cuestionarios
-                </h2>
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 uppercase tracking-wider">
-                  Oficial RBC
-                </span>
+      {!hideHeader ? (
+        <div className="p-5 sm:p-6 rounded-3xl bg-white/70 dark:bg-[#151518]/70 backdrop-blur-xl border border-white/75 dark:border-white/10 shadow-sm space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="w-11 h-11 rounded-2xl bg-black dark:bg-white text-white dark:text-black flex items-center justify-center shrink-0 shadow-xs">
+                <BookOpen className="w-5 h-5 text-emerald-400 dark:text-emerald-600" />
               </div>
-              <p className="text-xs font-light text-gray-500 dark:text-neutral-400">
-                Completa tus cuestionarios ontológicos y descarga tus Cuadernos de Trabajo oficiales en PDF en un solo lugar.
-              </p>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h2 className="text-base sm:text-lg font-bold text-black dark:text-white">
+                    Espacio Único de Cuadernos & Cuestionarios
+                  </h2>
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 uppercase tracking-wider">
+                    Oficial RBC
+                  </span>
+                </div>
+                <p className="text-xs font-light text-gray-500 dark:text-neutral-400">
+                  Completa tus cuestionarios ontológicos y descarga tus Cuadernos de Trabajo oficiales en PDF en un solo lugar.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-gray-500 dark:text-neutral-400 font-light hidden sm:inline">
+                Progreso:
+              </span>
+              <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-white dark:bg-[#222226] border border-gray-200 dark:border-neutral-700 text-black dark:text-white">
+                {forms.length}/6 Talleres • {postSessionForms.length} Sesiones
+              </span>
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-gray-500 dark:text-neutral-400 font-light hidden sm:inline">
-              Progreso:
-            </span>
-            <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-white dark:bg-[#222226] border border-gray-200 dark:border-neutral-700 text-black dark:text-white">
-              {forms.length}/6 Talleres • {postSessionForms.length} Sesiones
-            </span>
+          {/* PRIMARY TOGGLE: UNIFIES WORKSHOP AND 1-ON-1 SESSION WORKBOOKS */}
+          <div className="flex items-center p-1.5 rounded-2xl bg-white/60 dark:bg-[#121214]/60 backdrop-blur-md border border-white/75 dark:border-white/10 gap-1.5 flex-wrap">
+            <button
+              type="button"
+              onClick={() => setActiveMode('workshop')}
+              className={`flex-1 min-w-[180px] py-2.5 px-3.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-2 ${
+                activeMode === 'workshop'
+                  ? 'bg-black text-white dark:bg-white dark:text-black shadow-xs'
+                  : 'text-gray-600 dark:text-neutral-400 hover:text-black dark:hover:text-white hover:bg-gray-50 dark:hover:bg-neutral-800/50'
+              }`}
+            >
+              <Layers className="w-4 h-4 text-emerald-500" />
+              <span>1. Cuaderno del Taller (Quiebres & Bitácora)</span>
+              {forms.length > 0 && (
+                <span
+                  className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
+                    activeMode === 'workshop'
+                      ? 'bg-emerald-500 text-black'
+                      : 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'
+                  }`}
+                >
+                  {forms.length}
+                </span>
+              )}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveMode('session')}
+              className={`flex-1 min-w-[180px] py-2.5 px-3.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-2 ${
+                activeMode === 'session'
+                  ? 'bg-black text-white dark:bg-white dark:text-black shadow-xs'
+                  : 'text-gray-600 dark:text-neutral-400 hover:text-black dark:hover:text-white hover:bg-gray-50 dark:hover:bg-neutral-800/50'
+              }`}
+            >
+              <BookOpen className="w-4 h-4 text-blue-500" />
+              <span>2. Cuaderno Sesión 1 a 1 (Post-Sesión)</span>
+              {postSessionForms.length > 0 && (
+                <span
+                  className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
+                    activeMode === 'session'
+                      ? 'bg-blue-500 text-white'
+                      : 'bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300'
+                  }`}
+                >
+                  {postSessionForms.length}
+                </span>
+              )}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveMode('all')}
+              className={`py-2.5 px-3.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+                activeMode === 'all'
+                  ? 'bg-black text-white dark:bg-white dark:text-black shadow-xs'
+                  : 'text-gray-600 dark:text-neutral-400 hover:text-black dark:hover:text-white hover:bg-gray-50 dark:hover:bg-neutral-800/50'
+              }`}
+              title="Ver catálogo completo de descargas en PDF"
+            >
+              <Download className="w-3.5 h-3.5" />
+              <span>Centro de Descargas PDF</span>
+            </button>
           </div>
         </div>
-
-        {/* PRIMARY TOGGLE: UNIFIES WORKSHOP AND 1-ON-1 SESSION WORKBOOKS */}
-        <div className="flex items-center p-1.5 rounded-2xl bg-white/60 dark:bg-[#121214]/60 backdrop-blur-md border border-white/75 dark:border-white/10 gap-1.5 flex-wrap">
+      ) : (
+        <div className="flex items-center p-1.5 rounded-2xl bg-white/80 dark:bg-[#1A1A1E] border border-gray-200/80 dark:border-neutral-800 gap-1.5 flex-wrap shadow-xs">
           <button
             type="button"
             onClick={() => setActiveMode('workshop')}
-            className={`flex-1 min-w-[180px] py-2.5 px-3.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-2 ${
+            className={`flex-1 min-w-[170px] py-2 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-2 ${
               activeMode === 'workshop'
                 ? 'bg-black text-white dark:bg-white dark:text-black shadow-xs'
-                : 'text-gray-600 dark:text-neutral-400 hover:text-black dark:hover:text-white hover:bg-gray-50 dark:hover:bg-neutral-800/50'
+                : 'text-gray-600 dark:text-neutral-400 hover:text-black dark:hover:text-white hover:bg-gray-100 dark:hover:bg-neutral-800'
             }`}
           >
             <Layers className="w-4 h-4 text-emerald-500" />
-            <span>1. Cuaderno del Taller (Quiebres & Bitácora)</span>
-            {forms.length > 0 && (
-              <span
-                className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
-                  activeMode === 'workshop'
-                    ? 'bg-emerald-500 text-black'
-                    : 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'
-                }`}
-              >
-                {forms.length}
+            <span>1. Cuaderno del Taller {activeNodeInfo.step}</span>
+            {forms.some((f) => f.sessionStep === activeNodeInfo.step) && (
+              <span className="text-[10px] px-1.5 py-0.2 rounded-full font-bold bg-emerald-500/20 text-emerald-700 dark:text-emerald-300">
+                ✓
               </span>
             )}
           </button>
@@ -326,23 +390,17 @@ export const UnifiedWorkbookSpace: React.FC<UnifiedWorkbookSpaceProps> = ({
           <button
             type="button"
             onClick={() => setActiveMode('session')}
-            className={`flex-1 min-w-[180px] py-2.5 px-3.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-2 ${
+            className={`flex-1 min-w-[170px] py-2 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-2 ${
               activeMode === 'session'
                 ? 'bg-black text-white dark:bg-white dark:text-black shadow-xs'
-                : 'text-gray-600 dark:text-neutral-400 hover:text-black dark:hover:text-white hover:bg-gray-50 dark:hover:bg-neutral-800/50'
+                : 'text-gray-600 dark:text-neutral-400 hover:text-black dark:hover:text-white hover:bg-gray-100 dark:hover:bg-neutral-800'
             }`}
           >
             <BookOpen className="w-4 h-4 text-blue-500" />
-            <span>2. Cuaderno Sesión 1 a 1 (Post-Sesión)</span>
-            {postSessionForms.length > 0 && (
-              <span
-                className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
-                  activeMode === 'session'
-                    ? 'bg-blue-500 text-white'
-                    : 'bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300'
-                }`}
-              >
-                {postSessionForms.length}
+            <span>2. Acuerdos Sesión 1 a 1</span>
+            {postSessionForms.some((f) => f.sessionNumber === selectedSessionNumber) && (
+              <span className="text-[10px] px-1.5 py-0.2 rounded-full font-bold bg-blue-500/20 text-blue-700 dark:text-blue-300">
+                ✓
               </span>
             )}
           </button>
@@ -350,18 +408,18 @@ export const UnifiedWorkbookSpace: React.FC<UnifiedWorkbookSpaceProps> = ({
           <button
             type="button"
             onClick={() => setActiveMode('all')}
-            className={`py-2.5 px-3.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+            className={`py-2 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
               activeMode === 'all'
                 ? 'bg-black text-white dark:bg-white dark:text-black shadow-xs'
-                : 'text-gray-600 dark:text-neutral-400 hover:text-black dark:hover:text-white hover:bg-gray-50 dark:hover:bg-neutral-800/50'
+                : 'text-gray-600 dark:text-neutral-400 hover:text-black dark:hover:text-white hover:bg-gray-100 dark:hover:bg-neutral-800'
             }`}
             title="Ver catálogo completo de descargas en PDF"
           >
             <Download className="w-3.5 h-3.5" />
-            <span>Centro de Descargas PDF</span>
+            <span>Descargas PDF</span>
           </button>
         </div>
-      </div>
+      )}
 
       {/* ========================================================================= */}
       {/* SECCIÓN 1: CUADERNO DEL TALLER (CUESTIONARIO + BITÁCORA + DESCARGA PDF)   */}
@@ -369,68 +427,70 @@ export const UnifiedWorkbookSpace: React.FC<UnifiedWorkbookSpaceProps> = ({
       {activeMode === 'workshop' && (
         <div className="space-y-6 animate-fade-in">
           {/* Workshop Step Selector */}
-          <div className="p-4 rounded-2xl bg-white/70 dark:bg-[#18181B]/70 backdrop-blur-md border border-white/75 dark:border-white/10 space-y-2.5 shadow-xs">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-black dark:text-white uppercase tracking-wider flex items-center gap-1.5">
-                <Layers className="w-3.5 h-3.5 text-emerald-600" />
-                Selecciona el Taller a Diligenciar o Descargar:
-              </span>
-              <span className="text-[11px] text-gray-500 dark:text-neutral-400 font-light">
-                {activeNodeInfo.level} • {activeNodeInfo.weekLabel}
-              </span>
-            </div>
+          {!hideStepSelector && (
+            <div className="p-4 rounded-2xl bg-white/70 dark:bg-[#18181B]/70 backdrop-blur-md border border-white/75 dark:border-white/10 space-y-2.5 shadow-xs">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-black dark:text-white uppercase tracking-wider flex items-center gap-1.5">
+                  <Layers className="w-3.5 h-3.5 text-emerald-600" />
+                  Selecciona el Taller a Diligenciar o Descargar:
+                </span>
+                <span className="text-[11px] text-gray-500 dark:text-neutral-400 font-light">
+                  {activeNodeInfo.level} • {activeNodeInfo.weekLabel}
+                </span>
+              </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
-              {PROGRAM_NODES.map((node) => {
-                const isCompleted = forms.some((f) => f.sessionStep === node.step);
-                const isSelected = selectedStep === node.step;
-                const isLocked = node.step > currentProgress;
+              <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-2 sm:gap-2.5">
+                {PROGRAM_NODES.map((node) => {
+                  const isCompleted = forms.some((f) => f.sessionStep === node.step);
+                  const isSelected = selectedStep === node.step;
+                  const isLocked = node.step > currentProgress;
 
-                return (
-                  <button
-                    key={node.step}
-                    type="button"
-                    onClick={() => onStepChange(node.step)}
-                    className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer flex flex-col justify-between min-h-[64px] ${
-                      isSelected
-                        ? 'bg-black text-white dark:bg-white dark:text-black border-black dark:border-white shadow-xs'
-                        : isCompleted
-                        ? 'bg-white dark:bg-[#202024] border-emerald-300 dark:border-emerald-800 text-black dark:text-white hover:border-emerald-500'
-                        : isLocked
-                        ? 'bg-gray-100/70 dark:bg-neutral-900/60 border-gray-200 dark:border-neutral-800 text-gray-400 dark:text-neutral-600'
-                        : 'bg-white dark:bg-[#202024] border-gray-200 dark:border-neutral-700 text-black dark:text-white hover:border-black dark:hover:border-white'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-bold">Taller {node.step}</span>
-                      {isCompleted ? (
-                        <CheckCircle2
-                          className={`w-3.5 h-3.5 ${
-                            isSelected
-                              ? 'text-emerald-400 dark:text-emerald-600'
-                              : 'text-emerald-600'
-                          }`}
-                        />
-                      ) : isLocked ? (
-                        <Lock className="w-3 h-3 text-gray-400" />
-                      ) : (
-                        <span className="w-2 h-2 rounded-full bg-amber-500" />
-                      )}
-                    </div>
-                    <span
-                      className={`text-[10px] truncate block ${
+                  return (
+                    <button
+                      key={node.step}
+                      type="button"
+                      onClick={() => onStepChange(node.step)}
+                      className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer flex flex-col justify-between min-h-[64px] ${
                         isSelected
-                          ? 'text-neutral-300 dark:text-neutral-600 font-medium'
-                          : 'text-gray-500 dark:text-neutral-400'
+                          ? 'bg-black text-white dark:bg-white dark:text-black border-black dark:border-white shadow-xs'
+                          : isCompleted
+                          ? 'bg-white dark:bg-[#202024] border-emerald-300 dark:border-emerald-800 text-black dark:text-white hover:border-emerald-500'
+                          : isLocked
+                          ? 'bg-gray-100/70 dark:bg-neutral-900/60 border-gray-200 dark:border-neutral-800 text-gray-400 dark:text-neutral-600'
+                          : 'bg-white dark:bg-[#202024] border-gray-200 dark:border-neutral-700 text-black dark:text-white hover:border-black dark:hover:border-white'
                       }`}
                     >
-                      {node.sessionTitle}
-                    </span>
-                  </button>
-                );
-              })}
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold">Taller {node.step}</span>
+                        {isCompleted ? (
+                          <CheckCircle2
+                            className={`w-3.5 h-3.5 ${
+                              isSelected
+                                ? 'text-emerald-400 dark:text-emerald-600'
+                                : 'text-emerald-600'
+                            }`}
+                          />
+                        ) : isLocked ? (
+                          <Lock className="w-3 h-3 text-gray-400" />
+                        ) : (
+                          <span className="w-2 h-2 rounded-full bg-amber-500" />
+                        )}
+                      </div>
+                      <span
+                        className={`text-[10px] truncate block ${
+                          isSelected
+                            ? 'text-neutral-300 dark:text-neutral-600 font-medium'
+                            : 'text-gray-500 dark:text-neutral-400'
+                        }`}
+                      >
+                        {node.sessionTitle}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Success Banner if Saved */}
           {workshopSavedSuccess && (
@@ -876,69 +936,71 @@ export const UnifiedWorkbookSpace: React.FC<UnifiedWorkbookSpaceProps> = ({
       {activeMode === 'session' && (
         <div className="space-y-6 animate-fade-in">
           {/* Session Selector */}
-          <div className="p-4 rounded-2xl bg-white/70 dark:bg-[#18181B]/70 backdrop-blur-md border border-white/75 dark:border-white/10 space-y-2.5 shadow-xs">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-black dark:text-white uppercase tracking-wider flex items-center gap-1.5">
-                <BookOpen className="w-3.5 h-3.5 text-blue-600" />
-                Selecciona la Sesión 1 a 1 a Diligenciar o Descargar:
-              </span>
-              <span className="text-[11px] text-gray-500 dark:text-neutral-400 font-light">
-                Consultoría Individual con John Fredy Rengifo Basto
-              </span>
-            </div>
+          {!hideStepSelector && (
+            <div className="p-4 rounded-2xl bg-white/70 dark:bg-[#18181B]/70 backdrop-blur-md border border-white/75 dark:border-white/10 space-y-2.5 shadow-xs">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-black dark:text-white uppercase tracking-wider flex items-center gap-1.5">
+                  <BookOpen className="w-3.5 h-3.5 text-blue-600" />
+                  Selecciona la Sesión 1 a 1 a Diligenciar o Descargar:
+                </span>
+                <span className="text-[11px] text-gray-500 dark:text-neutral-400 font-light">
+                  Consultoría Individual con John Fredy Rengifo Basto
+                </span>
+              </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
-              {[1, 2, 3, 4, 5, 6].map((num) => {
-                const hasForm = postSessionForms.some((f) => f.sessionNumber === num);
-                const isSelected = selectedSessionNumber === num;
-                const sess = sessions.find((s) => s.sessionNumber === num);
+              <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-2 sm:gap-2.5">
+                {[1, 2, 3, 4, 5, 6].map((num) => {
+                  const hasForm = postSessionForms.some((f) => f.sessionNumber === num);
+                  const isSelected = selectedSessionNumber === num;
+                  const sess = sessions.find((s) => s.sessionNumber === num);
 
-                return (
-                  <button
-                    key={num}
-                    type="button"
-                    onClick={() => setSelectedSessionNumber(num)}
-                    className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer flex flex-col justify-between min-h-[64px] ${
-                      isSelected
-                        ? 'bg-black text-white dark:bg-white dark:text-black border-black dark:border-white shadow-xs'
-                        : hasForm
-                        ? 'bg-white dark:bg-[#202024] border-blue-300 dark:border-blue-800 text-black dark:text-white hover:border-blue-500'
-                        : 'bg-white dark:bg-[#202024] border-gray-200 dark:border-neutral-700 text-black dark:text-white hover:border-black dark:hover:border-white'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-bold">Sesión {num}</span>
-                      {hasForm ? (
-                        <CheckCircle2
-                          className={`w-3.5 h-3.5 ${
-                            isSelected ? 'text-blue-400 dark:text-blue-600' : 'text-blue-600'
-                          }`}
-                        />
-                      ) : (
-                        <span className="w-2 h-2 rounded-full bg-gray-300 dark:bg-neutral-600" />
-                      )}
-                    </div>
-                    <span
-                      className={`text-[10px] truncate block ${
+                  return (
+                    <button
+                      key={num}
+                      type="button"
+                      onClick={() => setSelectedSessionNumber(num)}
+                      className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer flex flex-col justify-between min-h-[64px] ${
                         isSelected
-                          ? 'text-neutral-300 dark:text-neutral-600 font-medium'
-                          : 'text-gray-500 dark:text-neutral-400'
+                          ? 'bg-black text-white dark:bg-white dark:text-black border-black dark:border-white shadow-xs'
+                          : hasForm
+                          ? 'bg-white dark:bg-[#202024] border-blue-300 dark:border-blue-800 text-black dark:text-white hover:border-blue-500'
+                          : 'bg-white dark:bg-[#202024] border-gray-200 dark:border-neutral-700 text-black dark:text-white hover:border-black dark:hover:border-white'
                       }`}
                     >
-                      {sess?.status === 'completed'
-                        ? 'Completada'
-                        : sess?.date
-                        ? new Date(sess.date).toLocaleDateString('es-CO', {
-                            day: 'numeric',
-                            month: 'short',
-                          })
-                        : 'Programada'}
-                    </span>
-                  </button>
-                );
-              })}
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold">Sesión {num}</span>
+                        {hasForm ? (
+                          <CheckCircle2
+                            className={`w-3.5 h-3.5 ${
+                              isSelected ? 'text-blue-400 dark:text-blue-600' : 'text-blue-600'
+                            }`}
+                          />
+                        ) : (
+                          <span className="w-2 h-2 rounded-full bg-gray-300 dark:bg-neutral-600" />
+                        )}
+                      </div>
+                      <span
+                        className={`text-[10px] truncate block ${
+                          isSelected
+                            ? 'text-neutral-300 dark:text-neutral-600 font-medium'
+                            : 'text-gray-500 dark:text-neutral-400'
+                        }`}
+                      >
+                        {sess?.status === 'completed'
+                          ? 'Completada'
+                          : sess?.date
+                          ? new Date(sess.date).toLocaleDateString('es-CO', {
+                              day: 'numeric',
+                              month: 'short',
+                            })
+                          : 'Programada'}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Success Banner if Saved */}
           {sessionSavedSuccess && (

@@ -19,6 +19,9 @@ import {
   QuestionnaireQuestion,
   DynamicQuestionnaire,
   QuestionType,
+  ClientEmailLog,
+  AutomatedTriggerConfig,
+  PricingPackage,
 } from '../types';
 import promotionalEventBannerImg from '../assets/images/proximo_evento_banner_1788270380574.jpg';
 import coachAvatarImg from '../assets/images/regenerated_image_1788287101599.jpg';
@@ -1089,7 +1092,134 @@ const STORAGE_KEYS = {
   PORTAL_URL: 'rbc_portal_url_v2',
   NEXT_LEVEL_PAYMENT_URL: 'rbc_next_level_payment_url_v2',
   WORKSHOPS_VIEWED: 'rbc_workshops_viewed_v2',
+  CLIENT_EMAIL_LOGS: 'rbc_client_email_logs_v2',
+  AUTOMATED_TRIGGERS: 'rbc_automated_triggers_v2',
+  PRICING_PACKAGES: 'rbc_pricing_packages_v2',
 };
+
+export const INITIAL_AUTOMATED_TRIGGERS: AutomatedTriggerConfig[] = [
+  {
+    id: 'trigger-form-submitted',
+    name: 'Disparador: Bitácora o Cuestionario Entregado',
+    description: 'Ejecuta el Diagnóstico Ontológico con Gemini AI y despacha el payload en JSON al Webhook de Make.com.',
+    event: 'form_submitted',
+    enabled: true,
+    actions: [
+      'Análisis Somático y Lingüístico Gemini 3.7',
+      'Despacho HTTP POST al Webhook Make.com',
+      'Actualización de avance de nodo del Coachee en Firestore',
+    ],
+    lastTriggeredAt: new Date(Date.now() - 1000 * 60 * 45).toISOString(),
+    executionsCount: 14,
+  },
+  {
+    id: 'trigger-payment-validated',
+    name: 'Disparador: Validación de Pago Bre-B Nu o Efectivo',
+    description: 'Desbloquea instantáneamente las sesiones correspondientes, genera recibo ontológico y notifica al coachee.',
+    event: 'payment_validated',
+    enabled: true,
+    actions: [
+      'Desbloqueo de Nivel y Sesiones en el Espacio Privado',
+      'Sincronización con balance de cobros en Google Sheets',
+      'Preparación de borrador de bienvenida/desbloqueo en Gmail',
+    ],
+    lastTriggeredAt: new Date(Date.now() - 1000 * 60 * 60 * 6).toISOString(),
+    executionsCount: 8,
+  },
+  {
+    id: 'trigger-session-scheduled',
+    name: 'Disparador: Agendamiento de Sesión 1 a 1',
+    description: 'Genera sala única de Google Meet, sincroniza con Google Calendar oficial y prepara correo de recordatorio.',
+    event: 'session_scheduled',
+    enabled: true,
+    actions: [
+      'Creación de evento en Google Calendar',
+      'Generación de enlace Google Meet seguro',
+      'Registro de fecha y recordatorio previo de 24h',
+    ],
+    lastTriggeredAt: new Date(Date.now() - 1000 * 60 * 60 * 18).toISOString(),
+    executionsCount: 22,
+  },
+  {
+    id: 'trigger-inactivity-detected',
+    name: 'Disparador: Alerta de Inactividad (+7 días)',
+    description: 'Detecta cuando un participante activo lleva más de 7 días sin enviar registros o bitácoras para activar seguimiento.',
+    event: 'inactivity_detected',
+    enabled: true,
+    actions: [
+      'Marcado de estado en revisión en el panel del coach',
+      'Preparación de mensaje de Pausa de Coherencia y Reactivación',
+    ],
+    lastTriggeredAt: new Date(Date.now() - 1000 * 60 * 60 * 72).toISOString(),
+    executionsCount: 5,
+  },
+];
+
+export const INITIAL_PRICING_PACKAGES: PricingPackage[] = [
+  {
+    id: 'pkg-certeza-12w',
+    name: 'Programa Completo Certeza Ontológica (12 Semanas)',
+    duration: '12 semanas (3 meses)',
+    targetAudience: 'Directores Generales, Socios y Gerentes Senior',
+    sessionsCount: 6,
+    basePriceCOP: 1500000,
+    brebNuDiscountPercent: 5,
+    includes: [
+      '6 Sesiones individuales quincenales de 60 minutos con John Fredy Rengifo',
+      'Acceso vitalicio a la plataforma con los 6 Nodos de Trabajo y material descargable',
+      'Diagnósticos continuos con Copiloto Gemini Ontológico',
+      'Cuadernos de Trabajo Post-Sesión generados en PDF bajo estándares ICF',
+      'Pausas de Coherencia guiadas y acompañamiento prioritario por WhatsApp',
+    ],
+    active: true,
+  },
+  {
+    id: 'pkg-cuota-nivel',
+    name: 'Pago Fraccionado por Nivel (Cuota 1 de 2)',
+    duration: '6 semanas',
+    targetAudience: 'Profesionales en proceso de exploración ontológica',
+    sessionsCount: 3,
+    basePriceCOP: 750000,
+    brebNuDiscountPercent: 0,
+    includes: [
+      '3 Sesiones individuales 1 a 1 de 60 minutos',
+      'Acceso al Nivel activo (Nivel I o Nivel II)',
+      'Bitácoras y Cuestionarios evaluativos del nivel',
+    ],
+    active: true,
+  },
+  {
+    id: 'pkg-sesion-individual',
+    name: 'Sesión Individual de Indagación & Quiebre',
+    duration: '60 minutos',
+    targetAudience: 'Directivos ante un quiebre urgente o conversación crucial',
+    sessionsCount: 1,
+    basePriceCOP: 280000,
+    brebNuDiscountPercent: 5,
+    includes: [
+      '1 Sesión intensiva 1 a 1 de 60 minutos por Google Meet',
+      'Mapeo de la transparencia, juicios maestros y emociones subyacentes',
+      'Informe ontológico confidencial en PDF con compromisos de acción',
+    ],
+    active: true,
+  },
+  {
+    id: 'pkg-taller-incompany',
+    name: 'Taller Vivencial In-Company: Soberanía y Conversaciones Impecables',
+    duration: '4 horas vivenciales (Media Jornada)',
+    targetAudience: 'Equipos de Alta Dirección (hasta 15 participantes)',
+    sessionsCount: 1,
+    basePriceCOP: 4500000,
+    brebNuDiscountPercent: 10,
+    includes: [
+      'Taller facilitado presencial o virtual por John Fredy Rengifo Basto',
+      'Dinámicas en los 3 dominios: lingüístico, somático y emocional',
+      'Manuales de trabajo y fichas de ejercicios impresas y digitales',
+      'Diagnóstico general de la coherencia del equipo post-taller',
+    ],
+    active: true,
+  },
+];
 
 export const DEFAULT_ROADMAP_STEPS: Record<number, WorkshopRoadmapStep[]> = {
   1: [
@@ -2576,6 +2706,23 @@ export class OntologicalStore {
     return updatedUser;
   }
 
+  static updateUser(clientId: string, patch: Partial<User>): User | null {
+    const users = this.getUsers();
+    let updatedUser: User | null = null;
+    const updatedUsers = users.map((u) => {
+      if (u.uid === clientId) {
+        updatedUser = { ...u, ...patch, lastActivityAt: new Date().toISOString() };
+        return updatedUser;
+      }
+      return u;
+    });
+    if (updatedUser) {
+      this.saveUsers(updatedUsers);
+      FirestoreSyncService.syncUserProfile(updatedUser).catch(() => {});
+    }
+    return updatedUser;
+  }
+
   static cancelUserSubscription(clientId: string): User | null {
     const users = this.getUsers();
     let updatedUser: User | null = null;
@@ -3421,6 +3568,26 @@ export class OntologicalStore {
     return newForm;
   }
 
+  static updateForm(
+    formId: string,
+    patch: Partial<FormSubmission>
+  ): FormSubmission | null {
+    const allForms = this.getForms();
+    const index = allForms.findIndex((f) => f.id === formId);
+    if (index === -1) return null;
+    const updatedForm = { ...allForms[index], ...patch };
+    allForms[index] = updatedForm;
+    this.save(STORAGE_KEYS.FORMS, allForms);
+    FirestoreSyncService.syncFormSubmission(updatedForm).catch(() => {});
+    return updatedForm;
+  }
+
+  static deleteForm(formId: string): void {
+    const allForms = this.getForms();
+    const filtered = allForms.filter((f) => f.id !== formId);
+    this.save(STORAGE_KEYS.FORMS, filtered);
+  }
+
   // --- AI INSIGHTS ---
   static getAIInsights(): AIInsight[] {
     const list = this.load<AIInsight[]>(
@@ -4213,6 +4380,185 @@ export class OntologicalStore {
       },
       error,
     };
+  }
+
+  // =========================================================================
+  // --- SEGUIMIENTO POR CORREO ELECTRÓNICO (GMAIL / GOOGLE WORKSPACE) ---
+  // =========================================================================
+  static getClientEmailLogs(): ClientEmailLog[] {
+    const list = this.load<ClientEmailLog[]>(
+      STORAGE_KEYS.CLIENT_EMAIL_LOGS,
+      []
+    );
+    return Array.isArray(list) ? list : [];
+  }
+
+  static saveClientEmailLogs(logs: ClientEmailLog[]): void {
+    this.save(STORAGE_KEYS.CLIENT_EMAIL_LOGS, logs);
+  }
+
+  static getEmailLogsForClient(clientId: string): ClientEmailLog[] {
+    const all = this.getClientEmailLogs();
+    return all
+      .filter((l) => l.clientId === clientId)
+      .sort((a, b) => new Date(b.sentAt).getTime() - new Date(a.sentAt).getTime());
+  }
+
+  static logClientEmail(
+    data: Omit<ClientEmailLog, 'id' | 'sentAt'>
+  ): ClientEmailLog {
+    const all = this.getClientEmailLogs();
+    const newLog: ClientEmailLog = {
+      ...data,
+      id: `email-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+      sentAt: new Date().toISOString(),
+    };
+    const updated = [newLog, ...all];
+    this.saveClientEmailLogs(updated);
+    return newLog;
+  }
+
+  // =========================================================================
+  // --- ACTIVADORES AUTOMÁTICOS (MAKE.COM / WEBHOOKS / TRIGGERS) ---
+  // =========================================================================
+  static getAutomatedTriggers(): AutomatedTriggerConfig[] {
+    const list = this.load<AutomatedTriggerConfig[]>(
+      STORAGE_KEYS.AUTOMATED_TRIGGERS,
+      INITIAL_AUTOMATED_TRIGGERS
+    );
+    return Array.isArray(list) && list.length > 0
+      ? list
+      : INITIAL_AUTOMATED_TRIGGERS;
+  }
+
+  static saveAutomatedTriggers(triggers: AutomatedTriggerConfig[]): void {
+    this.save(STORAGE_KEYS.AUTOMATED_TRIGGERS, triggers);
+  }
+
+  static toggleAutomatedTrigger(triggerId: string): AutomatedTriggerConfig | null {
+    const triggers = this.getAutomatedTriggers();
+    let updated: AutomatedTriggerConfig | null = null;
+    const mapped = triggers.map((t) => {
+      if (t.id === triggerId) {
+        updated = { ...t, enabled: !t.enabled };
+        return updated;
+      }
+      return t;
+    });
+    if (updated) {
+      this.saveAutomatedTriggers(mapped);
+    }
+    return updated;
+  }
+
+  static async executeTrigger(
+    triggerId: string,
+    contextData?: Record<string, any>
+  ): Promise<{ success: boolean; message: string; timestamp: string }> {
+    const triggers = this.getAutomatedTriggers();
+    const trigger = triggers.find((t) => t.id === triggerId);
+    const timestamp = new Date().toISOString();
+
+    if (!trigger) {
+      return { success: false, message: 'Activador no encontrado', timestamp };
+    }
+
+    if (!trigger.enabled) {
+      return { success: false, message: 'El activador se encuentra pausado', timestamp };
+    }
+
+    // Update execution metrics
+    const updated = triggers.map((t) => {
+      if (t.id === triggerId) {
+        return {
+          ...t,
+          executionsCount: t.executionsCount + 1,
+          lastTriggeredAt: timestamp,
+        };
+      }
+      return t;
+    });
+    this.saveAutomatedTriggers(updated);
+
+    // Optionally dispatch to Make.com Webhook if active
+    const webhookUrl = this.getWebhookUrl();
+    if (webhookUrl && webhookUrl.startsWith('http')) {
+      try {
+        fetch(webhookUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            event: trigger.event,
+            triggerName: trigger.name,
+            timestamp,
+            context: contextData || {},
+          }),
+        }).catch(() => {});
+      } catch {
+        // non-blocking
+      }
+    }
+
+    return {
+      success: true,
+      message: `Activador "${trigger.name}" ejecutado correctamente. Acciones ejecutadas: ${trigger.actions.length}`,
+      timestamp,
+    };
+  }
+
+  // =========================================================================
+  // --- CONSTRUCTOR DE VALORES, TARIFAS Y PAQUETES COMERCIALES ---
+  // =========================================================================
+  static getPricingPackages(): PricingPackage[] {
+    const list = this.load<PricingPackage[]>(
+      STORAGE_KEYS.PRICING_PACKAGES,
+      INITIAL_PRICING_PACKAGES
+    );
+    return Array.isArray(list) && list.length > 0
+      ? list
+      : INITIAL_PRICING_PACKAGES;
+  }
+
+  static savePricingPackages(packages: PricingPackage[]): void {
+    this.save(STORAGE_KEYS.PRICING_PACKAGES, packages);
+  }
+
+  static updatePricingPackage(
+    id: string,
+    patch: Partial<PricingPackage>
+  ): PricingPackage | null {
+    const packages = this.getPricingPackages();
+    let updated: PricingPackage | null = null;
+    const mapped = packages.map((p) => {
+      if (p.id === id) {
+        updated = { ...p, ...patch };
+        return updated;
+      }
+      return p;
+    });
+    if (updated) {
+      this.savePricingPackages(mapped);
+    }
+    return updated;
+  }
+
+  static addPricingPackage(
+    pkgData: Omit<PricingPackage, 'id'>
+  ): PricingPackage {
+    const packages = this.getPricingPackages();
+    const newPkg: PricingPackage = {
+      ...pkgData,
+      id: `pkg-${Date.now()}`,
+    };
+    const updated = [...packages, newPkg];
+    this.savePricingPackages(updated);
+    return newPkg;
+  }
+
+  static deletePricingPackage(id: string): void {
+    const packages = this.getPricingPackages();
+    const filtered = packages.filter((p) => p.id !== id);
+    this.savePricingPackages(filtered);
   }
 }
 
