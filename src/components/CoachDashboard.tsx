@@ -227,6 +227,23 @@ export const CoachDashboard: React.FC<CoachDashboardProps> = ({
     handleRefreshClientsList();
   };
 
+  const handleDeleteClient = (clientId: string) => {
+    handleRefreshClientsList();
+    if (selectedClientId === clientId) {
+      const remaining = OntologicalStore.getClients();
+      if (remaining.length > 0) {
+        setSelectedClientId(remaining[0].uid);
+      } else {
+        setSelectedClientId('');
+      }
+    }
+  };
+
+  const handleAddClient = (newClient: User) => {
+    handleRefreshClientsList();
+    setSelectedClientId(newClient.uid);
+  };
+
   const latestForm = forms[0] || null;
 
   // Trigger Webhook and generate Ontological AI Analysis
@@ -439,7 +456,7 @@ export const CoachDashboard: React.FC<CoachDashboardProps> = ({
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between gap-1">
-                    <span className="text-xs font-semibold truncate leading-tight">Eventos y sesiones</span>
+                    <span className="text-xs font-semibold truncate leading-tight">Eventos y Sesiones</span>
                     <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono font-bold shrink-0 ${
                       activeMainTab === 'events' || activeMainTab === 'academic'
                         ? 'bg-white/20 dark:bg-black/20 text-white dark:text-black'
@@ -451,7 +468,7 @@ export const CoachDashboard: React.FC<CoachDashboardProps> = ({
                   <span className={`text-[10px] block truncate font-light leading-tight mt-0.5 ${
                     activeMainTab === 'events' || activeMainTab === 'academic' ? 'text-white/80 dark:text-black/70' : 'text-gray-500 dark:text-neutral-400'
                   }`}>
-                    Meet en vivo, Programas & Talleres
+                    Meet, Programas & Talleres
                   </span>
                 </div>
               </button>
@@ -538,7 +555,7 @@ export const CoachDashboard: React.FC<CoachDashboardProps> = ({
                 id="coach-nav-gemini-btn"
                 type="button"
                 onClick={() => setActiveMainTab('gemini')}
-                className={`group px-3 py-2 sm:py-2.5 rounded-xl transition-all cursor-pointer text-left flex items-center gap-2.5 w-full ${
+                className={`group px-3 py-2 sm:py-2.5 rounded-xl transition-all cursor-pointer text-left flex items-center gap-2.5 w-full col-span-2 sm:col-span-1 lg:col-span-1 ${
                   activeMainTab === 'gemini'
                     ? 'bg-black text-white dark:bg-white dark:text-black shadow-sm ring-1 ring-black/10 dark:ring-white/20'
                     : 'glass-panel-opal hover:bg-white/90 dark:hover:bg-[#202026] text-neutral-800 dark:text-neutral-200 border border-white/60 dark:border-white/10 shadow-2xs hover:border-black/20 dark:hover:border-white/20'
@@ -575,34 +592,36 @@ export const CoachDashboard: React.FC<CoachDashboardProps> = ({
       </div>
 
       {/* FIREBASE FIRESTORE REAL-TIME MONITOR */}
-      <div className="mx-4 sm:mx-10 mt-4 max-w-7xl mx-auto w-full">
+      <div className="w-full max-w-7xl mx-auto px-4 sm:px-8 lg:px-10 mt-4">
         <FirebaseFirestoreMonitor />
       </div>
 
       {/* PENDING PAYMENTS NOTIFICATION BANNER */}
       {pendingPaymentCount > 0 && activeMainTab !== 'payments' && (
-        <div className="mx-4 sm:mx-10 mt-4 max-w-7xl mx-auto p-3 sm:p-4 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800/70 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs shadow-2xs">
-          <div className="flex items-center gap-2.5">
-            <span className="p-1.5 rounded-xl bg-amber-100 dark:bg-amber-900/60 text-amber-900 dark:text-amber-200 shrink-0">
-              <Clock className="w-4 h-4 text-amber-600 dark:text-amber-400 animate-spin" />
-            </span>
-            <div>
-              <span className="font-bold text-amber-900 dark:text-amber-200">
-                {pendingPaymentCount} solicitud(es) de pago en espera de validación
+        <div className="w-full max-w-7xl mx-auto px-4 sm:px-8 lg:px-10 mt-4">
+          <div className="p-3 sm:p-4 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800/70 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs shadow-2xs">
+            <div className="flex items-center gap-2.5">
+              <span className="p-1.5 rounded-xl bg-amber-100 dark:bg-amber-900/60 text-amber-900 dark:text-amber-200 shrink-0">
+                <Clock className="w-4 h-4 text-amber-600 dark:text-amber-400 animate-spin" />
               </span>
-              <span className="text-amber-800 dark:text-amber-300 font-light block sm:inline sm:ml-1">
-                (Efectivo en sesión o transferencia Bre-B Nu @ASL775).
-              </span>
+              <div>
+                <span className="font-bold text-amber-900 dark:text-amber-200">
+                  {pendingPaymentCount} solicitud(es) de pago en espera de validación
+                </span>
+                <span className="text-amber-800 dark:text-amber-300 font-light block sm:inline sm:ml-1">
+                  (Efectivo en sesión o transferencia Bre-B Nu @ASL775).
+                </span>
+              </div>
             </div>
+            <button
+              type="button"
+              onClick={() => setActiveMainTab('payments')}
+              className="px-3.5 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs flex items-center justify-center gap-1.5 cursor-pointer transition-transform active:scale-98 shadow-xs shrink-0"
+            >
+              <span>Revisar y Validar Pagos</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </button>
           </div>
-          <button
-            type="button"
-            onClick={() => setActiveMainTab('payments')}
-            className="px-3.5 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs flex items-center justify-center gap-1.5 cursor-pointer transition-transform active:scale-98 shadow-xs shrink-0"
-          >
-            <span>Revisar y Validar Pagos</span>
-            <ArrowRight className="w-3.5 h-3.5" />
-          </button>
         </div>
       )}
 
@@ -633,87 +652,91 @@ export const CoachDashboard: React.FC<CoachDashboardProps> = ({
             />
           )}
 
-          {/* View Mode Switcher Header with Title Clientes */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-gray-100 dark:border-neutral-800">
-            <div>
-              <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full bg-[#F5F5F7] dark:bg-neutral-800 border border-gray-200/80 dark:border-neutral-700 text-[10px] font-semibold text-gray-700 dark:text-neutral-300 uppercase tracking-wider mb-1">
-                <Users className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
-                Ecosistema Directivo de Clientes & Conversión
+          {/* View Mode Switcher Header with Title Clientes & Centered Navigation Bar */}
+          <div className="space-y-4 pb-4 border-b border-gray-100 dark:border-neutral-800">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full bg-[#F5F5F7] dark:bg-neutral-800 border border-gray-200/80 dark:border-neutral-700 text-[10px] font-semibold text-gray-700 dark:text-neutral-300 uppercase tracking-wider mb-1">
+                  <Users className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
+                  Ecosistema Directivo de Clientes & Conversión
+                </div>
+                <h2 className="text-xl sm:text-2xl font-light text-black dark:text-white tracking-tight">
+                  {clientsViewMode === 'pipeline' ? (
+                    <>Clientes: <strong className="font-semibold">Pipeline CRM & Embudo ({prospects.length})</strong></>
+                  ) : clientsViewMode === 'directory' ? (
+                    <>Clientes: <strong className="font-semibold">Directorio Activo ({clients.length})</strong></>
+                  ) : (
+                    <>Clientes: Ficha 1 a 1 de <strong className="font-semibold">{selectedClient?.name || 'Cliente'}</strong></>
+                  )}
+                </h2>
+                <p className="text-xs text-gray-500 dark:text-neutral-400 font-light mt-0.5">
+                  {clientsViewMode === 'pipeline'
+                    ? 'Embudo comercial ontológico, prospección de talleres y conversión al programa ejecutivo.'
+                    : clientsViewMode === 'directory'
+                    ? 'Directorio central de clientes ancla con seguimiento de quiebres, estados e inversión.'
+                    : 'Ficha de intervención ontológica, bitácora de sesiones y copiloto interpretativo con IA.'}
+                </p>
               </div>
-              <h2 className="text-xl sm:text-2xl font-light text-black dark:text-white tracking-tight">
-                {clientsViewMode === 'pipeline' ? (
-                  <>Clientes: <strong className="font-semibold">Pipeline CRM & Embudo ({prospects.length})</strong></>
-                ) : clientsViewMode === 'directory' ? (
-                  <>Clientes: <strong className="font-semibold">Directorio Activo ({clients.length})</strong></>
-                ) : (
-                  <>Clientes: Ficha 1 a 1 de <strong className="font-semibold">{selectedClient?.name || 'Cliente'}</strong></>
-                )}
-              </h2>
-              <p className="text-xs text-gray-500 dark:text-neutral-400 font-light mt-0.5">
-                {clientsViewMode === 'pipeline'
-                  ? 'Embudo comercial ontológico, prospección de talleres y conversión al programa ejecutivo.'
-                  : clientsViewMode === 'directory'
-                  ? 'Directorio central de clientes ancla con seguimiento de quiebres, estados e inversión.'
-                  : 'Ficha de intervención ontológica, bitácora de sesiones y copiloto interpretativo con IA.'}
-              </p>
             </div>
 
-            {/* Toggle Modes: 1. Pipeline CRM vs 2. Directorio Activos vs 3. Ficha 1 a 1 */}
-            <div className="inline-flex items-center p-1 rounded-xl bg-[#F5F5F7] dark:bg-neutral-800 border border-gray-200/60 dark:border-neutral-700 overflow-x-auto">
-              <button
-                type="button"
-                onClick={() => setClientsViewMode('pipeline')}
-                className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer shrink-0 ${
-                  clientsViewMode === 'pipeline'
-                    ? 'bg-white dark:bg-[#1A1A1E] text-black dark:text-white shadow-2xs font-semibold'
-                    : 'text-gray-500 dark:text-neutral-400 hover:text-black dark:hover:text-white'
-                }`}
-              >
-                <Kanban className="w-3.5 h-3.5 text-sky-500" />
-                <span>1. Pipeline CRM</span>
-                <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono font-medium ${
-                  clientsViewMode === 'pipeline'
-                    ? 'bg-sky-500 text-white'
-                    : 'bg-sky-100 dark:bg-sky-950 text-sky-700 dark:text-sky-300'
-                }`}>
-                  {prospects.length}
-                </span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setClientsViewMode('directory')}
-                className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer shrink-0 ${
-                  clientsViewMode === 'directory'
-                    ? 'bg-white dark:bg-[#1A1A1E] text-black dark:text-white shadow-2xs font-semibold'
-                    : 'text-gray-500 dark:text-neutral-400 hover:text-black dark:hover:text-white'
-                }`}
-              >
-                <LayoutList className="w-3.5 h-3.5 text-emerald-500" />
-                <span>2. Directorio Activos</span>
-                <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono font-medium ${
-                  clientsViewMode === 'directory'
-                    ? 'bg-emerald-500 text-white'
-                    : 'bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300'
-                }`}>
-                  {clients.length}
-                </span>
-              </button>
-
-              {selectedClient && (
+            {/* Centered Navigation Bar: 1. Pipeline CRM vs 2. Directorio Activos vs 3. Ficha 1 a 1 */}
+            <div className="flex justify-center items-center w-full pt-1">
+              <div className="inline-flex items-center justify-center p-1.5 rounded-2xl bg-[#F5F5F7] dark:bg-[#18181B] border border-gray-200/80 dark:border-neutral-800 shadow-2xs max-w-full overflow-x-auto gap-1">
                 <button
                   type="button"
-                  onClick={() => setClientsViewMode('workstation')}
-                  className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer shrink-0 ${
-                    clientsViewMode === 'workstation'
-                      ? 'bg-white dark:bg-[#1A1A1E] text-black dark:text-white shadow-2xs font-semibold'
-                      : 'text-gray-500 dark:text-neutral-400 hover:text-black dark:hover:text-white'
+                  onClick={() => setClientsViewMode('pipeline')}
+                  className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-medium transition-all cursor-pointer shrink-0 ${
+                    clientsViewMode === 'pipeline'
+                      ? 'bg-white dark:bg-[#27272A] text-black dark:text-white shadow-xs font-semibold'
+                      : 'text-gray-500 dark:text-neutral-400 hover:text-black dark:hover:text-white hover:bg-white/60 dark:hover:bg-neutral-800/60'
                   }`}
                 >
-                  <UserCircle2 className="w-3.5 h-3.5 text-indigo-500" />
-                  <span>3. Ficha 1 a 1 ({selectedClient.name.split(' ')[0]})</span>
+                  <Kanban className="w-3.5 h-3.5 text-sky-500" />
+                  <span>1. Pipeline CRM</span>
+                  <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono font-medium ${
+                    clientsViewMode === 'pipeline'
+                      ? 'bg-sky-500 text-white'
+                      : 'bg-sky-100 dark:bg-sky-950 text-sky-700 dark:text-sky-300'
+                  }`}>
+                    {prospects.length}
+                  </span>
                 </button>
-              )}
+
+                <button
+                  type="button"
+                  onClick={() => setClientsViewMode('directory')}
+                  className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-medium transition-all cursor-pointer shrink-0 ${
+                    clientsViewMode === 'directory'
+                      ? 'bg-white dark:bg-[#27272A] text-black dark:text-white shadow-xs font-semibold'
+                      : 'text-gray-500 dark:text-neutral-400 hover:text-black dark:hover:text-white hover:bg-white/60 dark:hover:bg-neutral-800/60'
+                  }`}
+                >
+                  <LayoutList className="w-3.5 h-3.5 text-emerald-500" />
+                  <span>2. Directorio Activos</span>
+                  <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono font-medium ${
+                    clientsViewMode === 'directory'
+                      ? 'bg-emerald-500 text-white'
+                      : 'bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300'
+                  }`}>
+                    {clients.length}
+                  </span>
+                </button>
+
+                {selectedClient && (
+                  <button
+                    type="button"
+                    onClick={() => setClientsViewMode('workstation')}
+                    className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-medium transition-all cursor-pointer shrink-0 ${
+                      clientsViewMode === 'workstation'
+                        ? 'bg-white dark:bg-[#27272A] text-black dark:text-white shadow-xs font-semibold'
+                        : 'text-gray-500 dark:text-neutral-400 hover:text-black dark:hover:text-white hover:bg-white/60 dark:hover:bg-neutral-800/60'
+                    }`}
+                  >
+                    <UserCircle2 className="w-3.5 h-3.5 text-indigo-500" />
+                    <span>3. Ficha 1 a 1 ({selectedClient.name.split(' ')[0]})</span>
+                  </button>
+                )}
+              </div>
             </div>
           </div>
 
@@ -745,6 +768,9 @@ export const CoachDashboard: React.FC<CoachDashboardProps> = ({
               onUpdateStatus={handleUpdateClientStatus}
               onUpdateBreakdown={handleUpdateClientBreakdown}
               onUpdateInvested={handleUpdateClientInvested}
+              onDeleteClient={handleDeleteClient}
+              onAddClient={handleAddClient}
+              onRefreshClients={handleRefreshClientsList}
               onOpenNewSession={(clientId) => {
                 handleSelectClient(clientId, false);
                 setShowNewSessionModal(true);
@@ -904,7 +930,7 @@ export const CoachDashboard: React.FC<CoachDashboardProps> = ({
         <div className="fixed inset-0 z-50 bg-black/40 dark:bg-black/70 backdrop-blur-xs flex items-center justify-center p-6">
           <div className="bg-white dark:bg-[#151518] rounded-3xl p-8 max-w-md w-full border border-gray-100 dark:border-neutral-800 shadow-2xl animate-fade-in space-y-4">
             <h3 className="text-lg font-semibold text-black dark:text-white tracking-tight mb-1">
-              Agendar Sesión en Programa
+              Agendar Sesión
             </h3>
             <p className="text-xs font-light text-gray-500 dark:text-neutral-400">
               Para {selectedClient?.name} • Programa Certeza (12 Semanas)

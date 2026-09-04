@@ -272,7 +272,7 @@
     },
     "CronogramaEvent": {
       "title": "CronogramaEvent",
-      "description": "Evento oficial del cronograma ontológico quincenal",
+      "description": "Evento oficial y talleres del cronograma ontológico quincenal",
       "type": "object",
       "properties": {
         "id": {
@@ -286,6 +286,10 @@
         "subtitle": {
           "type": "string",
           "maxLength": 200
+        },
+        "eventType": {
+          "type": "string",
+          "maxLength": 50
         },
         "date": {
           "type": "string",
@@ -302,6 +306,31 @@
         "facilitator": {
           "type": "string",
           "maxLength": 100
+        },
+        "coverImage": {
+          "type": "string",
+          "maxLength": 500
+        },
+        "showOnHome": {
+          "type": "boolean"
+        },
+        "capacityType": {
+          "type": "string",
+          "enum": ["individual", "grupal"]
+        },
+        "capacity": {
+          "type": "number"
+        },
+        "priceAmount": {
+          "type": "number"
+        },
+        "launchDate": {
+          "type": "string",
+          "maxLength": 50
+        },
+        "eventDate": {
+          "type": "string",
+          "maxLength": 50
         },
         "spotsLeft": {
           "type": "number"

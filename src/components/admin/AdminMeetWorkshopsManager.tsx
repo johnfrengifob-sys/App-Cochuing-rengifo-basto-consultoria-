@@ -237,10 +237,10 @@ export const AdminMeetWorkshopsManager: React.FC<AdminMeetWorkshopsManagerProps>
           <div className="space-y-2">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/20 border border-indigo-400/30 text-indigo-300 text-xs font-semibold backdrop-blur-md">
               <Radio className="w-3.5 h-3.5 animate-pulse text-indigo-400" />
-              <span>Sala Virtual Google Meet Directa</span>
+              <span>Sala Google Meet</span>
             </div>
             <h3 className="text-xl md:text-2xl font-black tracking-tight text-white flex items-center gap-2.5">
-              <span>Espacio de Encuentro & Talleres Ontológicos</span>
+              <span>Encuentros y Talleres</span>
             </h3>
             <p className="text-xs md:text-sm text-neutral-300 font-light max-w-2xl leading-relaxed">
               Enlace centralizado de Google Meet configurado para las transmisiones en vivo, talleres de profundización, conversatorios quincenales y sesiones grupales sincrónicas.
@@ -360,7 +360,7 @@ export const AdminMeetWorkshopsManager: React.FC<AdminMeetWorkshopsManagerProps>
               className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-black dark:bg-white text-white dark:text-black hover:bg-neutral-800 dark:hover:bg-neutral-200 text-xs font-semibold transition-all cursor-pointer shadow-xs"
             >
               <Plus className="w-3.5 h-3.5" />
-              <span>Programar Nuevo Taller</span>
+              <span>Nuevo Taller</span>
             </button>
           </div>
         </div>
@@ -557,7 +557,7 @@ export const AdminMeetWorkshopsManager: React.FC<AdminMeetWorkshopsManagerProps>
           <div>
             <h4 className="text-base font-bold text-black dark:text-white flex items-center gap-2">
               <Users className="w-4 h-4 text-indigo-600" />
-              <span>Registro de Asistencia a Talleres & Meet</span>
+              <span>Asistencia a Talleres</span>
             </h4>
             <p className="text-xs text-gray-500 dark:text-neutral-400 font-light">
               Participantes inscritos y control de asistencia presencial/virtual ({registrations.length} registros).
@@ -570,7 +570,7 @@ export const AdminMeetWorkshopsManager: React.FC<AdminMeetWorkshopsManagerProps>
             className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-gray-100 dark:bg-neutral-800 hover:bg-gray-200 text-xs font-semibold text-black dark:text-white cursor-pointer"
           >
             <Plus className="w-3.5 h-3.5" />
-            <span>Inscribir Participante Manualmente</span>
+            <span>Inscribir Asistente</span>
           </button>
         </div>
 

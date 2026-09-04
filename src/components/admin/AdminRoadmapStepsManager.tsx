@@ -154,7 +154,7 @@ export const AdminRoadmapStepsManager: React.FC<AdminRoadmapStepsManagerProps> =
         <div>
           <h3 className="text-base font-bold text-black dark:text-white flex items-center gap-2">
             <ListOrdered className="w-5 h-5 text-indigo-500" />
-            <span>Construcción Paso a Paso de Talleres y Sesiones</span>
+            <span>Pasos de Talleres y Sesiones</span>
           </h3>
           <p className="text-xs text-gray-500 dark:text-neutral-400 font-light mt-0.5">
             Estructura la cronología de cada encuentro: fases de centramiento, marco teórico, dinámicas de quiebre y acuerdos.

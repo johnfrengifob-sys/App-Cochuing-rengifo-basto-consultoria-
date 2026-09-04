@@ -1,5 +1,6 @@
 import {
   User,
+  ClientStatus,
   Session,
   PostSessionForm,
   FormSubmission,
@@ -12,6 +13,7 @@ import {
   CronogramaEvent,
   EventRegistration,
   OntologicalProgram,
+  WorkshopWorkbookSubmission,
   PaymentRequest,
   PaymentMethodType,
   PaymentApprovalStatus,
@@ -871,6 +873,7 @@ const INITIAL_CRONOGRAMA_EVENTS: CronogramaEvent[] = [
     title: 'Primer Taller: Conversatorio Raíz & Balance',
     subtitle: 'Fronteras, Límites No Dichos & Decodificación Somática (Taller Experiencial 1)',
     category: 'Primer Taller • En Vivo',
+    eventType: 'Taller',
     date: new Date(Date.now() + 1000 * 60 * 60 * 24 * 3 + 1000 * 60 * 60 * 5).toISOString(), // in ~3 days
     displayDate: 'Jueves Próximo (En Vivo)',
     time: '7:00 PM - 8:30 PM (GMT-5)',
@@ -879,6 +882,14 @@ const INITIAL_CRONOGRAMA_EVENTS: CronogramaEvent[] = [
     description:
       'Inmersión ontológica en vivo guiada por John Fredy Rengifo Basto. Abordaremos el mapeo de la transparencia cotidiana, la decodificación adaptativa de las emociones en el cuerpo y la proclamación del "Basta" como acto fundacional de dignidad y soberanía relacional.',
     imageUrl: promotionalEventBannerImg,
+    coverImage: promotionalEventBannerImg,
+    showOnHome: true,
+    capacityType: 'grupal',
+    capacity: 30,
+    priceAmount: 180000,
+    price: '$180.000 COP',
+    launchDate: '2026-09-01',
+    eventDate: new Date(Date.now() + 1000 * 60 * 60 * 24 * 3).toISOString(),
     aiPromptUsed:
       'High-end minimalist luxury advertising banner for an ontological coaching masterclass event named Raiz y Balance. Clean editorial aesthetic, subtle dark and warm neutral gradients, abstract geometric zen circle and botanical leaf silhouette, soft studio lighting, modern Swiss graphic design style, 8k resolution.',
     facilitator: 'John Fredy Rengifo Basto (Master Coach Ontológico)',
@@ -886,12 +897,129 @@ const INITIAL_CRONOGRAMA_EVENTS: CronogramaEvent[] = [
     totalSpots: 30,
     featured: true,
     status: 'upcoming',
+    // 2. Definición del Contenido y Temario
+    syllabus: [
+      {
+        id: 'syl-1',
+        title: 'Bloque 1: Mapeo de la Transparencia y Quiebres Inconscientes',
+        duration: '30 min',
+        description: 'Identificación de las narrativas automáticas y mandatos introyectados que generan fatiga relacional.',
+      },
+      {
+        id: 'syl-2',
+        title: 'Bloque 2: Decodificación Somática y Sabiduría de las Emociones',
+        duration: '35 min',
+        description: 'Lectura de señales corporales (mandíbula, pecho, garganta) y discernimiento entre miedo prudencial y miedo paralizante.',
+      },
+      {
+        id: 'syl-3',
+        title: 'Bloque 3: El "Basta" Ontológico y la Arquitectura de Acuerdos',
+        duration: '25 min',
+        description: 'Diseño de actos del habla declarativos, pedidos impecables y compromisos innegociables de autoasistencia.',
+      },
+    ],
+    guidingQuestions: [
+      '¿En qué áreas de tu vida y liderazgo estás diciendo "Sí" por complacencia cuando tu cuerpo y tu energía reclaman un "Basta"?',
+      '¿Cuál es el costo somático, emocional y relacional de intentar controlarlo todo por desconfianza en el entorno?',
+      '¿Cómo cambiaría tu serenidad y autoridad si comunicaras tus límites con total calma y sin necesidad de justificarte?',
+    ],
+    supportMaterials: [
+      {
+        id: 'mat-1',
+        title: 'Guía de Trabajo: Protocolo de Declaraciones Fundamentales y Soberanía (PDF)',
+        type: 'pdf',
+        url: 'https://rbc.edu.co/recursos/protocolo-soberania-ontologica.pdf',
+        sizeOrDuration: '2.4 MB (6 Páginas)',
+        description: 'Estructuras lingüísticas para comunicar desacuerdos y límites sin fricción destructiva.',
+      },
+      {
+        id: 'mat-2',
+        title: 'Video-Masterclass: Decodificación Somática de Emociones Densas',
+        type: 'video',
+        url: 'https://vimeo.com/rbc/decodificacion-somatica',
+        sizeOrDuration: '22 min',
+        description: 'Explicación del arco somático y enraizamiento torácico.',
+      },
+      {
+        id: 'mat-3',
+        title: 'Presentación Ejecutiva: Actos del Habla y Coordinación de Acciones',
+        type: 'presentation',
+        url: 'https://slides.google.com/rbc/actos-del-habla-ejecutivo',
+        sizeOrDuration: '28 diapositivas',
+        description: 'Diapositivas oficiales del encuentro con distinciones de Rafael Echeverría e ICF.',
+      },
+    ],
+    // 3. Evaluación y Cuaderno Descargable
+    postWorkshopQuestions: [
+      {
+        id: 'pwq-1',
+        question: '¿Cuál fue el quiebre principal o revelación que emergió durante esta sesión?',
+        type: 'textarea',
+        category: 'reflexion',
+        required: true,
+      },
+      {
+        id: 'pwq-2',
+        question: '¿Qué sensación corporal o mensaje somático lograste decodificar en tu cuerpo?',
+        type: 'textarea',
+        category: 'somatica',
+        required: true,
+      },
+      {
+        id: 'pwq-3',
+        question: '¿A qué compromiso o nuevo acuerdo te declaras leal para esta semana?',
+        type: 'textarea',
+        category: 'compromiso',
+        required: true,
+      },
+      {
+        id: 'pwq-4',
+        question: '¿Cómo calificarías la profundidad y claridad de lo vivido en esta sesión (1 al 5)?',
+        type: 'rating_scale',
+        category: 'evaluacion',
+        required: true,
+      },
+    ],
+    workbookSubmissions: [
+      {
+        id: 'sub-andres-1',
+        eventId: 'event-conversatorio-1',
+        participantName: 'Andrés Quintero',
+        participantEmail: 'andres.quintero@fintech.co',
+        participantPhone: '+57 310 987 6543',
+        submittedAt: new Date(Date.now() - 1000 * 60 * 60 * 12).toISOString(),
+        answers: {
+          'pwq-1': 'Me di cuenta de que mi autoexigencia extrema no es excelencia, sino un miedo inconsciente a perder autoridad si delego.',
+          'pwq-2': 'Sentí la tensión en la mandíbula y el cuello disminuir en el momento en que declaré que no tengo que solucionar todas las urgencias de los comités.',
+          'pwq-3': 'Me comprometo a delegar el reporte de operaciones del viernes sin pedir borradores intermedios y a apagar el chat a las 7:00 PM.',
+          'pwq-4': 5,
+        },
+        somaticObservation: 'Apertura torácica visible y alivio en la postura.',
+        coachFeedback: 'Excelente deconstrucción de la omnipotencia. Sostener la pausa respiratoria.',
+      },
+      {
+        id: 'sub-carolina-2',
+        eventId: 'event-conversatorio-1',
+        participantName: 'Carolina Gómez',
+        participantEmail: 'carolina.gomez@empresa.com',
+        participantPhone: '+57 315 123 4567',
+        submittedAt: new Date(Date.now() - 1000 * 60 * 60 * 26).toISOString(),
+        answers: {
+          'pwq-1': 'Reconocí que la culpa que siento al decir "no" viene de una creencia aprendida de complacencia que ya no me sirve como líder.',
+          'pwq-2': 'Identifiqué la pesadez en el plexo solar antes de las reuniones de negociación.',
+          'pwq-3': 'Emitir mi primera declaración de límite con la junta directiva sobre tiempos de entrega realistas.',
+          'pwq-4': 5,
+        },
+        somaticObservation: 'Conexión profunda con su centro de dignidad.',
+      },
+    ],
   },
   {
     id: 'event-masterclass-2',
     title: 'Masterclass: La Sabiduría Adaptativa del Miedo y la Culpa',
     subtitle: 'Metodología de Autoasistencia Ontológica y Reencuadre Somático',
     category: 'Masterclass Ontológica',
+    eventType: 'Masterclass',
     date: new Date(Date.now() + 1000 * 60 * 60 * 24 * 17).toISOString(),
     displayDate: 'Jueves 18 de Septiembre',
     time: '7:00 PM - 9:00 PM (GMT-5)',
@@ -900,6 +1028,14 @@ const INITIAL_CRONOGRAMA_EVENTS: CronogramaEvent[] = [
     description:
       'Sesión especializada para directivos y líderes. Cómo transformar la autocrítica destructiva y la exigencia descalificadora en discernimiento compasivo, auto-asistencia y coordinación de acciones impecables.',
     imageUrl: promotionalEventBannerImg,
+    coverImage: promotionalEventBannerImg,
+    showOnHome: false, // Visible solo internamente
+    capacityType: 'grupal',
+    capacity: 25,
+    priceAmount: 220000,
+    price: '$220.000 COP',
+    launchDate: '2026-09-08',
+    eventDate: new Date(Date.now() + 1000 * 60 * 60 * 24 * 17).toISOString(),
     aiPromptUsed:
       'Minimalist executive leadership conference banner with serene botanical shadow and zen layout.',
     facilitator: 'John Fredy Rengifo Basto',
@@ -907,6 +1043,50 @@ const INITIAL_CRONOGRAMA_EVENTS: CronogramaEvent[] = [
     totalSpots: 25,
     featured: false,
     status: 'upcoming',
+    syllabus: [
+      {
+        id: 'syl-m1',
+        title: 'Bloque 1: El Juicio Automático de la Culpa y su Trampa',
+        duration: '40 min',
+        description: 'Diferencia ontológica entre remordimiento improductivo y responsabilidad transformadora.',
+      },
+      {
+        id: 'syl-m2',
+        title: 'Bloque 2: Auto-asistencia y Calibración Somática',
+        duration: '50 min',
+        description: 'Prácticas corporales para habitar la vulnerabilidad directiva sin perder firmeza.',
+      },
+    ],
+    guidingQuestions: [
+      '¿Qué juicio maestro sobre ti mismo se activa cuando las cosas no salen de acuerdo al estándar idealizado?',
+      '¿De qué te está protegiendo la exigencia desmedida?',
+    ],
+    supportMaterials: [
+      {
+        id: 'mat-m1',
+        title: 'Ficha de Autoasistencia Ontológica (PDF)',
+        type: 'pdf',
+        url: 'https://rbc.edu.co/recursos/ficha-autoasistencia.pdf',
+        sizeOrDuration: '1.2 MB',
+      },
+    ],
+    postWorkshopQuestions: [
+      {
+        id: 'pwq-m1',
+        question: '¿Qué juicio maestro lograste desafiar en esta masterclass?',
+        type: 'textarea',
+        category: 'reflexion',
+        required: true,
+      },
+      {
+        id: 'pwq-m2',
+        question: '¿Qué práctica somática implementarás en tu rutina diaria?',
+        type: 'textarea',
+        category: 'somatica',
+        required: true,
+      },
+    ],
+    workbookSubmissions: [],
   },
 ];
 
@@ -2276,8 +2456,40 @@ export class OntologicalStore {
 
   static getUpcomingEvent(): CronogramaEvent {
     const events = this.getCronogramaEvents();
+    // Prioritize events that are upcoming, featured, and marked to show on home
+    const homeUpcoming = events.find((e) => e.status === 'upcoming' && e.showOnHome !== false && e.featured);
+    if (homeUpcoming) return homeUpcoming;
+    const anyHome = events.find((e) => e.showOnHome !== false && e.status === 'upcoming');
+    if (anyHome) return anyHome;
     const upcoming = events.find((e) => e.status === 'upcoming' && e.featured);
     return upcoming || events[0] || INITIAL_CRONOGRAMA_EVENTS[0];
+  }
+
+  static addWorkshopWorkbookSubmission(
+    eventId: string,
+    submissionData: Omit<WorkshopWorkbookSubmission, 'id' | 'eventId' | 'submittedAt'>
+  ): WorkshopWorkbookSubmission | null {
+    const events = this.getCronogramaEvents();
+    let created: WorkshopWorkbookSubmission | null = null;
+    const updated = events.map((evt) => {
+      if (evt.id === eventId) {
+        const sub: WorkshopWorkbookSubmission = {
+          id: 'sub-' + Date.now(),
+          eventId,
+          submittedAt: new Date().toISOString(),
+          ...submissionData,
+        };
+        created = sub;
+        const currentSubs = Array.isArray(evt.workbookSubmissions) ? evt.workbookSubmissions : [];
+        return {
+          ...evt,
+          workbookSubmissions: [sub, ...currentSubs],
+        };
+      }
+      return evt;
+    });
+    this.saveCronogramaEvents(updated);
+    return created;
   }
 
   static updateCronogramaEvent(
@@ -2980,6 +3192,64 @@ export class OntologicalStore {
     this.save(STORAGE_KEYS.SESSIONS, [...sessions, firstSession]);
 
     return newClient;
+  }
+
+  static createManualClient(data: {
+    name: string;
+    email: string;
+    phone?: string;
+    company?: string;
+    title?: string;
+    status?: ClientStatus;
+    primaryBreakdown?: string;
+    programName?: string;
+    programFee?: string;
+    totalInvested?: string;
+  }): User {
+    const users = this.getUsers();
+    const newClientId = 'client-' + Date.now();
+    const avatarNumber = 1530000000000 + Math.floor(Math.random() * 99999999);
+    const newClient: User = {
+      uid: newClientId,
+      name: data.name.trim(),
+      email: data.email.trim().toLowerCase(),
+      phone: data.phone?.trim() || '',
+      company: data.company?.trim() || '',
+      title: data.title?.trim() || 'Cliente Programa de Coaching',
+      role: 'client',
+      avatarUrl: `https://images.unsplash.com/photo-${avatarNumber}?auto=format&fit=crop&w=400&q=80`,
+      joinedAt: new Date().toISOString().split('T')[0],
+      programProgress: 1,
+      programStep: 1,
+      paymentStatus: 'Completado',
+      status: data.status || 'active',
+      primaryBreakdown: data.primaryBreakdown || 'Fronteras, auto-observación y claridad directiva',
+      programName: data.programName || 'Certeza, Fronteras & Dirección Personal',
+      programFee: data.programFee || '$1.500.000 COP',
+      totalInvested: data.totalInvested || data.programFee || '$1.500.000 COP',
+    };
+
+    this.saveUsers([...users, newClient]);
+
+    // Create first scheduled session
+    const sessions = this.getSessions();
+    const firstSession: Session = {
+      id: 'sess-' + Date.now(),
+      clientId: newClientId,
+      sessionNumber: 1,
+      date: new Date(Date.now() + 1000 * 60 * 60 * 48).toISOString(),
+      meetLink: `https://meet.google.com/rbc-${Math.random().toString(36).substring(2, 7)}`,
+      status: 'scheduled',
+      notes: `Sesión 1: Mapeo de la Transparencia y Quiebres para ${newClient.name}.`,
+      durationMinutes: 60,
+    };
+    this.save(STORAGE_KEYS.SESSIONS, [...sessions, firstSession]);
+
+    return newClient;
+  }
+
+  static getClients(): User[] {
+    return this.getUsers().filter((u) => u.role === 'client');
   }
 
   static advanceClientProgress(clientId: string): User | null {

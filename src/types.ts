@@ -263,11 +263,51 @@ export interface OntologicalProgram {
   totalNodes?: number;
 }
 
+export interface SyllabusBlock {
+  id: string;
+  title: string;
+  duration?: string; // ej: "30 min"
+  description: string;
+}
+
+export type SupportMaterialType = 'pdf' | 'video' | 'presentation' | 'guide' | 'link';
+
+export interface SupportMaterial {
+  id: string;
+  title: string;
+  type: SupportMaterialType;
+  url: string;
+  sizeOrDuration?: string;
+  description?: string;
+}
+
+export interface PostWorkshopQuestion {
+  id: string;
+  question: string;
+  type: 'textarea' | 'text' | 'rating_scale';
+  placeholder?: string;
+  category?: 'reflexion' | 'somatica' | 'compromiso' | 'evaluacion';
+  required?: boolean;
+}
+
+export interface WorkshopWorkbookSubmission {
+  id: string;
+  eventId: string;
+  participantName: string;
+  participantEmail: string;
+  participantPhone?: string;
+  submittedAt: string;
+  answers: Record<string, string | number>;
+  somaticObservation?: string;
+  coachFeedback?: string;
+}
+
 export interface CronogramaEvent {
   id: string;
   title: string;
   subtitle: string;
   category: EventCategory;
+  eventType?: 'Taller' | 'Sesión' | 'Workshop' | 'Conversatorio' | 'Masterclass' | string;
   date: string; // ISO string
   displayDate: string; // "Jueves, 12 de Octubre"
   time: string; // "7:00 PM (GMT-5)"
@@ -276,6 +316,14 @@ export interface CronogramaEvent {
   location?: string;
   description: string;
   imageUrl: string;
+  coverImage?: string; // Alias or dedicated cover image
+  showOnHome?: boolean; // Casilla: destacar en la portada principal de la app o mantener solo de forma interna
+  capacityType?: 'individual' | 'grupal'; // Individual (1) o Grupal (varios)
+  capacity?: number; // Límite numérico de participantes
+  priceAmount?: number; // Precio / Valor numérico
+  currency?: string; // ej: "COP"
+  launchDate?: string; // Calendario de fecha de lanzamiento y convocatoria
+  eventDate?: string; // Fecha de realización
   aiPromptUsed?: string;
   facilitator: string;
   spotsLeft: number;
@@ -283,6 +331,13 @@ export interface CronogramaEvent {
   featured: boolean;
   status: 'upcoming' | 'live' | 'completed';
   price?: string;
+  // Sección 2: Contenido y Temario
+  syllabus?: SyllabusBlock[];
+  guidingQuestions?: string[];
+  supportMaterials?: SupportMaterial[];
+  // Sección 3: Evaluación y Cuaderno Descargable
+  postWorkshopQuestions?: PostWorkshopQuestion[];
+  workbookSubmissions?: WorkshopWorkbookSubmission[];
 }
 
 export interface GoogleWorkspaceConfig {

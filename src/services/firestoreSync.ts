@@ -2,6 +2,7 @@ import {
   collection,
   doc,
   setDoc,
+  deleteDoc,
   getDocs,
   onSnapshot,
 } from 'firebase/firestore';
@@ -154,6 +155,16 @@ export class FirestoreSyncService {
       );
     } catch (error) {
       console.warn('Firestore syncUserProfile notice:', error);
+    }
+  }
+
+  // Delete user from Firestore
+  static async deleteUser(uid: string): Promise<void> {
+    try {
+      const userRef = doc(db, 'users', uid);
+      await deleteDoc(userRef);
+    } catch (error) {
+      console.warn('Firestore deleteUser notice:', error);
     }
   }
 

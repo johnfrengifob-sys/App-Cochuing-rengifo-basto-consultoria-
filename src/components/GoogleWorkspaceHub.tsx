@@ -464,7 +464,7 @@ export const GoogleWorkspaceHub: React.FC<GoogleWorkspaceHubProps> = ({
   };
 
   return (
-    <div className="space-y-6 w-full max-w-7xl mx-auto animate-fade-in text-left">
+    <div className="space-y-6 w-full animate-fade-in text-left">
       {/* Action Notification Toast */}
       {actionNotice && (
         <div className="fixed bottom-6 right-6 z-50 bg-black text-white dark:bg-white dark:text-black px-5 py-3.5 rounded-2xl shadow-2xl flex items-center gap-3 text-xs font-semibold tracking-wide border border-neutral-700 dark:border-neutral-200 animate-slide-up">

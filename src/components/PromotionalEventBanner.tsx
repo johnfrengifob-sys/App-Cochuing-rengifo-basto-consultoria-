@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { CronogramaEvent } from '../types';
 import { OntologicalStore } from '../services/store';
 import { LiquidGlassButton } from './LiquidGlassButton';
+import { downloadWorkshopNotebookPdf } from '../services/notebookPdfGenerator';
 import {
   Calendar,
   Clock,
@@ -21,6 +22,8 @@ import {
   X,
   Eye,
   ZoomIn,
+  Download,
+  Award,
 } from 'lucide-react';
 
 interface PromotionalEventBannerProps {
@@ -287,6 +290,16 @@ export const PromotionalEventBanner: React.FC<PromotionalEventBannerProps> = ({
 
                 <button
                   type="button"
+                  onClick={() => downloadWorkshopNotebookPdf(event)}
+                  className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-emerald-600/90 hover:bg-emerald-500 backdrop-blur-md text-white text-xs font-semibold transition-colors cursor-pointer shadow-md"
+                  title="Descargar Cuaderno y Memorias del Taller (PDF)"
+                >
+                  <Download className="w-3.5 h-3.5 text-white" />
+                  <span>Cuaderno PDF</span>
+                </button>
+
+                <button
+                  type="button"
                   onClick={() => setShowImageModal(true)}
                   className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/15 text-gray-200 hover:text-white text-xs font-medium transition-colors cursor-pointer"
                   title="Ver afiche completo en alta resolución"
@@ -478,6 +491,16 @@ export const PromotionalEventBanner: React.FC<PromotionalEventBannerProps> = ({
                 ) : (
                   <Copy className="w-4 h-4 text-gray-200" />
                 )}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => downloadWorkshopNotebookPdf(event)}
+                className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-full bg-emerald-600/90 hover:bg-emerald-500 backdrop-blur-md text-white text-xs font-semibold transition-colors cursor-pointer shadow-md"
+                title="Descargar Cuaderno y Memorias del Taller en formato PDF"
+              >
+                <Download className="w-3.5 h-3.5 text-white" />
+                <span>Cuaderno PDF</span>
               </button>
 
               <button

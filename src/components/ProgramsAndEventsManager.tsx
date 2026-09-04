@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   CronogramaEvent,
   OntologicalProgram,
   EventRegistration,
   EventCategory,
+  WorkshopWorkbookSubmission,
 } from '../types';
 import { OntologicalStore } from '../services/store';
 import {
@@ -24,26 +25,40 @@ import {
   Sparkles,
   ArrowRight,
   TrendingUp,
-  Sliders,
   DollarSign,
   AlertCircle,
   Copy,
   CheckCheck,
   Award,
-  Radio,
   Link as LinkIcon,
   Check,
+  FileText,
+  Download,
+  BookOpen,
+  FileCheck,
+  Eye,
+  EyeOff,
+  ChevronRight,
+  Shield,
+  Filter,
 } from 'lucide-react';
+import { EventGeneralConfigSection } from './admin/events/EventGeneralConfigSection';
+import { EventContentSyllabusSection } from './admin/events/EventContentSyllabusSection';
+import { EventEvaluationWorkbookSection } from './admin/events/EventEvaluationWorkbookSection';
+import {
+  downloadWorkshopNotebookPdf,
+  generateWorkshopNotebookPdf,
+} from '../services/notebookPdfGenerator';
 
 interface ProgramsAndEventsManagerProps {
   cronogramaEvents: CronogramaEvent[];
-  programs: OntologicalProgram[];
-  eventRegistrations: EventRegistration[];
+  programs?: OntologicalProgram[];
+  eventRegistrations?: EventRegistration[];
   onRefreshEvents: () => void;
-  onRefreshPrograms: () => void;
-  onRefreshRegistrations: () => void;
+  onRefreshPrograms?: () => void;
+  onRefreshRegistrations?: () => void;
   onOpenRegistrationPortal?: () => void;
-  initialSubTab?: 'events' | 'participants' | 'banner';
+  initialSubTab?: 'events' | 'participants' | 'editor' | 'workbooks' | 'banner' | string;
 }
 
 export const ProgramsAndEventsManager: React.FC<ProgramsAndEventsManagerProps> = ({
@@ -57,29 +72,112 @@ export const ProgramsAndEventsManager: React.FC<ProgramsAndEventsManagerProps> =
   initialSubTab = 'events',
 }) => {
   const safeEvents = Array.isArray(cronogramaEvents) ? cronogramaEvents : [];
-  const safePrograms = Array.isArray(programs) ? programs : [];
   const safeRegistrations = Array.isArray(eventRegistrations) ? eventRegistrations : [];
 
-  const [activeSubTab, setActiveSubTab] = useState<'events' | 'participants' | 'banner'>(initialSubTab);
+  // Active navigation sub-tab
+  const [activeSubTab, setActiveSubTab] = useState<'events' | 'editor' | 'workbooks' | 'participants'>(() => {
+    if (initialSubTab === 'participants') return 'participants';
+    if (initialSubTab === 'editor') return 'editor';
+    if (initialSubTab === 'workbooks') return 'workbooks';
+    return 'events';
+  });
 
-  React.useEffect(() => {
-    if (initialSubTab) {
-      setActiveSubTab(initialSubTab);
-    }
+  useEffect(() => {
+    if (initialSubTab === 'participants') setActiveSubTab('participants');
+    else if (initialSubTab === 'editor') setActiveSubTab('editor');
+    else if (initialSubTab === 'workbooks') setActiveSubTab('workbooks');
   }, [initialSubTab]);
+
+  // Search and filters
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedEventFilter, setSelectedEventFilter] = useState<string>('all');
-  const [copiedLinkFeedback, setCopiedLinkFeedback] = useState(false);
+  const [filterVisibility, setFilterVisibility] = useState<'all' | 'home' | 'internal'>('all');
+  const [filterType, setFilterType] = useState<string>('all');
 
   // Master Google Meet Room State
-  const defaultMeet = cronogramaEvents[0]?.meetUrl || 'https://meet.google.com/rbc-conversatorio-ontologico';
-  const [masterMeetUrl, setMasterMeetUrl] = useState(() => {
+  const defaultMeet = safeEvents[0]?.meetUrl || 'https://meet.google.com/rbc-conversatorio-ontologico';
+  const [masterMeetUrl, setMasterMeetUrl] = useState<string>(() => {
     return localStorage.getItem('rbc_master_meet_url') || defaultMeet;
   });
   const [isEditingMasterMeet, setIsEditingMasterMeet] = useState(false);
   const [tempMasterMeet, setTempMasterMeet] = useState(masterMeetUrl);
   const [copiedMeetFeedback, setCopiedMeetFeedback] = useState(false);
 
+  // Editor states (for creating or editing an event with the 3 sections)
+  const [editingEventId, setEditingEventId] = useState<string | null>(null);
+  const [editorActiveSection, setEditorActiveSection] = useState<'general' | 'content' | 'evaluation'>('general');
+  const [eventFormData, setEventFormData] = useState<Partial<CronogramaEvent>>({
+    title: '',
+    subtitle: '',
+    eventType: 'Taller',
+    category: 'Primer Taller • En Vivo',
+    date: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7).toISOString(),
+    displayDate: '',
+    time: '7:00 PM - 8:30 PM (GMT-5)',
+    mode: 'Online (Google Meet)',
+    meetUrl: masterMeetUrl,
+    description: '',
+    imageUrl: '',
+    coverImage: '',
+    showOnHome: true,
+    capacityType: 'grupal',
+    capacity: 30,
+    priceAmount: 180000,
+    price: '$180.000 COP',
+    launchDate: new Date().toISOString().split('T')[0],
+    facilitator: 'John Fredy Rengifo Basto (Master Coach Ontológico)',
+    spotsLeft: 20,
+    totalSpots: 30,
+    featured: true,
+    status: 'upcoming',
+    syllabus: [],
+    guidingQuestions: [],
+    supportMaterials: [],
+    postWorkshopQuestions: [],
+    workbookSubmissions: [],
+  });
+
+  // Modal: Manual Participant Registration
+  const [isManualRegModalOpen, setIsManualRegModalOpen] = useState(false);
+  const [regName, setRegName] = useState('');
+  const [regEmail, setRegEmail] = useState('');
+  const [regPhone, setRegPhone] = useState('');
+  const [regEventId, setRegEventId] = useState(safeEvents[0]?.id || '');
+  const [regAttended, setRegAttended] = useState(false);
+
+  // Filtered events
+  const filteredEvents = safeEvents.filter((evt) => {
+    const matchesSearch =
+      (evt.title || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (evt.subtitle || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (evt.eventType || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (evt.facilitator || '').toLowerCase().includes(searchQuery.toLowerCase());
+
+    const isHome = evt.showOnHome ?? true;
+    const matchesVisibility =
+      filterVisibility === 'all'
+        ? true
+        : filterVisibility === 'home'
+        ? isHome
+        : !isHome;
+
+    const matchesType =
+      filterType === 'all'
+        ? true
+        : (evt.eventType || evt.category || '').toLowerCase() === filterType.toLowerCase();
+
+    return matchesSearch && matchesVisibility && matchesType;
+  });
+
+  // Quick stats
+  const totalEventsCount = safeEvents.length;
+  const homeFeaturedCount = safeEvents.filter((e) => e.showOnHome ?? true).length;
+  const internalCount = safeEvents.filter((e) => (e.showOnHome ?? true) === false).length;
+  const totalSubmissionsCount = safeEvents.reduce(
+    (acc, curr) => acc + (curr.workbookSubmissions?.length || 0),
+    0
+  );
+
+  // Handlers for Google Meet
   const handleCopyMasterMeet = () => {
     navigator.clipboard.writeText(masterMeetUrl);
     setCopiedMeetFeedback(true);
@@ -94,554 +192,876 @@ export const ProgramsAndEventsManager: React.FC<ProgramsAndEventsManagerProps> =
     setIsEditingMasterMeet(false);
   };
 
-  // Modal: Create / Edit Event
-  const [isEventModalOpen, setIsEventModalOpen] = useState(false);
-  const [editingEventId, setEditingEventId] = useState<string | null>(null);
-  const [eventFormData, setEventFormData] = useState<Omit<CronogramaEvent, 'id'>>({
-    title: '',
-    subtitle: '',
-    category: 'Conversatorio Quincenal',
-    date: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7).toISOString(),
-    displayDate: '',
-    time: '7:00 PM - 9:00 PM (GMT-5)',
-    mode: 'Online (Google Meet)',
-    meetUrl: masterMeetUrl,
-    description: '',
-    imageUrl: '',
-    aiPromptUsed: '',
-    facilitator: 'John Fredy Rengifo Basto',
-    spotsLeft: 15,
-    totalSpots: 30,
-    featured: false,
-    status: 'upcoming',
-    price: 'Acceso Libre con Pre-Registro',
-  });
-
-  // Modal: Manual Participant Registration
-  const [isManualRegModalOpen, setIsManualRegModalOpen] = useState(false);
-  const [regName, setRegName] = useState('');
-  const [regEmail, setRegEmail] = useState('');
-  const [regPhone, setRegPhone] = useState('');
-  const [regEventId, setRegEventId] = useState('');
-  const [regAttended, setRegAttended] = useState(false);
-
-  // Quick Spot Adjustments for Events
-  const handleAdjustEventSpots = (eventId: string, delta: number) => {
-    const target = cronogramaEvents.find((e) => e.id === eventId);
-    if (!target) return;
-    const newSpotsLeft = Math.max(0, Math.min(target.totalSpots, target.spotsLeft + delta));
-    OntologicalStore.updateCronogramaEvent(eventId, { spotsLeft: newSpotsLeft });
-    onRefreshEvents();
-  };
-
-  // Open Event Modal for New
-  const handleOpenNewEventModal = () => {
+  // Open New Event
+  const handleOpenCreateEvent = () => {
     setEditingEventId(null);
+    setEditorActiveSection('general');
     setEventFormData({
       title: '',
       subtitle: '',
-      category: 'Conversatorio Quincenal',
+      eventType: 'Taller',
+      category: 'Primer Taller • En Vivo',
       date: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7).toISOString(),
-      displayDate: 'Jueves 24 de Septiembre',
+      displayDate: 'Jueves Próximo (En Vivo)',
       time: '7:00 PM - 8:30 PM (GMT-5)',
       mode: 'Online (Google Meet)',
-      meetUrl: 'https://meet.google.com/rbc-conversatorio-ontologico',
-      description: 'Espacio reflexivo y de calibración ontológica sobre límites, quiebres y soberanía personal.',
-      imageUrl: cronogramaEvents[0]?.imageUrl || '',
-      aiPromptUsed: 'Minimalist executive leadership conference banner with botanical shadow.',
-      facilitator: 'John Fredy Rengifo Basto',
-      spotsLeft: 20,
+      meetUrl: masterMeetUrl,
+      description: 'Inmersión ontológica en vivo para abordar quiebres, deconstrucción somática y soberanía relacional.',
+      imageUrl: 'https://images.unsplash.com/photo-1518531933037-91b2f5f229cc?w=1000&auto=format&fit=crop&q=80',
+      coverImage: 'https://images.unsplash.com/photo-1518531933037-91b2f5f229cc?w=1000&auto=format&fit=crop&q=80',
+      showOnHome: true,
+      capacityType: 'grupal',
+      capacity: 30,
+      priceAmount: 180000,
+      price: '$180.000 COP',
+      launchDate: new Date().toISOString().split('T')[0],
+      facilitator: 'John Fredy Rengifo Basto (Master Coach Ontológico)',
+      spotsLeft: 25,
       totalSpots: 30,
-      featured: false,
+      featured: true,
       status: 'upcoming',
-      price: 'Acceso Libre con Pre-Registro',
+      syllabus: [
+        {
+          id: 'syl-' + Date.now() + '-1',
+          title: 'Bloque 1: Mapeo de la Transparencia y Quiebres Inconscientes',
+          duration: '30 min',
+          description: 'Identificación de mandatos automáticos y exigencias descalificadoras.',
+        },
+        {
+          id: 'syl-' + Date.now() + '-2',
+          title: 'Bloque 2: Decodificación Somática del Miedo y la Culpa',
+          duration: '35 min',
+          description: 'Lectura corporal y reencuadre de la vulnerabilidad en el liderazgo.',
+        },
+      ],
+      guidingQuestions: [
+        '¿En qué áreas estás diciendo "Sí" por complacencia cuando tu cuerpo grita "Basta"?',
+        '¿Cuál es el costo somático y relacional de intentar controlarlo todo?',
+      ],
+      supportMaterials: [
+        {
+          id: 'mat-' + Date.now() + '-1',
+          title: 'Guía de Trabajo: Protocolo de Soberanía Ontológica (PDF)',
+          type: 'pdf',
+          url: 'https://rbc.edu.co/recursos/protocolo-soberania-ontologica.pdf',
+          sizeOrDuration: '2.1 MB',
+        },
+      ],
+      postWorkshopQuestions: [
+        {
+          id: 'pwq-1',
+          question: '¿Cuál fue el quiebre principal que descubriste en esta sesión?',
+          type: 'textarea',
+          category: 'reflexion',
+          required: true,
+        },
+        {
+          id: 'pwq-2',
+          question: '¿Qué sensación corporal o mensaje somático lograste decodificar?',
+          type: 'textarea',
+          category: 'somatica',
+          required: true,
+        },
+        {
+          id: 'pwq-3',
+          question: '¿A qué compromiso o nuevo acuerdo te declaras leal para esta semana?',
+          type: 'textarea',
+          category: 'compromiso',
+          required: true,
+        },
+      ],
+      workbookSubmissions: [],
     });
-    setIsEventModalOpen(true);
+    setActiveSubTab('editor');
   };
 
-  // Open Event Modal for Edit
-  const handleOpenEditEventModal = (event: CronogramaEvent) => {
-    setEditingEventId(event.id);
+  // Open Edit Event
+  const handleOpenEditEvent = (evt: CronogramaEvent) => {
+    setEditingEventId(evt.id);
+    setEditorActiveSection('general');
     setEventFormData({
-      title: event.title,
-      subtitle: event.subtitle,
-      category: event.category,
-      date: event.date,
-      displayDate: event.displayDate,
-      time: event.time,
-      mode: event.mode,
-      meetUrl: event.meetUrl || '',
-      location: event.location || '',
-      description: event.description,
-      imageUrl: event.imageUrl,
-      aiPromptUsed: event.aiPromptUsed || '',
-      facilitator: event.facilitator,
-      spotsLeft: event.spotsLeft,
-      totalSpots: event.totalSpots,
-      featured: event.featured,
-      status: event.status,
-      price: event.price || 'Acceso Libre con Pre-Registro',
+      ...evt,
+      showOnHome: evt.showOnHome ?? true,
+      capacityType: evt.capacityType || (evt.totalSpots === 1 ? 'individual' : 'grupal'),
+      capacity: evt.capacity || evt.totalSpots || 25,
+      priceAmount: evt.priceAmount !== undefined ? evt.priceAmount : 180000,
+      launchDate: evt.launchDate || (evt.date ? evt.date.split('T')[0] : ''),
     });
-    setIsEventModalOpen(true);
+    setActiveSubTab('editor');
   };
 
-  // Save Event
-  const handleSaveEvent = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!eventFormData.title.trim()) return;
-
-    if (editingEventId) {
-      OntologicalStore.updateCronogramaEvent(editingEventId, eventFormData);
-    } else {
-      OntologicalStore.addCronogramaEvent(eventFormData);
+  // Save Event from Editor
+  const handleSaveEditorEvent = () => {
+    if (!eventFormData.title?.trim()) {
+      alert('Por favor especifica el nombre del evento o taller.');
+      setEditorActiveSection('general');
+      return;
     }
 
-    setIsEventModalOpen(false);
-    setEditingEventId(null);
+    const payload: Partial<CronogramaEvent> = {
+      ...eventFormData,
+      totalSpots: eventFormData.capacity || eventFormData.totalSpots || 25,
+      spotsLeft: eventFormData.spotsLeft !== undefined ? eventFormData.spotsLeft : (eventFormData.capacity || 25),
+      featured: eventFormData.showOnHome ?? true,
+    };
+
+    if (editingEventId) {
+      OntologicalStore.updateCronogramaEvent(editingEventId, payload);
+    } else {
+      OntologicalStore.addCronogramaEvent(payload as Omit<CronogramaEvent, 'id'>);
+    }
+
     onRefreshEvents();
+    setActiveSubTab('events');
+    setEditingEventId(null);
   };
 
   // Delete Event
   const handleDeleteEvent = (id: string, title: string) => {
-    if (window.confirm(`¿Estás seguro de eliminar el evento "${title}"?`)) {
+    if (window.confirm(`¿Estás seguro de eliminar el taller o evento "${title}"? Esta acción no se puede deshacer.`)) {
       OntologicalStore.deleteCronogramaEvent(id);
       onRefreshEvents();
+      if (editingEventId === id) {
+        setActiveSubTab('events');
+        setEditingEventId(null);
+      }
     }
   };
 
-  // Toggle Featured Event
-  const handleToggleFeatured = (id: string) => {
-    const target = cronogramaEvents.find((e) => e.id === id);
-    if (!target) return;
-    const events = OntologicalStore.getCronogramaEvents();
-    const updated = events.map((e) => ({
-      ...e,
-      featured: e.id === id ? true : false,
-    }));
-    OntologicalStore.saveCronogramaEvents(updated);
+  // Duplicate Event
+  const handleDuplicateEvent = (evt: CronogramaEvent) => {
+    const duplicated: Omit<CronogramaEvent, 'id'> = {
+      ...evt,
+      title: `${evt.title} (Copia)`,
+      showOnHome: false,
+      featured: false,
+      workbookSubmissions: [],
+      date: new Date(Date.now() + 1000 * 60 * 60 * 24 * 14).toISOString(),
+      displayDate: 'Próxima Fecha a Definir',
+    };
+    OntologicalStore.addCronogramaEvent(duplicated);
     onRefreshEvents();
   };
 
-  // Manual Registration
+  // Manual participant registration submit
   const handleSaveManualRegistration = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!regName.trim() || !regPhone.trim()) return;
+    if (!regName.trim() || !regEmail.trim() || !regEventId) return;
 
-    OntologicalStore.addManualEventRegistration({
-      eventId: regEventId || cronogramaEvents[0]?.id || 'event-1',
+    const result = OntologicalStore.registerForEvent({
       name: regName.trim(),
       email: regEmail.trim(),
-      phone: regPhone.trim(),
-      attended: regAttended,
+      phone: regPhone.trim() || '+57 300 000 0000',
+      eventId: regEventId,
     });
 
+    if (regAttended && result?.registration?.id) {
+      OntologicalStore.updateEventRegistration(result.registration.id, { attendedEvent: true });
+    }
+
+    onRefreshRegistrations?.();
+    onRefreshEvents();
+    setIsManualRegModalOpen(false);
     setRegName('');
     setRegEmail('');
     setRegPhone('');
-    setRegAttended(false);
-    setIsManualRegModalOpen(false);
-    onRefreshRegistrations();
-    onRefreshEvents();
   };
-
-  const handleConfirmAttendance = (ticketCodeOrId: string) => {
-    OntologicalStore.confirmEventAttendance(ticketCodeOrId);
-    onRefreshRegistrations();
-  };
-
-  const handleDeleteRegistration = (id: string, name: string) => {
-    if (window.confirm(`¿Deseas cancelar la inscripción de ${name} y liberar el cupo?`)) {
-      OntologicalStore.deleteEventRegistration(id);
-      onRefreshRegistrations();
-      onRefreshEvents();
-    }
-  };
-
-  const handleCopyRegistrationLink = () => {
-    const url = `${window.location.origin}/?view=registro`;
-    navigator.clipboard.writeText(url);
-    setCopiedLinkFeedback(true);
-    setTimeout(() => setCopiedLinkFeedback(false), 2500);
-  };
-
-  // Filtered registrations
-  const filteredRegistrations = safeRegistrations.filter((r) => {
-    if (!r) return false;
-    const matchesSearch =
-      (r.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (r.email || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (r.phone || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (r.ticketCode || '').toLowerCase().includes(searchQuery.toLowerCase());
-
-    const matchesEvent =
-      selectedEventFilter === 'all' || r.eventId === selectedEventFilter;
-
-    return matchesSearch && matchesEvent;
-  });
-
-  const featuredEvent = safeEvents.find((e) => e && e.featured) || safeEvents[0];
 
   return (
-    <div className="p-4 sm:p-8 lg:p-10 max-w-7xl mx-auto w-full flex-1 flex flex-col space-y-6">
-      {/* 1. Header with Primary Sub-Tabs */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between pb-5 border-b border-gray-100 dark:border-neutral-800 gap-4">
-        <div>
-          <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full bg-[#F5F5F7] dark:bg-neutral-800 border border-gray-200/80 dark:border-neutral-700 text-[10px] font-semibold text-gray-700 dark:text-neutral-300 uppercase tracking-wider mb-1.5">
-            <Calendar className="w-3 h-3 text-black dark:text-white" />
-            Gestión de Eventos & Conversatorios en Vivo
+    <div className="space-y-6">
+      {/* 1. HEADER EJECUTIVO & MÉTRICAS PRINCIPALES */}
+      <div className="bg-white dark:bg-neutral-900 rounded-3xl border border-gray-200 dark:border-neutral-800 p-5 sm:p-7 shadow-xs">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5">
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-mono font-bold uppercase tracking-widest px-2.5 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-400">
+                Módulo Oficial RBC
+              </span>
+              <span className="text-xs text-gray-400">•</span>
+              <span className="text-xs text-gray-500 dark:text-neutral-400">
+                Gestión de Talleres, Temarios y Cuadernos
+              </span>
+            </div>
+            <h1 className="text-xl sm:text-2xl font-black text-black dark:text-white mt-1">
+              Eventos y Sesiones
+            </h1>
+            <p className="text-xs sm:text-sm text-gray-500 dark:text-neutral-400 font-light max-w-2xl mt-0.5">
+              Administra los talleres ontológicos, define sus temarios pedagógicos, preguntas guía y compila automáticamente las evaluaciones en cuadernos descargables en formato PDF.
+            </p>
           </div>
-          <h2 className="text-xl sm:text-2xl font-light text-black dark:text-white tracking-tight">
-            Agenda en Vivo, <strong className="font-semibold">Meet & Participantes</strong>
-          </h2>
-          <p className="text-xs font-light text-gray-500 dark:text-neutral-400 mt-0.5 max-w-2xl">
-            Gestiona los conversatorios y talleres en vivo, sala Google Meet central, monitorea participantes y configura el banner activo.
-          </p>
+
+          {/* Botones de acción directos */}
+          <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+            {onOpenRegistrationPortal && (
+              <button
+                type="button"
+                onClick={onOpenRegistrationPortal}
+                className="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl border border-gray-200 dark:border-neutral-700 hover:bg-gray-50 dark:hover:bg-neutral-800 text-xs font-semibold text-black dark:text-white cursor-pointer transition-all"
+              >
+                <ExternalLink className="w-3.5 h-3.5" />
+                <span>Ver Portal Público</span>
+              </button>
+            )}
+
+            <button
+              type="button"
+              onClick={handleOpenCreateEvent}
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-black dark:bg-white text-white dark:text-black hover:bg-neutral-800 dark:hover:bg-neutral-200 text-xs font-bold shadow-md cursor-pointer transition-all"
+            >
+              <Plus className="w-4 h-4" />
+              <span>+ Nuevo Evento o Taller</span>
+            </button>
+          </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2 shrink-0">
-          {activeSubTab === 'events' && (
-            <button
-              type="button"
-              onClick={handleOpenNewEventModal}
-              className="px-3.5 py-1.5 rounded-xl bg-black dark:bg-white text-white dark:text-black hover:bg-neutral-800 dark:hover:bg-neutral-200 text-xs font-medium transition-all flex items-center gap-1.5 cursor-pointer shadow-xs"
-            >
-              <Plus className="w-3.5 h-3.5 stroke-[2]" />
-              <span>+ Nuevo Evento / Conversatorio</span>
-            </button>
-          )}
+        {/* BARRAS DE MÉTRICAS RÁPIDAS */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mt-6 pt-5 border-t border-gray-100 dark:border-neutral-800">
+          <div className="p-3.5 rounded-2xl bg-gray-50/70 dark:bg-neutral-800/40 border border-gray-100 dark:border-neutral-800/80">
+            <span className="text-[10px] font-semibold text-gray-500 uppercase tracking-wider block">
+              Total Talleres
+            </span>
+            <div className="flex items-baseline gap-2 mt-0.5">
+              <span className="text-lg font-black text-black dark:text-white">
+                {totalEventsCount}
+              </span>
+              <span className="text-[11px] text-gray-400 font-light">creados</span>
+            </div>
+          </div>
 
-          {activeSubTab === 'participants' && (
-            <button
-              type="button"
-              onClick={() => {
-                setRegEventId(cronogramaEvents[0]?.id || '');
-                setIsManualRegModalOpen(true);
-              }}
-              className="px-3.5 py-1.5 rounded-xl bg-black dark:bg-white text-white dark:text-black hover:bg-neutral-800 dark:hover:bg-neutral-200 text-xs font-medium transition-all flex items-center gap-1.5 cursor-pointer shadow-xs"
-            >
-              <UserPlus className="w-3.5 h-3.5 stroke-[2]" />
-              <span>+ Inscribir Participante</span>
-            </button>
-          )}
+          <div className="p-3.5 rounded-2xl bg-emerald-50/40 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-900/40">
+            <span className="text-[10px] font-semibold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider block">
+              Portada Principal
+            </span>
+            <div className="flex items-baseline gap-2 mt-0.5">
+              <span className="text-lg font-black text-emerald-700 dark:text-emerald-300">
+                {homeFeaturedCount}
+              </span>
+              <span className="text-[11px] text-emerald-600/70 dark:text-emerald-400 font-light">
+                en Home
+              </span>
+            </div>
+          </div>
+
+          <div className="p-3.5 rounded-2xl bg-gray-50/70 dark:bg-neutral-800/40 border border-gray-100 dark:border-neutral-800/80">
+            <span className="text-[10px] font-semibold text-gray-500 uppercase tracking-wider block">
+              Solo Internos
+            </span>
+            <div className="flex items-baseline gap-2 mt-0.5">
+              <span className="text-lg font-black text-neutral-700 dark:text-neutral-300">
+                {internalCount}
+              </span>
+              <span className="text-[11px] text-gray-400 font-light">privados</span>
+            </div>
+          </div>
+
+          <div className="p-3.5 rounded-2xl bg-indigo-50/40 dark:bg-indigo-950/20 border border-indigo-100 dark:border-indigo-900/40">
+            <span className="text-[10px] font-semibold text-indigo-700 dark:text-indigo-400 uppercase tracking-wider block">
+              Cuadernos PDF
+            </span>
+            <div className="flex items-baseline gap-2 mt-0.5">
+              <span className="text-lg font-black text-indigo-700 dark:text-indigo-300">
+                {totalSubmissionsCount}
+              </span>
+              <span className="text-[11px] text-indigo-600/70 dark:text-indigo-400 font-light">
+                generados
+              </span>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* 2. Sub-Tab Switcher Bar */}
-      <div className="flex items-center justify-between gap-3 p-1.5 glass-panel-opal rounded-2xl overflow-x-auto">
-        <div className="flex items-center gap-1.5 min-w-max">
+      {/* 2. BARRA DE NAVEGACIÓN ENTRE SUB-PESTAÑAS */}
+      <div className="flex items-center justify-between gap-3 overflow-x-auto pb-1 scrollbar-none">
+        <div className="flex items-center gap-1.5 p-1 bg-gray-100 dark:bg-neutral-900 rounded-2xl border border-gray-200 dark:border-neutral-800 shrink-0">
+          {/* Pestaña Catálogo */}
           <button
             type="button"
             onClick={() => setActiveSubTab('events')}
-            className={`px-3.5 py-2 rounded-xl text-xs font-medium transition-all flex items-center gap-2 cursor-pointer ${
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
               activeSubTab === 'events'
-                ? 'bg-white dark:bg-[#202024] text-black dark:text-white font-bold shadow-2xs border border-gray-200/80 dark:border-neutral-700'
-                : 'text-gray-500 dark:text-neutral-400 hover:text-black dark:hover:text-white'
+                ? 'bg-white dark:bg-neutral-800 text-black dark:text-white shadow-xs'
+                : 'text-gray-600 dark:text-neutral-400 hover:text-black dark:hover:text-white'
             }`}
           >
-            <Calendar className="w-3.5 h-3.5" />
-            <span>Eventos & Conversatorios ({cronogramaEvents.length})</span>
+            <Calendar className="w-3.5 h-3.5 text-indigo-500" />
+            <span>Eventos y Talleres</span>
+            <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-gray-200 dark:bg-neutral-700 font-mono">
+              {safeEvents.length}
+            </span>
           </button>
 
+          {/* Pestaña Editor */}
+          <button
+            type="button"
+            onClick={() => {
+              if (!editingEventId && safeEvents.length > 0) {
+                handleOpenEditEvent(safeEvents[0]);
+              } else {
+                setActiveSubTab('editor');
+              }
+            }}
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+              activeSubTab === 'editor'
+                ? 'bg-white dark:bg-neutral-800 text-black dark:text-white shadow-xs'
+                : 'text-gray-600 dark:text-neutral-400 hover:text-black dark:hover:text-white'
+            }`}
+          >
+            <Edit3 className="w-3.5 h-3.5 text-amber-500" />
+            <span>Editor del Taller</span>
+            {editingEventId && (
+              <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400">
+                Editando
+              </span>
+            )}
+          </button>
+
+          {/* Pestaña Cuadernos Descargables */}
+          <button
+            type="button"
+            onClick={() => setActiveSubTab('workbooks')}
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+              activeSubTab === 'workbooks'
+                ? 'bg-white dark:bg-neutral-800 text-black dark:text-white shadow-xs'
+                : 'text-gray-600 dark:text-neutral-400 hover:text-black dark:hover:text-white'
+            }`}
+          >
+            <Award className="w-3.5 h-3.5 text-emerald-500" />
+            <span>Cuadernos y Memorias</span>
+            <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 font-mono">
+              PDF
+            </span>
+          </button>
+
+          {/* Pestaña Asistentes */}
           <button
             type="button"
             onClick={() => setActiveSubTab('participants')}
-            className={`px-3.5 py-2 rounded-xl text-xs font-medium transition-all flex items-center gap-2 cursor-pointer ${
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
               activeSubTab === 'participants'
-                ? 'bg-white dark:bg-[#202024] text-black dark:text-white font-bold shadow-2xs border border-gray-200/80 dark:border-neutral-700'
-                : 'text-gray-500 dark:text-neutral-400 hover:text-black dark:hover:text-white'
+                ? 'bg-white dark:bg-neutral-800 text-black dark:text-white shadow-xs'
+                : 'text-gray-600 dark:text-neutral-400 hover:text-black dark:hover:text-white'
             }`}
           >
-            <Users className="w-3.5 h-3.5" />
-            <span>Participantes & Cupos ({eventRegistrations.length})</span>
+            <Users className="w-3.5 h-3.5 text-blue-500" />
+            <span>Asistentes & Sala Meet</span>
+            <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-gray-200 dark:bg-neutral-700 font-mono">
+              {safeRegistrations.length}
+            </span>
           </button>
+        </div>
 
+        {/* Botón rápido para abrir editor nuevo */}
+        {activeSubTab !== 'editor' && (
           <button
             type="button"
-            onClick={() => setActiveSubTab('banner')}
-            className={`px-3.5 py-2 rounded-xl text-xs font-medium transition-all flex items-center gap-2 cursor-pointer ${
-              activeSubTab === 'banner'
-                ? 'bg-white dark:bg-[#202024] text-black dark:text-white font-bold shadow-2xs border border-gray-200/80 dark:border-neutral-700'
-                : 'text-gray-500 dark:text-neutral-400 hover:text-black dark:hover:text-white'
-            }`}
+            onClick={handleOpenCreateEvent}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-50 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 text-xs font-semibold cursor-pointer shrink-0"
           >
-            <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-            <span>Banner Activo en Inicio</span>
+            <Plus className="w-3.5 h-3.5" />
+            <span>Crear Taller</span>
           </button>
-        </div>
-
-        <div className="hidden sm:flex items-center gap-2 text-xs text-gray-500 dark:text-neutral-400 font-light pr-2">
-          <span>Capacidad total activa:</span>
-          <strong className="font-bold text-black dark:text-white">
-            {cronogramaEvents.reduce((acc, curr) => acc + curr.totalSpots, 0)} cupos
-          </strong>
-        </div>
+        )}
       </div>
 
-      {/* ================= SUB-TAB 1: EVENTOS & CONVERSATORIOS ================= */}
+      {/* ========================================================================= */}
+      {/* VISTA 1: CATÁLOGO DE EVENTOS Y TALLERES                                    */}
+      {/* ========================================================================= */}
       {activeSubTab === 'events' && (
         <div className="space-y-4">
-          {/* Master Google Meet Card */}
-          <div className="p-5 rounded-2xl bg-linear-to-r from-neutral-900 via-indigo-950 to-neutral-900 text-white shadow-lg relative overflow-hidden border border-indigo-900/50">
-            <div className="absolute right-0 top-0 w-72 h-72 bg-indigo-500/10 rounded-full blur-2xl pointer-events-none" />
-            <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
-              <div className="space-y-1.5">
-                <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full bg-indigo-500/20 border border-indigo-400/30 text-indigo-300 text-[11px] font-semibold">
-                  <Radio className="w-3 h-3 animate-pulse text-indigo-400" />
-                  <span>Sala Virtual Central Google Meet</span>
-                </div>
-                <h3 className="text-base sm:text-lg font-bold tracking-tight text-white flex items-center gap-2">
-                  <span>Enlace Maestro para Talleres y Conversatorios en Vivo</span>
-                </h3>
-                <p className="text-xs text-neutral-300 font-light max-w-xl">
-                  Enlace único sincronizado para los conversatorios quincenales, masterclasses y sesiones ontológicas grupales.
+          {/* Barra de Búsqueda y Filtros */}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-white dark:bg-neutral-900 p-3.5 rounded-2xl border border-gray-200 dark:border-neutral-800">
+            <div className="relative flex-1">
+              <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Buscar por título, facilitador, tipo..."
+                className="w-full pl-9 pr-3 py-2 text-xs rounded-xl border border-gray-200 dark:border-neutral-700 bg-gray-50/60 dark:bg-neutral-800/60 text-black dark:text-white focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
+              />
+            </div>
+
+            <div className="flex items-center gap-2 shrink-0">
+              {/* Filtro Visibilidad */}
+              <select
+                value={filterVisibility}
+                onChange={(e) => setFilterVisibility(e.target.value as any)}
+                className="px-3 py-2 text-xs rounded-xl border border-gray-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-black dark:text-white cursor-pointer"
+              >
+                <option value="all">Todas las visibilidades</option>
+                <option value="home">Destacados en Home</option>
+                <option value="internal">Solo Internos / Privados</option>
+              </select>
+
+              <button
+                type="button"
+                onClick={handleOpenCreateEvent}
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold cursor-pointer shadow-xs"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>Nuevo</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Grilla de Tarjetas de Talleres y Eventos */}
+          {filteredEvents.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              {filteredEvents.map((evt) => {
+                const isHome = evt.showOnHome ?? true;
+                const capacity = evt.capacity || evt.totalSpots || 25;
+                const capacityType = evt.capacityType || (capacity === 1 ? 'individual' : 'grupal');
+                const priceFormatted = evt.price || (evt.priceAmount ? `$${evt.priceAmount.toLocaleString()} COP` : 'Acceso Libre');
+                const cover = evt.coverImage || evt.imageUrl || 'https://images.unsplash.com/photo-1518531933037-91b2f5f229cc?w=1000&auto=format&fit=crop&q=80';
+                const submissionsCount = evt.workbookSubmissions?.length || 0;
+
+                return (
+                  <div
+                    key={evt.id}
+                    className="bg-white dark:bg-neutral-900 rounded-3xl border border-gray-200 dark:border-neutral-800 overflow-hidden shadow-xs hover:border-gray-300 dark:hover:border-neutral-700 transition-all flex flex-col justify-between group"
+                  >
+                    <div>
+                      {/* Portada con Insignias de Portada e Identidad */}
+                      <div className="relative aspect-video sm:aspect-21/9 overflow-hidden bg-neutral-950">
+                        <img
+                          src={cover}
+                          alt={evt.title}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-all duration-500 opacity-90"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent p-4 flex flex-col justify-between text-white">
+                          <div className="flex items-center justify-between gap-2">
+                            {/* Tipo de Módulo / Evento */}
+                            <span className="text-[10px] font-mono font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-md border border-white/20">
+                              {evt.eventType || evt.category || 'Taller'}
+                            </span>
+
+                            {/* Tag: Portada Principal vs Solo Interno */}
+                            {isHome ? (
+                              <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2.5 py-1 rounded-full bg-emerald-500/90 text-white backdrop-blur-md shadow-xs">
+                                <Eye className="w-3 h-3" />
+                                <span>Visible en Home</span>
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2.5 py-1 rounded-full bg-neutral-800/90 text-neutral-300 backdrop-blur-md border border-white/10">
+                                <EyeOff className="w-3 h-3" />
+                                <span>Solo Interno</span>
+                              </span>
+                            )}
+                          </div>
+
+                          <div>
+                            <span className="text-[11px] font-mono text-emerald-300 block font-medium">
+                              {evt.displayDate || (evt.date ? evt.date.split('T')[0] : 'Fecha por definir')} • {evt.time}
+                            </span>
+                            <h3 className="text-base font-bold text-white line-clamp-1 mt-0.5">
+                              {evt.title}
+                            </h3>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Cuerpo de la Tarjeta */}
+                      <div className="p-5 space-y-4">
+                        {evt.subtitle && (
+                          <p className="text-xs text-gray-600 dark:text-neutral-400 font-light line-clamp-2">
+                            {evt.subtitle}
+                          </p>
+                        )}
+
+                        {/* Datos Clave: Capacidad, Precio, Temario */}
+                        <div className="grid grid-cols-3 gap-2 p-3 rounded-2xl bg-gray-50 dark:bg-neutral-800/40 border border-gray-100 dark:border-neutral-800 text-center">
+                          <div>
+                            <span className="text-[10px] text-gray-400 uppercase font-semibold block">
+                              Capacidad
+                            </span>
+                            <span className="text-xs font-bold text-black dark:text-white capitalize">
+                              {capacityType === 'individual' ? '1 a 1' : `${capacity} cupos`}
+                            </span>
+                          </div>
+
+                          <div>
+                            <span className="text-[10px] text-gray-400 uppercase font-semibold block">
+                              Inversión
+                            </span>
+                            <span className="text-xs font-bold text-indigo-600 dark:text-indigo-400 truncate block">
+                              {priceFormatted}
+                            </span>
+                          </div>
+
+                          <div>
+                            <span className="text-[10px] text-gray-400 uppercase font-semibold block">
+                              Temario
+                            </span>
+                            <span className="text-xs font-bold text-black dark:text-white">
+                              {evt.syllabus?.length || 0} bloques
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Enlace de sala Google Meet si existe */}
+                        {evt.meetUrl && (
+                          <div className="flex items-center justify-between text-xs p-2.5 rounded-xl bg-indigo-50/50 dark:bg-indigo-950/30 border border-indigo-100 dark:border-indigo-900/40">
+                            <div className="flex items-center gap-2 truncate">
+                              <Video className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400 shrink-0" />
+                              <span className="text-[11px] font-mono text-indigo-800 dark:text-indigo-300 truncate">
+                                {evt.meetUrl}
+                              </span>
+                            </div>
+                            <a
+                              href={evt.meetUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="text-[11px] font-bold text-indigo-600 dark:text-indigo-400 hover:underline shrink-0 ml-2"
+                            >
+                              Abrir
+                            </a>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Barra de Acciones Inferior */}
+                    <div className="p-4 bg-gray-50/70 dark:bg-neutral-800/30 border-t border-gray-100 dark:border-neutral-800 flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-1">
+                        <button
+                          type="button"
+                          onClick={() => downloadWorkshopNotebookPdf(evt)}
+                          title="Descargar Cuaderno Base de la Sesión en PDF"
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold cursor-pointer transition-all shadow-xs"
+                        >
+                          <Download className="w-3.5 h-3.5" />
+                          <span>Cuaderno PDF</span>
+                        </button>
+
+                        {submissionsCount > 0 && (
+                          <span className="text-[10px] font-bold px-2 py-1 rounded-lg bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400">
+                            {submissionsCount} {submissionsCount === 1 ? 'respuesta' : 'respuestas'}
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => handleDuplicateEvent(evt)}
+                          title="Duplicar taller"
+                          className="p-1.5 rounded-lg text-gray-400 hover:text-black dark:hover:text-white hover:bg-gray-100 dark:hover:bg-neutral-800 cursor-pointer"
+                        >
+                          <Copy className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleOpenEditEvent(evt)}
+                          title="Editar configuración completa"
+                          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-black dark:bg-white text-white dark:text-black text-xs font-semibold hover:bg-neutral-800 dark:hover:bg-neutral-200 cursor-pointer"
+                        >
+                          <Edit3 className="w-3.5 h-3.5" />
+                          <span>Editar</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteEvent(evt.id, evt.title)}
+                          title="Eliminar taller"
+                          className="p-1.5 rounded-lg text-gray-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30 cursor-pointer"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="p-12 text-center bg-white dark:bg-neutral-900 rounded-3xl border border-gray-200 dark:border-neutral-800 space-y-3">
+              <Calendar className="w-10 h-10 text-gray-400 mx-auto" />
+              <div className="space-y-1">
+                <h4 className="text-sm font-bold text-black dark:text-white">
+                  No se encontraron talleres o eventos
+                </h4>
+                <p className="text-xs text-gray-400 font-light max-w-sm mx-auto">
+                  Ajusta los filtros de búsqueda o haz clic en "Nuevo Evento o Taller" para configurar el primer espacio formativo.
                 </p>
-                <div className="pt-1 flex items-center gap-2 text-xs font-mono text-indigo-200">
-                  <LinkIcon className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
-                  {isEditingMasterMeet ? (
-                    <form onSubmit={handleSaveMasterMeet} className="flex items-center gap-2">
-                      <input
-                        type="url"
-                        value={tempMasterMeet}
-                        onChange={(e) => setTempMasterMeet(e.target.value)}
-                        className="px-2.5 py-1 text-xs bg-white/20 rounded-lg text-white border border-white/30 focus:outline-none w-72"
-                      />
-                      <button
-                        type="submit"
-                        className="px-2 py-1 bg-white text-black text-[11px] font-bold rounded-lg hover:bg-gray-100"
-                      >
-                        Guardar
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setIsEditingMasterMeet(false)}
-                        className="px-2 py-1 bg-white/10 text-white text-[11px] rounded-lg hover:bg-white/20"
-                      >
-                        Cancelar
-                      </button>
-                    </form>
-                  ) : (
-                    <span className="truncate max-w-sm bg-white/10 px-2.5 py-1 rounded-lg border border-white/10">
-                      {masterMeetUrl}
-                    </span>
-                  )}
+              </div>
+              <button
+                type="button"
+                onClick={handleOpenCreateEvent}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold cursor-pointer"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Crear Taller Ahora</span>
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* VISTA 2: EDITOR COMPLETO (LAS 3 SECCIONES REQUERIDAS)                      */}
+      {/* ========================================================================= */}
+      {activeSubTab === 'editor' && (
+        <div className="space-y-6">
+          {/* Cabecera del Editor & Stepper de las 3 Secciones */}
+          <div className="bg-white dark:bg-neutral-900 rounded-3xl border border-gray-200 dark:border-neutral-800 p-5 shadow-xs space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-gray-100 dark:border-neutral-800 pb-4">
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-mono font-bold uppercase tracking-widest px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400">
+                    {editingEventId ? 'Modo Edición' : 'Nuevo Taller'}
+                  </span>
+                  <span className="text-xs text-gray-400">•</span>
+                  <span className="text-xs font-semibold text-gray-600 dark:text-neutral-400">
+                    {eventFormData.title || 'Configura el taller'}
+                  </span>
                 </div>
+                <h3 className="text-lg font-bold text-black dark:text-white mt-1">
+                  Estructura del Módulo de Eventos y Sesiones
+                </h3>
               </div>
 
-              <div className="flex items-center gap-2 shrink-0">
-                <a
-                  href={masterMeetUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white text-black hover:bg-neutral-100 text-xs font-bold transition-all shadow-xs"
-                >
-                  <Video className="w-3.5 h-3.5 text-indigo-600" />
-                  <span>Abrir Sala Meet</span>
-                  <ExternalLink className="w-3 h-3 text-neutral-400" />
-                </a>
-
+              <div className="flex items-center gap-2">
                 <button
                   type="button"
-                  onClick={handleCopyMasterMeet}
-                  className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 text-white text-xs font-medium transition-all cursor-pointer"
+                  onClick={() => setActiveSubTab('events')}
+                  className="px-3.5 py-2 rounded-xl border border-gray-200 dark:border-neutral-700 text-xs text-gray-600 dark:text-neutral-300 hover:bg-gray-50 dark:hover:bg-neutral-800 font-medium cursor-pointer"
                 >
-                  {copiedMeetFeedback ? (
-                    <>
-                      <Check className="w-3.5 h-3.5 text-emerald-400" />
-                      <span>¡Copiado!</span>
-                    </>
-                  ) : (
-                    <>
-                      <Copy className="w-3.5 h-3.5" />
-                      <span>Copiar</span>
-                    </>
-                  )}
+                  Volver al Catálogo
                 </button>
+                <button
+                  type="button"
+                  onClick={handleSaveEditorEvent}
+                  className="inline-flex items-center gap-2 px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-md cursor-pointer transition-all"
+                >
+                  <Check className="w-4 h-4" />
+                  <span>Guardar Evento</span>
+                </button>
+              </div>
+            </div>
 
-                {!isEditingMasterMeet && (
+            {/* Stepper de navegación entre las 3 Secciones */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+              <button
+                type="button"
+                onClick={() => setEditorActiveSection('general')}
+                className={`p-3 rounded-2xl border text-left transition-all cursor-pointer ${
+                  editorActiveSection === 'general'
+                    ? 'border-indigo-600 bg-indigo-50/60 dark:bg-indigo-950/30 text-indigo-900 dark:text-indigo-200 shadow-xs'
+                    : 'border-gray-200 dark:border-neutral-800 hover:bg-gray-50 dark:hover:bg-neutral-800 text-gray-600 dark:text-neutral-400'
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <span className="w-5 h-5 rounded-full bg-indigo-600 text-white flex items-center justify-center text-[10px] font-bold">
+                    1
+                  </span>
+                  <span className="text-xs font-bold">1. Configuración General</span>
+                </div>
+                <p className="text-[11px] text-gray-500 dark:text-neutral-400 font-light mt-1 truncate">
+                  Nombre, Portada & Toggle Home, Capacidad, Precio
+                </p>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setEditorActiveSection('content')}
+                className={`p-3 rounded-2xl border text-left transition-all cursor-pointer ${
+                  editorActiveSection === 'content'
+                    ? 'border-indigo-600 bg-indigo-50/60 dark:bg-indigo-950/30 text-indigo-900 dark:text-indigo-200 shadow-xs'
+                    : 'border-gray-200 dark:border-neutral-800 hover:bg-gray-50 dark:hover:bg-neutral-800 text-gray-600 dark:text-neutral-400'
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <span className="w-5 h-5 rounded-full bg-indigo-600 text-white flex items-center justify-center text-[10px] font-bold">
+                    2
+                  </span>
+                  <span className="text-xs font-bold">2. Contenido y Temario</span>
+                </div>
+                <p className="text-[11px] text-gray-500 dark:text-neutral-400 font-light mt-1 truncate">
+                  Temario, Preguntas Guía y Suministros Adjuntos
+                </p>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setEditorActiveSection('evaluation')}
+                className={`p-3 rounded-2xl border text-left transition-all cursor-pointer ${
+                  editorActiveSection === 'evaluation'
+                    ? 'border-indigo-600 bg-indigo-50/60 dark:bg-indigo-950/30 text-indigo-900 dark:text-indigo-200 shadow-xs'
+                    : 'border-gray-200 dark:border-neutral-800 hover:bg-gray-50 dark:hover:bg-neutral-800 text-gray-600 dark:text-neutral-400'
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <span className="w-5 h-5 rounded-full bg-indigo-600 text-white flex items-center justify-center text-[10px] font-bold">
+                    3
+                  </span>
+                  <span className="text-xs font-bold">3. Evaluación y Cuaderno</span>
+                </div>
+                <p className="text-[11px] text-gray-500 dark:text-neutral-400 font-light mt-1 truncate">
+                  Cuestionario Posterior & Descarga de PDF
+                </p>
+              </button>
+            </div>
+          </div>
+
+          {/* CONTENEDOR ACTIVO DE LA SECCIÓN SELECCIONADA */}
+          <div className="bg-white dark:bg-neutral-900 rounded-3xl border border-gray-200 dark:border-neutral-800 p-5 sm:p-7 shadow-xs">
+            {editorActiveSection === 'general' && (
+              <EventGeneralConfigSection
+                event={eventFormData}
+                onChange={(updates) => setEventFormData((prev) => ({ ...prev, ...updates }))}
+              />
+            )}
+
+            {editorActiveSection === 'content' && (
+              <EventContentSyllabusSection
+                event={eventFormData}
+                onChange={(updates) => setEventFormData((prev) => ({ ...prev, ...updates }))}
+              />
+            )}
+
+            {editorActiveSection === 'evaluation' && (
+              <EventEvaluationWorkbookSection
+                event={eventFormData}
+                onChange={(updates) => setEventFormData((prev) => ({ ...prev, ...updates }))}
+                onRefreshEvents={onRefreshEvents}
+              />
+            )}
+
+            {/* Navegación al pie del editor */}
+            <div className="flex items-center justify-between pt-6 mt-8 border-t border-gray-100 dark:border-neutral-800">
+              <button
+                type="button"
+                onClick={() => {
+                  if (editorActiveSection === 'content') setEditorActiveSection('general');
+                  else if (editorActiveSection === 'evaluation') setEditorActiveSection('content');
+                  else setActiveSubTab('events');
+                }}
+                className="px-4 py-2 rounded-xl border border-gray-200 dark:border-neutral-700 text-xs font-semibold text-gray-700 dark:text-neutral-300 hover:bg-gray-50 dark:hover:bg-neutral-800 cursor-pointer"
+              >
+                {editorActiveSection === 'general' ? 'Cancelar y Salir' : '← Sección Anterior'}
+              </button>
+
+              <div className="flex items-center gap-2">
+                {editorActiveSection !== 'evaluation' ? (
                   <button
                     type="button"
                     onClick={() => {
-                      setTempMasterMeet(masterMeetUrl);
-                      setIsEditingMasterMeet(true);
+                      if (editorActiveSection === 'general') setEditorActiveSection('content');
+                      else if (editorActiveSection === 'content') setEditorActiveSection('evaluation');
                     }}
-                    title="Editar enlace Google Meet maestro"
-                    className="p-2 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 text-white text-xs cursor-pointer"
+                    className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-black dark:bg-white text-white dark:text-black hover:bg-neutral-800 dark:hover:bg-neutral-200 text-xs font-bold shadow-md cursor-pointer transition-all"
                   >
-                    <Edit3 className="w-3.5 h-3.5" />
+                    <span>Siguiente Sección</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={handleSaveEditorEvent}
+                    className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-md cursor-pointer transition-all"
+                  >
+                    <Check className="w-4 h-4" />
+                    <span>Finalizar y Guardar Taller</span>
                   </button>
                 )}
               </div>
             </div>
           </div>
+        </div>
+      )}
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {cronogramaEvents.map((event) => {
-              const enrolledCount = Math.max(0, event.totalSpots - event.spotsLeft);
-              const percentage = Math.min(100, Math.round((enrolledCount / event.totalSpots) * 100));
+      {/* ========================================================================= */}
+      {/* VISTA 3: CENTRO DE CUADERNOS Y MEMORIAS DESCARGABLES (PDF)                 */}
+      {/* ========================================================================= */}
+      {activeSubTab === 'workbooks' && (
+        <div className="space-y-6">
+          <div className="bg-white dark:bg-neutral-900 rounded-3xl border border-gray-200 dark:border-neutral-800 p-6 shadow-xs space-y-3">
+            <div className="flex items-center gap-2">
+              <Award className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+              <h3 className="text-base font-bold text-black dark:text-white">
+                Centro de Descarga de Cuadernos y Memorias Ontológicas
+              </h3>
+            </div>
+            <p className="text-xs text-gray-500 dark:text-neutral-400 font-light max-w-2xl leading-relaxed">
+              Descarga en cualquier momento las plantillas oficiales en blanco para imprimir o los cuadernos personalizados compilados con las respuestas de cada participante.
+            </p>
+          </div>
 
+          <div className="space-y-4">
+            {safeEvents.map((evt) => {
+              const subs = evt.workbookSubmissions || [];
               return (
                 <div
-                  key={event.id}
-                  className={`card-solid-white rounded-2xl p-5 border transition-all duration-200 space-y-4 shadow-2xs ${
-                    event.featured
-                      ? 'border-black dark:border-white ring-1 ring-black/5 dark:ring-white/10'
-                      : 'border-gray-200/80 dark:border-neutral-800'
-                  }`}
+                  key={evt.id}
+                  className="bg-white dark:bg-neutral-900 rounded-3xl border border-gray-200 dark:border-neutral-800 p-5 shadow-xs space-y-4"
                 >
-                  {/* Top Bar: Category & Badges */}
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="text-[10px] uppercase font-bold tracking-wider px-2.5 py-0.5 rounded-full bg-gray-100 dark:bg-neutral-800 text-gray-700 dark:text-neutral-300">
-                        {event.category}
-                      </span>
-                      {event.featured && (
-                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-400/20 text-amber-600 dark:text-amber-300 border border-amber-300/40 flex items-center gap-1">
-                          <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
-                          Fijado en Inicio
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-gray-100 dark:border-neutral-800 pb-4">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-mono uppercase px-2 py-0.5 rounded-md bg-neutral-100 dark:bg-neutral-800 font-bold text-neutral-600 dark:text-neutral-300">
+                          {evt.eventType || 'Taller'}
                         </span>
-                      )}
-                      <span
-                        className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
-                          event.status === 'upcoming'
-                            ? 'bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300'
-                            : event.status === 'live'
-                            ? 'bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 animate-pulse'
-                            : 'bg-gray-100 text-gray-500'
-                        }`}
-                      >
-                        {event.status === 'upcoming'
-                          ? 'Próximo'
-                          : event.status === 'live'
-                          ? 'En Vivo'
-                          : 'Finalizado'}
-                      </span>
-                    </div>
-
-                    <div className="flex items-center gap-1">
-                      <button
-                        type="button"
-                        onClick={() => handleToggleFeatured(event.id)}
-                        title={event.featured ? 'Evento fijado en banner principal' : 'Fijar en banner de inicio'}
-                        className={`p-1.5 rounded-lg border transition-all cursor-pointer ${
-                          event.featured
-                            ? 'bg-amber-400/10 border-amber-400/40 text-amber-500'
-                            : 'border-gray-200 dark:border-neutral-700 text-gray-400 hover:text-black dark:hover:text-white'
-                        }`}
-                      >
-                        <Star className={`w-3.5 h-3.5 ${event.featured ? 'fill-amber-400' : ''}`} />
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => handleOpenEditEventModal(event)}
-                        title="Editar programa o evento"
-                        className="p-1.5 rounded-lg border border-gray-200 dark:border-neutral-700 text-gray-600 dark:text-neutral-300 hover:bg-gray-50 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
-                      >
-                        <Edit3 className="w-3.5 h-3.5" />
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => handleDeleteEvent(event.id, event.title)}
-                        title="Eliminar evento"
-                        className="p-1.5 rounded-lg border border-gray-200 dark:border-neutral-700 text-gray-400 hover:text-red-500 hover:border-red-200 dark:hover:border-red-900 transition-colors cursor-pointer"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Title & Subtitle */}
-                  <div>
-                    <h3 className="text-base font-bold text-black dark:text-white leading-snug">
-                      {event.title}
-                    </h3>
-                    {event.subtitle && (
-                      <p className="text-xs font-light text-gray-500 dark:text-neutral-400 mt-1">
-                        {event.subtitle}
-                      </p>
-                    )}
-                  </div>
-
-                  {/* Date, Time, Mode */}
-                  <div className="grid grid-cols-2 gap-2 text-xs glass-panel-opal p-3 rounded-xl">
-                    <div className="flex items-center gap-2 text-gray-700 dark:text-neutral-300">
-                      <Calendar className="w-3.5 h-3.5 text-gray-400" />
-                      <span className="font-medium">{event.displayDate || event.date.split('T')[0]}</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-gray-700 dark:text-neutral-300">
-                      <Clock className="w-3.5 h-3.5 text-gray-400" />
-                      <span>{event.time}</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-gray-700 dark:text-neutral-300 col-span-2">
-                      <Video className="w-3.5 h-3.5 text-gray-400" />
-                      <span className="truncate">{event.mode}</span>
-                    </div>
-                  </div>
-
-                  {/* QUOTA CONTROL & PARTICIPANTS CAPACITY BAR */}
-                  <div className="space-y-2 pt-1 border-t border-gray-100 dark:border-neutral-800">
-                    <div className="flex items-center justify-between text-xs">
-                      <div className="flex items-center gap-1.5">
-                        <Users className="w-3.5 h-3.5 text-black dark:text-white" />
-                        <span className="font-semibold text-black dark:text-white">
-                          Ocupación & Cupos:
-                        </span>
-                        <span className="text-gray-500 dark:text-neutral-400">
-                          {enrolledCount} de {event.totalSpots} inscritos
+                        <span className="text-xs text-gray-400">
+                          {evt.displayDate || evt.date?.split('T')[0]}
                         </span>
                       </div>
-                      <span className="font-bold text-black dark:text-white">
-                        {event.spotsLeft} cupos libres
+                      <h4 className="text-sm font-bold text-black dark:text-white mt-1">
+                        {evt.title}
+                      </h4>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => downloadWorkshopNotebookPdf(evt)}
+                      className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-black dark:bg-white text-white dark:text-black hover:bg-neutral-800 dark:hover:bg-neutral-200 text-xs font-semibold cursor-pointer shadow-xs self-start sm:self-auto shrink-0"
+                    >
+                      <Download className="w-3.5 h-3.5" />
+                      <span>Descargar Plantilla Base (PDF)</span>
+                    </button>
+                  </div>
+
+                  {/* Lista de cuadernos personalizados generados */}
+                  {subs.length > 0 ? (
+                    <div className="space-y-2">
+                      <span className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider block">
+                        Cuadernos de Asistentes Disponibles ({subs.length}):
                       </span>
-                    </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        {subs.map((sub) => (
+                          <div
+                            key={sub.id}
+                            className="p-3.5 rounded-2xl border border-gray-200 dark:border-neutral-800 bg-gray-50/50 dark:bg-neutral-800/30 flex items-center justify-between gap-3"
+                          >
+                            <div className="min-w-0">
+                              <h5 className="text-xs font-bold text-black dark:text-white truncate">
+                                {sub.participantName}
+                              </h5>
+                              <span className="text-[10px] text-gray-400 block truncate">
+                                {sub.participantEmail}
+                              </span>
+                            </div>
 
-                    {/* Progress Bar */}
-                    <div className="w-full h-2 bg-gray-100 dark:bg-neutral-800 rounded-full overflow-hidden flex">
-                      <div
-                        className={`h-full transition-all duration-300 ${
-                          percentage >= 90
-                            ? 'bg-red-500'
-                            : percentage >= 60
-                            ? 'bg-amber-500'
-                            : 'bg-emerald-500'
-                        }`}
-                        style={{ width: `${percentage}%` }}
-                      />
-                    </div>
-
-                    {/* Fast Quota Buttons */}
-                    <div className="flex items-center justify-between pt-1 text-xs">
-                      <span className="text-[11px] text-gray-400">Ajuste rápido de disponibilidad:</span>
-                      <div className="flex items-center gap-1.5">
-                        <button
-                          type="button"
-                          onClick={() => handleAdjustEventSpots(event.id, -1)}
-                          disabled={event.spotsLeft <= 0}
-                          title="Reducir 1 cupo disponible"
-                          className="px-2 py-0.5 bg-gray-100 dark:bg-neutral-800 text-black dark:text-white rounded-md text-[10px] font-bold hover:bg-gray-200 dark:hover:bg-neutral-700 disabled:opacity-30 cursor-pointer"
-                        >
-                          -1 Cupo
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleAdjustEventSpots(event.id, 1)}
-                          disabled={event.spotsLeft >= event.totalSpots}
-                          title="Aumentar 1 cupo disponible"
-                          className="px-2 py-0.5 bg-gray-100 dark:bg-neutral-800 text-black dark:text-white rounded-md text-[10px] font-bold hover:bg-gray-200 dark:hover:bg-neutral-700 disabled:opacity-30 cursor-pointer"
-                        >
-                          +1 Cupo
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleOpenEditEventModal(event)}
-                          className="px-2.5 py-0.5 bg-black dark:bg-white text-white dark:text-black rounded-md text-[10px] font-bold hover:bg-neutral-800 dark:hover:bg-neutral-200 cursor-pointer"
-                        >
-                          Modificar Total
-                        </button>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                downloadWorkshopNotebookPdf(evt, {
+                                  participantSubmission: sub,
+                                  includeAnswers: true,
+                                })
+                              }
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-semibold cursor-pointer shadow-xs shrink-0"
+                            >
+                              <Download className="w-3 h-3" />
+                              <span>PDF Personal</span>
+                            </button>
+                          </div>
+                        ))}
                       </div>
                     </div>
-                  </div>
+                  ) : (
+                    <div className="p-4 rounded-xl border border-dashed border-gray-200 dark:border-neutral-800 text-center text-xs text-gray-400">
+                      Aún no hay respuestas de participantes compiladas para este taller.
+                    </div>
+                  )}
                 </div>
               );
             })}
@@ -649,533 +1069,265 @@ export const ProgramsAndEventsManager: React.FC<ProgramsAndEventsManagerProps> =
         </div>
       )}
 
-      {/* ================= SUB-TAB 3: PARTICIPANTES & CONTROL DE CUPOS ================= */}
+      {/* ========================================================================= */}
+      {/* VISTA 4: CONTROL DE ASISTENTES & SALA VIRTUAL GOOGLE MEET                 */}
+      {/* ========================================================================= */}
       {activeSubTab === 'participants' && (
-        <div className="space-y-4">
-          {/* Filter toolbar */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 glass-panel-opal rounded-2xl">
-            <div className="flex flex-1 items-center gap-2 max-w-md">
-              <div className="relative flex-1">
-                <Search className="w-3.5 h-3.5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                <input
-                  type="text"
-                  placeholder="Buscar por nombre, email, ticket..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-8.5 pr-3 py-1.5 text-xs bg-white dark:bg-[#1E1E22] border border-gray-200 dark:border-neutral-700 rounded-xl text-black dark:text-white placeholder-gray-400 focus:outline-none"
-                />
-              </div>
-
-              <select
-                value={selectedEventFilter}
-                onChange={(e) => setSelectedEventFilter(e.target.value)}
-                className="px-2.5 py-1.5 text-xs bg-white dark:bg-[#1E1E22] border border-gray-200 dark:border-neutral-700 rounded-xl text-black dark:text-white focus:outline-none cursor-pointer"
-              >
-                <option value="all">Todos los eventos</option>
-                {cronogramaEvents.map((evt) => (
-                  <option key={evt.id} value={evt.id}>
-                    {evt.title}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={handleCopyRegistrationLink}
-                className="px-3 py-1.5 rounded-xl border border-gray-200 dark:border-neutral-700 bg-white dark:bg-[#1E1E22] text-xs font-medium text-black dark:text-white flex items-center gap-1.5 cursor-pointer shadow-2xs"
-              >
-                {copiedLinkFeedback ? (
-                  <>
-                    <CheckCheck className="w-3.5 h-3.5 text-emerald-600" />
-                    <span>¡Enlace Copiado!</span>
-                  </>
-                ) : (
-                  <>
-                    <Copy className="w-3.5 h-3.5" />
-                    <span>Copiar Link de Registro</span>
-                  </>
-                )}
-              </button>
-            </div>
-          </div>
-
-          {/* Table */}
-          <div className="glass-panel-sheer rounded-2xl overflow-hidden shadow-2xs">
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse text-xs">
-                <thead>
-                  <tr className="border-b border-gray-200/80 dark:border-neutral-800 bg-[#F9F9F9] dark:bg-[#1A1A1E] text-gray-500 dark:text-neutral-400 text-[10px] uppercase tracking-wider font-semibold">
-                    <th className="py-3 px-4">Participante</th>
-                    <th className="py-3 px-4">Evento / Programa</th>
-                    <th className="py-3 px-4">Ticket RSVP</th>
-                    <th className="py-3 px-4">Fecha Registro</th>
-                    <th className="py-3 px-4">Asistencia</th>
-                    <th className="py-3 px-4 text-right">Acciones</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100 dark:divide-neutral-800">
-                  {filteredRegistrations.length === 0 ? (
-                    <tr>
-                      <td colSpan={6} className="py-8 text-center text-gray-400 text-xs font-light">
-                        No hay participantes registrados para los criterios seleccionados.
-                      </td>
-                    </tr>
-                  ) : (
-                    filteredRegistrations.map((reg) => (
-                      <tr
-                        key={reg.id}
-                        className="hover:bg-gray-50/70 dark:hover:bg-neutral-800/40 transition-colors"
-                      >
-                        <td className="py-3 px-4">
-                          <div className="font-bold text-black dark:text-white">{reg.name}</div>
-                          <div className="text-[11px] text-gray-400">{reg.email} &bull; {reg.phone}</div>
-                        </td>
-
-                        <td className="py-3 px-4 max-w-xs">
-                          <div className="text-black dark:text-white font-medium truncate">
-                            {reg.eventTitle}
-                          </div>
-                        </td>
-
-                        <td className="py-3 px-4 font-mono font-bold text-amber-600 dark:text-amber-400">
-                          {reg.ticketCode}
-                        </td>
-
-                        <td className="py-3 px-4 text-gray-500 dark:text-neutral-400">
-                          {new Date(reg.registeredAt).toLocaleDateString('es-ES', {
-                            day: 'numeric',
-                            month: 'short',
-                            year: 'numeric',
-                          })}
-                        </td>
-
-                        <td className="py-3 px-4">
-                          {reg.attendedEvent ? (
-                            <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 font-bold">
-                              <CheckCircle2 className="w-3 h-3" />
-                              Confirmado
-                            </span>
-                          ) : (
-                            <button
-                              type="button"
-                              onClick={() => handleConfirmAttendance(reg.ticketCode)}
-                              className="text-[10px] px-2 py-1 rounded-lg bg-amber-400 text-black font-semibold hover:bg-amber-300 cursor-pointer"
-                            >
-                              Confirmar en vivo
-                            </button>
-                          )}
-                        </td>
-
-                        <td className="py-3 px-4 text-right">
-                          <button
-                            type="button"
-                            onClick={() => handleDeleteRegistration(reg.id, reg.name)}
-                            title="Cancelar inscripción y liberar cupo"
-                            className="p-1 text-gray-400 hover:text-red-500 rounded-md transition-colors cursor-pointer"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ================= SUB-TAB 4: BANNER ACTIVO EN INICIO ================= */}
-      {activeSubTab === 'banner' && (
-        <div className="glass-panel-sheer rounded-3xl p-6 sm:p-8 shadow-sm space-y-6">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div>
-              <span className="text-[10px] uppercase font-bold px-2.5 py-0.5 rounded-full bg-amber-400/20 text-amber-700 dark:text-amber-300">
-                Banner Activo en Portada Principal
-              </span>
-              <h3 className="text-xl font-bold text-black dark:text-white mt-1">
-                {featuredEvent.title}
-              </h3>
-              <p className="text-xs font-light text-gray-500 dark:text-neutral-400 mt-0.5">
-                {featuredEvent.subtitle}
-              </p>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => handleOpenEditEventModal(featuredEvent)}
-                className="px-3.5 py-1.5 rounded-xl bg-black dark:bg-white text-white dark:text-black font-semibold text-xs flex items-center gap-1.5 cursor-pointer"
-              >
-                <Edit3 className="w-3.5 h-3.5" />
-                <span>Editar Información del Banner</span>
-              </button>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
-            <div className="lg:col-span-6 rounded-2xl overflow-hidden border border-gray-200 dark:border-neutral-800 shadow-md">
-              <img
-                src={featuredEvent.imageUrl}
-                alt={featuredEvent.title}
-                className="w-full h-64 object-cover"
-              />
-            </div>
-
-            <div className="lg:col-span-6 space-y-4 text-xs">
-              <div className="p-4 glass-panel-opal rounded-2xl space-y-2">
-                <span className="text-[10px] uppercase font-bold text-gray-400 block">
-                  Prompt Utilizado para Generación IA:
-                </span>
-                <p className="text-gray-700 dark:text-neutral-300 font-mono text-[11px] leading-relaxed">
-                  {featuredEvent.aiPromptUsed || 'Banner minimalista de consultoría ontológica ejecutiva con atmósfera zen y sobria.'}
-                </p>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div className="p-3 glass-panel-opal rounded-xl">
-                  <span className="text-[10px] text-gray-400 block">Fecha en Portada</span>
-                  <span className="font-bold text-black dark:text-white">{featuredEvent.displayDate}</span>
-                </div>
-                <div className="p-3 glass-panel-opal rounded-xl">
-                  <span className="text-[10px] text-gray-400 block">Cupos Disponibles</span>
-                  <span className="font-bold text-emerald-600 dark:text-emerald-400">{featuredEvent.spotsLeft} de {featuredEvent.totalSpots}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ================= MODAL: CREATE / EDIT EVENT ================= */}
-      {isEventModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs overflow-y-auto">
-          <div className="bg-white dark:bg-[#18181B] rounded-3xl max-w-xl w-full p-6 sm:p-7 border border-gray-100 dark:border-neutral-800 shadow-2xl space-y-4 my-8">
-            <div className="flex items-center justify-between pb-3 border-b border-gray-100 dark:border-neutral-800">
-              <h3 className="text-base font-bold text-black dark:text-white">
-                {editingEventId ? 'Editar Evento / Conversatorio' : 'Crear Nuevo Evento / Conversatorio'}
-              </h3>
-              <button
-                type="button"
-                onClick={() => setIsEventModalOpen(false)}
-                className="text-gray-400 hover:text-black dark:hover:text-white text-base"
-              >
-                ✕
-              </button>
-            </div>
-
-            <form onSubmit={handleSaveEvent} className="space-y-3.5 text-xs">
-              <div>
-                <label className="font-semibold text-black dark:text-white block mb-1">
-                  Título del Evento *
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="Ej: Conversatorio: Límites, Quiebres & Soberanía Personal"
-                  value={eventFormData.title}
-                  onChange={(e) => setEventFormData({ ...eventFormData, title: e.target.value })}
-                  className="w-full px-3 py-2 bg-gray-50 dark:bg-[#202024] border border-gray-200 dark:border-neutral-700 rounded-xl text-black dark:text-white focus:outline-none"
-                />
-              </div>
-
-              <div>
-                <label className="font-semibold text-black dark:text-white block mb-1">
-                  Subtítulo / Enfoque
-                </label>
-                <input
-                  type="text"
-                  placeholder="Ej: Sesión Ontológica y Diagnóstico en Vivo"
-                  value={eventFormData.subtitle}
-                  onChange={(e) => setEventFormData({ ...eventFormData, subtitle: e.target.value })}
-                  className="w-full px-3 py-2 bg-gray-50 dark:bg-[#202024] border border-gray-200 dark:border-neutral-700 rounded-xl text-black dark:text-white focus:outline-none"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
+        <div className="space-y-6">
+          {/* Sala Google Meet Centralizada */}
+          <div className="bg-white dark:bg-neutral-900 rounded-3xl border border-gray-200 dark:border-neutral-800 p-5 shadow-xs space-y-3">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <Video className="w-5 h-5 text-indigo-500" />
                 <div>
-                  <label className="font-semibold text-black dark:text-white block mb-1">
-                    Categoría
-                  </label>
-                  <select
-                    value={eventFormData.category}
-                    onChange={(e) =>
-                      setEventFormData({ ...eventFormData, category: e.target.value as EventCategory })
-                    }
-                    className="w-full px-3 py-2 bg-gray-50 dark:bg-[#202024] border border-gray-200 dark:border-neutral-700 rounded-xl text-black dark:text-white focus:outline-none"
-                  >
-                    <option value="Conversatorio Quincenal">Conversatorio Quincenal</option>
-                    <option value="Masterclass Ontológica">Masterclass Ontológica</option>
-                    <option value="Taller Vivencial">Taller Vivencial</option>
-                    <option value="Círculo de Liderazgo">Círculo de Liderazgo</option>
-                    <option value="Seminario Ejecutivo">Seminario Ejecutivo</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="font-semibold text-black dark:text-white block mb-1">
-                    Modalidad
-                  </label>
-                  <select
-                    value={eventFormData.mode}
-                    onChange={(e) =>
-                      setEventFormData({
-                        ...eventFormData,
-                        mode: e.target.value as 'Online (Google Meet)' | 'Presencial & Streaming' | 'Híbrido',
-                      })
-                    }
-                    className="w-full px-3 py-2 bg-gray-50 dark:bg-[#202024] border border-gray-200 dark:border-neutral-700 rounded-xl text-black dark:text-white focus:outline-none"
-                  >
-                    <option value="Online (Google Meet)">Online (Google Meet)</option>
-                    <option value="Presencial & Streaming">Presencial & Streaming</option>
-                    <option value="Híbrido">Híbrido</option>
-                  </select>
+                  <h3 className="text-sm font-bold text-black dark:text-white">
+                    Sala Virtual Centralizada (Google Meet)
+                  </h3>
+                  <p className="text-[11px] text-gray-400 font-light">
+                    Enlace permanente utilizado para las transmisiones oficiales de los talleres.
+                  </p>
                 </div>
               </div>
 
-              {/* CUPOS & CAPACIDAD */}
-              <div className="p-3.5 bg-blue-50/50 dark:bg-blue-950/20 rounded-2xl border border-blue-200/60 dark:border-blue-900/40 space-y-3">
-                <span className="text-[10px] uppercase font-bold text-blue-700 dark:text-blue-300 block">
-                  Control de Cupos y Capacidad
-                </span>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="font-semibold text-black dark:text-white block mb-1">
-                      Cupos Totales / Aforo *
-                    </label>
-                    <input
-                      type="number"
-                      required
-                      min={1}
-                      max={500}
-                      value={eventFormData.totalSpots}
-                      onChange={(e) => {
-                        const total = parseInt(e.target.value) || 1;
-                        setEventFormData({
-                          ...eventFormData,
-                          totalSpots: total,
-                          spotsLeft: Math.min(total, eventFormData.spotsLeft),
-                        });
-                      }}
-                      className="w-full px-3 py-2 bg-white dark:bg-[#202024] border border-gray-200 dark:border-neutral-700 rounded-xl text-black dark:text-white focus:outline-none font-bold"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="font-semibold text-black dark:text-white block mb-1">
-                      Cupos Disponibles Libres *
-                    </label>
-                    <input
-                      type="number"
-                      required
-                      min={0}
-                      max={eventFormData.totalSpots}
-                      value={eventFormData.spotsLeft}
-                      onChange={(e) =>
-                        setEventFormData({
-                          ...eventFormData,
-                          spotsLeft: parseInt(e.target.value) || 0,
-                        })
-                      }
-                      className="w-full px-3 py-2 bg-white dark:bg-[#202024] border border-gray-200 dark:border-neutral-700 rounded-xl text-black dark:text-white focus:outline-none font-bold text-emerald-600 dark:text-emerald-400"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="font-semibold text-black dark:text-white block mb-1">
-                    Fecha Visible en Banner
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="Ej: Jueves 17 de Septiembre"
-                    value={eventFormData.displayDate}
-                    onChange={(e) => setEventFormData({ ...eventFormData, displayDate: e.target.value })}
-                    className="w-full px-3 py-2 bg-gray-50 dark:bg-[#202024] border border-gray-200 dark:border-neutral-700 rounded-xl text-black dark:text-white focus:outline-none"
-                  />
-                </div>
-
-                <div>
-                  <label className="font-semibold text-black dark:text-white block mb-1">
-                    Horario
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="7:00 PM - 9:00 PM (GMT-5)"
-                    value={eventFormData.time}
-                    onChange={(e) => setEventFormData({ ...eventFormData, time: e.target.value })}
-                    className="w-full px-3 py-2 bg-gray-50 dark:bg-[#202024] border border-gray-200 dark:border-neutral-700 rounded-xl text-black dark:text-white focus:outline-none"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="font-semibold text-black dark:text-white block mb-1">
-                  Enlace de Google Meet / Acceso
-                </label>
-                <input
-                  type="url"
-                  placeholder="https://meet.google.com/rbc-..."
-                  value={eventFormData.meetUrl}
-                  onChange={(e) => setEventFormData({ ...eventFormData, meetUrl: e.target.value })}
-                  className="w-full px-3 py-2 bg-gray-50 dark:bg-[#202024] border border-gray-200 dark:border-neutral-700 rounded-xl text-black dark:text-white focus:outline-none font-mono text-[11px]"
-                />
-              </div>
-
-              <div>
-                <label className="font-semibold text-black dark:text-white block mb-1">
-                  Descripción del Evento
-                </label>
-                <textarea
-                  rows={2}
-                  placeholder="Objetivos y dinámica pedagógica de la sesión..."
-                  value={eventFormData.description}
-                  onChange={(e) => setEventFormData({ ...eventFormData, description: e.target.value })}
-                  className="w-full px-3 py-2 bg-gray-50 dark:bg-[#202024] border border-gray-200 dark:border-neutral-700 rounded-xl text-black dark:text-white focus:outline-none"
-                />
-              </div>
-
-              <div className="flex items-center gap-2 pt-1">
-                <input
-                  type="checkbox"
-                  id="featured-checkbox"
-                  checked={eventFormData.featured}
-                  onChange={(e) => setEventFormData({ ...eventFormData, featured: e.target.checked })}
-                  className="w-4 h-4 rounded text-black cursor-pointer"
-                />
-                <label htmlFor="featured-checkbox" className="font-medium text-black dark:text-white cursor-pointer">
-                  Fijar este evento como principal en el Banner de Inicio
-                </label>
-              </div>
-
-              <div className="pt-3 flex items-center justify-end gap-2 border-t border-gray-100 dark:border-neutral-800">
+              <div className="flex items-center gap-2">
                 <button
                   type="button"
-                  onClick={() => setIsEventModalOpen(false)}
-                  className="px-4 py-2 rounded-xl border border-gray-200 dark:border-neutral-700 text-black dark:text-white font-medium"
+                  onClick={handleCopyMasterMeet}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-gray-200 dark:border-neutral-700 text-xs font-semibold text-gray-700 dark:text-neutral-300 hover:bg-gray-50 dark:hover:bg-neutral-800 cursor-pointer"
                 >
-                  Cancelar
+                  {copiedMeetFeedback ? (
+                    <>
+                      <CheckCheck className="w-3.5 h-3.5 text-emerald-500" />
+                      <span>¡Copiado!</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-3.5 h-3.5" />
+                      <span>Copiar Enlace</span>
+                    </>
+                  )}
                 </button>
+
                 <button
-                  type="submit"
-                  className="px-5 py-2 rounded-xl bg-black dark:bg-white text-white dark:text-black font-semibold"
+                  type="button"
+                  onClick={() => setIsEditingMasterMeet(!isEditingMasterMeet)}
+                  className="px-3 py-1.5 rounded-xl bg-gray-100 dark:bg-neutral-800 text-xs font-semibold text-black dark:text-white hover:bg-gray-200 dark:hover:bg-neutral-700 cursor-pointer"
                 >
-                  {editingEventId ? 'Guardar Cambios' : 'Crear Evento'}
+                  {isEditingMasterMeet ? 'Cerrar' : 'Editar Sala'}
                 </button>
               </div>
-            </form>
+            </div>
+
+            {isEditingMasterMeet ? (
+              <form onSubmit={handleSaveMasterMeet} className="flex gap-2 pt-2">
+                <input
+                  type="url"
+                  required
+                  value={tempMasterMeet}
+                  onChange={(e) => setTempMasterMeet(e.target.value)}
+                  className="flex-1 px-3 py-2 text-xs rounded-xl border border-gray-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-black dark:text-white"
+                />
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl cursor-pointer"
+                >
+                  Guardar
+                </button>
+              </form>
+            ) : (
+              <div className="p-2.5 rounded-xl bg-gray-50 dark:bg-neutral-800/40 font-mono text-xs text-indigo-700 dark:text-indigo-400 truncate">
+                {masterMeetUrl}
+              </div>
+            )}
+          </div>
+
+          {/* Tabla de Asistentes Registrados */}
+          <div className="bg-white dark:bg-neutral-900 rounded-3xl border border-gray-200 dark:border-neutral-800 overflow-hidden shadow-xs">
+            <div className="p-5 border-b border-gray-100 dark:border-neutral-800 flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-bold text-black dark:text-white">
+                  Participantes Registrados en Talleres
+                </h3>
+                <span className="text-xs text-gray-400">
+                  {safeRegistrations.length} registros totales
+                </span>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setIsManualRegModalOpen(true)}
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold cursor-pointer shadow-xs"
+              >
+                <UserPlus className="w-3.5 h-3.5" />
+                <span>Inscribir Participante</span>
+              </button>
+            </div>
+
+            {safeRegistrations.length > 0 ? (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs">
+                  <thead className="bg-gray-50 dark:bg-neutral-800/50 text-gray-500 uppercase tracking-wider font-semibold border-b border-gray-100 dark:border-neutral-800">
+                    <tr>
+                      <th className="px-5 py-3">Código</th>
+                      <th className="px-5 py-3">Participante</th>
+                      <th className="px-5 py-3">Contacto</th>
+                      <th className="px-5 py-3">Taller Asignado</th>
+                      <th className="px-5 py-3 text-right">Asistencia</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100 dark:divide-neutral-800">
+                    {safeRegistrations.map((reg) => {
+                      const eventMatch = safeEvents.find((e) => e.id === reg.eventId);
+                      return (
+                        <tr key={reg.id} className="hover:bg-gray-50/60 dark:hover:bg-neutral-800/40">
+                          <td className="px-5 py-3 font-mono text-gray-500">
+                            {reg.ticketCode || reg.id.slice(0, 8)}
+                          </td>
+                          <td className="px-5 py-3">
+                            <span className="font-bold text-black dark:text-white block">
+                              {reg.name}
+                            </span>
+                          </td>
+                          <td className="px-5 py-3 text-gray-500 dark:text-neutral-400">
+                            <span>{reg.email}</span>
+                            {reg.phone && <span className="block text-[10px]">{reg.phone}</span>}
+                          </td>
+                          <td className="px-5 py-3 font-medium text-black dark:text-white">
+                            {eventMatch?.title || reg.eventId}
+                          </td>
+                          <td className="px-5 py-3 text-right">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                OntologicalStore.updateEventRegistration(reg.id, { attendedEvent: !reg.attendedEvent });
+                                onRefreshRegistrations?.();
+                              }}
+                              className={`text-[10px] px-2.5 py-1 rounded-full font-semibold cursor-pointer transition-all ${
+                                reg.attendedEvent
+                                  ? 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400'
+                                  : 'bg-gray-100 dark:bg-neutral-800 text-gray-600 dark:text-neutral-400 hover:bg-gray-200'
+                              }`}
+                            >
+                              {reg.attendedEvent ? '✓ Asistió' : 'Pendiente'}
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <div className="p-8 text-center text-xs text-gray-400">
+                No hay asistentes registrados aún en este momento.
+              </div>
+            )}
           </div>
         </div>
       )}
 
-      {/* ================= MODAL: MANUAL PARTICIPANT REGISTRATION ================= */}
+      {/* MODAL: REGISTRO MANUAL DE PARTICIPANTE */}
       {isManualRegModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
-          <div className="bg-white dark:bg-[#18181B] rounded-3xl max-w-md w-full p-6 border border-gray-100 dark:border-neutral-800 shadow-2xl space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-gray-100 dark:border-neutral-800">
-              <h3 className="text-base font-bold text-black dark:text-white">
+          <div className="w-full max-w-md rounded-2xl bg-white dark:bg-neutral-900 border border-gray-200 dark:border-neutral-800 shadow-2xl p-5 space-y-4">
+            <div className="flex items-center justify-between border-b border-gray-100 dark:border-neutral-800 pb-3">
+              <h4 className="text-sm font-bold text-black dark:text-white">
                 Inscribir Participante Manualmente
-              </h3>
+              </h4>
               <button
                 type="button"
                 onClick={() => setIsManualRegModalOpen(false)}
-                className="text-gray-400 hover:text-black dark:hover:text-white"
+                className="text-gray-400 hover:text-black dark:hover:text-white text-xs cursor-pointer"
               >
                 ✕
               </button>
             </div>
 
-            <form onSubmit={handleSaveManualRegistration} className="space-y-3.5 text-xs">
+            <form onSubmit={handleSaveManualRegistration} className="space-y-3">
               <div>
-                <label className="font-semibold text-black dark:text-white block mb-1">
-                  Evento o Conversatorio *
+                <label className="block text-[11px] font-semibold text-black dark:text-white mb-1">
+                  Nombre Completo
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={regName}
+                  onChange={(e) => setRegName(e.target.value)}
+                  placeholder="Ej: Carolina Rojas"
+                  className="w-full px-3 py-2 text-xs rounded-xl border border-gray-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-black dark:text-white"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-semibold text-black dark:text-white mb-1">
+                  Correo Electrónico
+                </label>
+                <input
+                  type="email"
+                  required
+                  value={regEmail}
+                  onChange={(e) => setRegEmail(e.target.value)}
+                  placeholder="correo@ejemplo.com"
+                  className="w-full px-3 py-2 text-xs rounded-xl border border-gray-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-black dark:text-white"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-semibold text-black dark:text-white mb-1">
+                  Teléfono / WhatsApp
+                </label>
+                <input
+                  type="text"
+                  value={regPhone}
+                  onChange={(e) => setRegPhone(e.target.value)}
+                  placeholder="+57 300 123 4567"
+                  className="w-full px-3 py-2 text-xs rounded-xl border border-gray-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-black dark:text-white"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-semibold text-black dark:text-white mb-1">
+                  Taller o Evento
                 </label>
                 <select
-                  required
                   value={regEventId}
                   onChange={(e) => setRegEventId(e.target.value)}
-                  className="w-full px-3 py-2 bg-gray-50 dark:bg-[#202024] border border-gray-200 dark:border-neutral-700 rounded-xl text-black dark:text-white focus:outline-none font-medium"
+                  className="w-full px-3 py-2 text-xs rounded-xl border border-gray-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-black dark:text-white"
                 >
-                  {cronogramaEvents.map((e) => (
-                    <option key={e.id} value={e.id}>
-                      {e.title} ({e.spotsLeft} cupos libres)
+                  {safeEvents.map((evt) => (
+                    <option key={evt.id} value={evt.id}>
+                      {evt.title} ({evt.displayDate || evt.date?.split('T')[0]})
                     </option>
                   ))}
                 </select>
               </div>
 
-              <div>
-                <label className="font-semibold text-black dark:text-white block mb-1">
-                  Nombre Completo *
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="Ej: Andrés Morales"
-                  value={regName}
-                  onChange={(e) => setRegName(e.target.value)}
-                  className="w-full px-3 py-2 bg-gray-50 dark:bg-[#202024] border border-gray-200 dark:border-neutral-700 rounded-xl text-black dark:text-white focus:outline-none"
-                />
-              </div>
-
-              <div>
-                <label className="font-semibold text-black dark:text-white block mb-1">
-                  WhatsApp *
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="+57 320 123 4567"
-                  value={regPhone}
-                  onChange={(e) => setRegPhone(e.target.value)}
-                  className="w-full px-3 py-2 bg-gray-50 dark:bg-[#202024] border border-gray-200 dark:border-neutral-700 rounded-xl text-black dark:text-white focus:outline-none"
-                />
-              </div>
-
-              <div>
-                <label className="font-semibold text-black dark:text-white block mb-1">
-                  Correo Electrónico
-                </label>
-                <input
-                  type="email"
-                  placeholder="andres.morales@empresa.com"
-                  value={regEmail}
-                  onChange={(e) => setRegEmail(e.target.value)}
-                  className="w-full px-3 py-2 bg-gray-50 dark:bg-[#202024] border border-gray-200 dark:border-neutral-700 rounded-xl text-black dark:text-white focus:outline-none"
-                />
-              </div>
-
               <div className="flex items-center gap-2 pt-1">
                 <input
                   type="checkbox"
-                  id="reg-attended"
+                  id="regAttendedCheck"
                   checked={regAttended}
                   onChange={(e) => setRegAttended(e.target.checked)}
-                  className="w-4 h-4 rounded text-black cursor-pointer"
+                  className="rounded-sm text-indigo-600 focus:ring-indigo-500 cursor-pointer"
                 />
-                <label htmlFor="reg-attended" className="font-medium text-black dark:text-white cursor-pointer">
-                  Marcar asistencia como ya confirmada
+                <label htmlFor="regAttendedCheck" className="text-xs text-gray-700 dark:text-neutral-300 cursor-pointer">
+                  Marcar como asistente confirmado
                 </label>
               </div>
 
-              <div className="pt-3 flex items-center justify-end gap-2 border-t border-gray-100 dark:border-neutral-800">
+              <div className="flex items-center justify-end gap-2 pt-3 border-t border-gray-100 dark:border-neutral-800">
                 <button
                   type="button"
                   onClick={() => setIsManualRegModalOpen(false)}
-                  className="px-4 py-2 rounded-xl border border-gray-200 dark:border-neutral-700 text-black dark:text-white font-medium"
+                  className="px-3 py-1.5 text-xs text-gray-600 dark:text-neutral-400 hover:bg-gray-100 rounded-lg cursor-pointer"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 rounded-xl bg-black dark:bg-white text-white dark:text-black font-semibold"
+                  className="px-4 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold cursor-pointer"
                 >
-                  Generar Ticket & Inscribir
+                  Registrar Asistente
                 </button>
               </div>
             </form>
