@@ -342,6 +342,7 @@ export class FirestoreSyncService {
           sessionDate: form.sessionDate,
           submittedAt: form.submittedAt,
           emergentTopic: form.emergentTopic || '',
+          discovery: form.discovery || '',
           actionStep: form.actionStep || '',
           cycleHarvest: form.cycleHarvest || null,
           isCycleMilestone: Boolean(form.isCycleMilestone),
@@ -535,6 +536,60 @@ export class FirestoreSyncService {
       );
     } catch (error) {
       console.warn('Could not subscribe to prospects in Firestore:', error);
+      return () => {};
+    }
+  }
+
+  // Listen to user profile changes in real-time
+  static subscribeToUserProfile(uid: string, onUpdate: (user: User) => void): () => void {
+    const collectionPath = 'users';
+    if (!auth.currentUser) {
+      return () => {};
+    }
+    try {
+      const userRef = doc(db, collectionPath, uid);
+      return onSnapshot(
+        userRef,
+        (docSnap) => {
+          if (docSnap.exists()) {
+            onUpdate(docSnap.data() as User);
+          }
+        },
+        (error) => {
+          console.warn('Firestore subscribeToUserProfile notice:', error);
+        }
+      );
+    } catch (error) {
+      console.warn('Could not subscribe to user profile in Firestore:', error);
+      return () => {};
+    }
+  }
+
+  // Listen to cronograma events / workshops in real-time
+  static subscribeToCronogramaEvents(onUpdate: (events: CronogramaEvent[]) => void): () => void {
+    const collectionPath = 'cronogramaEvents';
+    if (!auth.currentUser) {
+      return () => {};
+    }
+    try {
+      const q = collection(db, collectionPath);
+      return onSnapshot(
+        q,
+        (snapshot) => {
+          const list: CronogramaEvent[] = [];
+          snapshot.forEach((docSnap) => {
+            list.push(docSnap.data() as CronogramaEvent);
+          });
+          if (list.length > 0) {
+            onUpdate(list);
+          }
+        },
+        (error) => {
+          console.warn('Firestore subscribeToCronogramaEvents notice:', error);
+        }
+      );
+    } catch (error) {
+      console.warn('Could not subscribe to cronogramaEvents in Firestore:', error);
       return () => {};
     }
   }

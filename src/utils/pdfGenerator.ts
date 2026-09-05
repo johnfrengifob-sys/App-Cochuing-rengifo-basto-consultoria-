@@ -1155,6 +1155,288 @@ export class PDFGenerator {
 
     openPrintWindow(htmlContent, fileName);
   }
+
+  /**
+   * Generates and triggers printable PDF view for a completed Workshop Memory & Workbook
+   */
+  static generateWorkshopMemoryPDF(
+    workshopTitle: string,
+    client: User,
+    details?: {
+      workshopCategory?: string;
+      completedAt?: string;
+      keyBreakthrough?: string;
+      commitments?: string;
+      somaticPractice?: string;
+      answers?: Record<string, string | number>;
+    }
+  ): void {
+    const clientName = client?.name || 'Participante';
+    const cleanTitle = workshopTitle.replace(/[^a-zA-Z0-9]/g, '_');
+    const fileName = `Memoria_Taller_${cleanTitle}_${clientName.replace(/\s+/g, '_')}.pdf`;
+
+    const formattedDate = new Date(details?.completedAt || Date.now()).toLocaleDateString('es-ES', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    });
+
+    const category = details?.workshopCategory || 'Taller Ontológico Vivencial';
+    const breakthrough = details?.keyBreakthrough || 'Deconstrucción de automatismos transparentes, reconocimiento del observador que soy y diseño de nuevas posibilidades de acción.';
+    const commitments = details?.commitments || 'Sostener límites conscientes, practicar la pausa somática diaria de 90 segundos y habitar conversaciones de soberanía personal.';
+
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html lang="es">
+      <head>
+        <meta charset="UTF-8">
+        <title>Memoria de Taller - ${escapeHTML(workshopTitle)} - ${escapeHTML(clientName)}</title>
+        <style>
+          @page {
+            size: A4;
+            margin: 18mm;
+          }
+          * {
+            box-sizing: border-box;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+          }
+          body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            color: #111827;
+            background: #ffffff;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+          }
+          .header {
+            border-bottom: 2px solid #000;
+            padding-bottom: 14px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+          }
+          .brand-title {
+            font-size: 18px;
+            font-weight: 800;
+            margin: 0 0 2px 0;
+            letter-spacing: -0.5px;
+          }
+          .brand-subtitle {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: #4b5563;
+            margin: 0;
+          }
+          .badge-row {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+            margin-bottom: 10px;
+          }
+          .tag-pill {
+            display: inline-block;
+            background: #000;
+            color: #fff;
+            font-size: 10px;
+            font-weight: 700;
+            padding: 3px 10px;
+            border-radius: 999px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+          }
+          .accredited-pill {
+            display: inline-block;
+            background: #ecfdf5;
+            color: #065f46;
+            border: 1px solid #a7f3d0;
+            font-size: 10px;
+            font-weight: 700;
+            padding: 3px 10px;
+            border-radius: 999px;
+          }
+          .hero-title {
+            font-size: 20px;
+            font-weight: 800;
+            color: #000;
+            margin: 0 0 4px 0;
+            line-height: 1.25;
+          }
+          .meta-strip {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 10px 14px;
+            margin-bottom: 18px;
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr;
+            gap: 12px;
+            font-size: 12px;
+          }
+          .meta-item strong {
+            display: block;
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #64748b;
+            margin-bottom: 2px;
+          }
+          .card {
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 14px 16px;
+            margin-bottom: 14px;
+            background: #fff;
+            page-break-inside: avoid;
+          }
+          .card-title {
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #000;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+          }
+          .highlight-box {
+            background: #09090b;
+            color: #f4f4f5;
+            padding: 14px 16px;
+            border-radius: 8px;
+            font-size: 13px;
+            line-height: 1.6;
+            margin-bottom: 14px;
+          }
+          .answer-box {
+            background: #f9fafb;
+            border-left: 3px solid #000;
+            padding: 10px 12px;
+            border-radius: 0 6px 6px 0;
+            font-size: 12px;
+            color: #374151;
+            white-space: pre-wrap;
+          }
+          .signatures {
+            margin-top: 30px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            padding-top: 20px;
+            border-top: 1px solid #e5e7eb;
+            font-size: 11px;
+            page-break-inside: avoid;
+          }
+          .sig-line {
+            border-top: 1px solid #000;
+            padding-top: 8px;
+          }
+          .sig-line strong {
+            display: block;
+            font-size: 12px;
+            color: #000;
+          }
+          .footer {
+            margin-top: 20px;
+            border-top: 1px solid #e5e7eb;
+            padding-top: 10px;
+            font-size: 10px;
+            color: #9ca3af;
+            display: flex;
+            justify-content: space-between;
+          }
+          @media print {
+            body { padding: 0; }
+          }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <div>
+            <div class="brand-title">${COMPANY_INFO.fullName}</div>
+            <div class="brand-subtitle">Memoria Oficial de Taller & Cuaderno Ontológico</div>
+          </div>
+          <div style="text-align: right; font-size: 11px; color: #4b5563;">
+            <div style="font-weight: 700; color: #000;">ID Registro: RBC-WS-${Date.now().toString().slice(-6)}</div>
+            <div>Fecha: ${formattedDate}</div>
+          </div>
+        </div>
+
+        <div class="badge-row">
+          <div class="tag-pill">${escapeHTML(category)}</div>
+          <div class="accredited-pill">✓ Asistencia Acreditada</div>
+        </div>
+
+        <div class="hero-title">${escapeHTML(workshopTitle)}</div>
+
+        <div class="meta-strip">
+          <div class="meta-item">
+            <strong>Participante Registrado</strong>
+            ${escapeHTML(clientName)} (${escapeHTML(client?.email || '')})
+          </div>
+          <div class="meta-item">
+            <strong>Facilitador</strong>
+            John Fredy Rengifo Basto
+          </div>
+          <div class="meta-item">
+            <strong>Acreditación</strong>
+            RBC Ontología & ICF
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">1. Quiebre Ontológico Central y Descubrimiento del Taller</div>
+          <div class="highlight-box">
+            ${escapeHTML(breakthrough)}
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">2. Compromisos Adquiridos & Declaraciones de Acción</div>
+          <div class="answer-box">
+            ${escapeHTML(commitments)}
+          </div>
+        </div>
+
+        ${details?.answers && Object.keys(details.answers).length > 0 ? `
+          <div class="card">
+            <div class="card-title">3. Respuestas y Registro del Cuaderno de Trabajo</div>
+            ${Object.entries(details.answers).map(([key, value]) => `
+              <div style="margin-bottom: 10px;">
+                <div style="font-size: 11px; font-weight: 700; color: #374151; margin-bottom: 3px;">• ${escapeHTML(key)}:</div>
+                <div class="answer-box" style="background: #fafafa; border-left-color: #64748b;">${escapeHTML(String(value))}</div>
+              </div>
+            `).join('')}
+          </div>
+        ` : ''}
+
+        <div class="signatures">
+          <div class="sig-line">
+            <strong>John Fredy Rengifo Basto</strong>
+            Master Coach Ontológico RBC • ICF
+            <div style="font-size: 9px; color: #6b7280; margin-top: 2px;">Facilitación & Sello de Acreditación</div>
+          </div>
+          <div class="sig-line">
+            <strong>${escapeHTML(clientName)}</strong>
+            Participante • RBC Transformación
+            <div style="font-size: 9px; color: #6b7280; margin-top: 2px;">Compromiso & Acuerdos de Taller</div>
+          </div>
+        </div>
+
+        <div class="footer">
+          <div>${COMPANY_INFO.fullName} • ${COMPANY_INFO.city} • Tel: ${COMPANY_INFO.formattedPhone}</div>
+          <div>Documento Confidencial de Formación Ontológica • ICF Code of Ethics</div>
+        </div>
+      </body>
+      </html>
+    `;
+
+    openPrintWindow(htmlContent, fileName);
+  }
 }
 
 function escapeHTML(str: string): string {

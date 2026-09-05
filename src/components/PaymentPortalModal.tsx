@@ -22,6 +22,7 @@ import {
   HeartHandshake,
   Check,
   UserCheck,
+  Receipt,
 } from 'lucide-react';
 import { User, ProgramNodeInfo, EventRegistration } from '../types';
 import { OntologicalStore, COMPANY_INFO, BRE_B_NU_CONFIG } from '../services/store';
@@ -110,21 +111,6 @@ export const PaymentPortalModal: React.FC<PaymentPortalModalProps> = ({
   const [isOneOnOneCheckoutOpen, setIsOneOnOneCheckoutOpen] = useState(false);
   const [oneOnOnePlan, setOneOnOnePlan] = useState<'full' | 'half'>('full');
 
-  // Métricas del participante para organización lógica del progreso
-  const clientPayments = OntologicalStore.getPaymentRequestsForClient(currentUser.uid);
-  const clientSessions = OntologicalStore.getSessionsForClient(currentUser.uid);
-  const clientForms = OntologicalStore.getPostSessionFormsForClient(currentUser.uid);
-  const completedSessions = clientSessions.filter((s) => s.status === 'completed');
-  const currentSessionNumber = currentUser.programProgress || 1;
-  const currentCycle = Math.ceil(currentSessionNumber / 4);
-  const isCycleMilestone =
-    currentSessionNumber === 4 || currentSessionNumber === 8 || currentSessionNumber === 12;
-  const enrolledWorkshopsCount = WORKSHOPS_CATALOG.filter((w) => isWorkshopEnrolled(w.id)).length;
-  const cyclePhaseLabel = isCycleMilestone
-    ? 'Fase de Consolidación • Cierre de Ciclo'
-    : 'Fase de Exploración Libre';
-  const remainingInCycle = 4 - ((currentSessionNumber - 1) % 4);
-
   // Reload client data
   const refreshLocalClient = () => {
     const fresh = OntologicalStore.getUsers().find((u) => u.uid === client.uid);
@@ -142,10 +128,6 @@ export const PaymentPortalModal: React.FC<PaymentPortalModalProps> = ({
 
   if (!isOpen) return null;
 
-  const isFreeAccess = currentUser.programAccessLevel === 'free';
-  const isAuthorized1on1 = Boolean(currentUser.authorizedForOneOnOne);
-  const hasPurchased1on1 = Boolean(currentUser.oneOnOnePackagePurchased);
-
   // Check if a workshop is enrolled or completed
   const isWorkshopEnrolled = (workshopId: string) => {
     return (
@@ -156,6 +138,25 @@ export const PaymentPortalModal: React.FC<PaymentPortalModalProps> = ({
       )
     );
   };
+
+  const isFreeAccess = currentUser.programAccessLevel === 'free';
+  const isAuthorized1on1 = Boolean(currentUser.authorizedForOneOnOne);
+  const hasPurchased1on1 = Boolean(currentUser.oneOnOnePackagePurchased);
+
+  // Métricas del participante para organización lógica del progreso
+  const clientPayments = OntologicalStore.getPaymentRequestsForClient(currentUser.uid);
+  const clientSessions = OntologicalStore.getSessionsForClient(currentUser.uid);
+  const clientForms = OntologicalStore.getPostSessionFormsForClient(currentUser.uid);
+  const completedSessions = clientSessions.filter((s) => s.status === 'completed');
+  const currentSessionNumber = currentUser.programProgress || 1;
+  const currentCycle = Math.ceil(currentSessionNumber / 4);
+  const isCycleMilestone =
+    currentSessionNumber === 4 || currentSessionNumber === 8 || currentSessionNumber === 12;
+  const enrolledWorkshopsCount = WORKSHOPS_CATALOG.filter((w) => isWorkshopEnrolled(w.id)).length;
+  const cyclePhaseLabel = isCycleMilestone
+    ? 'Fase de Consolidación • Cierre de Ciclo'
+    : 'Fase de Exploración Libre';
+  const remainingInCycle = 4 - ((currentSessionNumber - 1) % 4);
 
   // Handler: Direct Free Workshop Confirmation
   const handleConfirmFreeWorkshop = (workshop: WorkshopItem) => {
@@ -551,6 +552,114 @@ export const PaymentPortalModal: React.FC<PaymentPortalModalProps> = ({
                     </button>
                   </div>
                 )}
+              </div>
+
+              {/* DETALLE DE HISTORIAL DE PAGOS Y ESTADO DE INVERSIÓN */}
+              <div className="p-5 rounded-2xl bg-neutral-50/90 dark:bg-neutral-900/70 border border-black/15 dark:border-white/15 space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Receipt className="w-4 h-4 text-black dark:text-white" />
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-black dark:text-white font-mono">
+                      Historial de Inversiones y Transacciones Realizadas
+                    </span>
+                  </div>
+                  <span className="text-[10px] text-neutral-500 font-mono">
+                    {clientPayments.length} registro(s)
+                  </span>
+                </div>
+
+                {clientPayments.length === 0 ? (
+                  <div className="p-4 rounded-xl bg-white dark:bg-black border border-black/10 dark:border-white/10 text-xs text-neutral-600 dark:text-neutral-400 font-light space-y-1">
+                    <p className="font-medium text-black dark:text-white">
+                      {isFreeAccess ? 'Acceso Libre / Beca Institucional Activa' : 'No se registran transacciones previas en tu cuenta.'}
+                    </p>
+                    <p className="text-[11px]">
+                      Tus pagos confirmados a través de Bre-B Nu, tarjeta en línea o consignación se reflejan inmediatamente en este libro contable con su respectivo identificador de verificación.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-2.5">
+                    {clientPayments.map((pmt) => {
+                      const isApproved = pmt.status === 'approved';
+                      return (
+                        <div
+                          key={pmt.id}
+                          className="p-3.5 rounded-xl bg-white dark:bg-black border border-black/10 dark:border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs"
+                        >
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-2">
+                              <span className="font-semibold text-black dark:text-white">
+                                {pmt.concept || pmt.notes || 'Inversión en Acompañamiento Ontológico'}
+                              </span>
+                              <span
+                                className={`px-2 py-0.5 rounded-md text-[10px] font-mono font-medium ${
+                                  isApproved
+                                    ? 'bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800'
+                                    : 'bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-800'
+                                }`}
+                              >
+                                {isApproved ? 'Validado & Acreditado' : 'En Verificación'}
+                              </span>
+                            </div>
+                            <div className="flex flex-wrap items-center gap-2 text-[11px] text-neutral-500 font-mono">
+                              <span>Fecha: {new Date(pmt.createdAt).toLocaleDateString('es-ES')}</span>
+                              <span>•</span>
+                              <span>Método: {pmt.method === 'bre_b_nu' ? 'Bre-B Nu (Llave)' : pmt.method === 'online_card' ? 'Tarjeta En Línea' : 'Transferencia Directa'}</span>
+                              <span>•</span>
+                              <span>Ref: {pmt.id}</span>
+                            </div>
+                          </div>
+
+                          <div className="text-right self-start sm:self-auto shrink-0">
+                            <div className="font-bold text-sm text-black dark:text-white font-mono">
+                              {pmt.amount.toString().includes('COP')
+                                ? pmt.amount
+                                : `$${Number(pmt.amount || 0).toLocaleString()} COP`}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {/* PRÓXIMAS INVERSIONES / PAGOS PENDIENTES SEGÚN RUTA */}
+                <div className="pt-3 border-t border-black/10 dark:border-white/10">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-500 font-mono block mb-2">
+                    Próximas Inversiones o Desbloqueos en tu Ruta
+                  </span>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                    <div className="p-3 rounded-xl bg-white dark:bg-black border border-black/10 dark:border-white/10 space-y-1">
+                      <div className="font-semibold text-black dark:text-white flex items-center justify-between">
+                        <span>Ciclo Individual 1 a 1</span>
+                        <span className="text-[10px] font-mono text-neutral-500">
+                          {hasPurchased1on1 ? 'Completado' : isAuthorized1on1 ? 'Cupo Aprobado' : 'Requiere Autorización'}
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-neutral-600 dark:text-neutral-400 font-light">
+                        {hasPurchased1on1
+                          ? 'Has asegurado el paquete completo de 12 encuentros quincenales.'
+                          : isAuthorized1on1
+                          ? 'Postulación aprobada por el facilitador. Puedes asegurar tu cupo mediante Pago Único ($1.400.000 COP) o 2 Cuotas ($750.000 COP).'
+                          : 'Para desbloquear las 12 sesiones quincenales, se requiere valoración y autorización previa de John Fredy Rengifo Basto.'}
+                      </p>
+                    </div>
+
+                    <div className="p-3 rounded-xl bg-white dark:bg-black border border-black/10 dark:border-white/10 space-y-1">
+                      <div className="font-semibold text-black dark:text-white flex items-center justify-between">
+                        <span>Talleres Vivenciales (3 Hitos)</span>
+                        <span className="text-[10px] font-mono text-neutral-500">
+                          {enrolledWorkshopsCount}/3 Asegurados
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-neutral-600 dark:text-neutral-400 font-light">
+                        {isFreeAccess
+                          ? 'Cuentas con pase libre institucional para todos los talleres vivenciales.'
+                          : `${3 - enrolledWorkshopsCount} taller(es) vivencial(es) disponible(s) para inscripción ($180.000 COP cada uno).`}
+                      </p>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           )}

@@ -175,6 +175,58 @@ Genera una respuesta estructurada en formato JSON con los siguientes campos:
   });
 
   // ==========================================
+  // API: GEMINI SESSION 1-A-1 INSIGHTS & COPILOT
+  // ==========================================
+  app.post('/api/gemini/session-insights', async (req, res) => {
+    try {
+      const { clientName, sessionNumber, emergentTopic, discovery, actionStep, cycleHarvest } = req.body;
+
+      if (!process.env.GEMINI_API_KEY) {
+        return res.json({
+          ontologicalSynthesis: `A través de la exploración del emergente ("${emergentTopic || 'Gestión del observador'}"), se produjo un quiebre significativo al reconocer que la sobreexigencia encubría el miedo al error. El descubrimiento clave habilita una nueva narrativa de autonomía y límites conscientes.`,
+          somaticPractice: `Práctica de arraigo diafragmático: Al inicio del día o antes de reuniones decisivas, siéntate con ambos pies planos sobre el piso. Inhala en 4 tiempos expandiendo el abdomen inferior, exhala en 6 tiempos relajando mandíbula y trapecios. Sostén esta presencia durante 3 ciclos conscientes.`,
+          inquiryQuestion: `¿Qué conversación postergada o pedido explícito necesitas abrir esta semana para honrar la declaración que hiciste en tu sesión?`,
+          icfCompetencies: [
+            'ICF 5: Mantiene presencia - Apoya al cliente a habitar el presente sin juicios apresurados.',
+            'ICF 7: Evoca conciencia - Facilita el paso de la queja hacia el descubrimiento ontológico profundo.'
+          ]
+        });
+      }
+
+      const prompt = `
+Analiza la siguiente memoria de sesión 1 a 1 de coaching ontológico ejecutivo:
+- Coachee: ${clientName || 'Participante'}
+- Sesión Número: ${sessionNumber || 1} de 12
+- Tema Emergente: "${emergentTopic || 'No especificado'}"
+- Descubrimiento / Cambio de Mirada: "${discovery || 'No especificado'}"
+- Paso a la Acción: "${actionStep || 'No especificado'}"
+${cycleHarvest ? `- Cosecha de Cierre de Ciclo: "${cycleHarvest}"` : ''}
+
+Como Copiloto Ontológico Oficial de Rengifo Basto Consultoría Ontológica, devuelve un JSON con:
+1. "ontologicalSynthesis": Síntesis ontológica del observador que emergió y la transformación de sus juicios maestros.
+2. "somaticPractice": Ejercicio somático breve (2 a 3 minutos) diseñado para encarnar corporalmente el compromiso asumido.
+3. "inquiryQuestion": Una pregunta ontológica poderosa para acompañar su reflexión diaria entre sesiones.
+4. "icfCompetencies": Arreglo con 2 competencias ICF fortalecidas en este encuentro.
+`;
+
+      const response = await getGeminiClient().models.generateContent({
+        model: 'gemini-3.7-flash',
+        contents: prompt,
+        config: {
+          systemInstruction: SYSTEM_INSTRUCTION_ONTOLOGY,
+          responseMimeType: 'application/json',
+        },
+      });
+
+      const parsed = JSON.parse(response.text || '{}');
+      res.json(parsed);
+    } catch (error: any) {
+      console.error('Error in /api/gemini/session-insights:', error);
+      res.status(500).json({ error: error.message || 'Error al generar insights ontológicos con Gemini' });
+    }
+  });
+
+  // ==========================================
   // API: GEMINI ROLEPLAY & CONVERSATION SIMULATOR
   // ==========================================
   app.post('/api/gemini/roleplay', async (req, res) => {
