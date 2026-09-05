@@ -5,6 +5,7 @@ import {
   Zap,
   Ticket,
   Link2,
+  CalendarCheck2,
 } from 'lucide-react';
 import { OntologicalStore } from '../../services/store';
 import {
@@ -39,6 +40,7 @@ function SubPanelFallback({ title = 'Cargando Sub-Panel...' }: { title?: string 
 
 export type AcademicAdminSubTab =
   | 'events'
+  | 'sessions'
   | 'activadores'
   | 'cerebro'
   | 'triggers'
@@ -92,8 +94,10 @@ export const AdminAcademicManager: React.FC<AdminAcademicManagerProps> = ({
     return initialSubTab === 'automations' ? 'automations' : 'triggers';
   });
 
-  const [eventsInitialSubTab, setEventsInitialSubTab] = useState<'events' | 'participants'>(() => {
-    return initialSubTab === 'participants' ? 'participants' : 'events';
+  const [eventsInitialSubTab, setEventsInitialSubTab] = useState<'events' | 'sessions' | 'participants'>(() => {
+    if (initialSubTab === 'sessions') return 'sessions';
+    if (initialSubTab === 'participants') return 'participants';
+    return 'events';
   });
 
   const [version, setVersion] = useState(0);
@@ -110,6 +114,9 @@ export const AdminAcademicManager: React.FC<AdminAcademicManagerProps> = ({
       } else if (initialSubTab === 'triggers' || initialSubTab === 'activadores') {
         setCurrentTab('activadores');
         setActivadoresMode('triggers');
+      } else if (initialSubTab === 'sessions') {
+        setCurrentTab('events');
+        setEventsInitialSubTab('sessions');
       } else if (initialSubTab === 'participants') {
         setCurrentTab('events');
         setEventsInitialSubTab('participants');
@@ -123,6 +130,7 @@ export const AdminAcademicManager: React.FC<AdminAcademicManagerProps> = ({
   const rawPrograms = propPrograms || OntologicalStore.getPrograms();
   const rawEvents = propEvents || OntologicalStore.getCronogramaEvents();
   const rawRegistrations = propRegistrations || OntologicalStore.getEventRegistrations();
+  const rawSessions = OntologicalStore.getSessions();
   const automatedTriggers = OntologicalStore.getAutomatedTriggers();
   const activeTriggersCount = automatedTriggers.filter((t) => t.enabled).length;
   const homeEventsCount = rawEvents.filter((e) => e.showOnHome !== false).length;
@@ -154,13 +162,21 @@ export const AdminAcademicManager: React.FC<AdminAcademicManagerProps> = ({
           </div>
 
           {/* Quick Metrics */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-4 border-t border-white/10 w-full">
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5 pt-4 border-t border-white/10 w-full">
             <div className="p-2.5 rounded-2xl bg-white/10 backdrop-blur-md border border-white/10 text-center">
               <span className="text-[9px] text-rose-300 block font-medium uppercase tracking-wider">
-                Eventos
+                Talleres
               </span>
               <span className="text-base font-black font-mono text-white">{rawEvents.length}</span>
               <span className="text-[9px] text-neutral-300 block">{homeEventsCount} en Home</span>
+            </div>
+
+            <div className="p-2.5 rounded-2xl bg-white/10 backdrop-blur-md border border-white/10 text-center">
+              <span className="text-[9px] text-emerald-300 block font-medium uppercase tracking-wider">
+                Sesiones 1 a 1
+              </span>
+              <span className="text-base font-black font-mono text-white">{rawSessions.length}</span>
+              <span className="text-[9px] text-emerald-200 block">Sincronizadas</span>
             </div>
 
             <div className="p-2.5 rounded-2xl bg-white/10 backdrop-blur-md border border-white/10 text-center">
@@ -172,7 +188,7 @@ export const AdminAcademicManager: React.FC<AdminAcademicManagerProps> = ({
             </div>
 
             <div className="p-2.5 rounded-2xl bg-white/10 backdrop-blur-md border border-white/10 text-center">
-              <span className="text-[9px] text-emerald-300 block font-medium uppercase tracking-wider">
+              <span className="text-[9px] text-sky-300 block font-medium uppercase tracking-wider">
                 Activadores
               </span>
               <span className="text-base font-black font-mono text-white">
@@ -181,7 +197,7 @@ export const AdminAcademicManager: React.FC<AdminAcademicManagerProps> = ({
               <span className="text-[9px] text-neutral-300 block">Reglas Activas</span>
             </div>
 
-            <div className="p-2.5 rounded-2xl bg-white/10 backdrop-blur-md border border-white/10 text-center">
+            <div className="p-2.5 rounded-2xl bg-white/10 backdrop-blur-md border border-white/10 text-center col-span-2 sm:col-span-1">
               <span className="text-[9px] text-indigo-300 block font-medium uppercase tracking-wider">
                 Automatizaciones
               </span>
@@ -192,9 +208,9 @@ export const AdminAcademicManager: React.FC<AdminAcademicManagerProps> = ({
         </div>
       </div>
 
-      {/* Navigation Sub-Tabs: 1. Eventos & Asistentes, 2. Activadores */}
+      {/* Navigation Sub-Tabs: 1. Eventos & Talleres, 2. Sesiones 1 a 1, 3. Activadores, 4. Cerebro */}
       <div className="flex items-center gap-2 p-1.5 rounded-2xl bg-neutral-100/90 dark:bg-[#18181B] border border-neutral-200/80 dark:border-neutral-800 overflow-x-auto no-scrollbar">
-        {/* Tab 1: Eventos & Asistentes */}
+        {/* Tab 1: Eventos & Talleres */}
         <button
           type="button"
           onClick={() => {
@@ -202,16 +218,33 @@ export const AdminAcademicManager: React.FC<AdminAcademicManagerProps> = ({
             setEventsInitialSubTab('events');
           }}
           className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-medium transition-all cursor-pointer shrink-0 ${
-            currentTab === 'events'
+            currentTab === 'events' && eventsInitialSubTab !== 'sessions'
               ? 'bg-black text-white dark:bg-white dark:text-black shadow-xs font-semibold'
               : 'text-neutral-600 dark:text-neutral-400 hover:text-black dark:hover:text-white hover:bg-white/70 dark:hover:bg-neutral-800/70'
           }`}
         >
           <Ticket className="w-3.5 h-3.5 text-rose-500" />
-          <span>Eventos</span>
+          <span>Eventos y Talleres ({rawEvents.length})</span>
         </button>
 
-        {/* Tab 2: Activadores */}
+        {/* Tab 2: Sesiones 1 a 1 */}
+        <button
+          type="button"
+          onClick={() => {
+            setCurrentTab('events');
+            setEventsInitialSubTab('sessions');
+          }}
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-medium transition-all cursor-pointer shrink-0 ${
+            currentTab === 'events' && eventsInitialSubTab === 'sessions'
+              ? 'bg-black text-white dark:bg-white dark:text-black shadow-xs font-semibold'
+              : 'text-neutral-600 dark:text-neutral-400 hover:text-black dark:hover:text-white hover:bg-white/70 dark:hover:bg-neutral-800/70'
+          }`}
+        >
+          <CalendarCheck2 className="w-3.5 h-3.5 text-emerald-500" />
+          <span>Sesiones de Consultoría ({rawSessions.length})</span>
+        </button>
+
+        {/* Tab 3: Activadores */}
         <button
           type="button"
           onClick={() => setCurrentTab('activadores')}
@@ -222,10 +255,10 @@ export const AdminAcademicManager: React.FC<AdminAcademicManagerProps> = ({
           }`}
         >
           <Zap className="w-3.5 h-3.5 text-amber-500" />
-          <span>Activadores</span>
+          <span>Activadores ({activeTriggersCount})</span>
         </button>
 
-        {/* Tab 3: Cerebro & Vinculación */}
+        {/* Tab 4: Cerebro & Vinculación */}
         <button
           type="button"
           onClick={() => setCurrentTab('cerebro')}

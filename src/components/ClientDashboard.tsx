@@ -19,6 +19,7 @@ import { PostSessionWorkbookModal } from './PostSessionWorkbookModal';
 import { GeminiOntologicalCopilot } from './GeminiOntologicalCopilot';
 import { WorkshopRegistrySection } from './WorkshopRegistrySection';
 import { UnifiedWorkbookSpace } from './UnifiedWorkbookSpace';
+import { TransformationJourneyMap } from './TransformationJourneyMap';
 import {
   Video,
   Calendar,
@@ -94,7 +95,28 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
   const [sessions, setSessions] = useState<Session[]>(() =>
     OntologicalStore.getSessionsForClient(client.uid)
   );
-  const nextSession = OntologicalStore.getNextSessionForClient(client.uid);
+  const [nextSession, setNextSession] = useState<Session | null>(() =>
+    OntologicalStore.getNextSessionForClient(client.uid)
+  );
+
+  useEffect(() => {
+    const handleSync = () => {
+      const updatedSessions = OntologicalStore.getSessionsForClient(client.uid);
+      setSessions(updatedSessions);
+      setNextSession(OntologicalStore.getNextSessionForClient(client.uid));
+      setForms(OntologicalStore.getFormsForClient(client.uid));
+      setPostSessionForms(OntologicalStore.getPostSessionFormsForClient(client.uid));
+      setClientPaymentRequests(OntologicalStore.getPaymentRequestsForClient(client.uid));
+    };
+
+    window.addEventListener('rbc-sessions-updated', handleSync);
+    window.addEventListener('storage', handleSync);
+
+    return () => {
+      window.removeEventListener('rbc-sessions-updated', handleSync);
+      window.removeEventListener('storage', handleSync);
+    };
+  }, [client.uid]);
 
   const [forms, setForms] = useState<FormSubmission[]>(() =>
     OntologicalStore.getFormsForClient(client.uid)
@@ -361,124 +383,16 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
       </section>
 
       {/* ========================================================================= */}
-      {/* 1. TU CAMINO DE TRANSFORMACIÓN (EN BLANCO HASTA HABILITACIÓN DESDE EL ADMIN) */}
+      {/* 1. PANEL DE USUARIO: TU CAMINO DE TRANSFORMACIÓN (ALTO CONTRASTE B&W)     */}
       {/* ========================================================================= */}
-      {!client.transformationSpacesEnabled ? (
-        <section className="p-8 sm:p-12 rounded-3xl border border-dashed border-gray-300 dark:border-neutral-800 text-center space-y-4 bg-white/40 dark:bg-neutral-900/30 backdrop-blur-xs">
-          <div className="w-14 h-14 rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 mx-auto flex items-center justify-center">
-            <Compass className="w-7 h-7 stroke-[1.5]" />
-          </div>
-          <div className="space-y-2 max-w-lg mx-auto">
-            <h2 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white tracking-tight">
-              Tu Camino de Transformación
-            </h2>
-            <p className="text-xs sm:text-sm text-gray-500 dark:text-neutral-400 leading-relaxed font-light">
-              Este espacio permanece en blanco y será habilitado formalmente desde el panel del Administrador y Master Coach (John Fredy Rengifo Basto) una vez se active tu ciclo de sesiones individuales.
-            </p>
-          </div>
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/30">
-            <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
-            <span>Espacio en blanco • Pendiente de habilitación desde el panel admin</span>
-          </div>
-        </section>
-      ) : (
-        <>
-      {/* 1. MAPA INTERACTIVO DE LAS 6 SESIONES: SÚPER VISUAL Y CLARO */}
-      <section className="space-y-3">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-1">
-          <div>
-            <div className="flex items-center gap-2">
-              <Compass className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-              <h2 className="text-sm sm:text-base font-bold text-black dark:text-white tracking-tight">
-                Tu Camino de Transformación (6 Sesiones)
-              </h2>
-            </div>
-            <p className="text-xs font-light text-gray-500 dark:text-neutral-400">
-              Toca cualquier nivel para ver sus temas, preguntas y cuadernos de trabajo.
-            </p>
-          </div>
-          <div className="flex items-center gap-2 text-xs font-medium text-gray-600 dark:text-neutral-400 self-start sm:self-auto">
-            <span>Progreso Total:</span>
-            <div className="w-24 sm:w-32 h-2 rounded-full bg-gray-200 dark:bg-neutral-800 overflow-hidden">
-              <div
-                className="h-full bg-emerald-500 rounded-full transition-all duration-500"
-                style={{ width: `${progressPercentage}%` }}
-              />
-            </div>
-            <span className="font-bold text-black dark:text-white">{progressPercentage}%</span>
-          </div>
-        </div>
-
-        {/* 6 Interactive Buttons Grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5 sm:gap-3">
-          {PROGRAM_NODES.map((node) => {
-            const isCompleted = node.step < currentProgress || forms.some((f) => f.sessionStep === node.step);
-            const isCurrent = node.step === currentProgress;
-            const isSelected = node.step === selectedNodeStep;
-            const isLocked = node.step > currentProgress;
-
-            return (
-              <button
-                key={node.step}
-                type="button"
-                onClick={() => {
-                  setSelectedNodeStep(node.step);
-                  const el = document.getElementById('session-workspace-content');
-                  if (el) el.scrollIntoView({ behavior: 'smooth' });
-                }}
-                className={`p-3 sm:p-3.5 rounded-2xl border text-left transition-all cursor-pointer relative flex flex-col justify-between min-h-[95px] ${
-                  isSelected
-                    ? 'bg-black text-white dark:bg-white dark:text-black border-black dark:border-white shadow-md ring-2 ring-emerald-400/50 scale-[1.02]'
-                    : isCurrent
-                    ? 'bg-emerald-500/10 dark:bg-emerald-950/30 border-emerald-500/40 text-black dark:text-white hover:border-emerald-500'
-                    : isCompleted
-                    ? 'bg-white/80 dark:bg-[#1E1E22]/80 border-gray-200 dark:border-neutral-800 text-black dark:text-white hover:bg-white dark:hover:bg-[#25252A]'
-                    : 'bg-gray-100/60 dark:bg-[#151518]/60 border-gray-200/50 dark:border-neutral-800/50 text-gray-400 dark:text-neutral-500 opacity-80'
-                }`}
-              >
-                <div className="flex items-center justify-between w-full">
-                  <span
-                    className={`w-6 h-6 rounded-full flex items-center justify-center font-bold text-xs ${
-                      isSelected
-                        ? 'bg-white text-black dark:bg-black dark:text-white'
-                        : isCompleted
-                        ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'
-                        : isCurrent
-                        ? 'bg-emerald-500 text-white animate-pulse'
-                        : 'bg-gray-200 text-gray-500 dark:bg-neutral-800 dark:text-neutral-400'
-                    }`}
-                  >
-                    {isCompleted ? <Check className="w-3.5 h-3.5 stroke-[2.5]" /> : node.step}
-                  </span>
-
-                  {isCurrent && (
-                    <span className="px-1.5 py-0.5 rounded-full text-[9px] font-extrabold uppercase tracking-wide bg-emerald-500 text-white">
-                      Aquí estás
-                    </span>
-                  )}
-                  {isLocked && !isCurrent && (
-                    <Lock className="w-3 h-3 text-gray-400 dark:text-neutral-500" />
-                  )}
-                  {isCompleted && !isCurrent && (
-                    <span className="text-[10px] font-medium text-emerald-600 dark:text-emerald-400">
-                      Listo
-                    </span>
-                  )}
-                </div>
-
-                <div className="mt-2">
-                  <div className="text-xs font-bold leading-tight line-clamp-1">
-                    {node.sessionTitle}
-                  </div>
-                  <div className={`text-[10px] font-light mt-0.5 ${isSelected ? 'opacity-80' : 'text-gray-400 dark:text-neutral-500'}`}>
-                    {node.weekLabel}
-                  </div>
-                </div>
-              </button>
-            );
-          })}
-        </div>
-      </section>
+      <TransformationJourneyMap
+        client={client}
+        onSelectSessionStep={(step) => {
+          setSelectedNodeStep(step);
+          const el = document.getElementById('session-workspace-content');
+          if (el) el.scrollIntoView({ behavior: 'smooth' });
+        }}
+      />
 
       {/* ========================================================================= */}
       {/* 2. PANEL DE ACCIÓN DINÁMICA: ¿QUÉ DEBO HACER HOY? (MISIÓN ACTUAL) */}
@@ -679,7 +593,99 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
           </div>
         </div>
       </section>
-      </>
+
+      {/* ========================================================================= */}
+      {/* SESIONES DE CONSULTORÍA 1 A 1 (SINCRONIZADAS EN TIEMPO REAL CON EL COACH)  */}
+      {/* ========================================================================= */}
+      {sessions.length > 0 && (
+        <section className="space-y-3">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-1">
+            <div className="flex items-center gap-2">
+              <Calendar className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+              <h2 className="text-sm sm:text-base font-bold text-black dark:text-white tracking-tight">
+                Tus Sesiones de Consultoría 1 a 1 ({sessions.length})
+              </h2>
+            </div>
+            <span className="text-[11px] text-gray-500 dark:text-neutral-400 font-light">
+              Sincronizadas en vivo con el panel del consultor
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {sessions
+              .slice()
+              .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+              .map((session, idx) => {
+                const isUpcoming = session.status === 'scheduled';
+                const isCompleted = session.status === 'completed';
+                const isInProgress = session.status === 'in_progress';
+
+                return (
+                  <div
+                    key={session.id || idx}
+                    className={`p-4 rounded-2xl border transition-all flex flex-col justify-between gap-3 ${
+                      isUpcoming
+                        ? 'bg-white/80 dark:bg-[#18181B]/80 border-gray-200 dark:border-neutral-800 shadow-xs'
+                        : isCompleted
+                        ? 'bg-gray-50/60 dark:bg-neutral-900/40 border-gray-200/60 dark:border-neutral-800/60 opacity-90'
+                        : 'bg-emerald-50/40 dark:bg-emerald-950/20 border-emerald-300 dark:border-emerald-800/50'
+                    }`}
+                  >
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-black/5 dark:bg-white/10 text-black dark:text-white font-mono">
+                          Sesión {session.sessionNumber || idx + 1}
+                        </span>
+                        <span
+                          className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
+                            isCompleted
+                              ? 'bg-emerald-100 dark:bg-emerald-950/70 text-emerald-700 dark:text-emerald-400'
+                              : isInProgress
+                              ? 'bg-blue-100 dark:bg-blue-950/70 text-blue-700 dark:text-blue-400'
+                              : 'bg-amber-100 dark:bg-amber-950/70 text-amber-700 dark:text-amber-400'
+                          }`}
+                        >
+                          {isCompleted ? '✓ Completada' : isInProgress ? '• En Curso' : '⏱ Programada'}
+                        </span>
+                      </div>
+
+                      <div>
+                        <h4 className="text-xs sm:text-sm font-bold text-black dark:text-white line-clamp-2">
+                          {session.sessionGoal || session.title || `Sesión Ontológica ${session.sessionNumber || idx + 1}`}
+                        </h4>
+                        <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-neutral-400 font-light mt-1">
+                          <Clock className="w-3.5 h-3.5 shrink-0 text-gray-400" />
+                          <span className="capitalize">{formattedDate(session.date)}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 pt-1 border-t border-black/5 dark:border-white/5">
+                      {session.meetLink && isUpcoming && (
+                        <a
+                          href={session.meetLink}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="flex-1 py-1.5 px-3 rounded-xl bg-black dark:bg-white text-white dark:text-black font-bold text-[11px] flex items-center justify-center gap-1.5 hover:opacity-90 transition-opacity"
+                        >
+                          <Video className="w-3.5 h-3.5" />
+                          <span>Sala Meet</span>
+                        </a>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => openUnifiedWorkbook('session', session.id)}
+                        className="flex-1 py-1.5 px-3 rounded-xl bg-gray-100 dark:bg-neutral-800 hover:bg-gray-200 dark:hover:bg-neutral-700 text-black dark:text-white font-medium text-[11px] flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                      >
+                        <BookOpen className="w-3.5 h-3.5 text-emerald-500" />
+                        <span>Bitácora</span>
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+          </div>
+        </section>
       )}
 
       {/* ========================================================================= */}

@@ -536,7 +536,14 @@ ${
       )}
 
       {/* Tab: Validation (re-uses existing robust PaymentValidationManager) */}
-      {activeTab === 'validation' && <PaymentValidationManager />}
+      {activeTab === 'validation' && (
+        <PaymentValidationManager
+          requests={OntologicalStore.getPaymentRequests()}
+          clients={OntologicalStore.getUsers().filter((u) => u.role === 'client')}
+          coachName="John Fredy Rengifo Basto"
+          onRequestUpdated={() => {}}
+        />
+      )}
 
       {/* Modal: New Package */}
       {showNewModal && (

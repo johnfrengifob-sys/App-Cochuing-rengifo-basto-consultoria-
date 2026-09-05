@@ -143,7 +143,15 @@ export const LoginView: React.FC<LoginViewProps> = ({
           }
         }
       }
-    } catch (popupErr) {
+    } catch (popupErr: unknown) {
+      const firebaseErr = popupErr as { code?: string };
+      if (firebaseErr?.code === 'auth/unauthorized-domain') {
+        setIsVerifying(false);
+        setAuthError(
+          'Aviso de Seguridad Firebase: El dominio de vista previa aún no está registrado en los "Dominios Autorizados" de Firebase Console (Authentication > Settings > Authorized Domains). Puedes ingresar escribiendo tu correo registrado abajo o con el botón de Master Coach.'
+        );
+        return;
+      }
       console.warn('Google Sign-In popup notice (using secure session fallback):', popupErr);
     }
 

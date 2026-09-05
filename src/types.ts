@@ -4,6 +4,8 @@ export type PaymentStatus = 'Pago Único' | 'Cuota 1 de 2' | 'Completado';
 
 export type ClientStatus = 'active' | 'waiting' | 'inactive';
 
+export type ProgramAccessLevel = 'free' | 'premium';
+
 export interface User {
   uid: string;
   id?: string;
@@ -25,7 +27,24 @@ export interface User {
   totalInvested?: string; // Monto total invertido en su progreso
   primaryBreakdown?: string; // Quiebre principal sintético (ej: "Gestión de la ira", "Trato con sus padres", etc.)
   lastActivityAt?: string;
-  transformationSpacesEnabled?: boolean; // Espacio 'Tu camino de transformación' habilitado desde el panel admin
+  transformationSpacesEnabled?: boolean; // Espacio 'Tu camino de transformación' habilitado
+  welcomeMessage?: string; // Mensaje de bienvenida personalizado humano e inspirador
+  completedWorkshopIds?: string[]; // IDs de talleres completados: ['taller-1-raiz', 'taller-2-tallo', 'taller-3-florecimiento']
+  workshopMemories?: Record<
+    string,
+    {
+      pdfUrl?: string;
+      completedAt: string;
+      commitments?: string;
+      keyBreakthrough?: string;
+    }
+  >;
+  hasWorkshopsAccess?: boolean; // Acceso a la ruta de talleres
+  hasSessionsAccess?: boolean; // Acceso a la ruta de sesiones 1 a 1
+  programAccessLevel?: ProgramAccessLevel; // 'free' (Acceso Libre / Gratuito) o 'premium' (Acceso Premium / Con Inversión)
+  authorizedForOneOnOne?: boolean; // Estado de Autorización 1 a 1 (aprobado por el facilitador)
+  oneOnOnePackagePurchased?: boolean; // Paquete de 12 sesiones adquirido
+  enrolledWorkshopIds?: string[]; // IDs de talleres en los que el usuario está activamente inscrito
 }
 
 export type ProspectStatus =
@@ -48,15 +67,17 @@ export interface Prospect {
   createdAt: string;
 }
 
-export type SessionStatus = 'scheduled' | 'completed' | 'cancelled';
+export type SessionStatus = 'scheduled' | 'completed' | 'cancelled' | 'Completada' | 'in_progress';
 
 export interface Session {
   id: string;
   clientId: string;
-  sessionNumber?: number; // 1 to 6
+  sessionNumber?: number; // 1 to 12
   date: string; // ISO string
   meetLink: string;
   status: SessionStatus;
+  title?: string;
+  sessionGoal?: string;
   notes?: string;
   ontologicalFocus?: string;
   isPaid?: boolean;
@@ -65,6 +86,9 @@ export interface Session {
   unlockedPaymentPlan?: 'level' | 'full';
   durationMinutes?: number;
   programNodeStep?: number;
+  keyInsights?: string[];
+  actionAgreements?: string[];
+  somaticFocus?: string;
 }
 
 export interface PostSessionForm {
@@ -88,6 +112,8 @@ export interface PostSessionForm {
   coacheeKeyDeclaration?: string;
   agreedActionItems?: string[];
   somaticHomework?: string;
+  keyBreakthrough?: string;
+  actionCommitment?: string;
 }
 
 export interface FormSubmission {
@@ -101,6 +127,11 @@ export interface FormSubmission {
   levelSpecificAnswer?: string; // Respuesta a la pregunta específica del nivel
   dynamicAnswers?: Record<string, string | number>; // Dynamic questionnaire responses
   submittedAt: string; // ISO string
+  breakdownArea?: string;
+  currentEmotion?: string;
+  masterJudgment?: string;
+  limitingBelief?: string;
+  actionCommitment?: string;
 }
 
 export interface LevelReinforcementPack {
@@ -210,8 +241,10 @@ export interface AIInsight {
   generatedAt: string;
   webhookStatus?: 'sent' | 'fallback' | 'pending';
   somaticIndicators?: string;
+  somaticPatterns?: string[];
   recommendedShift?: string;
   powerfulQuestions?: string[];
+  actionQuestions?: string[];
   somaticScore?: number;
   confidenceScore?: number;
   confidenceLevel?: string;
@@ -232,6 +265,10 @@ export interface EventRegistration {
   attendedEvent: boolean;
   userUid?: string;
   googleAuthConnected?: boolean;
+  memoryPdfUrl?: string; // Cuaderno de memorias generado (AutoCrat / Google Docs)
+  commitments?: string; // Compromisos asumidos en el taller
+  keyBreakthrough?: string; // Quiebre o aprendizaje principal
+  completedAt?: string; // Fecha y hora de finalización del taller
 }
 
 export type EventCategory =
@@ -334,7 +371,7 @@ export interface CronogramaEvent {
   spotsLeft: number;
   totalSpots: number;
   featured: boolean;
-  status: 'upcoming' | 'live' | 'completed';
+  status: 'upcoming' | 'live' | 'completed' | 'past';
   price?: string;
   // Sección 2: Contenido y Temario
   syllabus?: SyllabusBlock[];

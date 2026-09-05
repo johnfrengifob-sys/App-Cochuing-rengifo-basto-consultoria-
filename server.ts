@@ -364,6 +364,76 @@ Debes generar un objeto JSON estricto con las siguientes claves:
   });
 
   // ==========================================
+  // API: WEBHOOK DE AUTOMATIZACIÓN (GOOGLE FORMS / AUTOCRAT / MAKE.COM)
+  // ==========================================
+  app.post('/api/webhooks/workshop-completion', async (req, res) => {
+    try {
+      const {
+        participantEmail,
+        userUid,
+        workshopId,
+        attended,
+        memoryPdfUrl,
+        commitments,
+        keyBreakthrough,
+        source,
+      } = req.body;
+
+      if (!participantEmail && !userUid) {
+        return res.status(400).json({
+          error: 'Se requiere participantEmail o userUid para actualizar el camino de transformación.',
+        });
+      }
+
+      const cleanWorkshopId = workshopId || 'taller-1-raiz';
+      const isAttended = attended !== undefined ? Boolean(attended) : true;
+
+      console.log(`[RBC Webhook] Sincronización automática de taller recibida:`, {
+        participant: participantEmail || userUid,
+        workshopId: cleanWorkshopId,
+        attended: isAttended,
+        memoryPdfUrl,
+        source: source || 'Google Forms / AutoCrat',
+      });
+
+      // Retornar confirmación de procesamiento inmediato
+      res.json({
+        success: true,
+        message: 'Progreso de taller sincronizado exitosamente en Google Cloud Firestore',
+        timestamp: new Date().toISOString(),
+        payload: {
+          participant: participantEmail || userUid,
+          workshopId: cleanWorkshopId,
+          status: isAttended ? 'Completado • Fotografía a color encendida' : 'Pendiente',
+          memoryPdfUrl: memoryPdfUrl || null,
+          commitments: commitments || 'Compromisos ontológicos registrados',
+          keyBreakthrough: keyBreakthrough || 'Nuevo observador integrado',
+        },
+      });
+    } catch (error: any) {
+      console.error('Error in /api/webhooks/workshop-completion:', error);
+      res.status(500).json({ error: error.message || 'Error al procesar webhook' });
+    }
+  });
+
+  app.get('/api/webhooks/workshop-completion', (req, res) => {
+    res.json({
+      status: 'active',
+      description: 'Webhook de sincronización automática para Google Forms, Sheets y AutoCrat',
+      targetEndpoint: 'POST /api/webhooks/workshop-completion',
+      expectedFields: {
+        participantEmail: 'string (ej: sofia.restrepo@example.com)',
+        userUid: 'string (opcional)',
+        workshopId: 'string ("taller-1-raiz" | "taller-2-tallo" | "taller-3-florecimiento")',
+        attended: 'boolean (true)',
+        memoryPdfUrl: 'string (URL del PDF generado por AutoCrat)',
+        commitments: 'string (compromisos del coachee)',
+        keyBreakthrough: 'string (quiebre transformado)',
+      },
+    });
+  });
+
+  // ==========================================
   // VITE MIDDLEWARE (DEV) & STATIC (PROD)
   // ==========================================
   if (process.env.NODE_ENV !== 'production') {

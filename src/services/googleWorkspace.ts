@@ -331,7 +331,7 @@ export class GoogleWorkspaceService {
 
   // Generate a brand new document directly in Google Workspace
   public static generateNewWorkspaceDocument(params: {
-    type: 'doc' | 'sheet' | 'slide' | 'form' | 'folder' | 'knowledge_base';
+    type: WorkspaceDocumentCategory;
     title: string;
     description?: string;
     tags?: string[];

@@ -41,10 +41,12 @@ import {
   ChevronRight,
   Shield,
   Filter,
+  CalendarCheck2,
 } from 'lucide-react';
 import { EventGeneralConfigSection } from './admin/events/EventGeneralConfigSection';
 import { EventContentSyllabusSection } from './admin/events/EventContentSyllabusSection';
 import { EventEvaluationWorkbookSection } from './admin/events/EventEvaluationWorkbookSection';
+import { AdminSessionsManager } from './admin/AdminSessionsManager';
 import {
   downloadWorkshopNotebookPdf,
   generateWorkshopNotebookPdf,
@@ -58,7 +60,7 @@ interface ProgramsAndEventsManagerProps {
   onRefreshPrograms?: () => void;
   onRefreshRegistrations?: () => void;
   onOpenRegistrationPortal?: () => void;
-  initialSubTab?: 'events' | 'participants' | 'editor' | 'workbooks' | 'banner' | string;
+  initialSubTab?: 'events' | 'sessions' | 'participants' | 'editor' | 'workbooks' | 'banner' | string;
 }
 
 export const ProgramsAndEventsManager: React.FC<ProgramsAndEventsManagerProps> = ({
@@ -74,8 +76,24 @@ export const ProgramsAndEventsManager: React.FC<ProgramsAndEventsManagerProps> =
   const safeEvents = Array.isArray(cronogramaEvents) ? cronogramaEvents : [];
   const safeRegistrations = Array.isArray(eventRegistrations) ? eventRegistrations : [];
 
+  // Track sessions from store for real-time badge and synchronization
+  const [allSessions, setAllSessions] = useState(() => OntologicalStore.getSessions());
+
+  useEffect(() => {
+    const handleSessionsUpdate = () => {
+      setAllSessions(OntologicalStore.getSessions());
+    };
+    window.addEventListener('rbc-sessions-updated', handleSessionsUpdate);
+    window.addEventListener('storage', handleSessionsUpdate);
+    return () => {
+      window.removeEventListener('rbc-sessions-updated', handleSessionsUpdate);
+      window.removeEventListener('storage', handleSessionsUpdate);
+    };
+  }, []);
+
   // Active navigation sub-tab
-  const [activeSubTab, setActiveSubTab] = useState<'events' | 'editor' | 'workbooks' | 'participants'>(() => {
+  const [activeSubTab, setActiveSubTab] = useState<'events' | 'sessions' | 'editor' | 'workbooks' | 'participants'>(() => {
+    if (initialSubTab === 'sessions') return 'sessions';
     if (initialSubTab === 'participants') return 'participants';
     if (initialSubTab === 'editor') return 'editor';
     if (initialSubTab === 'workbooks') return 'workbooks';
@@ -83,9 +101,11 @@ export const ProgramsAndEventsManager: React.FC<ProgramsAndEventsManagerProps> =
   });
 
   useEffect(() => {
-    if (initialSubTab === 'participants') setActiveSubTab('participants');
+    if (initialSubTab === 'sessions') setActiveSubTab('sessions');
+    else if (initialSubTab === 'participants') setActiveSubTab('participants');
     else if (initialSubTab === 'editor') setActiveSubTab('editor');
     else if (initialSubTab === 'workbooks') setActiveSubTab('workbooks');
+    else if (initialSubTab === 'events') setActiveSubTab('events');
   }, [initialSubTab]);
 
   // Search and filters
@@ -473,7 +493,7 @@ export const ProgramsAndEventsManager: React.FC<ProgramsAndEventsManagerProps> =
       {/* 2. BARRA DE NAVEGACIÓN ENTRE SUB-PESTAÑAS */}
       <div className="flex items-center justify-between gap-3 overflow-x-auto pb-1 scrollbar-none">
         <div className="flex items-center gap-1.5 p-1 bg-gray-100 dark:bg-neutral-900 rounded-2xl border border-gray-200 dark:border-neutral-800 shrink-0">
-          {/* Pestaña Catálogo */}
+          {/* Pestaña Catálogo de Eventos */}
           <button
             type="button"
             onClick={() => setActiveSubTab('events')}
@@ -487,6 +507,23 @@ export const ProgramsAndEventsManager: React.FC<ProgramsAndEventsManagerProps> =
             <span>Eventos y Talleres</span>
             <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-gray-200 dark:bg-neutral-700 font-mono">
               {safeEvents.length}
+            </span>
+          </button>
+
+          {/* Pestaña Sesiones de Consultoría (1 a 1) */}
+          <button
+            type="button"
+            onClick={() => setActiveSubTab('sessions')}
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+              activeSubTab === 'sessions'
+                ? 'bg-white dark:bg-neutral-800 text-black dark:text-white shadow-xs'
+                : 'text-gray-600 dark:text-neutral-400 hover:text-black dark:hover:text-white'
+            }`}
+          >
+            <CalendarCheck2 className="w-3.5 h-3.5 text-emerald-500" />
+            <span>Sesiones de Consultoría</span>
+            <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 font-mono">
+              {allSessions.length}
             </span>
           </button>
 
@@ -562,6 +599,13 @@ export const ProgramsAndEventsManager: React.FC<ProgramsAndEventsManagerProps> =
           </button>
         )}
       </div>
+
+      {/* ========================================================================= */}
+      {/* VISTA: GESTIÓN DIRECTA DE SESIONES DE CONSULTORÍA (1 A 1)                 */}
+      {/* ========================================================================= */}
+      {activeSubTab === 'sessions' && (
+        <AdminSessionsManager onRefreshParent={onRefreshEvents} />
+      )}
 
       {/* ========================================================================= */}
       {/* VISTA 1: CATÁLOGO DE EVENTOS Y TALLERES                                    */}

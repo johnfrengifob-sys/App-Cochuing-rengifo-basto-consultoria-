@@ -101,8 +101,15 @@ export async function signInWithGoogle() {
   try {
     const result = await signInWithPopup(auth, googleProvider);
     return result.user;
-  } catch (error) {
-    console.error('Google Sign-In Error:', error);
+  } catch (error: unknown) {
+    const firebaseErr = error as { code?: string; message?: string };
+    if (firebaseErr?.code === 'auth/unauthorized-domain') {
+      console.warn(
+        '[Firebase Auth] unauthorized-domain: El dominio actual no está agregado en Dominios Autorizados de Firebase Console (Authentication > Settings > Authorized Domains).'
+      );
+    } else {
+      console.warn('Google Sign-In notice:', error);
+    }
     throw error;
   }
 }

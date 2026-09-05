@@ -222,7 +222,7 @@ export const AdminTemariosManager: React.FC<AdminTemariosManagerProps> = ({ onRe
             </label>
             <select
               value={formData.level}
-              onChange={(e) => setFormData({ ...formData, level: e.target.value })}
+              onChange={(e) => setFormData({ ...formData, level: e.target.value as 'Nivel I' | 'Nivel II' | 'Nivel III' })}
               className="w-full p-2.5 rounded-xl bg-gray-50 dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 text-black dark:text-white"
             >
               <option value="Nivel I">Nivel I</option>

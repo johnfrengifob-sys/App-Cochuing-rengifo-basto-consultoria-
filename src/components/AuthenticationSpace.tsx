@@ -542,7 +542,9 @@ export const AuthenticationSpace: React.FC<AuthenticationSpaceProps> = ({
                 {otpDigits.map((digit, idx) => (
                   <input
                     key={idx}
-                    ref={(el) => (otpInputsRef.current[idx] = el)}
+                    ref={(el) => {
+                      otpInputsRef.current[idx] = el;
+                    }}
                     type="text"
                     inputMode="numeric"
                     maxLength={1}
@@ -746,7 +748,9 @@ export const AuthenticationSpace: React.FC<AuthenticationSpaceProps> = ({
                 {pinDigits.map((digit, idx) => (
                   <input
                     key={idx}
-                    ref={(el) => (pinInputsRef.current[idx] = el)}
+                    ref={(el) => {
+                      pinInputsRef.current[idx] = el;
+                    }}
                     type="password"
                     inputMode="numeric"
                     maxLength={1}

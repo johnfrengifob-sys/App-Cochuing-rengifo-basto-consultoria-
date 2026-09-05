@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useState, useEffect, lazy, Suspense } from 'react';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { User } from './types';
 import { OntologicalStore } from './services/store';
 import { ThemeManager } from './services/theme';
@@ -11,22 +11,16 @@ import { FirestoreSyncService } from './services/firestoreSync';
 import { auth } from './services/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 import { Header } from './components/Header';
+import { LoginView } from './components/LoginView';
+import { EventRegistrationLanding } from './components/EventRegistrationLanding';
 import whiteWavesBg from './assets/images/white_waves_bg_1788461168119.jpg';
 
-// Lazy load heavy dashboard views and secondary modals to prevent initial load freeze
-const LoginView = lazy(() =>
-  import('./components/LoginView').then((m) => ({ default: m.LoginView }))
-);
+// Lazy load heavy authenticated dashboard views and secondary modals
 const ClientDashboard = lazy(() =>
   import('./components/ClientDashboard').then((m) => ({ default: m.ClientDashboard }))
 );
 const CoachDashboard = lazy(() =>
   import('./components/CoachDashboard').then((m) => ({ default: m.CoachDashboard }))
-);
-const EventRegistrationLanding = lazy(() =>
-  import('./components/EventRegistrationLanding').then((m) => ({
-    default: m.EventRegistrationLanding,
-  }))
 );
 const WebhookConfigModal = lazy(() =>
   import('./components/WebhookConfigModal').then((m) => ({

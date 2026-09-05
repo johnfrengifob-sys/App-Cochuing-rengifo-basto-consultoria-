@@ -71,6 +71,10 @@ export class FirestoreSyncService {
           privacyTermsAccepted: registration.privacyTermsAccepted,
           attendedEvent: registration.attendedEvent,
           userUid: registration.userUid || null,
+          memoryPdfUrl: registration.memoryPdfUrl || null,
+          commitments: registration.commitments || null,
+          keyBreakthrough: registration.keyBreakthrough || null,
+          completedAt: registration.completedAt || null,
         },
         { merge: true }
       );
@@ -203,6 +207,16 @@ export class FirestoreSyncService {
           programStep: user.programStep || 1,
           company: user.company || '',
           primaryBreakdown: user.primaryBreakdown || '',
+          transformationSpacesEnabled: user.transformationSpacesEnabled ?? true,
+          welcomeMessage: user.welcomeMessage || '',
+          completedWorkshopIds: user.completedWorkshopIds || [],
+          enrolledWorkshopIds: user.enrolledWorkshopIds || [],
+          workshopMemories: user.workshopMemories || {},
+          hasWorkshopsAccess: user.hasWorkshopsAccess ?? true,
+          hasSessionsAccess: user.hasSessionsAccess ?? true,
+          programAccessLevel: user.programAccessLevel || 'premium',
+          authorizedForOneOnOne: Boolean(user.authorizedForOneOnOne),
+          oneOnOnePackagePurchased: Boolean(user.oneOnOnePackagePurchased),
           updatedAt: new Date().toISOString(),
         },
         { merge: true }

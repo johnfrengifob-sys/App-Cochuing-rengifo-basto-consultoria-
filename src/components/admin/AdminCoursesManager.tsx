@@ -455,7 +455,7 @@ export const AdminCoursesManager: React.FC<AdminCoursesManagerProps> = ({ onRefr
                   <input
                     type="text"
                     value={editingProgram.format}
-                    onChange={(e) => setEditingProgram({ ...editingProgram, format: e.target.value })}
+                    onChange={(e) => setEditingProgram({ ...editingProgram, format: e.target.value as any })}
                     placeholder="Ej: Online en Vivo + Prácticas Somáticas"
                     className="w-full p-2.5 rounded-xl bg-gray-50 dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 text-black dark:text-white"
                   />

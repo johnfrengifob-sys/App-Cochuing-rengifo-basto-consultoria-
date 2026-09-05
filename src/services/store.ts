@@ -695,6 +695,12 @@ const INITIAL_USERS: User[] = [
     totalInvested: '$1.500.000 COP',
     primaryBreakdown: 'Autoexigencia y límites no dichos con directivos',
     lastActivityAt: new Date(Date.now() - 1000 * 60 * 60 * 5).toISOString(),
+    transformationSpacesEnabled: true,
+    hasWorkshopsAccess: true,
+    hasSessionsAccess: true,
+    programAccessLevel: 'free',
+    authorizedForOneOnOne: true,
+    oneOnOnePackagePurchased: true,
   },
   {
     uid: 'client-2',
@@ -713,6 +719,12 @@ const INITIAL_USERS: User[] = [
     totalInvested: '$750.000 COP',
     primaryBreakdown: 'Gestión de la ira y reactividad con socios',
     lastActivityAt: new Date(Date.now() - 1000 * 60 * 60 * 22).toISOString(),
+    transformationSpacesEnabled: true,
+    hasWorkshopsAccess: true,
+    hasSessionsAccess: true,
+    programAccessLevel: 'premium',
+    authorizedForOneOnOne: false,
+    oneOnOnePackagePurchased: false,
   },
   {
     uid: 'client-3',
@@ -731,6 +743,12 @@ const INITIAL_USERS: User[] = [
     totalInvested: '$1.500.000 COP',
     primaryBreakdown: 'Crisis de identidad directiva y propósito',
     lastActivityAt: new Date(Date.now() - 1000 * 60 * 60 * 48).toISOString(),
+    transformationSpacesEnabled: true,
+    hasWorkshopsAccess: true,
+    hasSessionsAccess: false,
+    programAccessLevel: 'premium',
+    authorizedForOneOnOne: false,
+    oneOnOnePackagePurchased: false,
   },
   {
     uid: 'client-4',
@@ -749,6 +767,12 @@ const INITIAL_USERS: User[] = [
     totalInvested: '$750.000 COP',
     primaryBreakdown: 'Trato y sanación con sus padres & lealtad invisible',
     lastActivityAt: new Date(Date.now() - 1000 * 60 * 60 * 72).toISOString(),
+    transformationSpacesEnabled: true,
+    hasWorkshopsAccess: true,
+    hasSessionsAccess: false,
+    programAccessLevel: 'premium',
+    authorizedForOneOnOne: true,
+    oneOnOnePackagePurchased: false,
   },
   {
     uid: 'client-5',
@@ -767,6 +791,12 @@ const INITIAL_USERS: User[] = [
     totalInvested: '$3.000.000 COP',
     primaryBreakdown: 'Miedo al juicio externo y soberanía de decisión',
     lastActivityAt: new Date(Date.now() - 1000 * 60 * 60 * 240).toISOString(),
+    transformationSpacesEnabled: true,
+    hasWorkshopsAccess: true,
+    hasSessionsAccess: true,
+    programAccessLevel: 'free',
+    authorizedForOneOnOne: true,
+    oneOnOnePackagePurchased: true,
   },
   {
     uid: 'client-6',
@@ -785,6 +815,12 @@ const INITIAL_USERS: User[] = [
     totalInvested: '$1.500.000 COP',
     primaryBreakdown: 'Control obsesivo y delegación con angustia',
     lastActivityAt: new Date(Date.now() - 1000 * 60 * 60 * 12).toISOString(),
+    transformationSpacesEnabled: true,
+    hasWorkshopsAccess: true,
+    hasSessionsAccess: false,
+    programAccessLevel: 'premium',
+    authorizedForOneOnOne: false,
+    oneOnOnePackagePurchased: false,
   },
   {
     uid: 'client-andres',
@@ -803,6 +839,14 @@ const INITIAL_USERS: User[] = [
     totalInvested: '$1.500.000 COP',
     primaryBreakdown: 'Quiebre de autoexigencia extrema, delegación y presencia directiva',
     lastActivityAt: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
+    transformationSpacesEnabled: true,
+    hasWorkshopsAccess: true,
+    hasSessionsAccess: true,
+    programAccessLevel: 'free',
+    authorizedForOneOnOne: true,
+    oneOnOnePackagePurchased: true,
+    completedWorkshopIds: ['taller-1-raiz'],
+    enrolledWorkshopIds: ['taller-1-raiz', 'taller-2-tallo'],
   },
 ];
 
@@ -2869,7 +2913,14 @@ export class OntologicalStore {
 
     const updatedRegistrations = registrations.map((r) => {
       if (r.id === registrationId || r.ticketCode === registrationId) {
-        targetReg = { ...r, attendedEvent: true };
+        targetReg = {
+          ...r,
+          attendedEvent: true,
+          completedAt: r.completedAt || new Date().toISOString(),
+          memoryPdfUrl: r.memoryPdfUrl || `https://rbc.edu.co/memorias/${r.eventId}.pdf`,
+          commitments: r.commitments || 'Compromisos ontológicos acordados y vigentes.',
+        };
+        FirestoreSyncService.syncEventRegistration(targetReg).catch(() => {});
         return targetReg;
       }
       return r;
@@ -2879,18 +2930,156 @@ export class OntologicalStore {
 
     let user: User | null = null;
     if (targetReg && (targetReg as EventRegistration).userUid) {
+      const regObj = targetReg as EventRegistration;
       const users = this.getUsers();
-      user = users.find((u) => u.uid === (targetReg as EventRegistration).userUid) || null;
+      const updatedUsers = users.map((u) => {
+        if (u.uid === regObj.userUid || u.email.toLowerCase() === regObj.email.toLowerCase()) {
+          const completedIds = u.completedWorkshopIds || [];
+          const nextCompleted = completedIds.includes(regObj.eventId)
+            ? completedIds
+            : [...completedIds, regObj.eventId];
+
+          const memories = u.workshopMemories || {};
+          const nextMemories = {
+            ...memories,
+            [regObj.eventId]: {
+              pdfUrl: regObj.memoryPdfUrl || `https://rbc.edu.co/memorias/${regObj.eventId}.pdf`,
+              completedAt: regObj.completedAt || new Date().toISOString(),
+              commitments: regObj.commitments || 'Presencia, límites conscientes y coherencia somática.',
+              keyBreakthrough: regObj.keyBreakthrough || 'Deconstrucción del automatismo y rediseño del observador.',
+            },
+          };
+
+          user = {
+            ...u,
+            status: 'active',
+            transformationSpacesEnabled: true,
+            hasWorkshopsAccess: true,
+            completedWorkshopIds: nextCompleted,
+            workshopMemories: nextMemories,
+            lastActivityAt: new Date().toISOString(),
+          };
+          return user;
+        }
+        return u;
+      });
+
       if (user) {
-        // Ensure user is in good standing
-        this.saveUsers(users);
+        this.saveUsers(updatedUsers);
+        FirestoreSyncService.syncUserProfile(user).catch(() => {});
       }
+    }
+
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('rbc-workshops-updated'));
+      window.dispatchEvent(new CustomEvent('rbc-sessions-updated'));
+      window.dispatchEvent(new Event('storage'));
     }
 
     return {
       registration: targetReg,
       user,
     };
+  }
+
+  static markWorkshopCompleted(
+    participantEmailOrUid: string,
+    workshopId: string,
+    details?: {
+      memoryPdfUrl?: string;
+      commitments?: string;
+      keyBreakthrough?: string;
+      completedAt?: string;
+    }
+  ): { user: User | null; updatedRegistrations: EventRegistration[] } {
+    const query = participantEmailOrUid.trim().toLowerCase();
+    const completedTimestamp = details?.completedAt || new Date().toISOString();
+
+    const users = this.getUsers();
+    let updatedUser: User | null = null;
+
+    const updatedUsers = users.map((u) => {
+      if (u.uid === query || u.email.toLowerCase() === query) {
+        const existingCompleted = u.completedWorkshopIds || [];
+        const newCompleted = existingCompleted.includes(workshopId)
+          ? existingCompleted
+          : [...existingCompleted, workshopId];
+
+        const existingMemories = u.workshopMemories || {};
+        const newMemories = {
+          ...existingMemories,
+          [workshopId]: {
+            pdfUrl:
+              details?.memoryPdfUrl ||
+              existingMemories[workshopId]?.pdfUrl ||
+              `https://rbc.edu.co/memorias/${workshopId}.pdf`,
+            completedAt: completedTimestamp,
+            commitments:
+              details?.commitments ||
+              existingMemories[workshopId]?.commitments ||
+              'Presencia, límites conscientes y coherencia somática.',
+            keyBreakthrough:
+              details?.keyBreakthrough ||
+              existingMemories[workshopId]?.keyBreakthrough ||
+              'Deconstrucción del automatismo y rediseño del observador.',
+          },
+        };
+
+        updatedUser = {
+          ...u,
+          status: 'active',
+          transformationSpacesEnabled: true,
+          hasWorkshopsAccess: true,
+          completedWorkshopIds: newCompleted,
+          workshopMemories: newMemories,
+          lastActivityAt: completedTimestamp,
+        };
+        return updatedUser;
+      }
+      return u;
+    });
+
+    if (updatedUser) {
+      this.saveUsers(updatedUsers);
+      FirestoreSyncService.syncUserProfile(updatedUser).catch(() => {});
+    }
+
+    // Update any event registration
+    const registrations = this.getEventRegistrations();
+    const updatedRegsList: EventRegistration[] = [];
+    const updatedRegistrations = registrations.map((r) => {
+      const match =
+        r.eventId === workshopId &&
+        (r.email.toLowerCase() === query || (r.userUid && r.userUid === query));
+      if (match) {
+        const updatedReg: EventRegistration = {
+          ...r,
+          attendedEvent: true,
+          completedAt: completedTimestamp,
+          memoryPdfUrl: details?.memoryPdfUrl || r.memoryPdfUrl,
+          commitments: details?.commitments || r.commitments,
+          keyBreakthrough: details?.keyBreakthrough || r.keyBreakthrough,
+        };
+        updatedRegsList.push(updatedReg);
+        FirestoreSyncService.syncEventRegistration(updatedReg).catch(() => {});
+        return updatedReg;
+      }
+      return r;
+    });
+
+    this.saveEventRegistrations(updatedRegistrations);
+
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(
+        new CustomEvent('rbc-workshops-updated', {
+          detail: { workshopId, participant: participantEmailOrUid },
+        })
+      );
+      window.dispatchEvent(new CustomEvent('rbc-sessions-updated'));
+      window.dispatchEvent(new Event('storage'));
+    }
+
+    return { user: updatedUser, updatedRegistrations: updatedRegsList };
   }
 
   static getUsers(): User[] {
@@ -2923,10 +3112,32 @@ export class OntologicalStore {
           primaryBreakdown: u.primaryBreakdown || 'Quiebre de autoexigencia extrema, delegación y presencia directiva',
         };
       }
-      // Guarantee client defaults for status, totalInvested and primaryBreakdown
+      // Guarantee client defaults for status, totalInvested, primaryBreakdown and transformation journey
+      const isActive = (u.status || 'active') === 'active';
       return {
         ...u,
         status: u.status || 'active',
+        transformationSpacesEnabled: u.transformationSpacesEnabled ?? isActive,
+        hasWorkshopsAccess: u.hasWorkshopsAccess ?? true,
+        hasSessionsAccess: u.hasSessionsAccess ?? true,
+        completedWorkshopIds:
+          u.completedWorkshopIds ||
+          (u.uid === 'client-1' || u.uid === 'client-andres' ? ['taller-1-raiz'] : []),
+        workshopMemories: u.workshopMemories || {
+          ...(u.uid === 'client-1' || u.uid === 'client-andres'
+            ? {
+                'taller-1-raiz': {
+                  pdfUrl: 'https://rbc.edu.co/memorias/taller-1-raiz.pdf',
+                  completedAt: '2025-03-01T10:00:00.000Z',
+                  commitments: 'Centramiento corporal antes de reuniones decisivas y registro del observador.',
+                  keyBreakthrough: 'Reconocimiento de la autoexigencia como juicio automático y no como verdad fáctica.',
+                },
+              }
+            : {}),
+        },
+        welcomeMessage:
+          u.welcomeMessage ||
+          `Bienvenido(a) a tu Camino de Transformación. Este espacio sincroniza en tiempo real tu evolución en talleres y consultoría ontológica.`,
         totalInvested:
           u.totalInvested ||
           (u.paymentStatus === 'Cuota 1 de 2'
@@ -3689,6 +3900,9 @@ export class OntologicalStore {
 
   static saveSessions(sessions: Session[]): void {
     this.save(STORAGE_KEYS.SESSIONS, sessions);
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('rbc-sessions-updated', { detail: { sessions } }));
+    }
   }
 
   static addSession(session: Session): void {
@@ -3829,10 +4043,11 @@ export class OntologicalStore {
     return forms.find((f) => f.sessionId === sessionId);
   }
 
-  static savePostSessionForm(form: PostSessionForm): void {
+  static savePostSessionForm(form: PostSessionForm): PostSessionForm {
     const forms = this.getPostSessionForms();
     const filtered = forms.filter((f) => f.id !== form.id && f.sessionId !== form.sessionId);
     this.savePostSessionForms([form, ...filtered]);
+    return form;
   }
 
   static deletePostSessionForm(formId: string): void {
@@ -4989,6 +5204,245 @@ export class OntologicalStore {
       }
     }
     return updated;
+  }
+
+  // =========================================================================
+  // --- PORTAL DE PAGOS, MONETIZACIÓN & LÓGICA DE ACCESO ONTOLÓGICO ---
+  // =========================================================================
+
+  /**
+   * Actualiza el Estado de Autorización 1 a 1 para un coachee
+   * Controla la visibilidad y adquisición exclusiva del paquete de 12 sesiones
+   */
+  static setOneOnOneAuthorization(userId: string, authorized: boolean): User | null {
+    const users = this.getUsers();
+    let updatedUser: User | null = null;
+    const updatedUsers = users.map((u) => {
+      if (u.uid === userId) {
+        updatedUser = {
+          ...u,
+          authorizedForOneOnOne: authorized,
+          lastActivityAt: new Date().toISOString(),
+        };
+        return updatedUser;
+      }
+      return u;
+    });
+
+    if (updatedUser) {
+      this.saveUsers(updatedUsers);
+      FirestoreSyncService.syncUserProfile(updatedUser).catch(() => {});
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('rbc-sessions-updated'));
+        window.dispatchEvent(new CustomEvent('rbc-workshops-updated'));
+        window.dispatchEvent(new Event('storage'));
+      }
+    }
+    return updatedUser;
+  }
+
+  /**
+   * Configura el Nivel de Acceso al Programa ('free' | 'premium')
+   * Define si los talleres son de Acceso Libre o requieren Inversión
+   */
+  static setProgramAccessLevel(userId: string, level: ProgramAccessLevel): User | null {
+    const users = this.getUsers();
+    let updatedUser: User | null = null;
+    const updatedUsers = users.map((u) => {
+      if (u.uid === userId) {
+        updatedUser = {
+          ...u,
+          programAccessLevel: level,
+          lastActivityAt: new Date().toISOString(),
+        };
+        return updatedUser;
+      }
+      return u;
+    });
+
+    if (updatedUser) {
+      this.saveUsers(updatedUsers);
+      FirestoreSyncService.syncUserProfile(updatedUser).catch(() => {});
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('rbc-workshops-updated'));
+        window.dispatchEvent(new Event('storage'));
+      }
+    }
+    return updatedUser;
+  }
+
+  /**
+   * Registra a un usuario en un taller (sea gratuito o tras confirmar pago)
+   * Desbloquea y sincroniza automáticamente la estación en Tu Camino de Transformación
+   */
+  static enrollUserInWorkshop(
+    userId: string,
+    workshopId: string,
+    isFreeOrApproved = true
+  ): { user: User | null; registration: EventRegistration } {
+    const users = this.getUsers();
+    let targetUser = users.find((u) => u.uid === userId);
+    const events = this.getCronogramaEvents();
+    const event = events.find((e) => e.id === workshopId) || INITIAL_CRONOGRAMA_EVENTS[0];
+
+    const randomSuffix = Math.floor(10000 + Math.random() * 90000);
+    const ticketCode = `RBC-TK-${randomSuffix}`;
+    const regId = `reg-${Date.now()}`;
+
+    const newRegistration: EventRegistration = {
+      id: regId,
+      ticketCode,
+      eventId: workshopId,
+      eventTitle: event.title,
+      eventDate: event.date,
+      name: targetUser?.name || 'Participante',
+      email: targetUser?.email || '',
+      phone: targetUser?.phone || COMPANY_INFO.phone,
+      registeredAt: new Date().toISOString(),
+      icfTermsAccepted: true,
+      privacyTermsAccepted: true,
+      attendedEvent: false,
+      userUid: userId,
+      status: isFreeOrApproved ? 'aprobado' : 'pendiente',
+    };
+
+    const allRegs = this.getEventRegistrations();
+    const filteredRegs = allRegs.filter(
+      (r) => !(r.eventId === workshopId && (r.userUid === userId || r.email.toLowerCase() === targetUser?.email.toLowerCase()))
+    );
+    this.saveEventRegistrations([newRegistration, ...filteredRegs]);
+    FirestoreSyncService.syncEventRegistration(newRegistration).catch(() => {});
+
+    let updatedUser: User | null = null;
+    if (targetUser) {
+      const existingEnrolled = targetUser.enrolledWorkshopIds || [];
+      const newEnrolled = existingEnrolled.includes(workshopId)
+        ? existingEnrolled
+        : [...existingEnrolled, workshopId];
+
+      const updatedUsers = users.map((u) => {
+        if (u.uid === userId) {
+          updatedUser = {
+            ...u,
+            status: 'active',
+            transformationSpacesEnabled: true,
+            hasWorkshopsAccess: true,
+            enrolledWorkshopIds: newEnrolled,
+            lastActivityAt: new Date().toISOString(),
+          };
+          return updatedUser;
+        }
+        return u;
+      });
+
+      this.saveUsers(updatedUsers);
+      if (updatedUser) {
+        FirestoreSyncService.syncUserProfile(updatedUser).catch(() => {});
+      }
+    }
+
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('rbc-workshops-updated'));
+      window.dispatchEvent(new Event('storage'));
+    }
+
+    return { user: updatedUser, registration: newRegistration };
+  }
+
+  /**
+   * Adquiere o formaliza el Paquete de 12 Sesiones 1 a 1
+   * Habilita los espacios interactivos, cuaderno, bitácora y sesiones quincenales
+   */
+  static purchaseOneOnOnePackage(
+    userId: string,
+    paymentMethod: 'bre_b_nu' | 'efectivo' | 'online_card',
+    amount = '$1.500.000 COP',
+    notes?: string
+  ): { user: User | null; paymentRequest?: PaymentRequest } {
+    const users = this.getUsers();
+    let updatedUser: User | null = null;
+
+    const updatedUsers = users.map((u) => {
+      if (u.uid === userId) {
+        updatedUser = {
+          ...u,
+          status: 'active',
+          transformationSpacesEnabled: true,
+          hasSessionsAccess: true,
+          oneOnOnePackagePurchased: true,
+          paymentStatus: 'Completado',
+          programProgress: Math.max(u.programProgress || 1, 1),
+          totalInvested: amount,
+          lastActivityAt: new Date().toISOString(),
+        };
+        return updatedUser;
+      }
+      return u;
+    });
+
+    let newPaymentReq: PaymentRequest | undefined;
+    if (updatedUser) {
+      this.saveUsers(updatedUsers);
+      FirestoreSyncService.syncUserProfile(updatedUser).catch(() => {});
+
+      // Sincronizar sesiones del cliente para que estén listas y pagadas
+      const clientSessions = this.getSessionsForClient(userId);
+      if (clientSessions.length === 0) {
+        // Crear las 6 sesiones quincenales oficiales
+        const baseDate = Date.now();
+        const createdSessions: Session[] = PROGRAM_NODES.map((node, index) => ({
+          id: `sess-${userId}-${node.step}`,
+          clientId: userId,
+          sessionNumber: node.step,
+          date: new Date(baseDate + 1000 * 60 * 60 * 24 * 14 * index).toISOString(),
+          meetLink: 'https://meet.google.com/rbc-conversatorio-ontologico',
+          status: index === 0 ? 'scheduled' : 'scheduled',
+          isPaid: true,
+          paymentValidatedAt: new Date().toISOString(),
+          notes: `Sesión ${node.step}: ${node.level} • ${node.sessionTitle}`,
+          durationMinutes: 60,
+        }));
+        const allSessions = this.getSessions();
+        this.saveSessions([...allSessions, ...createdSessions]);
+      } else {
+        // Asegurar que las sesiones estén marcadas como pagadas
+        const allSessions = this.getSessions();
+        const updatedSessions = allSessions.map((s) => {
+          if (s.clientId === userId) {
+            return { ...s, isPaid: true, paymentValidatedAt: new Date().toISOString() };
+          }
+          return s;
+        });
+        this.saveSessions(updatedSessions);
+      }
+
+      // Registrar solicitud de pago en el historial administrativo
+      newPaymentReq = this.submitPaymentRequest({
+        clientId: (updatedUser as User).uid,
+        clientName: (updatedUser as User).name,
+        clientEmail: (updatedUser as User).email,
+        clientPhone: (updatedUser as User).phone || COMPANY_INFO.phone,
+        amount,
+        concept: 'Paquete de 12 Sesiones de Acompañamiento Ontológico 1 a 1',
+        targetStep: 1,
+        planType: 'full',
+        method: paymentMethod,
+        notes: notes || 'Inversión procesada mediante Portal de Pagos.',
+      });
+
+      // Si fue tarjeta o aprobado inmediato, validar
+      if (paymentMethod === 'online_card') {
+        this.approvePaymentRequest(newPaymentReq.id);
+      }
+    }
+
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('rbc-sessions-updated'));
+      window.dispatchEvent(new CustomEvent('rbc-workshops-updated'));
+      window.dispatchEvent(new Event('storage'));
+    }
+
+    return { user: updatedUser, paymentRequest: newPaymentReq };
   }
 }
 

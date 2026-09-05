@@ -4,6 +4,7 @@ import {
   FormSubmission,
   AIInsight,
   Session,
+  SessionStatus,
   ClientStatus,
   ProgramNodeInfo,
   PostSessionForm,
@@ -177,7 +178,7 @@ export const ClientWorkstationView: React.FC<ClientWorkstationViewProps> = ({
     sessionNumber: 1,
     date: '',
     meetLink: '',
-    status: 'scheduled' as 'scheduled' | 'completed' | 'cancelled',
+    status: 'scheduled' as SessionStatus,
     ontologicalFocus: '',
     notes: '',
   });
