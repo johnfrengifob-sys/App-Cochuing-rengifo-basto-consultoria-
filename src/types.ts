@@ -101,6 +101,7 @@ export interface PostSessionForm {
   submittedAt: string;
   // Campos del Formulario Simplificado 1 a 1 (Estructura Orgánica)
   emergentTopic?: string; // Campo 2: El tema emergente (De qué eligió hablar el cliente hoy)
+  discovery?: string; // Descubrimiento / Quiebre Ontológico
   actionStep?: string; // Campo 3: El paso a la acción (Qué decidió hacer con lo que descubrió)
   cycleHarvest?: string; // Lógica Condicional (Cierres 4, 8, 12): Cosecha del Ciclo
   isCycleMilestone?: boolean; // Verdadero en sesiones 4, 8 y 12

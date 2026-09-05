@@ -3,31 +3,37 @@ import { OntologicalExperience, UniversalExperienceBlock } from '../types';
 export const CURATED_EXPERIENCE_PHOTOS = [
   {
     title: 'Raíz Somática (Presencia y Tierra)',
+    description: 'Arraigo corporal, respiración diafragmática y conexión con el presente.',
     url: 'https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=1200&auto=format&fit=crop&q=80',
     tags: ['Cuerpo', 'Respiración', 'Tierra'],
   },
   {
     title: 'Tallo Lingüístico (Diálogo y Reencuadre)',
+    description: 'Actos del habla conscientes, distinción de juicios y coordinación de acciones.',
     url: 'https://images.unsplash.com/photo-1499750310107-5fef28a66643?w=1200&auto=format&fit=crop&q=80',
     tags: ['Lenguaje', 'Escucha', 'Claridad'],
   },
   {
     title: 'Florecimiento (Acción y Propósito)',
+    description: 'Integración ontológica, liderazgo con propósito y soberanía personal.',
     url: 'https://images.unsplash.com/photo-1518531933037-91b2f5f229cc?w=1200&auto=format&fit=crop&q=80',
     tags: ['Expansión', 'Liderazgo', 'Integración'],
   },
   {
     title: 'Arqueología Interior (Pausa Silenciosa)',
+    description: 'Exploración de la transparencia habitual y quiebres transformadores.',
     url: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=1200&auto=format&fit=crop&q=80',
     tags: ['Indagación', 'Quietud', 'Reflexión'],
   },
   {
     title: 'Círculo de Almas (Encuentro Consciente)',
+    description: 'Espacio de resonancia, vulnerabilidad compartida y red vincular.',
     url: 'https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=1200&auto=format&fit=crop&q=80',
     tags: ['Comunidad', 'Vulnerabilidad', 'Soberanía'],
   },
   {
     title: 'Montaña y Horizonte (Retiro Ontológico)',
+    description: 'Visión panorámica de vida, coherencia ser-hacer y proyección de futuro.',
     url: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=1200&auto=format&fit=crop&q=80',
     tags: ['Retiro', 'Inmersión', 'Perspectiva'],
   },
