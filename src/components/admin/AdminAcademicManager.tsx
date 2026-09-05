@@ -6,6 +6,7 @@ import {
   Ticket,
   Link2,
   CalendarCheck2,
+  Layers,
 } from 'lucide-react';
 import { OntologicalStore } from '../../services/store';
 import {
@@ -26,6 +27,9 @@ const ProgramsAndEventsManager = lazy(() =>
 const CerebroVinculacionManager = lazy(() =>
   import('../CerebroVinculacionManager').then((m) => ({ default: m.CerebroVinculacionManager }))
 );
+const ExperienceEditorManager = lazy(() =>
+  import('./ExperienceEditorManager').then((m) => ({ default: m.ExperienceEditorManager }))
+);
 
 function SubPanelFallback({ title = 'Cargando Sub-Panel...' }: { title?: string }) {
   return (
@@ -41,6 +45,7 @@ function SubPanelFallback({ title = 'Cargando Sub-Panel...' }: { title?: string 
 export type AcademicAdminSubTab =
   | 'events'
   | 'sessions'
+  | 'experiences'
   | 'activadores'
   | 'cerebro'
   | 'triggers'
@@ -77,9 +82,10 @@ export const AdminAcademicManager: React.FC<AdminAcademicManagerProps> = ({
   onRefreshRegistrations: propOnRefreshRegistrations,
   onOpenRegistrationPortal,
 }) => {
-  const [currentTab, setCurrentTab] = useState<'events' | 'activadores' | 'cerebro' | 'espacios'>(() => {
+  const [currentTab, setCurrentTab] = useState<'events' | 'activadores' | 'cerebro' | 'espacios' | 'experiences'>(() => {
     if (initialSubTab === 'cerebro') return 'cerebro';
     if (initialSubTab === 'espacios') return 'espacios';
+    if (initialSubTab === 'experiences') return 'experiences';
     if (
       initialSubTab === 'automations' ||
       initialSubTab === 'triggers' ||
@@ -108,6 +114,8 @@ export const AdminAcademicManager: React.FC<AdminAcademicManagerProps> = ({
         setCurrentTab('cerebro');
       } else if (initialSubTab === 'espacios') {
         setCurrentTab('espacios');
+      } else if (initialSubTab === 'experiences') {
+        setCurrentTab('experiences');
       } else if (initialSubTab === 'automations') {
         setCurrentTab('activadores');
         setActivadoresMode('automations');
@@ -271,10 +279,30 @@ export const AdminAcademicManager: React.FC<AdminAcademicManagerProps> = ({
           <Link2 className="w-3.5 h-3.5 text-indigo-500" />
           <span>Cerebro & Enlaces</span>
         </button>
+
+        {/* Tab 5: Editor de Experiencias B&W */}
+        <button
+          type="button"
+          onClick={() => setCurrentTab('experiences')}
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-medium transition-all cursor-pointer shrink-0 ${
+            currentTab === 'experiences'
+              ? 'bg-black text-white dark:bg-white dark:text-black shadow-xs font-semibold'
+              : 'text-neutral-600 dark:text-neutral-400 hover:text-black dark:hover:text-white hover:bg-white/70 dark:hover:bg-neutral-800/70'
+          }`}
+        >
+          <Layers className="w-3.5 h-3.5 text-emerald-500" />
+          <span>Editor de Experiencias (Lienzo B&W)</span>
+        </button>
       </div>
 
       {/* Render Active Sub-Panel */}
       <div key={version}>
+        {currentTab === 'experiences' && (
+          <Suspense fallback={<SubPanelFallback title="Cargando Constructor de Experiencias B&W..." />}>
+            <ExperienceEditorManager />
+          </Suspense>
+        )}
+
         {currentTab === 'events' && (
           <Suspense fallback={<SubPanelFallback title="Cargando Programas y Eventos..." />}>
             <ProgramsAndEventsManager

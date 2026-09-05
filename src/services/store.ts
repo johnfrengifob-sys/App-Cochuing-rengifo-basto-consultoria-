@@ -1,6 +1,7 @@
 import {
   User,
   ClientStatus,
+  ProgramAccessLevel,
   Session,
   PostSessionForm,
   FormSubmission,
@@ -25,6 +26,9 @@ import {
   AutomatedTriggerConfig,
   PricingPackage,
   SystemLinkBinding,
+  OntologicalExperience,
+  UniversalExperienceBlock,
+  ExperienceFormat,
 } from '../types';
 import promotionalEventBannerImg from '../assets/images/proximo_evento_banner_1788270380574.jpg';
 import coachAvatarImg from '../assets/images/regenerated_image_1788287101599.jpg';
@@ -33,6 +37,7 @@ import {
   INITIAL_CRONOGRAMA_EVENTS as RAIZ_BALANCE_WORKSHOPS,
   MASTER_PROGRAM_RAIZ_BALANCE,
 } from '../data/raizBalanceWorkshops';
+import { INITIAL_EXPERIENCES, DEFAULT_UNIVERSAL_BLOCK_TEMPLATES } from '../data/initialExperiences';
 
 export const COMPANY_INFO = {
   fullName: 'Rengifo Basto Consultoría Ontológica',
@@ -1273,6 +1278,7 @@ const STORAGE_KEYS = {
   AUTOMATED_TRIGGERS: 'rbc_automated_triggers_v2',
   PRICING_PACKAGES: 'rbc_pricing_packages_v2',
   SYSTEM_LINK_BINDINGS: 'rbc_system_link_bindings_v2',
+  EXPERIENCES: 'rbc_ontological_experiences_v1',
 };
 
 export const INITIAL_AUTOMATED_TRIGGERS: AutomatedTriggerConfig[] = [
@@ -2658,6 +2664,124 @@ export class OntologicalStore {
     this.saveCronogramaEvents(updated);
   }
 
+  // =========================================================================
+  // --- MÓDULO UNIVERSAL: EDITOR DE EXPERIENCIAS (ALTO CONTRASTE B&W) ---
+  // =========================================================================
+  static getExperiences(): OntologicalExperience[] {
+    const list = this.load<OntologicalExperience[]>(
+      STORAGE_KEYS.EXPERIENCES,
+      INITIAL_EXPERIENCES
+    );
+    if (!Array.isArray(list) || list.length === 0) {
+      this.saveExperiences(INITIAL_EXPERIENCES);
+      return INITIAL_EXPERIENCES;
+    }
+    return list;
+  }
+
+  static saveExperiences(experiences: OntologicalExperience[]): void {
+    this.save(STORAGE_KEYS.EXPERIENCES, experiences);
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('rbc-experiences-updated'));
+    }
+    // Sincronización en segundo plano con Firestore
+    try {
+      FirestoreSyncService.syncAllExperiences(experiences);
+    } catch (e) {
+      console.warn('Sync all experiences warning:', e);
+    }
+  }
+
+  static saveExperience(experience: OntologicalExperience): OntologicalExperience {
+    const experiences = this.getExperiences();
+    const index = experiences.findIndex((e) => e.id === experience.id);
+    let updatedList: OntologicalExperience[];
+
+    const updatedExperience = {
+      ...experience,
+      updatedAt: new Date().toISOString(),
+    };
+
+    if (index >= 0) {
+      updatedList = experiences.map((e) => (e.id === experience.id ? updatedExperience : e));
+    } else {
+      updatedList = [updatedExperience, ...experiences];
+    }
+
+    this.saveExperiences(updatedList);
+
+    // Sync a Firestore
+    try {
+      FirestoreSyncService.syncExperience(updatedExperience);
+    } catch (e) {
+      console.warn('Sync individual experience warning:', e);
+    }
+
+    // Coherencia bidireccional con CronogramaEvents si es taller
+    if (experience.type === 'workshop') {
+      try {
+        const events = this.getCronogramaEvents();
+        const existingEvt = events.find((ev) => ev.id === experience.id || ev.id.includes(experience.id.replace('exp-', '')));
+        if (existingEvt) {
+          this.updateCronogramaEvent(existingEvt.id, {
+            title: experience.title,
+            subtitle: experience.subtitle,
+            meetUrl: experience.meetUrl,
+            imageUrl: experience.colorPhotoUrl,
+            coverImage: experience.colorPhotoUrl,
+            guidingQuestions: experience.guidingQuestions,
+          });
+        }
+      } catch (e) {
+        console.warn('CronogramaEvent sync warning:', e);
+      }
+    }
+
+    return updatedExperience;
+  }
+
+  static deleteExperience(id: string): void {
+    const experiences = this.getExperiences();
+    const updated = experiences.filter((e) => e.id !== id);
+    this.saveExperiences(updated);
+    try {
+      FirestoreSyncService.deleteExperience(id);
+    } catch (e) {
+      console.warn('Delete experience firestore warning:', e);
+    }
+  }
+
+  static cloneExperienceTemplate(
+    templateId: string,
+    customTitle?: string
+  ): OntologicalExperience {
+    const experiences = this.getExperiences();
+    const base = experiences.find((e) => e.id === templateId) || experiences[0];
+    const timestamp = Date.now();
+
+    const cloned: OntologicalExperience = {
+      ...JSON.parse(JSON.stringify(base)),
+      id: `exp-${base.type}-${timestamp}`,
+      title: customTitle || `${base.title} (Copia)`,
+      isTemplate: false,
+      isPublished: true,
+      templateName: undefined,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      blocks: (base.blocks || []).map((blk: UniversalExperienceBlock, idx: number) => ({
+        ...blk,
+        id: `blk-${timestamp}-${idx}`,
+      })),
+    };
+
+    return this.saveExperience(cloned);
+  }
+
+  static resetExperiencesToDefault(): OntologicalExperience[] {
+    this.saveExperiences(INITIAL_EXPERIENCES);
+    return INITIAL_EXPERIENCES;
+  }
+
   // --- ONTOLOGICAL PROGRAMS CATALOGUE & QUOTAS ---
   static getPrograms(): OntologicalProgram[] {
     const list = this.load<OntologicalProgram[]>(
@@ -3916,20 +4040,12 @@ export class OntologicalStore {
     const now = Date.now();
     const sessions: Session[] = [];
 
-    const sessionThemes = [
-      'Mapeo de la transparencia cotidiana, quiebres no declarados y autoexigencia.',
-      'Deconstrucción del juicio maestro y diseño de conversaciones de oferta y confianza.',
-      'Decodificación somática de la presencia directiva, límites y acuerdos de equipo.',
-      'Distinción ontológica entre hechos y juicios en la toma de decisiones estratégicas.',
-      'Rediseño de la soberanía emocional, límites impecables y autonomía directiva.',
-      'Cierre del ciclo, consolidación de la nueva identidad y plan de sostenibilidad.',
-    ];
-
     for (let num = 1; num <= 6; num++) {
       const isPast = num < progress;
       const diffDays = (num - progress) * 14;
       const sessionDate = new Date(now + diffDays * 24 * 60 * 60 * 1000).toISOString();
       const status: 'completed' | 'scheduled' = isPast ? 'completed' : 'scheduled';
+      const isMilestone = num === 4 || num === 8 || num === 12;
 
       sessions.push({
         id: `sess-${clientId}-${num}`,
@@ -3940,7 +4056,10 @@ export class OntologicalStore {
         status: status,
         isPaid: true,
         durationMinutes: 60,
-        notes: `Sesión ${num}: ${sessionThemes[num - 1]}`,
+        ontologicalFocus: isMilestone ? 'Cierre de Ciclo & Cosecha Ontológica' : 'Acompañamiento del Emergente (Lienzo en Blanco)',
+        notes: isMilestone
+          ? 'Cierre de ciclo: integración de descubrimientos, patrones y cambios de perspectiva observados.'
+          : 'Pregunta de apertura: "¿Qué es importante para ti traer a este espacio hoy?". Espacio abierto al emergente.',
         programNodeStep: num,
       });
     }
@@ -4029,6 +4148,9 @@ export class OntologicalStore {
 
   static savePostSessionForms(forms: PostSessionForm[]): void {
     this.save(STORAGE_KEYS.POST_SESSION_FORMS, forms);
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('rbc-forms-updated', { detail: { forms } }));
+    }
   }
 
   static getPostSessionFormsForClient(clientId: string): PostSessionForm[] {

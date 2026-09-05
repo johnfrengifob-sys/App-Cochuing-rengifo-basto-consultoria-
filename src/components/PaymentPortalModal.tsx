@@ -32,7 +32,7 @@ interface PaymentPortalModalProps {
   onClose: () => void;
   client: User;
   onUserUpdated?: () => void;
-  initialTab?: 'all' | 'workshops' | 'sessions';
+  initialTab?: 'overview' | 'all' | 'workshops' | 'sessions';
 }
 
 interface WorkshopItem {
@@ -97,7 +97,7 @@ export const PaymentPortalModal: React.FC<PaymentPortalModalProps> = ({
   onUserUpdated,
   initialTab = 'all',
 }) => {
-  const [activeTab, setActiveTab] = useState<'all' | 'workshops' | 'sessions'>(initialTab);
+  const [activeTab, setActiveTab] = useState<'overview' | 'all' | 'workshops' | 'sessions'>(initialTab);
   const [currentUser, setCurrentUser] = useState<User>(client);
   const [selectedWorkshopForPayment, setSelectedWorkshopForPayment] = useState<WorkshopItem | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<'bre_b_nu' | 'efectivo' | 'online_card'>('bre_b_nu');
@@ -109,6 +109,21 @@ export const PaymentPortalModal: React.FC<PaymentPortalModalProps> = ({
   // 1-on-1 payment checkout modal state
   const [isOneOnOneCheckoutOpen, setIsOneOnOneCheckoutOpen] = useState(false);
   const [oneOnOnePlan, setOneOnOnePlan] = useState<'full' | 'half'>('full');
+
+  // Métricas del participante para organización lógica del progreso
+  const clientPayments = OntologicalStore.getPaymentRequestsForClient(currentUser.uid);
+  const clientSessions = OntologicalStore.getSessionsForClient(currentUser.uid);
+  const clientForms = OntologicalStore.getPostSessionFormsForClient(currentUser.uid);
+  const completedSessions = clientSessions.filter((s) => s.status === 'completed');
+  const currentSessionNumber = currentUser.programProgress || 1;
+  const currentCycle = Math.ceil(currentSessionNumber / 4);
+  const isCycleMilestone =
+    currentSessionNumber === 4 || currentSessionNumber === 8 || currentSessionNumber === 12;
+  const enrolledWorkshopsCount = WORKSHOPS_CATALOG.filter((w) => isWorkshopEnrolled(w.id)).length;
+  const cyclePhaseLabel = isCycleMilestone
+    ? 'Fase de Consolidación • Cierre de Ciclo'
+    : 'Fase de Exploración Libre';
+  const remainingInCycle = 4 - ((currentSessionNumber - 1) % 4);
 
   // Reload client data
   const refreshLocalClient = () => {
@@ -341,7 +356,18 @@ export const PaymentPortalModal: React.FC<PaymentPortalModalProps> = ({
         )}
 
         {/* NAVIGATION TABS (B&W CONTRAST) */}
-        <div className="px-6 sm:px-8 pt-4 pb-2 flex items-center gap-2 border-b border-black/5 dark:border-white/5">
+        <div className="px-6 sm:px-8 pt-4 pb-2 flex items-center gap-2 border-b border-black/5 dark:border-white/5 flex-wrap">
+          <button
+            type="button"
+            onClick={() => setActiveTab('overview')}
+            className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+              activeTab === 'overview'
+                ? 'bg-black text-white dark:bg-white dark:text-black'
+                : 'text-neutral-600 dark:text-neutral-400 hover:text-black dark:hover:text-white bg-neutral-100 dark:bg-neutral-900'
+            }`}
+          >
+            Estado & Progreso
+          </button>
           <button
             type="button"
             onClick={() => setActiveTab('all')}
@@ -386,6 +412,148 @@ export const PaymentPortalModal: React.FC<PaymentPortalModalProps> = ({
 
         {/* BODY SCROLLABLE AREA */}
         <div className="p-6 sm:p-8 overflow-y-auto space-y-8 flex-1">
+          {/* ========================================================================= */}
+          {/* SECCIÓN 0: ORGANIZACIÓN LÓGICA DEL PROGRESO (5 COMPONENTES CLAVE)         */}
+          {/* ========================================================================= */}
+          {(activeTab === 'all' || activeTab === 'overview') && (
+            <div className="space-y-6 pb-2">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <Layers className="w-4 h-4 text-black dark:text-white" />
+                  <h3 className="text-sm sm:text-base font-bold text-black dark:text-white uppercase tracking-wider font-mono">
+                    Organización Lógica de tu Progreso
+                  </h3>
+                </div>
+                <p className="text-xs text-neutral-600 dark:text-neutral-400 font-light">
+                  Total visibilidad de tu ruta ontológica, inversiones realizadas y próximos pasos en un solo vistazo.
+                </p>
+              </div>
+
+              {/* LAS 5 PREGUNTAS Y COMPONENTES */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* 1. ¿En qué punto del proceso está? */}
+                <div className="p-5 rounded-2xl bg-neutral-50/80 dark:bg-neutral-900/60 border border-black/15 dark:border-white/15 space-y-2">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-500 font-mono block">
+                    1. ¿En qué punto del proceso estás?
+                  </span>
+                  <div className="font-semibold text-sm text-black dark:text-white">
+                    Ciclo {currentCycle} de 3 • Encuentro {currentSessionNumber} de 12
+                  </div>
+                  <p className="text-xs text-neutral-600 dark:text-neutral-400 font-light leading-relaxed">
+                    Te encuentras transitando la <strong>{cyclePhaseLabel}</strong>. Has activado {completedSessions.length} de 12 estaciones de tu ruta individual y {enrolledWorkshopsCount} de 3 talleres vivenciales.
+                  </p>
+                </div>
+
+                {/* 2. ¿Qué ha trabajado hasta ahora? */}
+                <div className="p-5 rounded-2xl bg-neutral-50/80 dark:bg-neutral-900/60 border border-black/15 dark:border-white/15 space-y-2">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-500 font-mono block">
+                    2. ¿Qué has trabajado hasta ahora?
+                  </span>
+                  <div className="font-semibold text-sm text-black dark:text-white">
+                    {completedSessions.length} sesión(es) completada(s) & {clientForms.length} bitácora(s)
+                  </div>
+                  <p className="text-xs text-neutral-600 dark:text-neutral-400 font-light leading-relaxed">
+                    {completedSessions.length > 0
+                      ? `Has completado ${completedSessions.length} encuentro(s) con acuerdos y quiebres registrados. Memorias disponibles para descarga en PDF.`
+                      : 'Estás iniciando tu primer encuentro. A medida que concluyan tus sesiones, tus reflexiones se consolidarán aquí.'}
+                  </p>
+                </div>
+
+                {/* 3. ¿Qué le falta por recorrer? */}
+                <div className="p-5 rounded-2xl bg-neutral-50/80 dark:bg-neutral-900/60 border border-black/15 dark:border-white/15 space-y-2">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-500 font-mono block">
+                    3. ¿Qué te falta por recorrer?
+                  </span>
+                  <div className="font-semibold text-sm text-black dark:text-white">
+                    {remainingInCycle === 0
+                      ? '★ Sesión de Cierre y Cosecha de Ciclo'
+                      : `${remainingInCycle} encuentro(s) para la Cosecha del Ciclo ${currentCycle}`}
+                  </div>
+                  <p className="text-xs text-neutral-600 dark:text-neutral-400 font-light leading-relaxed">
+                    Cada 4 encuentros se consolida la siembra. Te restan {12 - completedSessions.length} sesiones para culminar el programa maestro de 12 encuentros.
+                  </p>
+                </div>
+
+                {/* 4. ¿Qué inversiones financieras ha hecho? */}
+                <div className="p-5 rounded-2xl bg-neutral-50/80 dark:bg-neutral-900/60 border border-black/15 dark:border-white/15 space-y-2">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-500 font-mono block">
+                    4. ¿Qué inversiones financieras has hecho?
+                  </span>
+                  <div className="font-semibold text-sm text-black dark:text-white">
+                    {clientPayments.length > 0
+                      ? `${clientPayments.length} transacción(es) registrada(s)`
+                      : isFreeAccess
+                      ? 'Acceso Libre / Beca de Formación'
+                      : 'Historial en apertura'}
+                  </div>
+                  <p className="text-xs text-neutral-600 dark:text-neutral-400 font-light leading-relaxed">
+                    {hasPurchased1on1
+                      ? 'Acompañamiento individual de 12 sesiones activo en tu perfil.'
+                      : isAuthorized1on1
+                      ? 'Cupo de 12 sesiones autorizado por John Fredy Rengifo Basto. Listo para confirmar abono.'
+                      : 'Postulación a sesiones individuales en proceso de valoración.'}
+                  </p>
+                </div>
+              </div>
+
+              {/* 5. ¿Qué falta de su progreso? (Desglose transparente) */}
+              <div className="p-5 rounded-2xl bg-white dark:bg-black border-2 border-black dark:border-white space-y-3 shadow-xs">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-500 font-mono block">
+                    5. ¿Qué falta de tu progreso para completar tu maestría personal?
+                  </span>
+                  <span className="text-xs font-semibold px-3 py-1 rounded-full bg-neutral-100 dark:bg-neutral-800 text-black dark:text-white self-start sm:self-auto">
+                    {12 - completedSessions.length} sesiones pendientes
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs pt-1">
+                  <div className="p-3 rounded-xl bg-neutral-50 dark:bg-neutral-900 border border-black/10 dark:border-white/10 space-y-1">
+                    <span className="text-neutral-500 font-mono text-[10px] uppercase block">Sesiones 1 a 1</span>
+                    <p className="font-semibold text-black dark:text-white">
+                      {12 - completedSessions.length} de 12 por cursar
+                    </p>
+                  </div>
+
+                  <div className="p-3 rounded-xl bg-neutral-50 dark:bg-neutral-900 border border-black/10 dark:border-white/10 space-y-1">
+                    <span className="text-neutral-500 font-mono text-[10px] uppercase block">Talleres Vivenciales</span>
+                    <p className="font-semibold text-black dark:text-white">
+                      {3 - enrolledWorkshopsCount} taller(es) por asegurar
+                    </p>
+                  </div>
+
+                  <div className="p-3 rounded-xl bg-neutral-50 dark:bg-neutral-900 border border-black/10 dark:border-white/10 space-y-1">
+                    <span className="text-neutral-500 font-mono text-[10px] uppercase block">Estado de Inversión</span>
+                    <p className="font-semibold text-black dark:text-white">
+                      {isFreeAccess ? 'Acceso Libre' : hasPurchased1on1 ? 'Programa Asegurado' : 'Abono Pendiente'}
+                    </p>
+                  </div>
+                </div>
+
+                {activeTab === 'overview' && (
+                  <div className="pt-2 flex flex-wrap items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setActiveTab('workshops')}
+                      className="px-4 py-2 rounded-xl bg-black text-white dark:bg-white dark:text-black hover:opacity-90 text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer shadow-xs"
+                    >
+                      <span>Explorar Talleres Vivenciales</span>
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setActiveTab('sessions')}
+                      className="px-4 py-2 rounded-xl border border-black/15 dark:border-white/15 bg-neutral-50 dark:bg-neutral-900 text-black dark:text-white hover:bg-neutral-100 dark:hover:bg-neutral-800 text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer"
+                    >
+                      <span>Ver Acompañamiento 1 a 1</span>
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
           {/* ========================================================================= */}
           {/* SECCIÓN 1: TALLERES VIVENCIALES (ACCESO DINÁMICO: GRATUITO O PAGO) */}
           {/* ========================================================================= */}

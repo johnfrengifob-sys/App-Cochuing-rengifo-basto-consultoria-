@@ -16,23 +16,25 @@ import { BRE_B_NU_CONFIG } from '../services/store';
 interface BreBNuPaymentCardProps {
   amount: string;
   concept: string;
-  clientName: string;
-  clientEmail: string;
-  proofImage: string | null;
-  onProofImageChange: (base64: string | null) => void;
-  whatsappSent: boolean;
-  onWhatsappSentToggle: (sent: boolean) => void;
+  clientName?: string;
+  clientEmail?: string;
+  proofImage?: string | null;
+  onProofImageChange?: (base64: string | null) => void;
+  whatsappSent?: boolean;
+  onWhatsappSentToggle?: (sent: boolean) => void;
+  variant?: 'compact' | 'full' | string;
 }
 
 export const BreBNuPaymentCard: React.FC<BreBNuPaymentCardProps> = ({
   amount,
   concept,
-  clientName,
-  clientEmail,
-  proofImage,
+  clientName = 'Participante',
+  clientEmail = '',
+  proofImage = null,
   onProofImageChange,
-  whatsappSent,
+  whatsappSent = false,
   onWhatsappSentToggle,
+  variant = 'full',
 }) => {
   const [copiedKey, setCopiedKey] = useState(false);
   const [dragOver, setDragOver] = useState(false);
@@ -48,7 +50,7 @@ export const BreBNuPaymentCard: React.FC<BreBNuPaymentCardProps> = ({
     const reader = new FileReader();
     reader.onload = (e) => {
       const result = e.target?.result as string;
-      onProofImageChange(result);
+      onProofImageChange?.(result);
     };
     reader.readAsDataURL(file);
   };

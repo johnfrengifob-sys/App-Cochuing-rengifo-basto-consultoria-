@@ -384,6 +384,56 @@
         }
       },
       "required": ["id", "clientId", "voucherCode", "status"]
+    },
+    "OntologicalExperience": {
+      "title": "OntologicalExperience",
+      "description": "Experiencia interactiva ultra-minimalista: Taller, Sesión 1 a 1, Retiro o Círculo",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "type": {
+          "type": "string",
+          "enum": ["workshop", "session_1on1", "retreat", "circle", "masterclass"]
+        },
+        "title": {
+          "type": "string",
+          "maxLength": 150
+        },
+        "subtitle": {
+          "type": "string",
+          "maxLength": 300
+        },
+        "step": {
+          "type": "number"
+        },
+        "category": {
+          "type": "string",
+          "maxLength": 100
+        },
+        "meetUrl": {
+          "type": "string",
+          "maxLength": 300
+        },
+        "colorPhotoUrl": {
+          "type": "string",
+          "maxLength": 500
+        },
+        "dateStr": {
+          "type": "string",
+          "maxLength": 100
+        },
+        "isPublished": {
+          "type": "boolean"
+        },
+        "updatedAt": {
+          "type": "string",
+          "maxLength": 50
+        }
+      },
+      "required": ["id", "type", "title", "subtitle"]
     }
   },
   "firestore": {
@@ -414,6 +464,10 @@
     "/cronogramaEvents/{eventId}": {
       "schema": "CronogramaEvent",
       "description": "Eventos públicos y conversatorios quincenales"
+    },
+    "/experiences/{experienceId}": {
+      "schema": "OntologicalExperience",
+      "description": "Constructor visual de experiencias (Talleres, Sesiones 1 a 1, Retiros, Círculos)"
     },
     "/payments/{paymentId}": {
       "schema": "PaymentValidation",

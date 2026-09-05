@@ -98,6 +98,12 @@ service cloud.firestore {
              data.status in ['upcoming', 'live', 'completed'];
     }
 
+    function isValidExperience(data) {
+      return data.id is string && data.id.size() <= 128 &&
+             data.title is string && data.title.size() > 0 && data.title.size() <= 150 &&
+             data.type in ['workshop', 'session_1on1', 'retreat', 'circle', 'masterclass'];
+    }
+
     function isValidPayment(data) {
       return data.id is string && data.id.size() <= 128 &&
              data.clientId is string && data.clientId.size() <= 128 &&
@@ -181,6 +187,12 @@ service cloud.firestore {
     match /cronogramaEvents/{eventId} {
       allow read: if true;
       allow create, update, delete: if isAdmin() && isValidCronogramaEvent(incoming());
+    }
+
+    // EXPERIENCES: Ultra-Minimalist Interactive Experiences & Universal Blocks
+    match /experiences/{experienceId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin() && isValidExperience(incoming());
     }
 
     // PAYMENTS: Bre-B Nu Validation Records

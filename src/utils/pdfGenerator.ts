@@ -1033,14 +1033,13 @@ export class PDFGenerator {
         </div>
 
         <div class="badge-row">
-          <span class="level-pill">Cuaderno de Trabajo Ontológico • Sesión ${form.sessionNumber}</span>
-          <span class="icf-pill">Supervisión & Bitácora ICF</span>
-          <span style="font-size: 11px; color: #059669; font-weight: 600; margin-left: auto;">
-            ✓ Taller 100% Pagado & Habilitado
+          <span class="level-pill">Memoria Ontológica 1 a 1 • Sesión ${form.sessionNumber}</span>
+          <span class="icf-pill" style="background:#000;color:#fff;border:1px solid #000;">
+            Ciclo ${form.cycleNumber || Math.ceil(form.sessionNumber / 4)} • ${form.sessionPhase === 'consolidation' || form.sessionNumber % 4 === 0 ? 'Consolidación & Cierre' : 'Exploración Libre'}
           </span>
         </div>
 
-        <div class="hero-title">${escapeHTML(form.workbookTitle || `Sesión ${form.sessionNumber}: Reencuadre y Dominio Ontológico`)}</div>
+        <div class="hero-title">${escapeHTML(form.workbookTitle || `Sesión ${form.sessionNumber}: Encuentro Ontológico 1 a 1`)}</div>
 
         <div class="meta-strip">
           <div class="meta-item">
@@ -1052,30 +1051,50 @@ export class PDFGenerator {
             ${formattedDate}
           </div>
           <div class="meta-item">
-            <strong>Inversión Realizada</strong>
-            ${client?.totalInvested || '$1.500.000 COP'} (Completado)
+            <strong>Modalidad</strong>
+            Acompañamiento 1 a 1 (Lienzo en Blanco)
           </div>
         </div>
 
-        <!-- SECCIÓN 1: DIAGNÓSTICO ONTO-SOMÁTICO (PREGUNTAS 1, 2 Y 3) -->
+        <!-- SECCIÓN 1: EL EMERGENTE (SIN OBJETIVOS FORZADOS) -->
         <div class="card">
-          <div class="card-title">1. Diagnóstico Ontológico, Corporal y Discursivo de la Sesión</div>
-
-          <p class="question-label">1. ¿Qué emoción principal habitó al coachee hoy y cuál fue su nivel de resistencia o apertura para explorarla?</p>
-          <div class="answer-box">
-            ${escapeHTML(form.coacheeEmotionAndOpenness)}
+          <div class="card-title">1. El Tema Emergente (Lienzo en Blanco)</div>
+          <div style="font-size: 11px; font-style: italic; color: #4b5563; margin-bottom: 8px;">
+            Pregunta de Apertura: "¿Qué es importante para ti traer a este espacio hoy?"
           </div>
-
-          <p class="question-label">2. ¿Cuál fue el juicio maestro, la narrativa o la creencia limitante que estructuró su discurso durante la sesión?</p>
+          <p class="question-label">¿De qué eligió hablar el participante hoy?</p>
           <div class="answer-box">
-            ${escapeHTML(form.masterJudgmentAndNarrative)}
-          </div>
-
-          <p class="question-label">3. ¿Qué evidencia de cambio de perspectiva o nuevo nivel de consciencia demostró el coachee al finalizar el encuentro?</p>
-          <div class="answer-box" style="margin-bottom: 0;">
-            ${escapeHTML(form.perspectiveShiftEvidence)}
+            ${escapeHTML(form.emergentTopic || form.masterJudgmentAndNarrative || 'Espacio de indagación libre y presencia.')}
           </div>
         </div>
+
+        <!-- SECCIÓN 2: EL PASO A LA ACCIÓN -->
+        <div class="card">
+          <div class="card-title">2. El Paso a la Acción</div>
+          <p class="question-label">¿Qué decidió hacer con lo que descubrió?</p>
+          <div class="answer-box" style="margin-bottom: 8px;">
+            ${escapeHTML(form.actionStep || form.agreedActionItems?.[0] || 'Sostener presencia y pausa reflexiva en la vida cotidiana.')}
+          </div>
+          ${form.coacheeKeyDeclaration ? `
+            <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: #000; margin-top: 10px; margin-bottom: 4px;">Declaración de Compromiso:</div>
+            <div class="declaration-box" style="background:#f9fafb;border-color:#000;color:#000;">
+              "${escapeHTML(form.coacheeKeyDeclaration)}"
+            </div>
+          ` : ''}
+        </div>
+
+        <!-- SECCIÓN 3 CONDICIONAL: COSECHA DEL CICLO (SESIONES 4, 8, 12) -->
+        ${(form.isCycleMilestone || form.cycleHarvest || form.sessionNumber % 4 === 0) ? `
+        <div class="card" style="border: 2px solid #000;">
+          <div class="card-title" style="font-size: 13px;">★ Cosecha del Ciclo ${form.cycleNumber || Math.ceil(form.sessionNumber / 4)} (Hito de Consolidación)</div>
+          <div style="font-size: 11px; color: #374151; margin-bottom: 8px;">
+            Reflexión de Cosecha: "¿Qué grandes descubrimientos o patrones has notado en estas últimas semanas? ¿Cómo sientes que tu forma de ver las cosas ha cambiado desde que empezamos este ciclo?"
+          </div>
+          <div class="answer-box" style="background: #f4f4f5; border-left: 4px solid #000; font-size: 12.5px; font-weight: 500;">
+            ${escapeHTML(form.cycleHarvest || form.perspectiveShiftEvidence || 'Consolidación de nuevos patrones de consciencia y cambio de observador.')}
+          </div>
+        </div>
+        ` : ''}
 
         <!-- SECCIÓN 2: SUPERVISIÓN Y COMPETENCIAS ICF (PREGUNTA 4) -->
         <div class="card">

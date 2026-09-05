@@ -7,7 +7,17 @@ import {
   onSnapshot,
 } from 'firebase/firestore';
 import { db, auth, handleFirestoreError, OperationType, testFirestoreConnection } from './firebase';
-import { Prospect, EventRegistration, Session, User, PaymentRequest, FormSubmission, CronogramaEvent } from '../types';
+import {
+  Prospect,
+  EventRegistration,
+  Session,
+  User,
+  PaymentRequest,
+  FormSubmission,
+  CronogramaEvent,
+  OntologicalExperience,
+  PostSessionForm,
+} from '../types';
 
 export class FirestoreSyncService {
   private static isInitialized = false;
@@ -137,6 +147,148 @@ export class FirestoreSyncService {
     }
   }
 
+  // Synchronize individual experience into Firestore
+  static async syncExperience(experience: OntologicalExperience): Promise<void> {
+    const collectionPath = 'experiences';
+    if (!auth.currentUser) {
+      return;
+    }
+    try {
+      const expRef = doc(db, collectionPath, experience.id);
+      await setDoc(
+        expRef,
+        {
+          id: experience.id,
+          type: experience.type,
+          title: experience.title,
+          subtitle: experience.subtitle,
+          step: experience.step,
+          category: experience.category,
+          meetUrl: experience.meetUrl || '',
+          colorPhotoUrl: experience.colorPhotoUrl || '',
+          dateStr: experience.dateStr || '',
+          guidingQuestions: experience.guidingQuestions || [],
+          blocks: experience.blocks || [],
+          isPublished: Boolean(experience.isPublished),
+          isTemplate: Boolean(experience.isTemplate),
+          templateName: experience.templateName || '',
+          badgeLabel: experience.badgeLabel || '',
+          updatedAt: new Date().toISOString(),
+        },
+        { merge: true }
+      );
+    } catch (error) {
+      console.warn('Firestore syncExperience notice:', error);
+    }
+  }
+
+  // Delete experience from Firestore
+  static async deleteExperience(id: string): Promise<void> {
+    const collectionPath = 'experiences';
+    if (!auth.currentUser) {
+      return;
+    }
+    try {
+      const expRef = doc(db, collectionPath, id);
+      await deleteDoc(expRef);
+    } catch (error) {
+      console.warn('Firestore deleteExperience notice:', error);
+    }
+  }
+
+  // Synchronize all experiences to Firestore
+  static async syncAllExperiences(experiences: OntologicalExperience[]): Promise<void> {
+    if (!auth.currentUser) {
+      return;
+    }
+    for (const exp of experiences) {
+      await this.syncExperience(exp);
+    }
+  }
+
+  // Fetch experiences from Firestore
+  static async fetchExperiences(): Promise<OntologicalExperience[]> {
+    const collectionPath = 'experiences';
+    if (!auth.currentUser) {
+      return [];
+    }
+    try {
+      const snap = await getDocs(collection(db, collectionPath));
+      const list: OntologicalExperience[] = [];
+      snap.forEach((d) => {
+        const data = d.data();
+        list.push(data as OntologicalExperience);
+      });
+      return list;
+    } catch (error) {
+      console.warn('Firestore fetchExperiences fallback:', error);
+      return [];
+    }
+  }
+
+  // Subscribe to real-time experiences updates (only when authenticated)
+  static subscribeToExperiences(onUpdate: (experiences: OntologicalExperience[]) => void): () => void {
+    const collectionPath = 'experiences';
+    // Firebase Skill rule: Only attach onSnapshot listeners if auth is ready and user is authenticated
+    if (!auth.currentUser) {
+      return () => {};
+    }
+    try {
+      const q = collection(db, collectionPath);
+      return onSnapshot(
+        q,
+        (snapshot) => {
+          const list: OntologicalExperience[] = [];
+          snapshot.forEach((docSnap) => {
+            const data = docSnap.data();
+            list.push(data as OntologicalExperience);
+          });
+          if (list.length > 0) {
+            onUpdate(list);
+          }
+        },
+        (error) => {
+          console.warn('Firestore subscribeToExperiences notice:', error);
+        }
+      );
+    } catch (error) {
+      console.warn('Could not subscribe to experiences in Firestore:', error);
+      return () => {};
+    }
+  }
+
+  // Subscribe to real-time sessions updates for a client (only when authenticated)
+  static subscribeToClientSessions(clientId: string, onUpdate: (sessions: Session[]) => void): () => void {
+    const collectionPath = 'sessions';
+    if (!auth.currentUser) {
+      return () => {};
+    }
+    try {
+      const q = collection(db, collectionPath);
+      return onSnapshot(
+        q,
+        (snapshot) => {
+          const list: Session[] = [];
+          snapshot.forEach((docSnap) => {
+            const data = docSnap.data();
+            if (data.clientId === clientId) {
+              list.push(data as Session);
+            }
+          });
+          if (list.length > 0) {
+            onUpdate(list);
+          }
+        },
+        (error) => {
+          console.warn('Firestore subscribeToClientSessions notice:', error);
+        }
+      );
+    } catch (error) {
+      console.warn('Could not subscribe to sessions in Firestore:', error);
+      return () => {};
+    }
+  }
+
   // Synchronize or save session
   static async syncSession(session: Session): Promise<void> {
     const collectionPath = 'sessions';
@@ -154,11 +306,92 @@ export class FirestoreSyncService {
           notes: session.notes || '',
           isPaid: Boolean(session.isPaid),
           durationMinutes: session.durationMinutes || 60,
+          ontologicalFocus: session.ontologicalFocus || '',
         },
         { merge: true }
       );
     } catch (error) {
       console.warn('Firestore syncSession notice:', error);
+    }
+  }
+
+  // Delete session from Firestore
+  static async deleteSession(sessionId: string): Promise<void> {
+    const collectionPath = 'sessions';
+    try {
+      const sessionRef = doc(db, collectionPath, sessionId);
+      await deleteDoc(sessionRef);
+    } catch (error) {
+      console.warn('Firestore deleteSession notice:', error);
+    }
+  }
+
+  // Synchronize post-session form (Cuestionario Posterior / Bitácora) to Firestore
+  static async syncPostSessionForm(form: PostSessionForm): Promise<void> {
+    const collectionPath = 'postSessionForms';
+    try {
+      const formRef = doc(db, collectionPath, form.id);
+      await setDoc(
+        formRef,
+        {
+          id: form.id,
+          sessionId: form.sessionId,
+          sessionNumber: form.sessionNumber,
+          clientId: form.clientId,
+          clientName: form.clientName,
+          sessionDate: form.sessionDate,
+          submittedAt: form.submittedAt,
+          emergentTopic: form.emergentTopic || '',
+          actionStep: form.actionStep || '',
+          cycleHarvest: form.cycleHarvest || null,
+          isCycleMilestone: Boolean(form.isCycleMilestone),
+          cycleNumber: form.cycleNumber || Math.ceil(form.sessionNumber / 4),
+          sessionPhase: form.sessionPhase || (form.isCycleMilestone ? 'consolidation' : 'exploration'),
+          openingQuestion: form.openingQuestion || '¿Qué es importante para ti traer a este espacio hoy?',
+          coacheeEmotionAndOpenness: form.coacheeEmotionAndOpenness || '',
+          masterJudgmentAndNarrative: form.masterJudgmentAndNarrative || '',
+          perspectiveShiftEvidence: form.perspectiveShiftEvidence || '',
+          directivenessAndIcfCompetency: form.directivenessAndIcfCompetency || '',
+          workbookTitle: form.workbookTitle || '',
+          somaticHomework: form.somaticHomework || '',
+          updatedAt: new Date().toISOString(),
+        },
+        { merge: true }
+      );
+    } catch (error) {
+      console.warn('Firestore syncPostSessionForm notice:', error);
+    }
+  }
+
+  // Subscribe to real-time post session forms for a client
+  static subscribeToClientPostForms(clientId: string, onUpdate: (forms: PostSessionForm[]) => void): () => void {
+    const collectionPath = 'postSessionForms';
+    if (!auth.currentUser) {
+      return () => {};
+    }
+    try {
+      const q = collection(db, collectionPath);
+      return onSnapshot(
+        q,
+        (snapshot) => {
+          const list: PostSessionForm[] = [];
+          snapshot.forEach((docSnap) => {
+            const data = docSnap.data();
+            if (data.clientId === clientId) {
+              list.push(data as PostSessionForm);
+            }
+          });
+          if (list.length > 0) {
+            onUpdate(list);
+          }
+        },
+        (error) => {
+          console.warn('Firestore subscribeToClientPostForms notice:', error);
+        }
+      );
+    } catch (error) {
+      console.warn('Could not subscribe to postSessionForms in Firestore:', error);
+      return () => {};
     }
   }
 
@@ -263,9 +496,13 @@ export class FirestoreSyncService {
     }
   }
 
-  // Listen to prospects with error handling
+  // Listen to prospects with error handling (only when authenticated)
   static subscribeToProspects(onUpdate: (prospects: Prospect[]) => void): () => void {
     const collectionPath = 'prospects';
+    // Firebase Skill rule: Only attach onSnapshot listeners if auth is ready and user is authenticated
+    if (!auth.currentUser) {
+      return () => {};
+    }
     try {
       const q = collection(db, collectionPath);
       return onSnapshot(
@@ -293,7 +530,7 @@ export class FirestoreSyncService {
           }
         },
         (error) => {
-          handleFirestoreError(error, OperationType.LIST, collectionPath);
+          console.warn('Firestore subscribeToProspects notice:', error);
         }
       );
     } catch (error) {

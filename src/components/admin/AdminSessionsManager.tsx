@@ -25,9 +25,13 @@ import {
   Link as LinkIcon,
   X,
   FileText,
+  Download,
 } from 'lucide-react';
 import { Session, SessionStatus, User, FormSubmission, PostSessionForm } from '../../types';
-import { OntologicalStore, PROGRAM_NODES } from '../../services/store';
+import { OntologicalStore } from '../../services/store';
+import { FirestoreSyncService } from '../../services/firestoreSync';
+import { PostSessionWorkbookModal } from '../PostSessionWorkbookModal';
+import { PDFGenerator } from '../../utils/pdfGenerator';
 
 interface AdminSessionsManagerProps {
   onSelectClientForFicha?: (clientId: string) => void;
@@ -38,7 +42,7 @@ export const AdminSessionsManager: React.FC<AdminSessionsManagerProps> = ({
   onSelectClientForFicha,
   onRefreshParent,
 }) => {
-  // 1. Data Store States
+  // 1. Estados de Datos
   const [sessions, setSessions] = useState<Session[]>(() => OntologicalStore.getSessions());
   const [users, setUsers] = useState<User[]>(() => OntologicalStore.getUsers());
   const [forms, setForms] = useState<FormSubmission[]>(() => OntologicalStore.getForms());
@@ -46,13 +50,13 @@ export const AdminSessionsManager: React.FC<AdminSessionsManagerProps> = ({
     OntologicalStore.getPostSessionForms()
   );
 
-  // Clients list only
+  // Lista de participantes (clientes)
   const clients = useMemo(
     () => users.filter((u) => u.role === 'client'),
     [users]
   );
 
-  // Listen for real-time synchronization events across tabs / windows
+  // Sincronización en tiempo real (Eventos locales y Firestore)
   useEffect(() => {
     const handleSync = () => {
       setSessions(OntologicalStore.getSessions());
@@ -62,10 +66,12 @@ export const AdminSessionsManager: React.FC<AdminSessionsManagerProps> = ({
     };
 
     window.addEventListener('rbc-sessions-updated', handleSync);
+    window.addEventListener('rbc-forms-updated', handleSync);
     window.addEventListener('storage', handleSync);
 
     return () => {
       window.removeEventListener('rbc-sessions-updated', handleSync);
+      window.removeEventListener('rbc-forms-updated', handleSync);
       window.removeEventListener('storage', handleSync);
     };
   }, []);
@@ -78,18 +84,18 @@ export const AdminSessionsManager: React.FC<AdminSessionsManagerProps> = ({
     onRefreshParent?.();
   };
 
-  // 2. Filter & Search States
+  // 2. Filtros y Búsqueda
   const [searchQuery, setSearchQuery] = useState('');
   const [clientFilter, setClientFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<'all' | 'scheduled' | 'completed' | 'cancelled'>('all');
 
-  // Expanded reflections accordion for specific sessions
-  const [expandedReflectionId, setExpandedReflectionId] = useState<string | null>(null);
+  // Acordeón de cuestionario posterior expandido en tarjeta
+  const [expandedFormId, setExpandedFormId] = useState<string | null>(null);
 
-  // Clipboard feedback
+  // Feedback de copiado de enlace Meet
   const [copiedLinkSessionId, setCopiedLinkSessionId] = useState<string | null>(null);
 
-  // 3. Modals: Create / Edit Session
+  // 3. Modal de Crear / Editar Sesión Individual (Lienzo en Blanco)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingSession, setEditingSession] = useState<Session | null>(null);
   const [sessionFormData, setSessionFormData] = useState<{
@@ -114,7 +120,7 @@ export const AdminSessionsManager: React.FC<AdminSessionsManagerProps> = ({
     notes: '',
   });
 
-  // Modal: Generate Full Cycle
+  // 4. Modal de Construcción de Ciclo Orgánico (6 o 12 sesiones libres)
   const [isCycleModalOpen, setIsCycleModalOpen] = useState(false);
   const [cycleClientId, setCycleClientId] = useState<string>('');
   const [cycleCount, setCycleCount] = useState<number>(6);
@@ -125,7 +131,12 @@ export const AdminSessionsManager: React.FC<AdminSessionsManagerProps> = ({
     return d.toISOString().split('T')[0];
   });
 
-  // Helper to open creation modal
+  // 5. Modal de Cuestionario Posterior / Bitácora (El Cuestionario como Eje)
+  const [isWorkbookModalOpen, setIsWorkbookModalOpen] = useState<boolean>(false);
+  const [selectedSessionForWorkbook, setSelectedSessionForWorkbook] = useState<Session | null>(null);
+  const [selectedClientForWorkbook, setSelectedClientForWorkbook] = useState<User | null>(null);
+
+  // Apertura de modal de creación con Lienzo en Blanco
   const handleOpenCreateSession = (preselectedClientId?: string) => {
     const targetClientId = preselectedClientId || clients[0]?.uid || '';
     const targetClient = clients.find((c) => c.uid === targetClientId);
@@ -134,7 +145,9 @@ export const AdminSessionsManager: React.FC<AdminSessionsManagerProps> = ({
       ? Math.max(...existingClientSessions.map((s) => s.sessionNumber || 1)) + 1
       : (targetClient?.programProgress || 1);
 
-    const defaultNode = PROGRAM_NODES.find((n) => n.step === nextSessionNum) || PROGRAM_NODES[0];
+    const safeNum = Math.min(nextSessionNum, 12);
+    const isMilestone = safeNum === 4 || safeNum === 8 || safeNum === 12;
+    const cycleNum = Math.ceil(safeNum / 4);
 
     const d = new Date();
     d.setDate(d.getDate() + 2);
@@ -143,19 +156,21 @@ export const AdminSessionsManager: React.FC<AdminSessionsManagerProps> = ({
     setEditingSession(null);
     setSessionFormData({
       clientId: targetClientId,
-      sessionNumber: Math.min(nextSessionNum, 12),
+      sessionNumber: safeNum,
       date: dateStr,
       time: '15:00',
-      meetLink: `https://meet.google.com/rbc-${(targetClient?.name || 'sesion').toLowerCase().replace(/[^a-z0-9]/g, '')}-s${nextSessionNum}`,
+      meetLink: `https://meet.google.com/rbc-${(targetClient?.name || 'sesion').toLowerCase().replace(/[^a-z0-9]/g, '')}-s${safeNum}`,
       status: 'scheduled',
       durationMinutes: 60,
-      ontologicalFocus: defaultNode ? `${defaultNode.level}: ${defaultNode.sessionTitle}` : '',
-      notes: defaultNode?.objective || '',
+      ontologicalFocus: isMilestone ? `Cierre del Ciclo ${cycleNum} & Cosecha Ontológica` : '',
+      notes: isMilestone
+        ? 'Cierre de ciclo: consolidación e integración de descubrimientos, patrones recurrentes y cambios de perspectiva observados.'
+        : 'Pregunta de apertura: "¿Qué es importante para ti traer a este espacio hoy?". Espacio abierto al emergente del participante.',
     });
     setIsEditModalOpen(true);
   };
 
-  // Helper to open edit modal
+  // Apertura de modal de edición
   const handleOpenEditSession = (sess: Session) => {
     setEditingSession(sess);
     let dateStr = '';
@@ -184,15 +199,14 @@ export const AdminSessionsManager: React.FC<AdminSessionsManagerProps> = ({
     setIsEditModalOpen(true);
   };
 
-  // Save session (create or update)
-  const handleSaveSession = (e: React.FormEvent) => {
+  // Guardar sesión (Crear o Actualizar) con sincronización directa en Firestore
+  const handleSaveSession = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!sessionFormData.clientId) {
       alert('Por favor selecciona un participante.');
       return;
     }
 
-    // Combine date and time to ISO
     let finalIsoDate = new Date().toISOString();
     if (sessionFormData.date) {
       const [year, month, day] = sessionFormData.date.split('-').map(Number);
@@ -214,30 +228,36 @@ export const AdminSessionsManager: React.FC<AdminSessionsManagerProps> = ({
       programNodeStep: Number(sessionFormData.sessionNumber),
     };
 
+    let savedSession: Session;
     if (editingSession) {
+      savedSession = { ...editingSession, ...payload } as Session;
       OntologicalStore.updateSession(editingSession.id, payload);
     } else {
-      const newSession: Session = {
+      savedSession = {
         id: `sess-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
         clientId: sessionFormData.clientId,
         ...payload,
       } as Session;
-      OntologicalStore.addSession(newSession);
+      OntologicalStore.addSession(savedSession);
     }
+
+    // Sincronización en tiempo real a Firestore
+    await FirestoreSyncService.syncSession(savedSession);
 
     refreshAll();
     setIsEditModalOpen(false);
     setEditingSession(null);
   };
 
-  // Quick toggle status (e.g. mark as completed)
-  const handleToggleStatus = (sess: Session, newStatus: SessionStatus) => {
+  // Cambio rápido de estado (ej: marcar completada)
+  const handleToggleStatus = async (sess: Session, newStatus: SessionStatus) => {
     OntologicalStore.updateSession(sess.id, { status: newStatus });
+    await FirestoreSyncService.syncSession({ ...sess, status: newStatus });
     refreshAll();
   };
 
-  // Delete session with confirmation
-  const handleDeleteSession = (sess: Session) => {
+  // Eliminar sesión
+  const handleDeleteSession = async (sess: Session) => {
     const clientName = clients.find((c) => c.uid === sess.clientId)?.name || 'el participante';
     if (
       window.confirm(
@@ -245,12 +265,13 @@ export const AdminSessionsManager: React.FC<AdminSessionsManagerProps> = ({
       )
     ) {
       OntologicalStore.deleteSession(sess.id);
+      await FirestoreSyncService.deleteSession(sess.id);
       refreshAll();
     }
   };
 
-  // Generate Full Cycle for a client
-  const handleGenerateCycle = () => {
+  // Generación de Ciclo Orgánico (Principio de Sesiones Libres)
+  const handleGenerateCycle = async () => {
     if (!cycleClientId) {
       alert('Por favor selecciona un participante.');
       return;
@@ -265,9 +286,10 @@ export const AdminSessionsManager: React.FC<AdminSessionsManagerProps> = ({
       const sessDate = new Date(start.getTime() + (i - 1) * dayInterval * 24 * 60 * 60 * 1000);
       sessDate.setHours(15, 0, 0, 0);
 
-      const nodeInfo = PROGRAM_NODES.find((n) => n.step === i) || PROGRAM_NODES[0];
+      const isMilestone = i === 4 || i === 8 || i === 12;
+      const cycleNum = Math.ceil(i / 4);
 
-      newSessions.push({
+      const sessionItem: Session = {
         id: `sess-${cycleClientId}-${i}-${Date.now()}`,
         clientId: cycleClientId,
         sessionNumber: i,
@@ -275,224 +297,236 @@ export const AdminSessionsManager: React.FC<AdminSessionsManagerProps> = ({
         meetLink: `https://meet.google.com/rbc-${(client?.name || 'sesion').toLowerCase().replace(/[^a-z0-9]/g, '')}-s${i}`,
         status: 'scheduled',
         durationMinutes: 60,
-        ontologicalFocus: `${nodeInfo.level}: ${nodeInfo.sessionTitle}`,
-        notes: `Objetivo: ${nodeInfo.objective}`,
+        ontologicalFocus: isMilestone
+          ? `Cierre del Ciclo ${cycleNum} & Cosecha Ontológica`
+          : 'Espacio Abierto • Acompañamiento del Emergente',
+        notes: isMilestone
+          ? 'Cierre de ciclo: consolidación e integración de descubrimientos, patrones recurrentes y cambios de perspectiva observados.'
+          : 'Pregunta de apertura: "¿Qué es importante para ti traer a este espacio hoy?". Espacio abierto al emergente.',
         isPaid: true,
         programNodeStep: i,
-      });
+      };
+
+      newSessions.push(sessionItem);
     }
 
-    // Save alongside existing sessions for other clients
+    // Persistencia local
     const existing = OntologicalStore.getSessions().filter((s) => s.clientId !== cycleClientId);
     OntologicalStore.saveSessions([...existing, ...newSessions]);
 
+    // Sincronización directa en Firestore
+    for (const sess of newSessions) {
+      await FirestoreSyncService.syncSession(sess);
+    }
+
     refreshAll();
     setIsCycleModalOpen(false);
-    alert(`¡Ciclo de ${cycleCount} sesiones construido y sincronizado con éxito para ${client?.name || 'el participante'}!`);
+    alert(`¡Ciclo de ${cycleCount} sesiones construido con espacio abierto al emergente y sincronizado con éxito para ${client?.name || 'el participante'}!`);
   };
 
-  // Copy Meet link to clipboard
+  // Copiar enlace de Google Meet
   const handleCopyMeetLink = (sessId: string, link: string) => {
     navigator.clipboard.writeText(link);
     setCopiedLinkSessionId(sessId);
-    setTimeout(() => setCopiedLinkSessionId(null), 2000);
+    setTimeout(() => setCopiedLinkSessionId(null), 2500);
   };
 
-  // Format date helper
-  const formatSessionDate = (isoString?: string) => {
-    if (!isoString) return 'Fecha por coordinar';
+  // Abrir Cuestionario Posterior / Bitácora para registrar o editar
+  const handleOpenWorkbook = (sess: Session) => {
+    const client = clients.find((c) => c.uid === sess.clientId);
+    setSelectedSessionForWorkbook(sess);
+    setSelectedClientForWorkbook(client || null);
+    setIsWorkbookModalOpen(true);
+  };
+
+  // Descargar memoria de sesión en PDF
+  const handleDownloadMemory = (form: PostSessionForm, sess: Session) => {
+    const client = clients.find((c) => c.uid === sess.clientId);
+    if (!client) {
+      alert('No se encontró el participante asociado.');
+      return;
+    }
+    PDFGenerator.generateSessionWorkbookPDF(form, client, sess);
+  };
+
+  // Filtrado de sesiones
+  const filteredSessions = useMemo(() => {
+    return sessions
+      .filter((s) => {
+        if (clientFilter !== 'all' && s.clientId !== clientFilter) return false;
+        if (statusFilter !== 'all' && s.status !== statusFilter) return false;
+
+        if (searchQuery.trim()) {
+          const q = searchQuery.toLowerCase();
+          const clientName = clients.find((c) => c.uid === s.clientId)?.name?.toLowerCase() || '';
+          const focus = (s.ontologicalFocus || '').toLowerCase();
+          const notes = (s.notes || '').toLowerCase();
+          const meet = (s.meetLink || '').toLowerCase();
+          return (
+            clientName.includes(q) ||
+            focus.includes(q) ||
+            notes.includes(q) ||
+            meet.includes(q)
+          );
+        }
+        return true;
+      })
+      .sort((a, b) => {
+        const timeA = a.date ? new Date(a.date).getTime() : 0;
+        const timeB = b.date ? new Date(b.date).getTime() : 0;
+        return timeA - timeB;
+      });
+  }, [sessions, clientFilter, statusFilter, searchQuery, clients]);
+
+  // Formateadores humanos de fecha y hora
+  const formatSessionDate = (dateStr?: string) => {
+    if (!dateStr) return 'Por coordinar';
     try {
-      const d = new Date(isoString);
+      const d = new Date(dateStr);
       return d.toLocaleDateString('es-ES', {
-        weekday: 'long',
-        year: 'numeric',
-        month: 'long',
+        weekday: 'short',
         day: 'numeric',
+        month: 'short',
+        year: 'numeric',
       });
     } catch {
-      return isoString;
+      return dateStr;
     }
   };
 
-  const formatSessionTime = (isoString?: string) => {
-    if (!isoString) return '';
+  const formatSessionTime = (dateStr?: string) => {
+    if (!dateStr) return '--:--';
     try {
-      const d = new Date(isoString);
+      const d = new Date(dateStr);
       return d.toLocaleTimeString('es-ES', {
         hour: '2-digit',
         minute: '2-digit',
       });
     } catch {
-      return '';
+      return '--:--';
     }
   };
 
-  // Filtered sessions calculation
-  const filteredSessions = useMemo(() => {
-    return sessions
-      .filter((s) => {
-        // Client filter
-        if (clientFilter !== 'all' && s.clientId !== clientFilter) return false;
-
-        // Status filter
-        if (statusFilter !== 'all') {
-          const isCompleted = s.status === 'completed' || s.status === 'Completada';
-          if (statusFilter === 'completed' && !isCompleted) return false;
-          if (statusFilter === 'scheduled' && (s.status !== 'scheduled' || isCompleted)) return false;
-          if (statusFilter === 'cancelled' && s.status !== 'cancelled') return false;
-        }
-
-        // Search query
-        if (searchQuery.trim()) {
-          const q = searchQuery.toLowerCase();
-          const client = clients.find((c) => c.uid === s.clientId);
-          const clientName = client?.name?.toLowerCase() || '';
-          const clientEmail = client?.email?.toLowerCase() || '';
-          const focus = s.ontologicalFocus?.toLowerCase() || '';
-          const notes = s.notes?.toLowerCase() || '';
-          const sessNum = `sesion ${s.sessionNumber || ''}`;
-
-          if (
-            !clientName.includes(q) &&
-            !clientEmail.includes(q) &&
-            !focus.includes(q) &&
-            !notes.includes(q) &&
-            !sessNum.includes(q)
-          ) {
-            return false;
-          }
-        }
-
-        return true;
-      })
-      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-  }, [sessions, clientFilter, statusFilter, searchQuery, clients]);
-
-  // Metric stats
+  // Métricas
   const scheduledCount = sessions.filter((s) => s.status === 'scheduled').length;
-  const completedCount = sessions.filter((s) => s.status === 'completed' || s.status === 'Completada').length;
+  const completedCount = sessions.filter((s) => s.status === 'completed').length;
   const uniqueClientsWithSessions = new Set(sessions.map((s) => s.clientId)).size;
 
   return (
-    <div className="space-y-6 animate-fade-in">
-      {/* 1. HEADER EJECUTIVO & RESUMEN */}
-      <div className="bg-white dark:bg-[#18181B] rounded-3xl border border-gray-200/80 dark:border-neutral-800 p-5 sm:p-6 shadow-xs">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5">
+    <div className="space-y-6">
+      {/* ========================================================================= */}
+      {/* 1. CABECERA DEL EDITOR: IDENTIDAD B&W DE ALTO CONTRASTE                   */}
+      {/* ========================================================================= */}
+      <div className="p-6 rounded-2xl bg-white dark:bg-black border border-black/10 dark:border-white/10 shadow-xs space-y-5">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2">
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-400 text-[10px] font-mono font-bold uppercase tracking-wider">
-                <CalendarCheck2 className="w-3 h-3" />
-                Sincronización Directa con Participantes
+              <span className="text-[10px] uppercase tracking-widest font-mono text-neutral-500 dark:text-neutral-400">
+                Acompañamiento 1 a 1 • Espacio Abierto
               </span>
-              <span className="text-xs text-gray-400">•</span>
-              <span className="text-xs text-gray-500 dark:text-neutral-400">
-                1 a 1 & Acompañamiento Ontológico
+              <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-neutral-100 dark:bg-neutral-800 text-black dark:text-white border border-black/10 dark:border-white/10">
+                Lienzo en Blanco
               </span>
             </div>
-            <h2 className="text-xl sm:text-2xl font-black text-black dark:text-white mt-1">
-              Sesiones de Consultoría
+            <h2 className="text-xl sm:text-2xl font-semibold tracking-tight text-black dark:text-white mt-1">
+              Editor de Sesiones Individuales
             </h2>
-            <p className="text-xs sm:text-sm text-gray-500 dark:text-neutral-400 font-light max-w-2xl mt-0.5">
-              Construye, revisa o elimina sesiones individuales para cada participante. Cualquier cambio, fecha, enlace o nota se sincroniza automáticamente en el portal del cliente.
+            <p className="text-xs text-neutral-600 dark:text-neutral-400 font-light mt-0.5 max-w-2xl leading-relaxed">
+              Las sesiones fluyen sin agendas rígidas para honrar el emergente del cliente. El cuestionario posterior consolida el registro de descubrimientos, compromisos y cosechas cada 4 encuentros.
             </p>
           </div>
 
-          {/* Quick Actions */}
+          {/* Acciones principales */}
           <div className="flex flex-wrap items-center gap-2.5 shrink-0">
             <button
               type="button"
               onClick={() => setIsCycleModalOpen(true)}
-              className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl border border-gray-200 dark:border-neutral-700 bg-gray-50 dark:bg-neutral-800/80 hover:bg-gray-100 dark:hover:bg-neutral-700 text-xs font-semibold text-black dark:text-white cursor-pointer transition-all shadow-2xs"
-              title="Construir ciclo completo de 6 o 12 sesiones para un cliente"
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-black/15 dark:border-white/15 bg-neutral-50 dark:bg-neutral-900 hover:bg-neutral-100 dark:hover:bg-neutral-800 text-xs font-semibold text-black dark:text-white cursor-pointer transition-colors"
             >
-              <Layers className="w-3.5 h-3.5 text-indigo-500" />
-              <span>Construir Ciclo Completo</span>
+              <Layers className="w-4 h-4" />
+              <span>Construir Ciclo de Sesiones</span>
             </button>
 
             <button
               type="button"
               onClick={() => handleOpenCreateSession()}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-black dark:bg-white text-white dark:text-black hover:bg-neutral-800 dark:hover:bg-neutral-200 text-xs font-bold shadow-md cursor-pointer transition-all"
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-black text-white dark:bg-white dark:text-black hover:opacity-90 text-xs font-bold shadow-xs cursor-pointer transition-opacity"
             >
-              <Plus className="w-4 h-4 text-emerald-400 dark:text-emerald-600" />
+              <Plus className="w-4 h-4" />
               <span>+ Nueva Sesión Individual</span>
             </button>
           </div>
         </div>
 
-        {/* Métricas Rápidas */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mt-5 pt-5 border-t border-gray-100 dark:border-neutral-800">
-          <div className="p-3.5 rounded-2xl bg-gray-50/80 dark:bg-neutral-800/40 border border-gray-100 dark:border-neutral-800">
-            <span className="text-[10px] font-semibold text-gray-500 uppercase tracking-wider block">
+        {/* Métricas: Contenedores Transparentes Jerárquicos en B&W */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 pt-5 border-t border-black/10 dark:border-white/10">
+          <div className="p-3.5 rounded-2xl bg-black/[0.02] dark:bg-white/[0.02] border border-black/10 dark:border-white/10">
+            <span className="text-[10px] font-semibold text-neutral-500 uppercase tracking-wider block font-mono">
               Total Sesiones
             </span>
-            <div className="flex items-baseline gap-2 mt-0.5">
-              <span className="text-xl font-black text-black dark:text-white">{sessions.length}</span>
-              <span className="text-[11px] text-gray-400 font-light">en agenda</span>
+            <div className="flex items-baseline gap-2 mt-1">
+              <span className="text-xl font-bold text-black dark:text-white">{sessions.length}</span>
+              <span className="text-[11px] text-neutral-400 font-light">en agenda</span>
             </div>
           </div>
 
-          <div className="p-3.5 rounded-2xl bg-blue-50/60 dark:bg-blue-950/20 border border-blue-100 dark:border-blue-900/40">
-            <span className="text-[10px] font-semibold text-blue-700 dark:text-blue-400 uppercase tracking-wider block">
+          <div className="p-3.5 rounded-2xl bg-neutral-50/80 dark:bg-neutral-900/60 border border-black/15 dark:border-white/15">
+            <span className="text-[10px] font-semibold text-neutral-500 uppercase tracking-wider block font-mono">
               Programadas
             </span>
-            <div className="flex items-baseline gap-2 mt-0.5">
-              <span className="text-xl font-black text-blue-700 dark:text-blue-300">
-                {scheduledCount}
-              </span>
-              <span className="text-[11px] text-blue-600/70 dark:text-blue-400 font-light">por realizar</span>
+            <div className="flex items-baseline gap-2 mt-1">
+              <span className="text-xl font-bold text-black dark:text-white">{scheduledCount}</span>
+              <span className="text-[11px] text-neutral-400 font-light">por realizar</span>
             </div>
           </div>
 
-          <div className="p-3.5 rounded-2xl bg-emerald-50/60 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-900/40">
-            <span className="text-[10px] font-semibold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider block">
+          <div className="p-3.5 rounded-2xl bg-neutral-50/80 dark:bg-neutral-900/60 border border-black/15 dark:border-white/15">
+            <span className="text-[10px] font-semibold text-neutral-500 uppercase tracking-wider block font-mono">
               Completadas
             </span>
-            <div className="flex items-baseline gap-2 mt-0.5">
-              <span className="text-xl font-black text-emerald-700 dark:text-emerald-300">
-                {completedCount}
-              </span>
-              <span className="text-[11px] text-emerald-600/70 dark:text-emerald-400 font-light">ejecutadas</span>
+            <div className="flex items-baseline gap-2 mt-1">
+              <span className="text-xl font-bold text-black dark:text-white">{completedCount}</span>
+              <span className="text-[11px] text-neutral-400 font-light">ejecutadas</span>
             </div>
           </div>
 
-          <div className="p-3.5 rounded-2xl bg-purple-50/60 dark:bg-purple-950/20 border border-purple-100 dark:border-purple-900/40">
-            <span className="text-[10px] font-semibold text-purple-700 dark:text-purple-400 uppercase tracking-wider block">
+          <div className="p-3.5 rounded-2xl bg-black/[0.02] dark:bg-white/[0.02] border border-black/10 dark:border-white/10">
+            <span className="text-[10px] font-semibold text-neutral-500 uppercase tracking-wider block font-mono">
               Participantes
             </span>
-            <div className="flex items-baseline gap-2 mt-0.5">
-              <span className="text-xl font-black text-purple-700 dark:text-purple-300">
-                {uniqueClientsWithSessions}
-              </span>
-              <span className="text-[11px] text-purple-600/70 dark:text-purple-400 font-light">con sesiones</span>
+            <div className="flex items-baseline gap-2 mt-1">
+              <span className="text-xl font-bold text-black dark:text-white">{uniqueClientsWithSessions}</span>
+              <span className="text-[11px] text-neutral-400 font-light">en proceso</span>
             </div>
           </div>
         </div>
       </div>
 
-      {/* 2. FILTROS & BARRA DE BÚSQUEDA */}
-      <div className="p-4 rounded-2xl bg-white dark:bg-[#18181B] border border-gray-200/80 dark:border-neutral-800 shadow-2xs flex flex-col md:flex-row md:items-center justify-between gap-3">
+      {/* ========================================================================= */}
+      {/* 2. FILTROS Y BÚSQUEDA                                                     */}
+      {/* ========================================================================= */}
+      <div className="p-4 rounded-2xl bg-neutral-50/80 dark:bg-neutral-900/60 border border-black/10 dark:border-white/10 flex flex-col md:flex-row md:items-center justify-between gap-3">
         {/* Buscador */}
         <div className="relative flex-1 min-w-[240px]">
-          <Search className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+          <Search className="w-4 h-4 text-neutral-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
           <input
             type="text"
-            placeholder="Buscar por participante, enfoque ontológico o notas..."
+            placeholder="Buscar por participante, notas o emergente..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-9 pr-3.5 py-2 rounded-xl bg-gray-50 dark:bg-neutral-900 border border-gray-200 dark:border-neutral-700 text-xs text-black dark:text-white placeholder-gray-400 focus:outline-hidden focus:border-black dark:focus:border-white"
+            className="w-full pl-9 pr-3.5 py-2 rounded-xl bg-white dark:bg-black border border-black/10 dark:border-white/10 text-xs text-black dark:text-white placeholder-neutral-400 focus:outline-hidden focus:border-black dark:focus:border-white"
           />
         </div>
 
         {/* Filtro por Participante */}
         <div className="flex items-center gap-2">
-          <label className="text-xs font-medium text-gray-500 dark:text-neutral-400 whitespace-nowrap">
+          <label className="text-xs font-medium text-neutral-500 dark:text-neutral-400 whitespace-nowrap">
             Participante:
           </label>
           <select
             value={clientFilter}
             onChange={(e) => setClientFilter(e.target.value)}
-            className="px-3 py-2 rounded-xl bg-gray-50 dark:bg-neutral-900 border border-gray-200 dark:border-neutral-700 text-xs font-medium text-black dark:text-white focus:outline-hidden"
+            className="px-3 py-2 rounded-xl bg-white dark:bg-black border border-black/10 dark:border-white/10 text-xs font-medium text-black dark:text-white focus:outline-hidden"
           >
             <option value="all">Todos los participantes ({clients.length})</option>
             {clients.map((c) => (
@@ -503,135 +537,119 @@ export const AdminSessionsManager: React.FC<AdminSessionsManagerProps> = ({
           </select>
         </div>
 
-        {/* Filtro por Estado (Tabs) */}
-        <div className="inline-flex p-1 rounded-xl bg-gray-100 dark:bg-neutral-900 border border-gray-200/70 dark:border-neutral-800 shrink-0">
-          <button
-            type="button"
-            onClick={() => setStatusFilter('all')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-              statusFilter === 'all'
-                ? 'bg-white dark:bg-[#202024] text-black dark:text-white shadow-xs'
-                : 'text-gray-500 hover:text-black dark:hover:text-white'
-            }`}
-          >
-            Todas ({sessions.length})
-          </button>
-          <button
-            type="button"
-            onClick={() => setStatusFilter('scheduled')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-              statusFilter === 'scheduled'
-                ? 'bg-white dark:bg-[#202024] text-blue-600 dark:text-blue-400 shadow-xs'
-                : 'text-gray-500 hover:text-black dark:hover:text-white'
-            }`}
-          >
-            Programadas ({scheduledCount})
-          </button>
-          <button
-            type="button"
-            onClick={() => setStatusFilter('completed')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-              statusFilter === 'completed'
-                ? 'bg-white dark:bg-[#202024] text-emerald-600 dark:text-emerald-400 shadow-xs'
-                : 'text-gray-500 hover:text-black dark:hover:text-white'
-            }`}
-          >
-            Completadas ({completedCount})
-          </button>
+        {/* Filtro por Estado */}
+        <div className="flex items-center gap-1.5 border-t md:border-t-0 md:border-l border-black/10 dark:border-white/10 pt-2 md:pt-0 md:pl-3">
+          {(['all', 'scheduled', 'completed', 'cancelled'] as const).map((st) => (
+            <button
+              key={st}
+              type="button"
+              onClick={() => setStatusFilter(st)}
+              className={`px-3 py-1.5 rounded-xl text-xs font-semibold cursor-pointer transition-colors ${
+                statusFilter === st
+                  ? 'bg-black text-white dark:bg-white dark:text-black'
+                  : 'bg-white dark:bg-black text-neutral-600 dark:text-neutral-400 border border-black/10 dark:border-white/10 hover:bg-neutral-100 dark:hover:bg-neutral-800'
+              }`}
+            >
+              {st === 'all' && 'Todas'}
+              {st === 'scheduled' && 'Programadas'}
+              {st === 'completed' && 'Completadas'}
+              {st === 'cancelled' && 'Canceladas'}
+            </button>
+          ))}
         </div>
       </div>
 
-      {/* 3. LISTADO DE SESIONES CONSTRUIDAS */}
+      {/* ========================================================================= */}
+      {/* 3. LISTADO DE SESIONES: DISEÑO LIMPIO Y HUMANIZADO                         */}
+      {/* ========================================================================= */}
       {filteredSessions.length === 0 ? (
-        <div className="text-center py-16 px-4 bg-white dark:bg-[#18181B] rounded-3xl border border-dashed border-gray-300 dark:border-neutral-800 space-y-4">
-          <div className="w-12 h-12 rounded-2xl bg-gray-100 dark:bg-neutral-800 flex items-center justify-center text-gray-400 mx-auto">
-            <Calendar className="w-6 h-6" />
-          </div>
-          <div className="space-y-1 max-w-md mx-auto">
-            <h3 className="text-base font-bold text-black dark:text-white">
-              No hay sesiones con los filtros actuales
-            </h3>
-            <p className="text-xs text-gray-500 dark:text-neutral-400 font-light">
-              {sessions.length === 0
-                ? 'Aún no se han construido sesiones. Crea una sesión individual o genera un ciclo completo para comenzar.'
-                : 'Prueba cambiando los filtros de búsqueda o participante para ver más sesiones.'}
-            </p>
-          </div>
-          <div className="flex items-center justify-center gap-3 pt-2">
-            <button
-              type="button"
-              onClick={() => handleOpenCreateSession(clientFilter !== 'all' ? clientFilter : undefined)}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-black dark:bg-white text-white dark:text-black text-xs font-bold shadow-xs cursor-pointer"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              <span>Construir Primera Sesión</span>
-            </button>
-          </div>
+        <div className="p-12 text-center rounded-2xl bg-white dark:bg-black border border-black/10 dark:border-white/10 space-y-3">
+          <Calendar className="w-8 h-8 text-neutral-400 mx-auto" />
+          <h3 className="text-sm font-semibold text-black dark:text-white">
+            No se encontraron sesiones con estos filtros
+          </h3>
+          <p className="text-xs text-neutral-500 dark:text-neutral-400 max-w-sm mx-auto">
+            Puedes registrar una nueva sesión en blanco para cualquier participante o construir su ciclo de encuentros.
+          </p>
+          <button
+            type="button"
+            onClick={() => handleOpenCreateSession()}
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-black text-white dark:bg-white dark:text-black text-xs font-bold hover:opacity-90 cursor-pointer"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            <span>Crear Sesión en Blanco</span>
+          </button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-4">
+        <div className="space-y-4">
           {filteredSessions.map((sess) => {
             const client = clients.find((c) => c.uid === sess.clientId);
-            const isCompleted = sess.status === 'completed' || sess.status === 'Completada';
-            const nodeInfo = PROGRAM_NODES.find((n) => n.step === sess.sessionNumber) || PROGRAM_NODES[0];
+            const sessNumber = sess.sessionNumber || 1;
+            const isMilestone = sessNumber === 4 || sessNumber === 8 || sessNumber === 12;
+            const cycleNum = Math.ceil(sessNumber / 4);
 
-            // Check if participant submitted reflections for this session
-            const matchingForm = forms.find(
-              (f) => f.clientId === sess.clientId && f.sessionStep === sess.sessionNumber
-            );
-            const matchingPostForm = postSessionForms.find(
-              (f) => f.sessionId === sess.id || (f.clientId === sess.clientId && f.sessionNumber === sess.sessionNumber)
-            );
+            // Cuestionario posterior correspondiente
+            const matchingForm =
+              postSessionForms.find((f) => f.sessionId === sess.id) ||
+              postSessionForms.find(
+                (f) => f.clientId === sess.clientId && f.sessionNumber === sessNumber
+              );
 
-            const hasReflections = Boolean(matchingForm || matchingPostForm);
-            const isExpanded = expandedReflectionId === sess.id;
+            const hasPostForm = !!matchingForm;
+            const isExpanded = expandedFormId === sess.id;
 
             return (
               <div
                 key={sess.id}
-                className={`rounded-3xl border transition-all p-5 sm:p-6 bg-white dark:bg-[#18181B] ${
-                  isCompleted
-                    ? 'border-emerald-500/30 bg-emerald-50/10 dark:bg-emerald-950/10'
-                    : 'border-gray-200/90 dark:border-neutral-800 hover:border-gray-300 dark:hover:border-neutral-700 shadow-2xs'
+                className={`p-5 rounded-2xl bg-white dark:bg-black border transition-all ${
+                  isMilestone
+                    ? 'border-black dark:border-white shadow-xs'
+                    : 'border-black/10 dark:border-white/10 hover:border-black/25 dark:hover:border-white/25'
                 }`}
               >
-                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-gray-100 dark:border-neutral-800/80">
-                  {/* Participant & Session ID header */}
-                  <div className="flex items-start sm:items-center gap-3">
-                    <div className="w-10 h-10 rounded-2xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-400 font-bold text-sm flex items-center justify-center shrink-0 border border-indigo-200/60 dark:border-indigo-900/40">
-                      S{sess.sessionNumber || 1}
-                    </div>
+                {/* Cabecera de la Tarjeta */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-black/10 dark:border-white/10">
+                  <div className="flex items-center gap-3">
+                    {/* Fotografía a color del participante (Único elemento cromático) */}
+                    <img
+                      src={
+                        client?.avatarUrl ||
+                        'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80'
+                      }
+                      alt={client?.name || 'Participante'}
+                      referrerPolicy="no-referrer"
+                      className="w-12 h-12 rounded-full object-cover border border-black/10 dark:border-white/10 shrink-0"
+                    />
                     <div>
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="text-sm font-bold text-black dark:text-white">
-                          Sesión {sess.sessionNumber || 1}: {sess.ontologicalFocus || nodeInfo.sessionTitle}
+                          {client?.name || 'Participante Sin Asignar'}
                         </span>
-                        <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-gray-100 dark:bg-neutral-800 text-gray-600 dark:text-neutral-400 font-medium">
-                          {nodeInfo.level}
+                        <span className="text-neutral-400">•</span>
+                        <span className="text-xs font-semibold text-black dark:text-white font-mono">
+                          Sesión {sessNumber} de 12
+                        </span>
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold border border-black/10 dark:border-white/10 bg-neutral-50 dark:bg-neutral-900 text-neutral-700 dark:text-neutral-300">
+                          {isMilestone ? `★ Cierre de Ciclo ${cycleNum}` : `Ciclo ${cycleNum} • Exploración Libre`}
                         </span>
                       </div>
-                      <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-neutral-400 font-light mt-0.5">
-                        <UserCheck className="w-3.5 h-3.5 text-indigo-500" />
-                        <span className="font-semibold text-black dark:text-white">
-                          {client?.name || 'Participante sin asignar'}
-                        </span>
-                        {client?.email && <span>• {client.email}</span>}
-                        {client?.company && <span>• {client.company}</span>}
-                      </div>
+                      <p className="text-xs text-neutral-600 dark:text-neutral-400 font-light mt-0.5">
+                        {sess.ontologicalFocus || (isMilestone ? 'Cierre de Ciclo & Cosecha Ontológica' : 'Espacio Abierto al Emergente (Lienzo en Blanco)')}
+                      </p>
                     </div>
                   </div>
 
-                  {/* Status toggle & Actions */}
-                  <div className="flex items-center gap-2.5 shrink-0 self-start lg:self-auto">
-                    {/* Status Pill with Toggle */}
-                    <div className="inline-flex items-center gap-1.5 p-1 rounded-xl bg-gray-50 dark:bg-neutral-900 border border-gray-200/80 dark:border-neutral-800">
+                  {/* Estado y Acciones Rápidas */}
+                  <div className="flex items-center gap-2 self-start sm:self-auto flex-wrap">
+                    {/* Botón de Estado */}
+                    <div className="flex items-center rounded-xl border border-black/10 dark:border-white/10 p-0.5 bg-neutral-50 dark:bg-neutral-900">
                       <button
                         type="button"
                         onClick={() => handleToggleStatus(sess, 'scheduled')}
-                        className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all cursor-pointer ${
-                          !isCompleted
-                            ? 'bg-blue-600 text-white shadow-xs'
-                            : 'text-gray-500 hover:text-black dark:hover:text-white'
+                        className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold cursor-pointer transition-colors ${
+                          sess.status === 'scheduled'
+                            ? 'bg-black text-white dark:bg-white dark:text-black'
+                            : 'text-neutral-500 hover:text-black dark:hover:text-white'
                         }`}
                       >
                         Programada
@@ -639,63 +657,62 @@ export const AdminSessionsManager: React.FC<AdminSessionsManagerProps> = ({
                       <button
                         type="button"
                         onClick={() => handleToggleStatus(sess, 'completed')}
-                        className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all cursor-pointer flex items-center gap-1 ${
-                          isCompleted
-                            ? 'bg-emerald-600 text-white shadow-xs'
-                            : 'text-gray-500 hover:text-black dark:hover:text-white'
+                        className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold cursor-pointer transition-colors ${
+                          sess.status === 'completed'
+                            ? 'bg-black text-white dark:bg-white dark:text-black'
+                            : 'text-neutral-500 hover:text-black dark:hover:text-white'
                         }`}
                       >
-                        <Check className="w-3 h-3" />
-                        <span>Completada</span>
+                        Completada
                       </button>
                     </div>
 
-                    {/* Edit Session */}
+                    {/* Editar */}
                     <button
                       type="button"
                       onClick={() => handleOpenEditSession(sess)}
-                      className="p-2 rounded-xl bg-gray-100 dark:bg-neutral-800 text-gray-700 dark:text-neutral-300 hover:bg-gray-200 dark:hover:bg-neutral-700 transition-colors cursor-pointer"
-                      title="Editar o reprogramar sesión"
+                      className="p-2 rounded-xl border border-black/10 dark:border-white/10 hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-700 dark:text-neutral-300 transition-colors cursor-pointer"
+                      title="Editar sesión"
                     >
                       <Edit3 className="w-4 h-4" />
                     </button>
 
-                    {/* Delete Session */}
+                    {/* Eliminar */}
                     <button
                       type="button"
                       onClick={() => handleDeleteSession(sess)}
-                      className="p-2 rounded-xl bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-900/60 transition-colors cursor-pointer"
-                      title="Eliminar sesión de forma permanente"
+                      className="p-2 rounded-xl border border-black/10 dark:border-white/10 hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-500 hover:text-black dark:hover:text-white transition-colors cursor-pointer"
+                      title="Eliminar sesión"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
                 </div>
 
-                {/* Session Body: Date, Meet & Notes */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 text-xs">
-                  {/* Col 1: Fecha y Hora */}
-                  <div className="space-y-1.5 p-3 rounded-2xl bg-gray-50/70 dark:bg-neutral-900/50 border border-gray-100 dark:border-neutral-800/80">
-                    <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider block">
-                      Fecha y Hora Confirmada
+                {/* Cuerpo de la Sesión: 3 Bloques Sin Ruido */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-4 text-xs">
+                  {/* Bloque 1: Fecha y Hora */}
+                  <div className="p-3.5 rounded-2xl bg-neutral-50/80 dark:bg-neutral-900/60 border border-black/10 dark:border-white/10 space-y-1.5">
+                    <span className="text-[10px] font-semibold text-neutral-500 uppercase tracking-wider block font-mono">
+                      Fecha y Hora
                     </span>
-                    <div className="font-bold text-black dark:text-white capitalize flex items-center gap-1.5">
-                      <Calendar className="w-3.5 h-3.5 text-blue-500" />
+                    <div className="font-semibold text-black dark:text-white flex items-center gap-1.5">
+                      <Calendar className="w-3.5 h-3.5" />
                       <span>{formatSessionDate(sess.date)}</span>
                     </div>
-                    <div className="text-gray-500 dark:text-neutral-400 flex items-center gap-1.5">
-                      <Clock className="w-3.5 h-3.5 text-gray-400" />
-                      <span>{formatSessionTime(sess.date)} ({sess.durationMinutes || 60} minutos)</span>
+                    <div className="text-neutral-500 dark:text-neutral-400 flex items-center gap-1.5">
+                      <Clock className="w-3.5 h-3.5" />
+                      <span>{formatSessionTime(sess.date)} ({sess.durationMinutes || 60} min)</span>
                     </div>
                   </div>
 
-                  {/* Col 2: Enlace Google Meet */}
-                  <div className="space-y-1.5 p-3 rounded-2xl bg-gray-50/70 dark:bg-neutral-900/50 border border-gray-100 dark:border-neutral-800/80 flex flex-col justify-between">
+                  {/* Bloque 2: Sala Google Meet */}
+                  <div className="p-3.5 rounded-2xl bg-neutral-50/80 dark:bg-neutral-900/60 border border-black/10 dark:border-white/10 space-y-1.5 flex flex-col justify-between">
                     <div>
-                      <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider block">
+                      <span className="text-[10px] font-semibold text-neutral-500 uppercase tracking-wider block font-mono">
                         Sala Google Meet
                       </span>
-                      <p className="text-[11px] font-mono text-gray-600 dark:text-neutral-300 truncate mt-0.5">
+                      <p className="text-[11px] font-mono text-neutral-600 dark:text-neutral-300 truncate mt-0.5">
                         {sess.meetLink || 'Sin enlace configurado'}
                       </p>
                     </div>
@@ -707,19 +724,19 @@ export const AdminSessionsManager: React.FC<AdminSessionsManagerProps> = ({
                             href={sess.meetLink}
                             target="_blank"
                             rel="noreferrer"
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-black dark:bg-white text-white dark:text-black font-semibold text-[11px] hover:opacity-90 transition-opacity shadow-xs"
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-black text-white dark:bg-white dark:text-black font-semibold text-[11px] hover:opacity-90 transition-opacity"
                           >
-                            <Video className="w-3 h-3 text-emerald-400 dark:text-emerald-600" />
-                            <span>Entrar a Meet</span>
+                            <Video className="w-3 h-3" />
+                            <span>Entrar</span>
                           </a>
                           <button
                             type="button"
                             onClick={() => handleCopyMeetLink(sess.id, sess.meetLink)}
-                            className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl border border-gray-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-gray-700 dark:text-neutral-300 hover:bg-gray-50 text-[11px] font-medium cursor-pointer"
+                            className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl border border-black/10 dark:border-white/10 bg-white dark:bg-black text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800 text-[11px] font-medium cursor-pointer"
                           >
                             {copiedLinkSessionId === sess.id ? (
                               <>
-                                <Check className="w-3 h-3 text-emerald-500" />
+                                <Check className="w-3 h-3" />
                                 <span>Copiado</span>
                               </>
                             ) : (
@@ -734,7 +751,7 @@ export const AdminSessionsManager: React.FC<AdminSessionsManagerProps> = ({
                         <button
                           type="button"
                           onClick={() => handleOpenEditSession(sess)}
-                          className="text-[11px] font-medium text-blue-600 dark:text-blue-400 underline cursor-pointer"
+                          className="text-[11px] font-medium text-neutral-600 dark:text-neutral-300 underline cursor-pointer"
                         >
                           + Agregar enlace de Meet
                         </button>
@@ -742,105 +759,115 @@ export const AdminSessionsManager: React.FC<AdminSessionsManagerProps> = ({
                     </div>
                   </div>
 
-                  {/* Col 3: Enfoque y Cuaderno */}
-                  <div className="space-y-1.5 p-3 rounded-2xl bg-gray-50/70 dark:bg-neutral-900/50 border border-gray-100 dark:border-neutral-800/80 flex flex-col justify-between">
+                  {/* Bloque 3: Cuestionario Posterior (Eje de Captura) */}
+                  <div className="p-3.5 rounded-2xl bg-neutral-50/80 dark:bg-neutral-900/60 border border-black/10 dark:border-white/10 space-y-2 flex flex-col justify-between">
                     <div>
                       <div className="flex items-center justify-between">
-                        <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider block">
-                          Cuaderno / Reflexiones
+                        <span className="text-[10px] font-semibold text-neutral-500 uppercase tracking-wider block font-mono">
+                          Cuestionario Posterior
                         </span>
-                        {hasReflections ? (
-                          <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-100/80 dark:bg-emerald-950/60 px-2 py-0.5 rounded-full">
+                        {hasPostForm ? (
+                          <span className="inline-flex items-center gap-1 text-[10px] font-bold text-black dark:text-white bg-neutral-200 dark:bg-neutral-800 px-2 py-0.5 rounded-full border border-black/10 dark:border-white/10">
                             <CheckCircle2 className="w-3 h-3" />
-                            Respondido
+                            Registrado
                           </span>
                         ) : (
-                          <span className="text-[10px] font-medium text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 px-2 py-0.5 rounded-full">
+                          <span className="text-[10px] font-medium text-neutral-500 bg-neutral-100 dark:bg-neutral-800 px-2 py-0.5 rounded-full border border-black/10 dark:border-white/10">
                             Pendiente
                           </span>
                         )}
                       </div>
-                      <p className="text-[11px] text-gray-600 dark:text-neutral-300 font-light line-clamp-2 mt-1">
-                        {sess.notes || 'Sin notas preparatorias registradas para esta sesión.'}
+                      <p className="text-[11px] text-neutral-600 dark:text-neutral-400 font-light line-clamp-2 mt-1">
+                        {hasPostForm
+                          ? `Emergente: "${matchingForm?.emergentTopic || matchingForm?.masterJudgmentAndNarrative || 'Sin título'}"`
+                          : (sess.notes || 'Espacio abierto al emergente. El cuestionario posterior capturará los descubrimientos.')}
                       </p>
                     </div>
 
                     <div className="flex items-center justify-between gap-2 pt-1">
-                      {hasReflections && (
-                        <button
-                          type="button"
-                          onClick={() => setExpandedReflectionId(isExpanded ? null : sess.id)}
-                          className="text-[11px] font-semibold text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-1 cursor-pointer"
-                        >
-                          <BookOpen className="w-3 h-3" />
-                          <span>{isExpanded ? 'Ocultar Reflexiones' : 'Revisar Reflexiones'}</span>
-                          {isExpanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
-                        </button>
-                      )}
+                      <button
+                        type="button"
+                        onClick={() => handleOpenWorkbook(sess)}
+                        className="text-[11px] font-semibold text-black dark:text-white underline flex items-center gap-1 cursor-pointer"
+                      >
+                        <BookOpen className="w-3 h-3" />
+                        <span>{hasPostForm ? 'Editar Cuestionario' : 'Diligenciar Cuestionario'}</span>
+                      </button>
 
-                      {onSelectClientForFicha && client && (
-                        <button
-                          type="button"
-                          onClick={() => onSelectClientForFicha(client.uid)}
-                          className="ml-auto text-[11px] font-medium text-gray-500 hover:text-black dark:hover:text-white underline cursor-pointer"
-                        >
-                          Ver Ficha 1 a 1 →
-                        </button>
+                      {hasPostForm && (
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => setExpandedFormId(isExpanded ? null : sess.id)}
+                            className="text-[11px] font-medium text-neutral-600 dark:text-neutral-400 hover:text-black dark:hover:text-white flex items-center gap-0.5 cursor-pointer"
+                          >
+                            <span>{isExpanded ? 'Ocultar' : 'Ver detalle'}</span>
+                            {isExpanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => handleDownloadMemory(matchingForm!, sess)}
+                            className="p-1 rounded-lg border border-black/10 dark:border-white/10 hover:bg-neutral-200 dark:hover:bg-neutral-800 text-black dark:text-white cursor-pointer"
+                            title="Descargar Memoria en PDF"
+                          >
+                            <Download className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
                       )}
                     </div>
                   </div>
                 </div>
 
-                {/* Expanded Reflections View for this Session */}
-                {isExpanded && (
-                  <div className="mt-4 pt-4 border-t border-gray-100 dark:border-neutral-800 animate-fade-in">
-                    <div className="p-4 rounded-2xl bg-indigo-50/50 dark:bg-indigo-950/20 border border-indigo-100 dark:border-indigo-900/40 space-y-3">
+                {/* Acordeón de Detalle del Cuestionario Posterior */}
+                {isExpanded && matchingForm && (
+                  <div className="mt-4 pt-4 border-t border-black/10 dark:border-white/10 space-y-3 animate-fade-in">
+                    <div className="p-4 rounded-2xl bg-neutral-50 dark:bg-neutral-900 border border-black/10 dark:border-white/10 space-y-3 text-xs">
                       <div className="flex items-center justify-between">
-                        <h4 className="text-xs font-bold text-indigo-950 dark:text-indigo-200 flex items-center gap-2">
-                          <BookOpen className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
-                          <span>Reflexiones y Cuaderno Directivo Diligenciado por {client?.name}</span>
-                        </h4>
-                        <span className="text-[10px] text-indigo-600 dark:text-indigo-400 font-mono">
-                          {matchingForm?.submittedAt
-                            ? new Date(matchingForm.submittedAt).toLocaleDateString('es-ES')
-                            : 'Registro oficial'}
+                        <span className="font-bold text-black dark:text-white uppercase tracking-wider text-[10px] font-mono">
+                          Registro del Cuestionario Posterior • Sesión {sessNumber}
                         </span>
+                        <button
+                          type="button"
+                          onClick={() => handleDownloadMemory(matchingForm, sess)}
+                          className="inline-flex items-center gap-1 text-[11px] font-semibold text-black dark:text-white underline cursor-pointer"
+                        >
+                          <Download className="w-3 h-3" />
+                          <span>Descargar Memoria (PDF)</span>
+                        </button>
                       </div>
 
-                      {matchingForm && (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
-                          <div className="p-3 rounded-xl bg-white/90 dark:bg-[#1E1E22] border border-indigo-100/60 dark:border-neutral-800">
-                            <span className="text-[10px] font-semibold text-gray-400 uppercase block mb-1">
-                              Sensación Corporal & Somática
-                            </span>
-                            <p className="text-gray-800 dark:text-neutral-200 font-light whitespace-pre-wrap">
-                              {matchingForm.bodyEmotion || 'Sin registro somático.'}
-                            </p>
-                          </div>
-                          <div className="p-3 rounded-xl bg-white/90 dark:bg-[#1E1E22] border border-indigo-100/60 dark:border-neutral-800">
-                            <span className="text-[10px] font-semibold text-gray-400 uppercase block mb-1">
-                              Quiebre Declarado & Reflexiones
-                            </span>
-                            <p className="text-gray-800 dark:text-neutral-200 font-light whitespace-pre-wrap">
-                              {matchingForm.reflections || 'Sin reflexiones registradas.'}
-                            </p>
-                          </div>
+                      <div className="space-y-2 text-neutral-700 dark:text-neutral-300">
+                        <div>
+                          <strong className="text-black dark:text-white block font-medium">Tema Emergente de la Sesión:</strong>
+                          <p className="mt-0.5 font-light">
+                            {matchingForm.emergentTopic || matchingForm.masterJudgmentAndNarrative || 'No especificado.'}
+                          </p>
                         </div>
-                      )}
 
-                      {matchingPostForm && (
-                        <div className="p-3 rounded-xl bg-white/90 dark:bg-[#1E1E22] border border-indigo-100/60 dark:border-neutral-800 text-xs space-y-2">
-                          <span className="text-[10px] font-semibold text-gray-400 uppercase block">
-                            Evaluación Post-Sesión & Aprendizaje Central
-                          </span>
-                          <p className="text-gray-800 dark:text-neutral-200 font-light">
-                            <strong>Quiebre abordado:</strong> {matchingPostForm.keyBreakthrough || 'N/A'}
-                          </p>
-                          <p className="text-gray-800 dark:text-neutral-200 font-light">
-                            <strong>Compromiso directivo:</strong> {matchingPostForm.actionCommitment || 'N/A'}
+                        {matchingForm.discovery && (
+                          <div>
+                            <strong className="text-black dark:text-white block font-medium">Descubrimiento / Quiebre Ontológico:</strong>
+                            <p className="mt-0.5 font-light">{matchingForm.discovery}</p>
+                          </div>
+                        )}
+
+                        <div>
+                          <strong className="text-black dark:text-white block font-medium">Paso a la Acción Acordado:</strong>
+                          <p className="mt-0.5 font-light">
+                            {matchingForm.actionStep || matchingForm.agreedActionItems?.[0] || 'No especificado.'}
                           </p>
                         </div>
-                      )}
+
+                        {matchingForm.cycleHarvest && (
+                          <div className="p-3 rounded-xl bg-white dark:bg-black border border-black/10 dark:border-white/10">
+                            <strong className="text-black dark:text-white block font-medium">
+                              ★ Cosecha del Ciclo (Sesión {sessNumber}):
+                            </strong>
+                            <p className="mt-0.5 font-light">{matchingForm.cycleHarvest}</p>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
                 )}
@@ -851,223 +878,189 @@ export const AdminSessionsManager: React.FC<AdminSessionsManagerProps> = ({
       )}
 
       {/* ========================================================================= */}
-      {/* MODAL 1: CONSTRUIR / EDITAR SESIÓN INDIVIDUAL                             */}
+      {/* MODAL 1: CREAR / EDITAR SESIÓN INDIVIDUAL (LIENZO EN BLANCO)               */}
       {/* ========================================================================= */}
       {isEditModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fade-in">
-          <div className="bg-white dark:bg-[#18181B] rounded-3xl border border-gray-200 dark:border-neutral-800 max-w-xl w-full p-6 space-y-5 shadow-2xl max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between pb-3 border-b border-gray-100 dark:border-neutral-800">
-              <div className="flex items-center gap-2.5">
-                <div className="p-2 rounded-xl bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400">
-                  <Calendar className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="text-base font-bold text-black dark:text-white">
-                    {editingSession ? 'Revisar / Modificar Sesión' : 'Construir Nueva Sesión Individual'}
-                  </h3>
-                  <p className="text-xs text-gray-500 dark:text-neutral-400 font-light">
-                    Sincronización en tiempo real con el panel del participante.
-                  </p>
-                </div>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-xs animate-fade-in">
+          <div className="bg-white dark:bg-[#121214] rounded-3xl border border-black/10 dark:border-white/10 max-w-lg w-full p-6 space-y-5 shadow-2xl">
+            <div className="flex items-center justify-between pb-3 border-b border-black/10 dark:border-white/10">
+              <div>
+                <h3 className="text-base font-bold text-black dark:text-white">
+                  {editingSession ? 'Editar Sesión' : 'Nueva Sesión Individual'}
+                </h3>
+                <p className="text-xs text-neutral-500 dark:text-neutral-400 font-light mt-0.5">
+                  Principio de Sesiones Libres: Sin agendas rígidas.
+                </p>
               </div>
               <button
                 type="button"
                 onClick={() => setIsEditModalOpen(false)}
-                className="p-1.5 rounded-xl hover:bg-gray-100 dark:hover:bg-neutral-800 text-gray-400 hover:text-black dark:hover:text-white"
+                className="p-1.5 rounded-xl hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-400 hover:text-black dark:hover:text-white cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <form onSubmit={handleSaveSession} className="space-y-4">
+            <form onSubmit={handleSaveSession} className="space-y-4 text-xs">
+              {/* Notificación del Principio de Sesiones Libres */}
+              <div className="p-3.5 rounded-2xl bg-neutral-50 dark:bg-neutral-900 border border-black/10 dark:border-white/10 space-y-1">
+                <span className="font-semibold text-black dark:text-white block font-mono text-[11px]">
+                  Lienzo en Blanco
+                </span>
+                <p className="text-[11px] text-neutral-600 dark:text-neutral-400 font-light leading-relaxed">
+                  Este espacio nace completamente abierto al emergente del cliente. El cuestionario posterior cumplirá el rol fundamental de registrar los descubrimientos, acuerdos y cosechas.
+                </p>
+              </div>
+
               {/* Participante */}
               <div>
-                <label className="block text-xs font-semibold text-gray-700 dark:text-neutral-300 mb-1">
-                  Participante / Cliente *
+                <label className="block font-semibold text-neutral-700 dark:text-neutral-300 mb-1">
+                  Participante *
                 </label>
                 <select
-                  required
                   value={sessionFormData.clientId}
                   onChange={(e) => {
-                    const newCId = e.target.value;
-                    const c = clients.find((u) => u.uid === newCId);
+                    const newId = e.target.value;
+                    const c = clients.find((u) => u.uid === newId);
                     setSessionFormData({
                       ...sessionFormData,
-                      clientId: newCId,
+                      clientId: newId,
                       meetLink: `https://meet.google.com/rbc-${(c?.name || 'sesion').toLowerCase().replace(/[^a-z0-9]/g, '')}-s${sessionFormData.sessionNumber}`,
                     });
                   }}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 dark:border-neutral-700 bg-gray-50 dark:bg-neutral-900 text-xs font-medium text-black dark:text-white focus:outline-hidden"
+                  required
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-black/10 dark:border-white/10 bg-neutral-50 dark:bg-neutral-900 font-medium text-black dark:text-white focus:outline-hidden"
                 >
                   <option value="">-- Seleccionar Participante --</option>
                   {clients.map((c) => (
                     <option key={c.uid} value={c.uid}>
-                      {c.name} ({c.email}) • Progreso: Nivel {c.programProgress || 1}
+                      {c.name} ({c.email})
                     </option>
                   ))}
                 </select>
               </div>
 
-              {/* Número de Sesión y Sugerencias de Temario */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-semibold text-gray-700 dark:text-neutral-300 mb-1">
-                    Número de Sesión (1 a 12)
-                  </label>
-                  <select
-                    value={sessionFormData.sessionNumber}
-                    onChange={(e) => {
-                      const num = Number(e.target.value);
-                      const node = PROGRAM_NODES.find((n) => n.step === num) || PROGRAM_NODES[0];
-                      const c = clients.find((u) => u.uid === sessionFormData.clientId);
-                      setSessionFormData({
-                        ...sessionFormData,
-                        sessionNumber: num,
-                        ontologicalFocus: `${node.level}: ${node.sessionTitle}`,
-                        notes: node.objective || '',
-                        meetLink: `https://meet.google.com/rbc-${(c?.name || 'sesion').toLowerCase().replace(/[^a-z0-9]/g, '')}-s${num}`,
-                      });
-                    }}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 dark:border-neutral-700 bg-gray-50 dark:bg-neutral-900 text-xs font-medium text-black dark:text-white focus:outline-hidden"
-                  >
-                    {PROGRAM_NODES.map((node) => (
-                      <option key={node.step} value={node.step}>
-                        Sesión {node.step} ({node.level}): {node.sessionTitle}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+              {/* Número de Sesión (1 a 12) */}
+              <div>
+                <label className="block font-semibold text-neutral-700 dark:text-neutral-300 mb-1">
+                  Estación / Número de Sesión en el Camino
+                </label>
+                <select
+                  value={sessionFormData.sessionNumber}
+                  onChange={(e) => {
+                    const num = Number(e.target.value);
+                    const isMilestone = num === 4 || num === 8 || num === 12;
+                    const cycleNum = Math.ceil(num / 4);
+                    const c = clients.find((u) => u.uid === sessionFormData.clientId);
 
-                <div>
-                  <label className="block text-xs font-semibold text-gray-700 dark:text-neutral-300 mb-1">
-                    Estado de la Sesión
-                  </label>
-                  <select
-                    value={sessionFormData.status}
-                    onChange={(e) => setSessionFormData({ ...sessionFormData, status: e.target.value as SessionStatus })}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 dark:border-neutral-700 bg-gray-50 dark:bg-neutral-900 text-xs font-medium text-black dark:text-white focus:outline-hidden"
-                  >
-                    <option value="scheduled">Programada / En Espera</option>
-                    <option value="completed">Completada</option>
-                    <option value="cancelled">Cancelada</option>
-                  </select>
-                </div>
+                    setSessionFormData({
+                      ...sessionFormData,
+                      sessionNumber: num,
+                      ontologicalFocus: isMilestone ? `Cierre del Ciclo ${cycleNum} & Cosecha Ontológica` : '',
+                      notes: isMilestone
+                        ? 'Cierre de ciclo: integración de descubrimientos, patrones recurrentes y cambios de perspectiva observados.'
+                        : 'Pregunta de apertura: "¿Qué es importante para ti traer a este espacio hoy?". Espacio abierto al emergente del participante.',
+                      meetLink: `https://meet.google.com/rbc-${(c?.name || 'sesion').toLowerCase().replace(/[^a-z0-9]/g, '')}-s${num}`,
+                    });
+                  }}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-black/10 dark:border-white/10 bg-neutral-50 dark:bg-neutral-900 font-medium text-black dark:text-white focus:outline-hidden"
+                >
+                  {Array.from({ length: 12 }, (_, i) => i + 1).map((num) => {
+                    const cycleNum = Math.ceil(num / 4);
+                    const isMilestone = num === 4 || num === 8 || num === 12;
+                    return (
+                      <option key={num} value={num}>
+                        Sesión {num} • Ciclo {cycleNum} {isMilestone ? '(★ Cierre de Ciclo & Cosecha)' : '(Exploración Libre)'}
+                      </option>
+                    );
+                  })}
+                </select>
               </div>
 
-              {/* Fecha, Hora y Duración */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              {/* Fecha y Hora */}
+              <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-gray-700 dark:text-neutral-300 mb-1">
-                    Fecha *
+                  <label className="block font-semibold text-neutral-700 dark:text-neutral-300 mb-1">
+                    Fecha de la Sesión *
                   </label>
                   <input
                     type="date"
                     required
                     value={sessionFormData.date}
                     onChange={(e) => setSessionFormData({ ...sessionFormData, date: e.target.value })}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 dark:border-neutral-700 bg-gray-50 dark:bg-neutral-900 text-xs font-medium text-black dark:text-white focus:outline-hidden"
+                    className="w-full px-3 py-2 rounded-xl border border-black/10 dark:border-white/10 bg-neutral-50 dark:bg-neutral-900 text-black dark:text-white focus:outline-hidden"
                   />
                 </div>
-
                 <div>
-                  <label className="block text-xs font-semibold text-gray-700 dark:text-neutral-300 mb-1">
-                    Hora *
+                  <label className="block font-semibold text-neutral-700 dark:text-neutral-300 mb-1">
+                    Hora (24h) *
                   </label>
                   <input
                     type="time"
                     required
                     value={sessionFormData.time}
                     onChange={(e) => setSessionFormData({ ...sessionFormData, time: e.target.value })}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 dark:border-neutral-700 bg-gray-50 dark:bg-neutral-900 text-xs font-medium text-black dark:text-white focus:outline-hidden"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-gray-700 dark:text-neutral-300 mb-1">
-                    Duración (min)
-                  </label>
-                  <input
-                    type="number"
-                    min={30}
-                    max={180}
-                    step={15}
-                    value={sessionFormData.durationMinutes}
-                    onChange={(e) => setSessionFormData({ ...sessionFormData, durationMinutes: Number(e.target.value) })}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 dark:border-neutral-700 bg-gray-50 dark:bg-neutral-900 text-xs font-medium text-black dark:text-white focus:outline-hidden"
+                    className="w-full px-3 py-2 rounded-xl border border-black/10 dark:border-white/10 bg-neutral-50 dark:bg-neutral-900 text-black dark:text-white focus:outline-hidden"
                   />
                 </div>
               </div>
 
               {/* Enlace Google Meet */}
               <div>
-                <div className="flex items-center justify-between mb-1">
-                  <label className="text-xs font-semibold text-gray-700 dark:text-neutral-300">
-                    Enlace de Google Meet *
-                  </label>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const c = clients.find((u) => u.uid === sessionFormData.clientId);
-                      const link = `https://meet.google.com/rbc-${(c?.name || 'sesion').toLowerCase().replace(/[^a-z0-9]/g, '')}-s${sessionFormData.sessionNumber}`;
-                      setSessionFormData({ ...sessionFormData, meetLink: link });
-                    }}
-                    className="text-[10px] text-blue-600 dark:text-blue-400 hover:underline cursor-pointer"
-                  >
-                    Generar enlace automático RBC
-                  </button>
-                </div>
+                <label className="block font-semibold text-neutral-700 dark:text-neutral-300 mb-1">
+                  Enlace Google Meet
+                </label>
                 <input
                   type="url"
-                  required
                   placeholder="https://meet.google.com/..."
                   value={sessionFormData.meetLink}
                   onChange={(e) => setSessionFormData({ ...sessionFormData, meetLink: e.target.value })}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 dark:border-neutral-700 bg-gray-50 dark:bg-neutral-900 text-xs font-medium text-black dark:text-white focus:outline-hidden"
+                  className="w-full px-3.5 py-2 rounded-xl border border-black/10 dark:border-white/10 bg-neutral-50 dark:bg-neutral-900 font-mono text-black dark:text-white focus:outline-hidden"
                 />
               </div>
 
-              {/* Enfoque Ontológico */}
+              {/* Tema Emergente / Enfoque (Opcional) */}
               <div>
-                <label className="block text-xs font-semibold text-gray-700 dark:text-neutral-300 mb-1">
-                  Enfoque Ontológico / Quiebre
+                <label className="block font-semibold text-neutral-700 dark:text-neutral-300 mb-1">
+                  Tema Emergente u Orientación Inicial (Opcional)
                 </label>
                 <input
                   type="text"
-                  placeholder="Ej: Mapeo de la Transparencia y Declaración de Límites"
+                  placeholder="Dejar en blanco para espacio libre u orientar si ya fue conversado..."
                   value={sessionFormData.ontologicalFocus}
                   onChange={(e) => setSessionFormData({ ...sessionFormData, ontologicalFocus: e.target.value })}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 dark:border-neutral-700 bg-gray-50 dark:bg-neutral-900 text-xs font-medium text-black dark:text-white focus:outline-hidden"
+                  className="w-full px-3.5 py-2 rounded-xl border border-black/10 dark:border-white/10 bg-neutral-50 dark:bg-neutral-900 text-black dark:text-white focus:outline-hidden"
                 />
               </div>
 
               {/* Notas Preparatorias */}
               <div>
-                <label className="block text-xs font-semibold text-gray-700 dark:text-neutral-300 mb-1">
-                  Notas Preparatorias / Consignas
+                <label className="block font-semibold text-neutral-700 dark:text-neutral-300 mb-1">
+                  Notas de Apertura o Acuerdos Previos
                 </label>
                 <textarea
-                  rows={3}
-                  placeholder="Instrucciones previas, acuerdos o reflexiones para la sesión..."
+                  rows={2}
+                  placeholder="Pregunta de apertura o notas para el encuentro..."
                   value={sessionFormData.notes}
                   onChange={(e) => setSessionFormData({ ...sessionFormData, notes: e.target.value })}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 dark:border-neutral-700 bg-gray-50 dark:bg-neutral-900 text-xs font-medium text-black dark:text-white focus:outline-hidden"
+                  className="w-full px-3.5 py-2 rounded-xl border border-black/10 dark:border-white/10 bg-neutral-50 dark:bg-neutral-900 text-black dark:text-white focus:outline-hidden resize-none"
                 />
               </div>
 
-              {/* Botones de guardar */}
-              <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-100 dark:border-neutral-800">
+              {/* Botones */}
+              <div className="flex items-center justify-end gap-3 pt-3 border-t border-black/10 dark:border-white/10">
                 <button
                   type="button"
                   onClick={() => setIsEditModalOpen(false)}
-                  className="px-4 py-2.5 rounded-xl border border-gray-200 dark:border-neutral-700 text-xs font-semibold text-gray-600 dark:text-neutral-400 hover:bg-gray-50 dark:hover:bg-neutral-800 cursor-pointer"
+                  className="px-4 py-2 rounded-xl border border-black/10 dark:border-white/10 text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800 cursor-pointer font-semibold"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2.5 rounded-xl bg-black dark:bg-white text-white dark:text-black text-xs font-bold shadow-md cursor-pointer hover:opacity-90 transition-opacity"
+                  className="px-5 py-2 rounded-xl bg-black text-white dark:bg-white dark:text-black font-bold hover:opacity-90 cursor-pointer transition-opacity"
                 >
-                  {editingSession ? 'Guardar Cambios' : 'Construir Sesión & Sincronizar'}
+                  {editingSession ? 'Guardar Cambios' : 'Guardar y Sincronizar'}
                 </button>
               </div>
             </form>
@@ -1076,44 +1069,44 @@ export const AdminSessionsManager: React.FC<AdminSessionsManagerProps> = ({
       )}
 
       {/* ========================================================================= */}
-      {/* MODAL 2: GENERAR CICLO COMPLETO DE SESIONES (1-6 o 1-12)                  */}
+      {/* MODAL 2: GENERAR CICLO COMPLETO DE SESIONES LIBRES                        */}
       {/* ========================================================================= */}
       {isCycleModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fade-in">
-          <div className="bg-white dark:bg-[#18181B] rounded-3xl border border-gray-200 dark:border-neutral-800 max-w-lg w-full p-6 space-y-5 shadow-2xl">
-            <div className="flex items-center justify-between pb-3 border-b border-gray-100 dark:border-neutral-800">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-xs animate-fade-in">
+          <div className="bg-white dark:bg-[#121214] rounded-3xl border border-black/10 dark:border-white/10 max-w-lg w-full p-6 space-y-5 shadow-2xl">
+            <div className="flex items-center justify-between pb-3 border-b border-black/10 dark:border-white/10">
               <div className="flex items-center gap-2.5">
-                <div className="p-2 rounded-xl bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400">
+                <div className="p-2 rounded-xl bg-neutral-100 dark:bg-neutral-800 text-black dark:text-white">
                   <Layers className="w-5 h-5" />
                 </div>
                 <div>
                   <h3 className="text-base font-bold text-black dark:text-white">
                     Construir Ciclo de Sesiones
                   </h3>
-                  <p className="text-xs text-gray-500 dark:text-neutral-400 font-light">
-                    Genera el cronograma de 6 o 12 sesiones con temarios ontológicos oficiales.
+                  <p className="text-xs text-neutral-500 dark:text-neutral-400 font-light">
+                    Genera el cronograma con espacio abierto al emergente del cliente.
                   </p>
                 </div>
               </div>
               <button
                 type="button"
                 onClick={() => setIsCycleModalOpen(false)}
-                className="p-1.5 rounded-xl hover:bg-gray-100 dark:hover:bg-neutral-800 text-gray-400 hover:text-black dark:hover:text-white"
+                className="p-1.5 rounded-xl hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-400 hover:text-black dark:hover:text-white cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <div className="space-y-4">
+            <div className="space-y-4 text-xs">
               {/* Participante */}
               <div>
-                <label className="block text-xs font-semibold text-gray-700 dark:text-neutral-300 mb-1">
+                <label className="block font-semibold text-neutral-700 dark:text-neutral-300 mb-1">
                   Selecciona el Participante *
                 </label>
                 <select
                   value={cycleClientId}
                   onChange={(e) => setCycleClientId(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 dark:border-neutral-700 bg-gray-50 dark:bg-neutral-900 text-xs font-medium text-black dark:text-white focus:outline-hidden"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-black/10 dark:border-white/10 bg-neutral-50 dark:bg-neutral-900 font-medium text-black dark:text-white focus:outline-hidden"
                 >
                   <option value="">-- Seleccionar Participante --</option>
                   {clients.map((c) => (
@@ -1127,27 +1120,28 @@ export const AdminSessionsManager: React.FC<AdminSessionsManagerProps> = ({
               {/* Cantidad de Sesiones */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-gray-700 dark:text-neutral-300 mb-1">
+                  <label className="block font-semibold text-neutral-700 dark:text-neutral-300 mb-1">
                     Cantidad de Sesiones
                   </label>
                   <select
                     value={cycleCount}
                     onChange={(e) => setCycleCount(Number(e.target.value))}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 dark:border-neutral-700 bg-gray-50 dark:bg-neutral-900 text-xs font-medium text-black dark:text-white focus:outline-hidden"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-black/10 dark:border-white/10 bg-neutral-50 dark:bg-neutral-900 font-medium text-black dark:text-white focus:outline-hidden"
                   >
-                    <option value={6}>Ciclo Estándar (6 Sesiones - Nivel I a III)</option>
-                    <option value={12}>Ciclo Completo (12 Sesiones - Maestría)</option>
+                    <option value={4}>1 Ciclo (4 Sesiones con Cierre en S4)</option>
+                    <option value={8}>2 Ciclos (8 Sesiones con Cierres en S4 y S8)</option>
+                    <option value={12}>3 Ciclos (12 Sesiones - Proceso Completo)</option>
                   </select>
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-gray-700 dark:text-neutral-300 mb-1">
+                  <label className="block font-semibold text-neutral-700 dark:text-neutral-300 mb-1">
                     Frecuencia
                   </label>
                   <select
                     value={cycleFrequency}
                     onChange={(e) => setCycleFrequency(e.target.value as 'weekly' | 'biweekly')}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 dark:border-neutral-700 bg-gray-50 dark:bg-neutral-900 text-xs font-medium text-black dark:text-white focus:outline-hidden"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-black/10 dark:border-white/10 bg-neutral-50 dark:bg-neutral-900 font-medium text-black dark:text-white focus:outline-hidden"
                   >
                     <option value="biweekly">Quincenal (Cada 14 días)</option>
                     <option value="weekly">Semanal (Cada 7 días)</option>
@@ -1157,40 +1151,39 @@ export const AdminSessionsManager: React.FC<AdminSessionsManagerProps> = ({
 
               {/* Fecha de Inicio */}
               <div>
-                <label className="block text-xs font-semibold text-gray-700 dark:text-neutral-300 mb-1">
+                <label className="block font-semibold text-neutral-700 dark:text-neutral-300 mb-1">
                   Fecha de Inicio de la Primera Sesión
                 </label>
                 <input
                   type="date"
                   value={cycleStartDate}
                   onChange={(e) => setCycleStartDate(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 dark:border-neutral-700 bg-gray-50 dark:bg-neutral-900 text-xs font-medium text-black dark:text-white focus:outline-hidden"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-black/10 dark:border-white/10 bg-neutral-50 dark:bg-neutral-900 font-medium text-black dark:text-white focus:outline-hidden"
                 />
               </div>
 
-              <div className="p-3.5 rounded-2xl bg-indigo-50/60 dark:bg-indigo-950/20 border border-indigo-100 dark:border-indigo-900/40 text-xs text-indigo-900 dark:text-indigo-300 space-y-1">
-                <div className="flex items-center gap-1.5 font-bold">
-                  <Sparkles className="w-3.5 h-3.5 text-indigo-600" />
-                  <span>Beneficio de la Construcción Automatizada:</span>
-                </div>
-                <p className="font-light text-[11px] leading-relaxed">
-                  Se asignarán los títulos temáticos oficiales de RBC (Mapeo de Transparencia, Fronteras, Desarticulación de Juicios, Liderazgo, etc.) y se generarán las salas Google Meet correspondientes. Todo se reflejará al instante en el portal del participante.
+              <div className="p-3.5 rounded-2xl bg-neutral-50 dark:bg-neutral-900 border border-black/10 dark:border-white/10 space-y-1">
+                <span className="font-semibold text-black dark:text-white block font-mono text-[11px]">
+                  Flujo del Ciclo:
+                </span>
+                <p className="font-light text-[11px] leading-relaxed text-neutral-600 dark:text-neutral-400">
+                  Las sesiones se crearán con espacio abierto al emergente y pregunta de apertura ontológica. Los encuentros 4, 8 y 12 se marcarán automáticamente como "Cierre de Ciclo & Cosecha Ontológica".
                 </p>
               </div>
 
               {/* Botones */}
-              <div className="flex items-center justify-end gap-3 pt-3 border-t border-gray-100 dark:border-neutral-800">
+              <div className="flex items-center justify-end gap-3 pt-3 border-t border-black/10 dark:border-white/10">
                 <button
                   type="button"
                   onClick={() => setIsCycleModalOpen(false)}
-                  className="px-4 py-2 rounded-xl border border-gray-200 dark:border-neutral-700 text-xs font-semibold text-gray-600 dark:text-neutral-400 hover:bg-gray-50 dark:hover:bg-neutral-800 cursor-pointer"
+                  className="px-4 py-2 rounded-xl border border-black/10 dark:border-white/10 font-semibold text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800 cursor-pointer"
                 >
                   Cancelar
                 </button>
                 <button
                   type="button"
                   onClick={handleGenerateCycle}
-                  className="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold shadow-md cursor-pointer transition-colors"
+                  className="px-5 py-2 rounded-xl bg-black text-white dark:bg-white dark:text-black font-bold hover:opacity-90 cursor-pointer transition-opacity"
                 >
                   Construir Ciclo Ahora
                 </button>
@@ -1198,6 +1191,26 @@ export const AdminSessionsManager: React.FC<AdminSessionsManagerProps> = ({
             </div>
           </div>
         </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* MODAL 3: CUESTIONARIO POSTERIOR / BITÁCORA (EL EJE DE CAPTURA)             */}
+      {/* ========================================================================= */}
+      {isWorkbookModalOpen && selectedSessionForWorkbook && selectedClientForWorkbook && (
+        <PostSessionWorkbookModal
+          isOpen={isWorkbookModalOpen}
+          onClose={() => {
+            setIsWorkbookModalOpen(false);
+            setSelectedSessionForWorkbook(null);
+            setSelectedClientForWorkbook(null);
+          }}
+          session={selectedSessionForWorkbook}
+          client={selectedClientForWorkbook}
+          isParticipant={false}
+          onFormSaved={() => {
+            refreshAll();
+          }}
+        />
       )}
     </div>
   );

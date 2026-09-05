@@ -1,274 +1,163 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
-  User,
-  Session,
-  FormSubmission,
-  AIInsight,
-  ProgramNodeInfo,
-  PostSessionForm,
-  PaymentRequest,
-} from '../types';
-import { OntologicalStore, PROGRAM_NODES, COMPANY_INFO } from '../services/store';
-import coachAvatarImg from '../assets/images/regenerated_image_1788287101599.jpg';
-import { PDFGenerator } from '../utils/pdfGenerator';
-import { LiquidGlassButton } from './LiquidGlassButton';
-import { PulseBadge } from './PulseBadge';
-import { PromotionalEventBanner } from './PromotionalEventBanner';
-import { PaymentUnlockModal } from './PaymentUnlockModal';
-import { PostSessionWorkbookModal } from './PostSessionWorkbookModal';
-import { GeminiOntologicalCopilot } from './GeminiOntologicalCopilot';
-import { WorkshopRegistrySection } from './WorkshopRegistrySection';
-import { UnifiedWorkbookSpace } from './UnifiedWorkbookSpace';
-import { TransformationJourneyMap } from './TransformationJourneyMap';
-import {
-  Video,
   Calendar,
-  Clock,
-  Send,
-  Sparkles,
-  CheckCircle,
-  CheckCircle2,
-  FileText,
-  HeartPulse,
-  Brain,
-  History,
-  Lock,
-  Check,
-  Layers,
-  ArrowRight,
-  Shield,
-  ShieldCheck,
-  CreditCard,
+  Video,
   Download,
-  BookOpen,
-  Compass,
-  Activity,
-  ChevronRight,
+  FileText,
+  CheckCircle2,
   ChevronDown,
   ChevronUp,
-  ExternalLink,
-  Info,
-  Flame,
-  FileDown,
-  Edit3,
-  Banknote,
-  Smartphone,
   MessageCircle,
-  Zap,
-  AlertCircle,
-  Headphones,
+  ExternalLink,
+  Sparkles,
+  Clock,
+  ShieldCheck,
+  ArrowRight,
+  RefreshCw,
+  CreditCard,
+  Layers,
+  BookOpen,
+  Check,
+  Circle,
 } from 'lucide-react';
+import { User, Session, PostSessionForm } from '../types';
+import { OntologicalStore, COMPANY_INFO } from '../services/store';
+import { FirestoreSyncService } from '../services/firestoreSync';
+import { PDFGenerator } from '../utils/pdfGenerator';
+import { PostSessionWorkbookModal } from './PostSessionWorkbookModal';
+import { PaymentPortalModal } from './PaymentPortalModal';
+import { CURATED_EXPERIENCE_PHOTOS } from '../data/initialExperiences';
+import coachAvatarImg from '../assets/images/regenerated_image_1788287101599.jpg';
 
 interface ClientDashboardProps {
   client: User;
   onLogout?: () => void;
   onUserUpdated?: () => void;
+  onViewSessionForm?: (session: Session) => void;
+  onOpenDiagnosticWorkspace?: () => void;
 }
-
-type WorkspaceTab = 'materials' | 'reinforcement' | 'form' | 'workbook' | 'gemini';
 
 export const ClientDashboard: React.FC<ClientDashboardProps> = ({
   client,
   onLogout,
   onUserUpdated,
 }) => {
-  // Unified Workbook Space Mode ('workshop' | 'session' | 'all')
-  const [unifiedWorkbookMode, setUnifiedWorkbookMode] = useState<'workshop' | 'session' | 'all'>('workshop');
-  const [unifiedSessionId, setUnifiedSessionId] = useState<string | null>(null);
-
-  const openUnifiedWorkbook = (mode: 'workshop' | 'session' | 'all', targetStepOrSessionId?: number | string) => {
-    setActiveTab('workbook');
-    setUnifiedWorkbookMode(mode);
-    if (typeof targetStepOrSessionId === 'number') {
-      setSelectedNodeStep(targetStepOrSessionId);
-    } else if (typeof targetStepOrSessionId === 'string') {
-      setUnifiedSessionId(targetStepOrSessionId);
-    }
-    setTimeout(() => {
-      const el = document.getElementById('unified-workbook-space') || document.getElementById('session-workspace-content');
-      if (el) {
-        el.scrollIntoView({ behavior: 'smooth' });
-      }
-    }, 50);
-  };
-
+  // 1. Estados de Datos: Sesiones y Cuestionarios Posteriores
   const [sessions, setSessions] = useState<Session[]>(() =>
     OntologicalStore.getSessionsForClient(client.uid)
   );
-  const [nextSession, setNextSession] = useState<Session | null>(() =>
-    OntologicalStore.getNextSessionForClient(client.uid)
-  );
-
-  useEffect(() => {
-    const handleSync = () => {
-      const updatedSessions = OntologicalStore.getSessionsForClient(client.uid);
-      setSessions(updatedSessions);
-      setNextSession(OntologicalStore.getNextSessionForClient(client.uid));
-      setForms(OntologicalStore.getFormsForClient(client.uid));
-      setPostSessionForms(OntologicalStore.getPostSessionFormsForClient(client.uid));
-      setClientPaymentRequests(OntologicalStore.getPaymentRequestsForClient(client.uid));
-    };
-
-    window.addEventListener('rbc-sessions-updated', handleSync);
-    window.addEventListener('storage', handleSync);
-
-    return () => {
-      window.removeEventListener('rbc-sessions-updated', handleSync);
-      window.removeEventListener('storage', handleSync);
-    };
-  }, [client.uid]);
-
-  const [forms, setForms] = useState<FormSubmission[]>(() =>
-    OntologicalStore.getFormsForClient(client.uid)
-  );
-
-  const [insights, setInsights] = useState<AIInsight[]>(() =>
-    OntologicalStore.getInsightsForClient(client.uid)
-  );
-
-  const [postSessionForms, setPostSessionForms] = useState<PostSessionForm[]>(() =>
+  const [postForms, setPostForms] = useState<PostSessionForm[]>(() =>
     OntologicalStore.getPostSessionFormsForClient(client.uid)
   );
 
-  const calendarUrl = OntologicalStore.getCalendarUrl();
+  // Estados interactivos
+  const [isCardRevealed, setIsCardRevealed] = useState<boolean>(true);
+  const [isHistoryExpanded, setIsHistoryExpanded] = useState<boolean>(false);
+  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+  const [activeSessionForModal, setActiveSessionForModal] = useState<Session | null>(null);
+  const [isPaymentPortalOpen, setIsPaymentPortalOpen] = useState<boolean>(false);
 
-  // Active step in the 6-node roadmap
-  const [currentProgress, setCurrentProgress] = useState<number>(
-    client.programProgress || 1
-  );
+  // Sincronización en tiempo real (Local Store + Firestore)
+  useEffect(() => {
+    const reloadData = () => {
+      const currentSessions = OntologicalStore.getSessionsForClient(client.uid);
+      const currentForms = OntologicalStore.getPostSessionFormsForClient(client.uid);
+      setSessions(currentSessions);
+      setPostForms(currentForms);
+    };
 
-  // Selected node for detailed view / form submission
-  const [selectedNodeStep, setSelectedNodeStep] = useState<number>(
-    client.programProgress || 1
-  );
+    window.addEventListener('rbc-sessions-updated', reloadData);
+    window.addEventListener('rbc-forms-updated', reloadData);
+    window.addEventListener('storage', reloadData);
 
-  // Workspace sub-tab (Default to workbook so participant immediately sees exercises and answers)
-  const [activeTab, setActiveTab] = useState<WorkspaceTab>('workbook');
-
-  // Upcoming open community workshop banner toggle state
-  const upcomingEvent = OntologicalStore.getUpcomingEvent();
-  const [showEventBanner, setShowEventBanner] = useState(false);
-
-  // Level-specific Post-session form state
-  const [bodyEmotion, setBodyEmotion] = useState('');
-  const [reflections, setReflections] = useState('');
-  const [levelSpecificAnswer, setLevelSpecificAnswer] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submissionSuccess, setSubmissionSuccess] = useState(false);
-  const [isEditingExisting, setIsEditingExisting] = useState(false);
-
-  // Payment & Unlock Modal State for Inactive Areas
-  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
-  const [unlockTargetNode, setUnlockTargetNode] = useState<ProgramNodeInfo>(
-    PROGRAM_NODES[0]
-  );
-
-  // Client payment requests state
-  const [clientPaymentRequests, setClientPaymentRequests] = useState<PaymentRequest[]>(() =>
-    OntologicalStore.getPaymentRequestsForClient(client.uid)
-  );
-  const pendingPayment = clientPaymentRequests.find((r) => r.status === 'pending');
-
-  // 1-on-1 Session Questionnaire & Workbook Modal State (for participants)
-  const [isSessionWorkbookModalOpen, setIsSessionWorkbookModalOpen] = useState(false);
-  const [sessionForWorkbook, setSessionForWorkbook] = useState<Session | null>(null);
-
-  // Workshop Viewed Tracking State & Sub-Tab Mode
-  const [workshopsViewed, setWorkshopsViewed] = useState<number[]>(() =>
-    OntologicalStore.getWorkshopsViewed(client.uid)
-  );
-  const [sessionWorkspaceMode, setSessionWorkspaceMode] = useState<'sessions' | 'workshops'>('sessions');
-
-  const handleToggleWorkshopViewed = (step: number) => {
-    OntologicalStore.toggleWorkshopViewed(client.uid, step);
-    setWorkshopsViewed(OntologicalStore.getWorkshopsViewed(client.uid));
-  };
-
-  const activeNodeInfo: ProgramNodeInfo =
-    PROGRAM_NODES.find((n) => n.step === selectedNodeStep) || PROGRAM_NODES[0];
-
-  const isNodeLocked = activeNodeInfo.step > currentProgress;
-
-  const existingForm = OntologicalStore.getFormForStep(
-    client.uid,
-    activeNodeInfo.step
-  );
-
-  const nodeInsight = insights.find(
-    (i) => i.sessionStep === activeNodeInfo.step
-  );
-
-  const handleOpenPaymentForNode = (node: ProgramNodeInfo) => {
-    setUnlockTargetNode(node);
-    setIsPaymentModalOpen(true);
-  };
-
-  const handleNodeUnlocked = (updatedUser: User) => {
-    if (updatedUser.programProgress) {
-      setCurrentProgress(updatedUser.programProgress);
-      setSelectedNodeStep(updatedUser.programProgress);
-    }
-    setSessions(OntologicalStore.getSessionsForClient(client.uid));
-    setClientPaymentRequests(OntologicalStore.getPaymentRequestsForClient(client.uid));
-  };
-
-  const handleSubmitForm = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!bodyEmotion.trim() || !reflections.trim()) return;
-
-    setIsSubmitting(true);
-    setTimeout(async () => {
-      const activeSessionId = nextSession
-        ? nextSession.id
-        : 'sess-step-' + selectedNodeStep + '-' + Date.now();
-
-      const newForm = OntologicalStore.submitForm({
-        clientId: client.uid,
-        sessionId: activeSessionId,
-        sessionStep: selectedNodeStep,
-        level: activeNodeInfo.level,
-        bodyEmotion: bodyEmotion.trim(),
-        reflections: reflections.trim(),
-        levelSpecificAnswer: levelSpecificAnswer.trim() || undefined,
-      });
-
-      // Trigger automatic background Ontological evaluation
-      await OntologicalStore.triggerAIAnalysisWebhook(client.uid, newForm);
-
-      // Refresh state
-      const updatedForms = OntologicalStore.getFormsForClient(client.uid);
-      const updatedInsights = OntologicalStore.getInsightsForClient(client.uid);
-      const updatedUser = OntologicalStore.getCurrentUser();
-
-      setForms(updatedForms);
-      setInsights(updatedInsights);
-      if (updatedUser?.programProgress) {
-        setCurrentProgress(updatedUser.programProgress);
+    const unsubSessions = FirestoreSyncService.subscribeToClientSessions(client.uid, (syncedSessions) => {
+      if (Array.isArray(syncedSessions) && syncedSessions.length > 0) {
+        setSessions(syncedSessions);
       }
+    });
 
-      setBodyEmotion('');
-      setReflections('');
-      setLevelSpecificAnswer('');
-      setIsSubmitting(false);
-      setIsEditingExisting(false);
-      setSubmissionSuccess(true);
-      setTimeout(() => setSubmissionSuccess(false), 6000);
-    }, 600);
-  };
+    const unsubForms = FirestoreSyncService.subscribeToClientPostForms(client.uid, (syncedForms) => {
+      if (Array.isArray(syncedForms) && syncedForms.length > 0) {
+        setPostForms(syncedForms);
+      }
+    });
 
-  const handleStartEditForm = () => {
-    if (existingForm) {
-      setBodyEmotion(existingForm.bodyEmotion);
-      setReflections(existingForm.reflections);
-      setLevelSpecificAnswer(existingForm.levelSpecificAnswer || '');
-      setIsEditingExisting(true);
-      setActiveTab('form');
+    return () => {
+      window.removeEventListener('rbc-sessions-updated', reloadData);
+      window.removeEventListener('rbc-forms-updated', reloadData);
+      window.removeEventListener('storage', reloadData);
+      unsubSessions();
+      unsubForms();
+    };
+  }, [client.uid]);
+
+  // Cálculo del momento actual y ciclo
+  const currentSessionNumber = client.programProgress || 1;
+  const currentCycle = Math.ceil(currentSessionNumber / 4); // Ciclo 1 (1-4), Ciclo 2 (5-8), Ciclo 3 (9-12)
+  const isCycleMilestone =
+    currentSessionNumber === 4 || currentSessionNumber === 8 || currentSessionNumber === 12;
+
+  const cyclePhaseLabel = isCycleMilestone
+    ? 'Fase de Consolidación • Cierre de Ciclo'
+    : 'Fase de Exploración Libre';
+
+  // Sesión actual
+  const currentSession: Session = useMemo(() => {
+    const found = sessions.find((s) => s.sessionNumber === currentSessionNumber);
+    if (found) return found;
+
+    return {
+      id: `sess-${client.uid}-${currentSessionNumber}`,
+      sessionNumber: currentSessionNumber,
+      clientId: client.uid,
+      clientName: client.name,
+      date: new Date().toISOString(),
+      status: 'scheduled',
+      durationMinutes: 60,
+      meetLink: `https://meet.google.com/rbc-${(client.name || 'sesion').toLowerCase().replace(/[^a-z0-9]/g, '')}-s${currentSessionNumber}`,
+      notes: isCycleMilestone
+        ? 'Cierre de ciclo: integración de descubrimientos, patrones recurrentes y cambios de perspectiva observados.'
+        : 'Pregunta de apertura: "¿Qué es importante para ti traer a este espacio hoy?". Espacio abierto al emergente.',
+      keyInsights: [],
+      actionAgreements: [],
+      somaticFocus: '',
+      programNodeStep: currentSessionNumber,
+    };
+  }, [sessions, currentSessionNumber, client, isCycleMilestone]);
+
+  // Cuestionario asociado al momento actual
+  const currentPostForm: PostSessionForm | undefined = useMemo(() => {
+    return (
+      postForms.find((f) => f.sessionId === currentSession.id) ||
+      postForms.find((f) => f.sessionNumber === currentSessionNumber)
+    );
+  }, [postForms, currentSession.id, currentSessionNumber]);
+
+  // Selección de fotografía a color curada según el ciclo (único elemento a color)
+  const currentPhoto = useMemo(() => {
+    if (currentSessionNumber === 4 || currentSessionNumber === 8) {
+      return CURATED_EXPERIENCE_PHOTOS[2]; // Florecimiento (Cierre de ciclo)
     }
-  };
+    if (currentSessionNumber >= 9) {
+      return CURATED_EXPERIENCE_PHOTOS[5]; // Montaña y horizonte
+    }
+    if (currentSessionNumber >= 5) {
+      return CURATED_EXPERIENCE_PHOTOS[1]; // Tallo lingüístico
+    }
+    return CURATED_EXPERIENCE_PHOTOS[0]; // Raíz somática y presencia
+  }, [currentSessionNumber]);
 
-  const formattedDate = (isoStr: string) => {
+  // Historial condensado de cuestionarios finalizados
+  const pastForms = useMemo(() => {
+    return postForms
+      .slice()
+      .sort((a, b) => b.sessionNumber - a.sessionNumber);
+  }, [postForms]);
+
+  const formatHumanDate = (dateStr?: string) => {
+    if (!dateStr) return 'Próximamente por agendar';
     try {
-      const d = new Date(isoStr);
+      const d = new Date(dateStr);
       return d.toLocaleDateString('es-ES', {
         weekday: 'long',
         day: 'numeric',
@@ -277,1096 +166,510 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
         minute: '2-digit',
       });
     } catch {
-      return isoStr;
+      return dateStr;
     }
   };
 
-  const progressPercentage = Math.round((currentProgress / 6) * 100);
+  const handleOpenBitacora = (sessionToEdit: Session) => {
+    setActiveSessionForModal(sessionToEdit);
+    setIsModalOpen(true);
+  };
 
-  // Group nodes by Level for structured roadmap overview
-  const levels = [
-    {
-      levelId: 'Nivel I',
-      title: 'Arqueología & Deconstrucción',
-      weeks: 'Semanas 1 a 4',
-      nodes: PROGRAM_NODES.filter((n) => n.level === 'Nivel I'),
-    },
-    {
-      levelId: 'Nivel II',
-      title: 'Soberanía Emocional & Fronteras',
-      weeks: 'Semanas 5 a 8',
-      nodes: PROGRAM_NODES.filter((n) => n.level === 'Nivel II'),
-    },
-    {
-      levelId: 'Nivel III',
-      title: 'Diseño de Futuro & Maestría',
-      weeks: 'Semanas 9 a 12',
-      nodes: PROGRAM_NODES.filter((n) => n.level === 'Nivel III'),
-    },
-  ];
+  const handleDownloadMemory = (form: PostSessionForm, sess?: Session) => {
+    PDFGenerator.generateSessionWorkbookPDF(form, client, sess || currentSession);
+  };
 
   return (
-    <div className="min-h-screen bg-transparent text-black dark:text-neutral-100 py-8 sm:py-10 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-8 sm:space-y-10 transition-colors duration-200">
-      {/* Personalized Greeting & Program Status Banner with Participant Account Dropdown */}
-      <section className="pt-2">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-6 border-b border-black/5 dark:border-white/10">
-          <div className="flex items-start sm:items-center gap-4 sm:gap-5">
-            {/* Participant Photo */}
-            <div className="relative shrink-0">
-              <img
-                src={client.avatarUrl}
-                alt={client.name}
-                referrerPolicy="no-referrer"
-                className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl object-cover shadow-sm ring-2 ring-gray-100 dark:ring-neutral-800"
-              />
-              <span
-                className={`absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full border-2 border-white dark:border-[#0D0D0E] ${
-                  client.status === 'inactive' ? 'bg-rose-500' : 'bg-emerald-500'
-                }`}
-                title={client.status === 'inactive' ? 'Suscripción Pausada' : 'Suscripción Activa'}
-              />
-            </div>
-
-            {/* Greeting */}
-            <div className="space-y-1">
-              <div className="flex flex-wrap items-center gap-2 mb-1">
-                <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-white/60 dark:bg-[#18181B]/60 backdrop-blur-md border border-white/60 dark:border-neutral-800 text-xs font-light text-gray-500 dark:text-neutral-400">
-                  <span className="w-1.5 h-1.5 rounded-full bg-black dark:bg-white" />
-                  Programa 1 a 1 • 12 Semanas
-                </div>
-                <div className="sm:hidden inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-[11px] font-medium text-emerald-700 dark:text-emerald-400">
-                  <ShieldCheck className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
-                  <span>Espacio Privado & Confidencial</span>
-                </div>
-              </div>
-
-              <div className="flex flex-wrap items-center gap-2">
-                <h1 className="text-2xl sm:text-3xl font-light tracking-tight text-black dark:text-white">
-                  Bienvenido(a),{' '}
-                  <span className="font-semibold text-black dark:text-white">
-                    {client.name}
-                  </span>
-                </h1>
-              </div>
-
-              <p className="text-xs sm:text-sm font-light text-gray-500 dark:text-neutral-400 max-w-xl leading-relaxed">
-                Programa:{' '}
-                <strong>
-                  {client.programName || 'Certeza, Fronteras & Dirección Personal'}
-                </strong>
-              </p>
-            </div>
-          </div>
-
-          {/* Payment Status and Roadmap Progress Pill */}
-          <div className="flex flex-wrap items-center gap-3 self-start lg:self-auto">
-            <div className="px-4 py-2 rounded-2xl glass-panel-opal text-xs shadow-xs">
-              <span className="text-[10px] font-medium uppercase tracking-wider text-gray-400 dark:text-neutral-500 block">
-                Estado del Programa
-              </span>
-              <span className="font-semibold text-black dark:text-white flex items-center gap-1.5 mt-0.5">
-                <CreditCard className="w-3.5 h-3.5 text-black dark:text-white" />
-                {client.paymentStatus || 'Completado'}
-              </span>
-            </div>
-
-            <div className="px-4 py-2 rounded-2xl bg-black/80 dark:bg-white/85 backdrop-blur-xl text-white dark:text-black text-xs shadow-xs">
-              <span className="text-[10px] font-medium uppercase tracking-wider text-gray-400 dark:text-neutral-500 block">
-                Avance Ontológico
-              </span>
-              <span className="font-semibold text-white dark:text-black mt-0.5 block">
-                Sesión {currentProgress} de 6 ({progressPercentage}%)
-              </span>
-            </div>
-          </div>
-        </div>
-      </section>
-
+    <div className="min-h-screen bg-white dark:bg-black text-black dark:text-white px-4 sm:px-6 lg:px-8 py-8 sm:py-12 max-w-4xl mx-auto font-sans antialiased selection:bg-black selection:text-white dark:selection:bg-white dark:selection:text-black">
       {/* ========================================================================= */}
-      {/* 1. PANEL DE USUARIO: TU CAMINO DE TRANSFORMACIÓN (ALTO CONTRASTE B&W)     */}
+      {/* 1. CABECERA UNIFICADA Y SIN RUIDO (UX/UI MINIMALISTA)                      */}
       {/* ========================================================================= */}
-      <TransformationJourneyMap
-        client={client}
-        onSelectSessionStep={(step) => {
-          setSelectedNodeStep(step);
-          const el = document.getElementById('session-workspace-content');
-          if (el) el.scrollIntoView({ behavior: 'smooth' });
-        }}
-      />
-
-      {/* ========================================================================= */}
-      {/* 2. PANEL DE ACCIÓN DINÁMICA: ¿QUÉ DEBO HACER HOY? (MISIÓN ACTUAL) */}
-      {/* ========================================================================= */}
-      <section className="glass-panel-opal rounded-3xl p-5 sm:p-6 lg:p-7 space-y-5 border border-black/5 dark:border-white/10 shadow-sm">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-black/5 dark:border-white/10">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-black dark:bg-white text-white dark:text-black flex items-center justify-center font-bold text-sm shadow-xs shrink-0">
-              🎯
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h2 className="text-sm sm:text-base font-bold text-black dark:text-white">
-                  Tu Misión Actual • Sesión {currentProgress}
-                </h2>
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
-                  Paso Recomendado
-                </span>
-              </div>
-              <p className="text-xs font-light text-gray-500 dark:text-neutral-400">
-                Sigue estos dos pasos sencillos para aprovechar al máximo tu consultoría.
-              </p>
-            </div>
-          </div>
-
-          {/* Coach Quick Contact Pill */}
-          <div className="flex items-center gap-2.5 bg-white/80 dark:bg-neutral-900/80 py-1.5 px-3 rounded-2xl border border-gray-200/70 dark:border-neutral-800 self-start sm:self-auto shadow-2xs">
+      <header className="border-b border-black/10 dark:border-white/10 pb-6 mb-8 space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            {/* Fotografía a color del participante (Único punto cromático del usuario) */}
             <img
-              src={coachAvatarImg}
-              alt="John Fredy Rengifo Basto"
-              className="w-8 h-8 rounded-xl object-cover ring-1 ring-emerald-500/30 shrink-0"
+              src={
+                client.avatarUrl ||
+                'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80'
+              }
+              alt={client.name}
+              referrerPolicy="no-referrer"
+              className="w-14 h-14 sm:w-16 sm:h-16 rounded-full object-cover border border-black/15 dark:border-white/15 shrink-0 shadow-xs"
             />
-            <div className="text-[11px] leading-tight">
-              <div className="flex items-center gap-1.5">
-                <span className="font-bold text-black dark:text-white">John Fredy Rengifo</span>
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-              </div>
-              <span className="text-[10px] text-gray-500 dark:text-neutral-400 font-light">Consultor Senior ICF</span>
+            <div>
+              <span className="text-[10px] uppercase tracking-widest text-neutral-500 dark:text-neutral-400 block font-mono">
+                Rengifo Basto Consultoría Ontológica
+              </span>
+              <h1 className="text-xl sm:text-2xl font-semibold tracking-tight text-black dark:text-white">
+                Hola, {client.name}
+              </h1>
+              <p className="text-xs text-neutral-600 dark:text-neutral-400 font-light">
+                Acompañamiento Individual 1 a 1 • Espacio confidencial y orgánico
+              </p>
             </div>
-            <a
-              href={COMPANY_INFO.whatsappUrl}
-              target="_blank"
-              rel="noreferrer"
-              className="ml-1 px-2.5 py-1 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-[10px] flex items-center gap-1 transition-colors shadow-2xs"
-              title="Escribir por WhatsApp a John Fredy Rengifo"
+          </div>
+
+          {/* Acciones de la Cabecera */}
+          <div className="flex items-center gap-3 self-start sm:self-auto flex-wrap">
+            <button
+              type="button"
+              onClick={() => setIsPaymentPortalOpen(true)}
+              className="px-3.5 py-2 rounded-xl border border-black/15 dark:border-white/15 bg-neutral-50 dark:bg-neutral-900 text-black dark:text-white text-xs font-semibold hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs"
             >
-              <MessageCircle className="w-3 h-3" />
-              <span>WhatsApp</span>
-            </a>
-          </div>
-        </div>
+              <CreditCard className="w-3.5 h-3.5" />
+              <span>Portal de Pagos & Progreso</span>
+            </button>
 
-        {/* 2 Big Action Cards: Paso 1 (La Cita en Vivo) y Paso 2 (El Cuaderno) */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* PASO 1: TU ENCUENTRO EN VIVO */}
-          <div className="p-4 sm:p-5 rounded-2xl bg-white/70 dark:bg-[#1A1A1E]/70 border border-black/5 dark:border-white/10 space-y-3.5 flex flex-col justify-between">
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300 flex items-center gap-1">
-                  <Video className="w-3 h-3" />
-                  Paso 1: Sesión con John Rengifo
-                </span>
-                {nextSession && (
-                  <span className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
-                    <CheckCircle2 className="w-3 h-3" />
-                    Cita Confirmada
-                  </span>
-                )}
-              </div>
-
-              {nextSession ? (
-                <div>
-                  <h3 className="text-base sm:text-lg font-bold text-black dark:text-white capitalize">
-                    {formattedDate(nextSession.date)}
-                  </h3>
-                  <p className="text-xs font-light text-gray-500 dark:text-neutral-400 mt-1 flex items-center gap-1.5">
-                    <Clock className="w-3.5 h-3.5" />
-                    Duración: 60 min • Google Meet
-                  </p>
-                </div>
-              ) : (
-                <div>
-                  <h3 className="text-base sm:text-lg font-bold text-black dark:text-white">
-                    Aún no tienes fecha agendada
-                  </h3>
-                  <p className="text-xs font-light text-gray-500 dark:text-neutral-400 mt-1">
-                    Elige el día y la hora que mejor se ajusten a tu agenda.
-                  </p>
-                </div>
-              )}
-            </div>
-
-            <div className="space-y-2 pt-1">
-              {nextSession ? (
-                <div className="flex flex-col sm:flex-row gap-2">
-                  <a
-                    href={nextSession.meetLink}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="flex-1 py-2.5 px-4 rounded-xl bg-black dark:bg-white text-white dark:text-black font-bold text-xs flex items-center justify-center gap-2 hover:opacity-90 transition-opacity shadow-xs"
-                  >
-                    <Video className="w-4 h-4 text-emerald-400 dark:text-emerald-600" />
-                    <span>Entrar a Google Meet</span>
-                  </a>
-                  <a
-                    href={calendarUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="py-2.5 px-3 rounded-xl bg-gray-100 dark:bg-neutral-800 text-black dark:text-white font-medium text-xs flex items-center justify-center gap-1 hover:bg-gray-200 dark:hover:bg-neutral-700 transition-colors"
-                    title="Reprogramar o agendar otra sesión"
-                  >
-                    <Calendar className="w-3.5 h-3.5 text-blue-500" />
-                    <span>Reprogramar</span>
-                  </a>
-                </div>
-              ) : (
-                <a
-                  href={calendarUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs flex items-center justify-center gap-2 transition-colors shadow-xs"
-                >
-                  <Calendar className="w-4 h-4" />
-                  <span>📅 Agendar en Google Calendar</span>
-                </a>
-              )}
-            </div>
-          </div>
-
-          {/* PASO 2: TU CUADERNO DE TRABAJO */}
-          <div className="p-4 sm:p-5 rounded-2xl bg-white/70 dark:bg-[#1A1A1E]/70 border border-black/5 dark:border-white/10 space-y-3.5 flex flex-col justify-between">
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 flex items-center gap-1">
-                  <BookOpen className="w-3 h-3" />
-                  Paso 2: Tu Cuaderno de Trabajo
-                </span>
-                {existingForm ? (
-                  <span className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
-                    <CheckCircle2 className="w-3 h-3" />
-                    ¡Completado!
-                  </span>
-                ) : (
-                  <span className="text-[11px] font-semibold text-amber-600 dark:text-amber-400 flex items-center gap-1">
-                    <Clock className="w-3 h-3" />
-                    Por responder
-                  </span>
-                )}
-              </div>
-
-              <div>
-                <h3 className="text-base sm:text-lg font-bold text-black dark:text-white">
-                  {existingForm ? 'Tus reflexiones están registradas' : 'Diligencia tus reflexiones'}
-                </h3>
-                <p className="text-xs font-light text-gray-500 dark:text-neutral-400 mt-1">
-                  {existingForm
-                    ? 'Puedes consultar tus respuestas guardadas o descargar tu Cuaderno oficial en PDF.'
-                    : 'Son 3 preguntas sencillas sobre tus emociones y sensaciones físicas (toma 5 minutos).'}
-                </p>
-              </div>
-            </div>
-
-            <div className="flex flex-wrap items-center gap-2 pt-1">
+            {onLogout && (
               <button
                 type="button"
-                onClick={() => {
-                  setSelectedNodeStep(currentProgress);
-                  openUnifiedWorkbook('workshop', currentProgress);
-                }}
-                className={`flex-1 py-2.5 px-4 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-all shadow-xs cursor-pointer ${
-                  existingForm
-                    ? 'bg-gray-100 dark:bg-neutral-800 hover:bg-gray-200 dark:hover:bg-neutral-700 text-black dark:text-white'
-                    : 'bg-black dark:bg-white text-white dark:text-black hover:opacity-90'
-                }`}
+                onClick={onLogout}
+                className="text-xs text-neutral-500 hover:text-black dark:hover:text-white underline cursor-pointer"
               >
-                <BookOpen className="w-4 h-4 text-emerald-400 dark:text-emerald-600" />
-                <span>{existingForm ? 'Ver / Modificar Respuestas' : '✍️ Diligenciar Cuaderno Ahora'}</span>
+                Cerrar sesión
               </button>
-
-              {existingForm && (
-                <button
-                  type="button"
-                  onClick={() =>
-                    PDFGenerator.generateLevelWorkbookPDF(
-                      activeNodeInfo,
-                      client,
-                      existingForm
-                    )
-                  }
-                  className="py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition-colors shadow-xs cursor-pointer"
-                  title="Descargar Cuaderno Oficial en PDF"
-                >
-                  <Download className="w-3.5 h-3.5" />
-                  <span>PDF</span>
-                </button>
-              )}
-            </div>
+            )}
           </div>
         </div>
-      </section>
 
-      {/* ========================================================================= */}
-      {/* SESIONES DE CONSULTORÍA 1 A 1 (SINCRONIZADAS EN TIEMPO REAL CON EL COACH)  */}
-      {/* ========================================================================= */}
-      {sessions.length > 0 && (
-        <section className="space-y-3">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-1">
-            <div className="flex items-center gap-2">
-              <Calendar className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-              <h2 className="text-sm sm:text-base font-bold text-black dark:text-white tracking-tight">
-                Tus Sesiones de Consultoría 1 a 1 ({sessions.length})
-              </h2>
-            </div>
-            <span className="text-[11px] text-gray-500 dark:text-neutral-400 font-light">
-              Sincronizadas en vivo con el panel del consultor
+        {/* UN SOLO BLOQUE CENTRAL UNIFICADO DE PROGRESO */}
+        <div className="p-4 rounded-2xl border border-black/10 dark:border-white/10 bg-neutral-50/80 dark:bg-neutral-900/60 backdrop-blur-xs flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="w-2 h-2 rounded-full bg-black dark:bg-white shrink-0" />
+            <span className="font-bold text-black dark:text-white">
+              Ciclo {currentCycle} de 3
+            </span>
+            <span className="text-neutral-400 dark:text-neutral-600">•</span>
+            <span className="text-neutral-700 dark:text-neutral-300 font-medium">
+              Encuentro {currentSessionNumber} de 12
+            </span>
+            <span className="text-neutral-400 dark:text-neutral-600">•</span>
+            <span className="font-semibold text-black dark:text-white">
+              {cyclePhaseLabel}
             </span>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {sessions
-              .slice()
-              .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-              .map((session, idx) => {
-                const isUpcoming = session.status === 'scheduled';
-                const isCompleted = session.status === 'completed';
-                const isInProgress = session.status === 'in_progress';
+          <div className="text-[11px] text-neutral-500 dark:text-neutral-400 font-mono">
+            {isCycleMilestone ? '★ Cosecha del Ciclo' : 'Lienzo en Blanco'}
+          </div>
+        </div>
+      </header>
+
+      {/* ========================================================================= */}
+      {/* 2. EL LIENZO CENTRAL: "TU MOMENTO ACTUAL" (UNA SOLA TARJETA ACTIVA)       */}
+      {/* ========================================================================= */}
+      <main className="space-y-8">
+        <section
+          id="tu-momento-actual"
+          className="rounded-3xl border border-black/15 dark:border-white/15 bg-white dark:bg-black overflow-hidden shadow-xs"
+        >
+          {/* FOTOGRAFÍA A COLOR (Único elemento cromático de la experiencia) */}
+          <div className="relative h-60 sm:h-72 w-full overflow-hidden border-b border-black/10 dark:border-white/10">
+            <img
+              src={currentPhoto.url}
+              alt={currentPhoto.title}
+              referrerPolicy="no-referrer"
+              className="w-full h-full object-cover transition-transform duration-700 hover:scale-102"
+            />
+            {/* Pill minimalista en B&W superpuesta */}
+            <div className="absolute top-4 left-4 bg-black text-white px-3 py-1 text-[10px] font-bold uppercase tracking-widest rounded-full shadow-xs">
+              Tu momento actual
+            </div>
+
+            <div className="absolute bottom-4 left-4 right-4 bg-black/75 backdrop-blur-md text-white p-3.5 rounded-2xl border border-white/15">
+              <span className="text-[10px] uppercase tracking-widest text-neutral-300 block font-mono">
+                {currentPhoto.title}
+              </span>
+              <p className="text-xs font-light text-neutral-200 mt-0.5 leading-snug">
+                {currentPhoto.description}
+              </p>
+            </div>
+          </div>
+
+          {/* CONTENIDO INTERIOR DEL LIENZO */}
+          <div className="p-6 sm:p-8 space-y-6">
+            {/* PREGUNTA DE APERTURA ONTOLÓGICA / ESPACIO LIBRE */}
+            <div className="p-5 rounded-2xl bg-neutral-50/80 dark:bg-neutral-900/60 border border-black/10 dark:border-white/10 space-y-2">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-neutral-500 dark:text-neutral-400 block font-mono">
+                Pregunta de Apertura Ontológica
+              </span>
+              <h2 className="text-base sm:text-lg font-normal text-black dark:text-white leading-snug">
+                {isCycleMilestone
+                  ? '«¿Qué grandes descubrimientos o patrones has notado en estas semanas y cómo sientes que tu perspectiva ha cambiado?»'
+                  : '«¿Qué es importante para ti traer a este espacio hoy?»'}
+              </h2>
+              <p className="text-xs text-neutral-600 dark:text-neutral-400 font-light leading-relaxed">
+                Este espacio nace completamente abierto a tu emergente. No hay temas predeterminados ni respuestas correctas. Conversaremos sobre lo que esté vivo en ti.
+              </p>
+            </div>
+
+            {/* SECCIÓN CONDICIONAL: COSECHA DE CICLO (CADA 4 SESIONES) */}
+            {isCycleMilestone && (
+              <div className="p-5 rounded-2xl bg-neutral-100 dark:bg-neutral-900 border border-black dark:border-white space-y-3">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-black dark:text-white" />
+                  <h3 className="text-xs font-bold text-black dark:text-white uppercase tracking-wider font-mono">
+                    Cosecha del Ciclo {currentCycle}
+                  </h3>
+                </div>
+                <p className="text-xs text-neutral-700 dark:text-neutral-300 leading-relaxed">
+                  Hemos completado 4 encuentros. Este espacio está dedicado a integrar la siembra:
+                </p>
+                <ul className="list-disc list-inside text-xs text-neutral-800 dark:text-neutral-200 space-y-1 font-light">
+                  <li>¿Qué descubrimientos o patrones recurrentes has identificado?</li>
+                  <li>¿Cómo se ha transformado tu manera de observar tus quiebres y decisiones?</li>
+                </ul>
+                {currentPostForm?.cycleHarvest && (
+                  <div className="mt-2 p-3.5 rounded-xl bg-white dark:bg-black border border-black/15 dark:border-white/15 text-xs text-neutral-800 dark:text-neutral-200 font-light">
+                    <strong className="font-semibold text-black dark:text-white block mb-0.5">
+                      Tu cosecha registrada:
+                    </strong>
+                    {currentPostForm.cycleHarvest}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* INFORMACIÓN ESENCIAL DEL PRÓXIMO PASO */}
+            <div className="space-y-4 pt-2">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-neutral-500 dark:text-neutral-400 block font-mono">
+                Información Esencial del Próximo Paso
+              </span>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {/* Próximo Encuentro */}
+                <div className="p-5 rounded-2xl border border-black/15 dark:border-white/15 bg-neutral-50/60 dark:bg-neutral-900/40 space-y-3">
+                  <div className="flex items-center gap-2 text-xs font-bold text-black dark:text-white">
+                    <Clock className="w-4 h-4" />
+                    <span>Tu Próxima Sesión</span>
+                  </div>
+                  <p className="text-xs text-neutral-700 dark:text-neutral-300">
+                    {formatHumanDate(currentSession.date)}
+                  </p>
+                  <div className="pt-2 flex flex-wrap gap-2">
+                    <a
+                      href={currentSession.meetLink || 'https://meet.google.com/new'}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="px-4 py-2 rounded-xl bg-black text-white dark:bg-white dark:text-black text-xs font-semibold hover:opacity-90 transition-opacity inline-flex items-center gap-1.5 cursor-pointer shadow-xs"
+                    >
+                      <Video className="w-3.5 h-3.5" />
+                      <span>Unirme por Meet</span>
+                    </a>
+
+                    <a
+                      href="https://calendar.google.com"
+                      target="_blank"
+                      rel="noreferrer"
+                      className="px-4 py-2 rounded-xl border border-black/15 dark:border-white/15 bg-white dark:bg-black text-xs font-semibold hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors inline-flex items-center gap-1.5 cursor-pointer"
+                    >
+                      <Calendar className="w-3.5 h-3.5" />
+                      <span>Reprogramar</span>
+                    </a>
+                  </div>
+                </div>
+
+                {/* Memoria de Sesión & Cuestionario Posterior */}
+                <div className="p-5 rounded-2xl border border-black/15 dark:border-white/15 bg-neutral-50/60 dark:bg-neutral-900/40 space-y-3">
+                  <div className="flex items-center gap-2 text-xs font-bold text-black dark:text-white">
+                    <FileText className="w-4 h-4" />
+                    <span>Memoria y Bitácora Posterior</span>
+                  </div>
+                  <p className="text-xs text-neutral-700 dark:text-neutral-300">
+                    {currentPostForm
+                      ? 'Tu memoria de sesión está registrada y lista para consultar.'
+                      : 'Registra el emergente y el paso a la acción tras tu encuentro.'}
+                  </p>
+                  <div className="pt-2 flex flex-wrap gap-2">
+                    {currentPostForm ? (
+                      <button
+                        type="button"
+                        onClick={() => handleDownloadMemory(currentPostForm, currentSession)}
+                        className="px-4 py-2 rounded-xl bg-black text-white dark:bg-white dark:text-black text-xs font-semibold hover:opacity-90 transition-opacity inline-flex items-center gap-1.5 cursor-pointer shadow-xs"
+                      >
+                        <Download className="w-3.5 h-3.5" />
+                        <span>Descargar Memoria (PDF)</span>
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => handleOpenBitacora(currentSession)}
+                        className="px-4 py-2 rounded-xl bg-black text-white dark:bg-white dark:text-black text-xs font-semibold hover:opacity-90 transition-opacity inline-flex items-center gap-1.5 cursor-pointer shadow-xs"
+                      >
+                        <FileText className="w-3.5 h-3.5" />
+                        <span>Registrar Bitácora</span>
+                      </button>
+                    )}
+
+                    {currentPostForm && (
+                      <button
+                        type="button"
+                        onClick={() => handleOpenBitacora(currentSession)}
+                        className="px-3.5 py-2 rounded-xl border border-black/15 dark:border-white/15 bg-white dark:bg-black text-xs font-semibold hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
+                      >
+                        Editar registro
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Tema Emergente y Paso a la Acción Registrado */}
+              {currentPostForm && (
+                <div className="p-4 rounded-2xl border border-black/10 dark:border-white/10 bg-neutral-50/80 dark:bg-neutral-900/60 space-y-3">
+                  <div>
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-500 font-mono">
+                      El tema emergente de este encuentro:
+                    </span>
+                    <p className="text-xs font-medium text-black dark:text-white mt-0.5">
+                      {currentPostForm.emergentTopic || currentPostForm.masterJudgmentAndNarrative}
+                    </p>
+                  </div>
+
+                  <div>
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-500 font-mono">
+                      El paso a la acción acordado:
+                    </span>
+                    <p className="text-xs font-medium text-black dark:text-white mt-0.5">
+                      {currentPostForm.actionStep || currentPostForm.agreedActionItems?.[0]}
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </section>
+
+        {/* ========================================================================= */}
+        {/* 3. MÓDULO DE PROGRESO INTEGRAL (ESPACIO DEDICADO Y ESTRUCTURADO)          */}
+        {/* ========================================================================= */}
+        <section className="rounded-3xl border border-black/15 dark:border-white/15 bg-white dark:bg-black p-6 sm:p-8 space-y-6 shadow-xs">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-black/10 dark:border-white/10">
+            <div>
+              <div className="flex items-center gap-2">
+                <Layers className="w-4 h-4 text-black dark:text-white" />
+                <h3 className="text-sm sm:text-base font-bold text-black dark:text-white uppercase tracking-wider font-mono">
+                  Módulo de Progreso Integral
+                </h3>
+              </div>
+              <p className="text-xs text-neutral-600 dark:text-neutral-400 font-light mt-0.5">
+                Tu avance gráfico en el Camino de Transformación, histórico de cuestionarios y material propio.
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setIsPaymentPortalOpen(true)}
+              className="px-3.5 py-1.5 rounded-xl border border-black/15 dark:border-white/15 bg-neutral-50 dark:bg-neutral-900 text-black dark:text-white text-xs font-semibold hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors self-start sm:self-auto cursor-pointer"
+            >
+              Ver Seguimiento Financiero →
+            </button>
+          </div>
+
+          {/* PARTE A: AVANCE GRÁFICO EN EL "CAMINO DE TRANSFORMACIÓN" (3 CICLOS, 12 ESTACIONES) */}
+          <div className="space-y-3">
+            <span className="text-[10px] font-bold uppercase tracking-widest text-neutral-500 font-mono block">
+              1. Tu Ruta Gráfica (12 Estaciones en 3 Ciclos)
+            </span>
+
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2.5">
+              {Array.from({ length: 12 }, (_, i) => i + 1).map((stepNum) => {
+                const cycleNum = Math.ceil(stepNum / 4);
+                const isMilestone = stepNum === 4 || stepNum === 8 || stepNum === 12;
+                const isCompleted = stepNum < currentSessionNumber;
+                const isCurrent = stepNum === currentSessionNumber;
+                const hasForm = postForms.some((f) => f.sessionNumber === stepNum);
 
                 return (
                   <div
-                    key={session.id || idx}
-                    className={`p-4 rounded-2xl border transition-all flex flex-col justify-between gap-3 ${
-                      isUpcoming
-                        ? 'bg-white/80 dark:bg-[#18181B]/80 border-gray-200 dark:border-neutral-800 shadow-xs'
+                    key={stepNum}
+                    className={`p-3 rounded-2xl border transition-all text-xs flex flex-col justify-between ${
+                      isCurrent
+                        ? 'bg-black text-white dark:bg-white dark:text-black border-black dark:border-white shadow-xs'
                         : isCompleted
-                        ? 'bg-gray-50/60 dark:bg-neutral-900/40 border-gray-200/60 dark:border-neutral-800/60 opacity-90'
-                        : 'bg-emerald-50/40 dark:bg-emerald-950/20 border-emerald-300 dark:border-emerald-800/50'
+                        ? 'bg-neutral-50 dark:bg-neutral-900 border-black/10 dark:border-white/10 text-neutral-800 dark:text-neutral-200'
+                        : 'bg-neutral-50/40 dark:bg-neutral-900/30 border-black/5 dark:border-white/5 text-neutral-400 dark:text-neutral-600'
                     }`}
                   >
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-black/5 dark:bg-white/10 text-black dark:text-white font-mono">
-                          Sesión {session.sessionNumber || idx + 1}
+                    <div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-mono font-bold uppercase">
+                          E{stepNum.toString().padStart(2, '0')}
                         </span>
-                        <span
-                          className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
-                            isCompleted
-                              ? 'bg-emerald-100 dark:bg-emerald-950/70 text-emerald-700 dark:text-emerald-400'
-                              : isInProgress
-                              ? 'bg-blue-100 dark:bg-blue-950/70 text-blue-700 dark:text-blue-400'
-                              : 'bg-amber-100 dark:bg-amber-950/70 text-amber-700 dark:text-amber-400'
-                          }`}
-                        >
-                          {isCompleted ? '✓ Completada' : isInProgress ? '• En Curso' : '⏱ Programada'}
-                        </span>
+                        {isCompleted ? (
+                          <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
+                        ) : isCurrent ? (
+                          <span className="w-2 h-2 rounded-full bg-white dark:bg-black animate-pulse" />
+                        ) : (
+                          <Circle className="w-3 h-3 shrink-0 opacity-40" />
+                        )}
                       </div>
-
-                      <div>
-                        <h4 className="text-xs sm:text-sm font-bold text-black dark:text-white line-clamp-2">
-                          {session.sessionGoal || session.title || `Sesión Ontológica ${session.sessionNumber || idx + 1}`}
-                        </h4>
-                        <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-neutral-400 font-light mt-1">
-                          <Clock className="w-3.5 h-3.5 shrink-0 text-gray-400" />
-                          <span className="capitalize">{formattedDate(session.date)}</span>
-                        </div>
+                      <div className="font-semibold text-xs mt-1">
+                        {isMilestone ? `Cierre C${cycleNum}` : `Sesión ${stepNum}`}
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-2 pt-1 border-t border-black/5 dark:border-white/5">
-                      {session.meetLink && isUpcoming && (
-                        <a
-                          href={session.meetLink}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="flex-1 py-1.5 px-3 rounded-xl bg-black dark:bg-white text-white dark:text-black font-bold text-[11px] flex items-center justify-center gap-1.5 hover:opacity-90 transition-opacity"
-                        >
-                          <Video className="w-3.5 h-3.5" />
-                          <span>Sala Meet</span>
-                        </a>
-                      )}
-                      <button
-                        type="button"
-                        onClick={() => openUnifiedWorkbook('session', session.id)}
-                        className="flex-1 py-1.5 px-3 rounded-xl bg-gray-100 dark:bg-neutral-800 hover:bg-gray-200 dark:hover:bg-neutral-700 text-black dark:text-white font-medium text-[11px] flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
-                      >
-                        <BookOpen className="w-3.5 h-3.5 text-emerald-500" />
-                        <span>Bitácora</span>
-                      </button>
+                    <div className="mt-2 text-[10px] font-mono opacity-80">
+                      {isCompleted
+                        ? (hasForm ? 'Memoria OK' : 'Completada')
+                        : isCurrent
+                        ? 'Lienzo Activo'
+                        : 'Por recorrer'}
                     </div>
                   </div>
                 );
               })}
-          </div>
-        </section>
-      )}
-
-      {/* ========================================================================= */}
-      {/* 3. TALLER EN VIVO ABIERTO EN COMUNIDAD (Barra compacta con afiche desplegable) */}
-      {/* ========================================================================= */}
-      <section className="space-y-3">
-        <div className="glass-panel-opal rounded-2xl p-3.5 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border border-emerald-500/20 shadow-2xs">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
-              <Sparkles className="w-4 h-4" />
-            </div>
-            <div className="min-w-0">
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
-                  Taller en Comunidad
-                </span>
-                <span className="text-xs font-bold text-black dark:text-white truncate">
-                  {upcomingEvent.title}
-                </span>
-              </div>
-              <p className="text-[11px] font-light text-gray-500 dark:text-neutral-400 mt-0.5">
-                {upcomingEvent.displayDate} ({upcomingEvent.time}) • Taller Abierto para Participantes
-              </p>
             </div>
           </div>
 
-          <button
-            type="button"
-            onClick={() => setShowEventBanner(!showEventBanner)}
-            className="px-3.5 py-1.5 rounded-xl bg-white dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 text-xs font-medium text-black dark:text-white hover:bg-gray-50 dark:hover:bg-neutral-700 transition-colors flex items-center justify-center gap-1.5 shrink-0 cursor-pointer shadow-2xs"
-          >
-            <span>{showEventBanner ? 'Ocultar Afiche' : 'Ver Afiche & Contador'}</span>
-            {showEventBanner ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
-          </button>
-        </div>
-
-        {showEventBanner && (
-          <div className="animate-fade-in pt-1">
-            <PromotionalEventBanner variant="participant" />
-          </div>
-        )}
-      </section>
-
-      {/* Pending Payment Validation Banner for Participant */}
-      {pendingPayment && (
-        <section className="p-4 sm:p-5 rounded-3xl bg-amber-50 dark:bg-amber-950/30 border border-amber-300 dark:border-amber-800/60 shadow-xs">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div className="flex items-start sm:items-center gap-3">
-              <span className="p-2 rounded-2xl bg-amber-200/80 dark:bg-amber-900/60 text-amber-900 dark:text-amber-200 shrink-0">
-                <Clock className="w-5 h-5 text-amber-700 dark:text-amber-300 animate-spin" />
+          {/* PARTE B: HISTÓRICO COMPLETO DE RESPUESTAS A CUESTIONARIOS POSTERIORES */}
+          <div className="space-y-3 pt-4 border-t border-black/10 dark:border-white/10">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-neutral-500 font-mono block">
+                2. Histórico Completo de Respuestas a Cuestionarios ({pastForms.length})
               </span>
-              <div>
-                <div className="flex items-center gap-2">
-                  <h3 className="text-sm font-bold text-amber-950 dark:text-amber-100">
-                    Pago en Proceso de Validación por el Administrador
-                  </h3>
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-200 dark:bg-amber-900 text-amber-900 dark:text-amber-200 uppercase">
-                    {pendingPayment.method === 'efectivo' ? 'Efectivo en Sesión' : 'Bre-B Nu'}
-                  </span>
-                </div>
-                <p className="text-xs text-amber-900/80 dark:text-amber-300/90 font-light mt-0.5">
-                  Has registrado una solicitud de <strong>{pendingPayment.amount}</strong> para <em>{pendingPayment.concept}</em>. En cuanto el consultor John Rengifo confirme el pago en su panel de administración, tu nivel se habilitará automáticamente.
-                </p>
-              </div>
             </div>
 
-            <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
-              <button
-                type="button"
-                onClick={() => {
-                  const targetNode = PROGRAM_NODES.find((n) => n.step === pendingPayment.targetStep) || activeNodeInfo;
-                  handleOpenPaymentForNode(targetNode);
-                }}
-                className="px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs flex items-center gap-1.5 transition-colors shadow-xs cursor-pointer"
-              >
-                <span>Ver Estado del Pago</span>
-              </button>
-            </div>
+            {pastForms.length === 0 ? (
+              <p className="text-xs text-neutral-500 font-light italic p-4 rounded-2xl bg-neutral-50 dark:bg-neutral-900 border border-black/10 dark:border-white/10">
+                Aún no has finalizado encuentros individuales. Tras tu primera sesión y el llenado del cuestionario posterior, tus reflexiones aparecerán aquí.
+              </p>
+            ) : (
+              <div className="space-y-3">
+                {pastForms.map((item) => {
+                  const cycleNum = Math.ceil(item.sessionNumber / 4);
+                  const isMilestone =
+                    item.sessionNumber === 4 || item.sessionNumber === 8 || item.sessionNumber === 12;
+
+                  return (
+                    <div
+                      key={item.id}
+                      className="p-4 rounded-2xl border border-black/10 dark:border-white/10 bg-neutral-50/80 dark:bg-neutral-900/60 space-y-2 text-xs"
+                    >
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold text-black dark:text-white">
+                            Sesión {item.sessionNumber}
+                          </span>
+                          <span className="text-neutral-400">•</span>
+                          <span className="text-neutral-600 dark:text-neutral-400">
+                            Ciclo {cycleNum} {isMilestone ? '(★ Cierre de Ciclo)' : ''}
+                          </span>
+                          <span className="text-neutral-400">•</span>
+                          <span className="text-[11px] text-neutral-500 font-mono">
+                            {item.submittedAt ? new Date(item.submittedAt).toLocaleDateString('es-ES') : 'Registrado'}
+                          </span>
+                        </div>
+
+                        {/* Botón de descarga de PDF AutoCrat */}
+                        <button
+                          type="button"
+                          onClick={() => handleDownloadMemory(item)}
+                          className="px-3 py-1.5 rounded-xl border border-black/15 dark:border-white/15 bg-white dark:bg-black text-xs font-semibold hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors inline-flex items-center gap-1.5 self-start sm:self-auto cursor-pointer"
+                        >
+                          <Download className="w-3.5 h-3.5" />
+                          <span>Descargar PDF</span>
+                        </button>
+                      </div>
+
+                      <div className="space-y-1 text-neutral-700 dark:text-neutral-300 font-light">
+                        <p>
+                          <strong className="font-semibold text-black dark:text-white">Tema Emergente:</strong>{' '}
+                          {item.emergentTopic || item.masterJudgmentAndNarrative}
+                        </p>
+                        {item.discovery && (
+                          <p>
+                            <strong className="font-semibold text-black dark:text-white">Descubrimiento:</strong>{' '}
+                            {item.discovery}
+                          </p>
+                        )}
+                        {item.actionStep && (
+                          <p>
+                            <strong className="font-semibold text-black dark:text-white">Acción:</strong>{' '}
+                            {item.actionStep}
+                          </p>
+                        )}
+                        {item.cycleHarvest && (
+                          <div className="mt-1.5 p-2.5 rounded-xl bg-white dark:bg-black border border-black/10 dark:border-white/10 text-neutral-900 dark:text-neutral-100">
+                            <strong className="font-semibold block text-[11px]">★ Cosecha del Ciclo:</strong>
+                            <span>{item.cycleHarvest}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </section>
+
+        {/* ========================================================================= */}
+        {/* 4. ACOMPAÑAMIENTO CERCANO: CONTACTO DIRECTO CON EL FACILITADOR           */}
+        {/* ========================================================================= */}
+        <footer className="p-5 rounded-3xl border border-black/10 dark:border-white/10 bg-neutral-50/80 dark:bg-neutral-900/60 flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-xs">
+          <div className="flex items-center gap-3">
+            {/* Fotografía a color del coach (Único punto cromático) */}
+            <img
+              src={coachAvatarImg}
+              alt="John Fredy Rengifo Basto"
+              className="w-12 h-12 rounded-full object-cover border border-black/15 dark:border-white/15 shrink-0"
+            />
+            <div>
+              <div className="font-bold text-black dark:text-white">
+                John Fredy Rengifo Basto
+              </div>
+              <div className="text-[11px] text-neutral-600 dark:text-neutral-400 font-light">
+                Master Coach Ontológico • Acompañamiento entre encuentros
+              </div>
+            </div>
+          </div>
+
+          <a
+            href={COMPANY_INFO.whatsappUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="px-4 py-2.5 rounded-xl bg-black text-white dark:bg-white dark:text-black font-semibold text-xs hover:opacity-90 transition-opacity inline-flex items-center gap-2 self-start sm:self-auto cursor-pointer shadow-xs"
+          >
+            <MessageCircle className="w-3.5 h-3.5" />
+            <span>Mensaje directo por WhatsApp</span>
+          </a>
+        </footer>
+      </main>
+
+      {/* ========================================================================= */}
+      {/* 5. MODAL DE CUESTIONARIO POSTERIOR / BITÁCORA                             */}
+      {/* ========================================================================= */}
+      {isModalOpen && (
+        <PostSessionWorkbookModal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          session={activeSessionForModal}
+          client={client}
+          isParticipant={true}
+          onFormSaved={() => {
+            const updatedForms = OntologicalStore.getPostSessionFormsForClient(client.uid);
+            setPostForms(updatedForms);
+            if (onUserUpdated) onUserUpdated();
+          }}
+        />
       )}
 
       {/* ========================================================================= */}
-      {/* 3. ESPACIO DE TRABAJO COMPLETO DE LA SESIÓN SELECCIONADA (SOLO SI ESTÁ HABILITADO) */}
+      {/* 6. MODAL DE PORTAL DE PAGOS Y SEGUIMIENTO FINANCIERO                      */}
       {/* ========================================================================= */}
-      {client.transformationSpacesEnabled && (
-        <section id="session-workspace-content" className="w-full">
-        <div className="glass-panel-sheer rounded-3xl p-5 sm:p-7 lg:p-8 space-y-6 sm:space-y-7">
-          {/* Header: Selected Session & Level Information */}
-          <div className="pb-6 border-b border-black/5 dark:border-white/10 space-y-4">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/60 dark:bg-[#202024]/60 backdrop-blur-md border border-white/60 dark:border-neutral-800 text-[11px] font-medium text-gray-500 dark:text-neutral-400 uppercase tracking-widest">
-                <span>{activeNodeInfo.level}: {activeNodeInfo.levelTitle}</span>
-                <span>•</span>
-                <span>{activeNodeInfo.weekLabel}</span>
-              </div>
-
-              {/* Level Tag & Quick Actions */}
-              <div className="flex items-center gap-2">
-                {isNodeLocked ? (
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-50 dark:bg-amber-950/50 text-amber-800 dark:text-amber-300 border border-amber-200/80 dark:border-amber-800/60 text-[11px] font-semibold uppercase tracking-wider">
-                    <Lock className="w-3 h-3" />
-                    Área Inactiva • Próximo Nivel
-                  </span>
-                ) : (
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/50 text-emerald-800 dark:text-emerald-300 border border-emerald-200/80 dark:border-emerald-800/60 text-[11px] font-semibold uppercase tracking-wider">
-                    <CheckCircle2 className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
-                    Sesión Habilitada
-                  </span>
-                )}
-                <span className="text-[11px] font-light text-gray-400 dark:text-neutral-500">
-                  Nodo {activeNodeInfo.step} de 6
-                </span>
-              </div>
-            </div>
-
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-              <div className="flex-1">
-                <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-black dark:text-white">
-                  Sesión {activeNodeInfo.step}: {activeNodeInfo.sessionTitle}
-                </h2>
-                <p className="text-xs sm:text-sm font-light text-gray-600 dark:text-neutral-300 mt-2 leading-relaxed bg-white/50 dark:bg-[#202024]/50 backdrop-blur-md p-3.5 sm:p-4 rounded-2xl border border-white/60 dark:border-neutral-800 max-w-3xl">
-                  <strong className="font-medium text-black dark:text-white block mb-1">
-                    Propósito ontológico de esta etapa:
-                  </strong>
-                  {activeNodeInfo.objective}
-                </p>
-              </div>
-
-              {/* Quick PDF actions in header if unlocked */}
-              {!isNodeLocked && (
-                <div className="flex flex-row md:flex-col gap-2 shrink-0 self-start md:self-center">
-                  <button
-                    type="button"
-                    onClick={() =>
-                      PDFGenerator.generateLevelWorkbookPDF(
-                        activeNodeInfo,
-                        client,
-                        existingForm
-                      )
-                    }
-                    className="py-2.5 px-4 rounded-xl bg-black dark:bg-white text-white dark:text-black hover:opacity-90 font-bold text-xs flex items-center gap-2 transition-all shadow-xs cursor-pointer whitespace-nowrap"
-                  >
-                    <Download className="w-3.5 h-3.5 text-emerald-400 dark:text-emerald-600" />
-                    <span>Descargar Cuaderno PDF</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      PDFGenerator.generateReinforcementPackPDF(
-                        activeNodeInfo,
-                        client
-                      )
-                    }
-                    className="py-2 px-3 rounded-xl bg-gray-100 dark:bg-neutral-800 hover:bg-gray-200 dark:hover:bg-neutral-700 text-black dark:text-white font-medium text-xs flex items-center gap-1.5 transition-colors cursor-pointer whitespace-nowrap"
-                  >
-                    <FileText className="w-3.5 h-3.5 text-blue-500" />
-                    <span>Fichas de Refuerzo</span>
-                  </button>
-                </div>
-              )}
-            </div>
-
-            {/* Inactive Area Callout Banner with Payment Link */}
-            {isNodeLocked && (
-              <div className="p-5 sm:p-6 rounded-2xl bg-linear-to-br from-amber-50/80 via-[#FFFDF7] to-amber-100/40 dark:from-amber-950/30 dark:via-[#1A1A1E] dark:to-amber-900/20 border border-amber-200/80 dark:border-amber-800/60 space-y-3.5 animate-fade-in">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-100/90 dark:bg-amber-900/60 text-amber-900 dark:text-amber-200 text-[10px] font-semibold uppercase tracking-widest">
-                    <Lock className="w-3 h-3" />
-                    Área Inactiva • Tu Próximo Nivel
-                  </span>
-                  <span className="text-xs font-medium text-amber-800 dark:text-amber-300">
-                    Inversión requerida para habilitar
-                  </span>
-                </div>
-
-                <div className="space-y-1">
-                  <h3 className="text-sm sm:text-base font-semibold text-black dark:text-white">
-                    Desbloquea el {activeNodeInfo.level}: {activeNodeInfo.sessionTitle}
-                  </h3>
-                  <p className="text-xs font-light text-gray-700 dark:text-neutral-300 leading-relaxed">
-                    Esta área aún no se encuentra activa en tu cuenta. Al realizar tu pago, habilitarás tus próximas sesiones 1-a-1 de consultoría ontológica, la bitácora somática, las fichas descargables y el protocolo de refuerzo personalizado.
-                  </p>
-                </div>
-
-                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 pt-1">
-                  <button
-                    type="button"
-                    onClick={() => handleOpenPaymentForNode(activeNodeInfo)}
-                    className="flex-1 py-3 px-4 rounded-xl bg-black dark:bg-white text-white dark:text-black hover:bg-neutral-800 dark:hover:bg-neutral-200 text-xs font-medium flex items-center justify-center gap-2 transition-all cursor-pointer shadow-xs"
-                  >
-                    <CreditCard className="w-4 h-4" />
-                    <span>Enlace de Pago • Tu Próximo Nivel</span>
-                  </button>
-
-                  <a
-                    href={`https://wa.me/573234642257?text=${encodeURIComponent(
-                      `Hola John, deseo formalizar el pago de mi Próximo Nivel (${activeNodeInfo.level}: ${activeNodeInfo.sessionTitle}) en Rengifo Basto Consultoría Ontológica.`
-                    )}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="py-3 px-4 rounded-xl bg-white dark:bg-[#202024] hover:bg-gray-100 dark:hover:bg-neutral-800 border border-gray-200/80 dark:border-neutral-700 text-xs font-medium text-black dark:text-white flex items-center justify-center gap-2 transition-colors"
-                  >
-                    <MessageCircle className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                    <span>Coordinar por WhatsApp</span>
-                  </a>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Navigation Tabs and Content (ONLY shown when node is unlocked/active) */}
-          {!isNodeLocked ? (
-            <>
-              {/* Navigation Tabs for Workspace: Súper claras, numeradas y con estado */}
-              <div className="flex border-b border-gray-100 dark:border-neutral-800 gap-2 overflow-x-auto pb-1">
-              <button
-                type="button"
-                onClick={() => {
-                  setActiveTab('workbook');
-                  setUnifiedWorkbookMode('workshop');
-                }}
-                className={`pb-3 px-3.5 text-xs sm:text-sm font-semibold transition-all cursor-pointer relative flex items-center gap-2 whitespace-nowrap ${
-                  activeTab === 'workbook' || activeTab === 'form'
-                    ? 'text-black dark:text-white border-b-2 border-black dark:border-white'
-                    : 'text-gray-400 dark:text-neutral-500 hover:text-gray-700 dark:hover:text-neutral-300'
-                }`}
-              >
-                <BookOpen className="w-4 h-4 text-emerald-500" />
-                <span>📘 1. Mi Cuaderno & Cuestionarios</span>
-                {existingForm ? (
-                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 font-bold">
-                    ✅ Listo
-                  </span>
-                ) : (
-                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 font-bold">
-                    ✍️ Por responder
-                  </span>
-                )}
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setActiveTab('materials')}
-                className={`pb-3 px-3.5 text-xs sm:text-sm font-semibold transition-all cursor-pointer relative flex items-center gap-2 whitespace-nowrap ${
-                  activeTab === 'materials'
-                    ? 'text-black dark:text-white border-b-2 border-black dark:border-white'
-                    : 'text-gray-400 dark:text-neutral-500 hover:text-gray-700 dark:hover:text-neutral-300'
-                }`}
-              >
-                <Compass className="w-4 h-4 text-blue-500" />
-                <span>💡 2. Guía de la Sesión</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setActiveTab('reinforcement')}
-                className={`pb-3 px-3.5 text-xs sm:text-sm font-semibold transition-all cursor-pointer relative flex items-center gap-2 whitespace-nowrap ${
-                  activeTab === 'reinforcement'
-                    ? 'text-black dark:text-white border-b-2 border-black dark:border-white'
-                    : 'text-gray-400 dark:text-neutral-500 hover:text-gray-700 dark:hover:text-neutral-300'
-                }`}
-              >
-                <Headphones className="w-4 h-4 text-purple-500" />
-                <span>🎧 3. Audio & Prácticas</span>
-              </button>
-            </div>
-
-            {/* Notification if submission just succeeded */}
-            {submissionSuccess && (
-              <div className="p-4 rounded-2xl bg-emerald-50/80 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-emerald-950 dark:text-emerald-200 animate-fade-in">
-                <div className="flex items-center gap-3">
-                  <CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400 stroke-[1.5] shrink-0" />
-                  <div>
-                    <strong className="font-semibold block">
-                      ¡Cuestionario registrado con éxito! Tu Cuaderno de Trabajo ha sido construido.
-                    </strong>
-                    <span className="font-light text-emerald-800 dark:text-emerald-300/90 text-[11px]">
-                      Tus respuestas del cuestionario han sido integradas en tu cuaderno en PDF listo para descargar.
-                    </span>
-                  </div>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={() =>
-                    PDFGenerator.generateLevelWorkbookPDF(
-                      activeNodeInfo,
-                      client,
-                      existingForm
-                    )
-                  }
-                  className="px-3.5 py-2 rounded-xl bg-black dark:bg-white text-white dark:text-black font-bold text-xs flex items-center justify-center gap-2 hover:opacity-90 transition-opacity cursor-pointer shrink-0 shadow-xs"
-                >
-                  <Download className="w-3.5 h-3.5 text-emerald-400 dark:text-emerald-600" />
-                  <span>Descargar Cuaderno PDF</span>
-                </button>
-              </div>
-            )}
-
-            {/* ========================================================================= */}
-            {/* TAB 1: GUÍA & MATERIALES DE TRABAJO DEL NIVEL */}
-            {/* ========================================================================= */}
-            {activeTab === 'materials' && (
-              <div className="space-y-6">
-                {/* Tangible Outcomes */}
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2">
-                    <Compass className="w-4 h-4 text-black dark:text-white" />
-                    <h3 className="text-xs font-semibold uppercase tracking-wider text-black dark:text-white">
-                      Capacidades & Resultados Tangibles
-                    </h3>
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                    {activeNodeInfo.tangibleOutcomes?.map((outcome, idx) => (
-                      <div
-                        key={idx}
-                        className="p-3.5 rounded-2xl bg-[#F9F9F9] dark:bg-[#202024] border border-gray-100 dark:border-neutral-800 text-xs font-light text-gray-700 dark:text-neutral-300 flex items-start gap-2.5"
-                      >
-                        <span className="w-1.5 h-1.5 rounded-full bg-black dark:bg-white mt-1.5 shrink-0" />
-                        <span>{outcome}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* 3 Ontological Domains Methodology */}
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2">
-                    <Brain className="w-4 h-4 text-black dark:text-white" />
-                    <h3 className="text-xs font-semibold uppercase tracking-wider text-black dark:text-white">
-                      Metodología de Trabajo en los 3 Dominios Ontológicos
-                    </h3>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                    <div className="p-4 rounded-2xl bg-[#F9F9F9] dark:bg-[#202024] border border-gray-100 dark:border-neutral-800 space-y-1.5">
-                      <span className="text-[11px] font-semibold text-black dark:text-white flex items-center gap-1.5">
-                        🗣️ Lingüístico
-                      </span>
-                      <p className="text-xs font-light text-gray-600 dark:text-neutral-400 leading-relaxed">
-                        {activeNodeInfo.methodology.linguistic}
-                      </p>
-                    </div>
-
-                    <div className="p-4 rounded-2xl bg-[#F9F9F9] dark:bg-[#202024] border border-gray-100 dark:border-neutral-800 space-y-1.5">
-                      <span className="text-[11px] font-semibold text-black dark:text-white flex items-center gap-1.5">
-                        🫀 Somático
-                      </span>
-                      <p className="text-xs font-light text-gray-600 dark:text-neutral-400 leading-relaxed">
-                        {activeNodeInfo.methodology.somatic}
-                      </p>
-                    </div>
-
-                    <div className="p-4 rounded-2xl bg-[#F9F9F9] dark:bg-[#202024] border border-gray-100 dark:border-neutral-800 space-y-1.5">
-                      <span className="text-[11px] font-semibold text-black dark:text-white flex items-center gap-1.5">
-                        🌊 Emocional
-                      </span>
-                      <p className="text-xs font-light text-gray-600 dark:text-neutral-400 leading-relaxed">
-                        {activeNodeInfo.methodology.emotional}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Daily Micro-Practice */}
-                <div className="p-5 rounded-2xl bg-[#F9F9F9] dark:bg-[#202024] border border-gray-100 dark:border-neutral-800 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-semibold uppercase tracking-wider text-black dark:text-white flex items-center gap-2">
-                      <Activity className="w-4 h-4 text-black dark:text-white" />
-                      Micro-Práctica de Anclaje Cotidiano
-                    </span>
-                    <span className="px-2.5 py-0.5 rounded-full bg-white dark:bg-[#18181B] border border-gray-200/70 dark:border-neutral-700 text-[10px] font-medium text-gray-600 dark:text-neutral-400">
-                      {activeNodeInfo.dailyMicroPractice.frequency}
-                    </span>
-                  </div>
-                  <h4 className="text-xs font-semibold text-black dark:text-white">
-                    {activeNodeInfo.dailyMicroPractice.title}
-                  </h4>
-                  <p className="text-xs font-light text-gray-600 dark:text-neutral-300 leading-relaxed">
-                    {activeNodeInfo.dailyMicroPractice.description}
-                  </p>
-                </div>
-
-                {/* Recommended Readings & Study Materials */}
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2">
-                    <BookOpen className="w-4 h-4 text-black dark:text-white" />
-                    <h3 className="text-xs font-semibold uppercase tracking-wider text-black dark:text-white">
-                      Materiales de Estudio & Lecturas Clave
-                    </h3>
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {activeNodeInfo.studyMaterials?.map((mat, idx) => (
-                      <div
-                        key={idx}
-                        className="p-4 rounded-2xl bg-[#F9F9F9] dark:bg-[#202024] border border-gray-100 dark:border-neutral-800 space-y-1.5"
-                      >
-                        <div className="flex items-center justify-between">
-                          <span className="text-[10px] font-semibold text-gray-400 dark:text-neutral-500 uppercase tracking-wider">
-                            {mat.type}
-                          </span>
-                          <span className="text-[10px] font-light text-gray-400 dark:text-neutral-500">
-                            {mat.pages}
-                          </span>
-                        </div>
-                        <h4 className="text-xs font-medium text-black dark:text-white">
-                          {mat.title}
-                        </h4>
-                        <p className="text-[11px] font-light text-gray-500 dark:text-neutral-400 leading-relaxed">
-                          {mat.description}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Download Workbook Action */}
-                <div className="p-5 rounded-2xl bg-black dark:bg-[#222226] text-white flex flex-col sm:flex-row items-center justify-between gap-4">
-                  <div className="space-y-1 text-center sm:text-left">
-                    <div className="text-xs font-semibold flex items-center justify-center sm:justify-start gap-2">
-                      <span>Cuaderno de Trabajo del Taller (PDF)</span>
-                      {existingForm && (
-                        <span className="text-[10px] font-bold bg-emerald-500/30 text-emerald-300 px-2 py-0.5 rounded-full border border-emerald-400/40">
-                          ✓ Con tus Respuestas
-                        </span>
-                      )}
-                    </div>
-                    <div className="text-[11px] font-light text-gray-300 dark:text-neutral-300">
-                      Construye tu cuaderno completando el cuestionario ontológico de este taller y descárgalo con tu bitácora integrada.
-                    </div>
-                  </div>
-
-                  {isNodeLocked ? (
-                    <button
-                      type="button"
-                      onClick={() => handleOpenPaymentForNode(activeNodeInfo)}
-                      className="px-4 py-2.5 rounded-xl bg-amber-400 dark:bg-amber-300 hover:bg-amber-300 text-black font-semibold text-xs flex items-center gap-2 transition-all shrink-0 cursor-pointer shadow-xs"
-                    >
-                      <CreditCard className="w-3.5 h-3.5" />
-                      Enlace de Pago • Tu Próximo Nivel
-                    </button>
-                  ) : (
-                    <div className="flex flex-wrap items-center gap-2 shrink-0">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setActiveTab('form');
-                          const el = document.getElementById('session-workspace-content');
-                          if (el) el.scrollIntoView({ behavior: 'smooth' });
-                        }}
-                        className="px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 text-white font-medium text-xs flex items-center gap-1.5 transition-colors cursor-pointer"
-                      >
-                        <FileText className="w-3.5 h-3.5 text-emerald-400" />
-                        <span>
-                          {existingForm
-                            ? 'Editar Cuestionario'
-                            : '✍️ Diligenciar Cuestionario'}
-                        </span>
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() =>
-                          PDFGenerator.generateLevelWorkbookPDF(
-                            activeNodeInfo,
-                            client,
-                            existingForm
-                          )
-                        }
-                        className="px-4 py-2 rounded-xl bg-white text-black font-bold text-xs flex items-center gap-2 hover:bg-gray-100 transition-colors shrink-0 cursor-pointer shadow-sm"
-                        title={
-                          existingForm
-                            ? 'Descargar Cuaderno PDF con tus respuestas'
-                            : 'Descargar Cuaderno PDF'
-                        }
-                      >
-                        <Download className="w-3.5 h-3.5 text-emerald-600" />
-                        Descargar Cuaderno PDF
-                      </button>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* ========================================================================= */}
-            {/* TAB 2: REFUERZO PERSONALIZADO DEL NIVEL */}
-            {/* ========================================================================= */}
-            {activeTab === 'reinforcement' && (
-              <div className="space-y-6">
-                <div className="p-5 rounded-2xl bg-[#F9F9F9] dark:bg-[#202024] border border-gray-100 dark:border-neutral-800 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-semibold uppercase tracking-wider text-black dark:text-white flex items-center gap-2">
-                      <Sparkles className="w-4 h-4 text-black dark:text-white" />
-                      {activeNodeInfo.reinforcementPack.title}
-                    </span>
-                    <span className="text-[10px] font-light text-gray-400 dark:text-neutral-500">
-                      {activeNodeInfo.reinforcementPack.subtitle}
-                    </span>
-                  </div>
-                  <p className="text-xs font-light text-gray-600 dark:text-neutral-300 leading-relaxed">
-                    {activeNodeInfo.reinforcementPack.summary}
-                  </p>
-                </div>
-
-                {/* Audio Guide & Somatic Protocol */}
-                <div className="p-4 rounded-2xl bg-[#F9F9F9] dark:bg-[#202024] border border-gray-100 dark:border-neutral-800 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-semibold text-black dark:text-white uppercase tracking-wider flex items-center gap-1.5">
-                      🎧 {activeNodeInfo.reinforcementPack.audioGuideTitle}
-                    </span>
-                    <span className="text-[10px] font-light text-gray-400 dark:text-neutral-500">
-                      {activeNodeInfo.reinforcementPack.audioDuration}
-                    </span>
-                  </div>
-                  <p className="text-xs font-light text-gray-600 dark:text-neutral-400 italic">
-                    "{activeNodeInfo.reinforcementPack.audioScript}"
-                  </p>
-                </div>
-
-                {/* Key Practices */}
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2">
-                    <Flame className="w-4 h-4 text-black dark:text-white" />
-                    <h3 className="text-xs font-semibold uppercase tracking-wider text-black dark:text-white">
-                      Prácticas Clave de Integración
-                    </h3>
-                  </div>
-                  <div className="space-y-2">
-                    {activeNodeInfo.reinforcementPack.keyPractices?.map(
-                      (practice, idx) => (
-                        <div
-                          key={idx}
-                          className="p-3.5 rounded-2xl bg-[#F9F9F9] dark:bg-[#202024] border border-gray-100 dark:border-neutral-800 text-xs font-light text-gray-700 dark:text-neutral-300 flex items-start gap-2.5"
-                        >
-                          <span className="w-5 h-5 rounded-full bg-white dark:bg-[#18181B] border border-gray-200/80 dark:border-neutral-700 flex items-center justify-center text-[10px] font-semibold text-black dark:text-white shrink-0 mt-0.5">
-                            {idx + 1}
-                          </span>
-                          <span className="leading-relaxed">{practice}</span>
-                        </div>
-                      )
-                    )}
-                  </div>
-                </div>
-
-                {/* Self-care protocol */}
-                {activeNodeInfo.reinforcementPack.selfCareProtocol && (
-                  <div className="p-4 rounded-2xl bg-[#F9F9F9] dark:bg-[#202024] border border-gray-100 dark:border-neutral-800 space-y-1.5">
-                    <span className="text-[10px] font-semibold text-gray-400 dark:text-neutral-500 uppercase tracking-wider block">
-                      Protocolo de Auto-Cuidado & Regulación
-                    </span>
-                    <p className="text-xs font-light text-gray-700 dark:text-neutral-300 leading-relaxed">
-                      {activeNodeInfo.reinforcementPack.selfCareProtocol}
-                    </p>
-                  </div>
-                )}
-
-                {/* Download Reinforcement Pack PDF Action */}
-                <div className="p-5 rounded-2xl bg-black dark:bg-[#222226] text-white flex flex-col sm:flex-row items-center justify-between gap-4">
-                  <div className="space-y-0.5 text-center sm:text-left">
-                    <div className="text-xs font-semibold">
-                      Pack de Refuerzo Personalizado (PDF)
-                    </div>
-                    <div className="text-[11px] font-light text-gray-300 dark:text-neutral-300">
-                      Imprime o guarda en PDF para tus sesiones de auto-indagación quincenal.
-                    </div>
-                  </div>
-
-                  {isNodeLocked ? (
-                    <button
-                      type="button"
-                      onClick={() => handleOpenPaymentForNode(activeNodeInfo)}
-                      className="px-4 py-2.5 rounded-xl bg-amber-400 dark:bg-amber-300 hover:bg-amber-300 text-black font-semibold text-xs flex items-center gap-2 transition-all shrink-0 cursor-pointer shadow-xs"
-                    >
-                      <CreditCard className="w-3.5 h-3.5" />
-                      Enlace de Pago • Tu Próximo Nivel
-                    </button>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={() =>
-                        PDFGenerator.generateReinforcementPackPDF(
-                          activeNodeInfo,
-                          client
-                        )
-                      }
-                      className="px-4 py-2.5 rounded-xl bg-white text-black font-medium text-xs flex items-center gap-2 hover:bg-gray-100 transition-colors shrink-0 cursor-pointer"
-                    >
-                      <Download className="w-3.5 h-3.5" />
-                      Descargar Refuerzo PDF
-                    </button>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* ========================================================================= */}
-            {/* UNIFIED WORKBOOK & QUESTIONNAIRE SPACE */}
-            {/* ========================================================================= */}
-            {(activeTab === 'workbook' || activeTab === 'form') && (
-              <div id="unified-workbook-space" className="animate-fade-in">
-                <UnifiedWorkbookSpace
-                  client={client}
-                  sessions={sessions}
-                  forms={forms}
-                  postSessionForms={postSessionForms}
-                  currentProgress={currentProgress}
-                  selectedStep={selectedNodeStep}
-                  onStepChange={(step) => setSelectedNodeStep(step)}
-                  workshopsViewed={workshopsViewed}
-                  onToggleWorkshopViewed={handleToggleWorkshopViewed}
-                  hideHeader={true}
-                  hideStepSelector={true}
-                  onFormSubmitted={(newForm) => {
-                    setForms((prev) => {
-                      const idx = prev.findIndex(
-                        (f) => f.sessionStep === newForm.sessionStep && f.clientId === client.uid
-                      );
-                      if (idx >= 0) {
-                        const updated = [...prev];
-                        updated[idx] = newForm;
-                        return updated;
-                      }
-                      return [newForm, ...prev];
-                    });
-                    setSubmissionSuccess(true);
-                    setTimeout(() => setSubmissionSuccess(false), 5000);
-                    onUserUpdated?.();
-                  }}
-                  onPostSessionFormSaved={(savedForm) => {
-                    setPostSessionForms((prev) => {
-                      const idx = prev.findIndex((f) => f.id === savedForm.id);
-                      if (idx >= 0) {
-                        const updated = [...prev];
-                        updated[idx] = savedForm;
-                        return updated;
-                      }
-                      return [savedForm, ...prev];
-                    });
-                    onUserUpdated?.();
-                  }}
-                  onOpenPaymentForNode={handleOpenPaymentForNode}
-                  initialMode={unifiedWorkbookMode}
-                  initialSessionId={unifiedSessionId}
-                />
-              </div>
-            )}
-
-              </>
-            ) : null}
-          </div>
-      </section>
+      {isPaymentPortalOpen && (
+        <PaymentPortalModal
+          isOpen={isPaymentPortalOpen}
+          onClose={() => setIsPaymentPortalOpen(false)}
+          client={client}
+          onUserUpdated={() => {
+            if (onUserUpdated) onUserUpdated();
+          }}
+          initialTab="overview"
+        />
       )}
-
-      {/* Payment and Unlock Modal for Inactive Areas */}
-      <PaymentUnlockModal
-        isOpen={isPaymentModalOpen}
-        onClose={() => {
-          setIsPaymentModalOpen(false);
-          setClientPaymentRequests(OntologicalStore.getPaymentRequestsForClient(client.uid));
-        }}
-        node={unlockTargetNode}
-        client={client}
-        onUnlocked={handleNodeUnlocked}
-      />
-
-      {/* 1-on-1 Session Questionnaire & Workbook Modal for Participants */}
-      <PostSessionWorkbookModal
-        isOpen={isSessionWorkbookModalOpen}
-        onClose={() => {
-          setIsSessionWorkbookModalOpen(false);
-          setSessionForWorkbook(null);
-        }}
-        session={sessionForWorkbook}
-        client={client}
-        isParticipant={true}
-        onFormSaved={(savedForm) => {
-          setPostSessionForms(OntologicalStore.getPostSessionFormsForClient(client.uid));
-        }}
-      />
-
     </div>
   );
 };

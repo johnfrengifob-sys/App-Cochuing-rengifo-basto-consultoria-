@@ -99,6 +99,14 @@ export interface PostSessionForm {
   clientName: string;
   sessionDate: string;
   submittedAt: string;
+  // Campos del Formulario Simplificado 1 a 1 (Estructura Orgánica)
+  emergentTopic?: string; // Campo 2: El tema emergente (De qué eligió hablar el cliente hoy)
+  actionStep?: string; // Campo 3: El paso a la acción (Qué decidió hacer con lo que descubrió)
+  cycleHarvest?: string; // Lógica Condicional (Cierres 4, 8, 12): Cosecha del Ciclo
+  isCycleMilestone?: boolean; // Verdadero en sesiones 4, 8 y 12
+  openingQuestion?: string; // Guía facilitador: "¿Qué es importante para ti traer a este espacio hoy?"
+  cycleNumber?: number; // Ciclo 1 (1-4), Ciclo 2 (5-8), Ciclo 3 (9-12)
+  sessionPhase?: 'exploration' | 'consolidation'; // Exploración (1-3, 5-7, 9-11) o Consolidación (4, 8, 12)
   // Pregunta 1: Emoción principal y nivel de resistencia/apertura
   coacheeEmotionAndOpenness: string;
   // Pregunta 2: Juicio maestro, narrativa o creencia limitante
@@ -269,6 +277,7 @@ export interface EventRegistration {
   commitments?: string; // Compromisos asumidos en el taller
   keyBreakthrough?: string; // Quiebre o aprendizaje principal
   completedAt?: string; // Fecha y hora de finalización del taller
+  status?: 'aprobado' | 'pendiente' | 'rechazado' | string;
 }
 
 export type EventCategory =
@@ -457,7 +466,7 @@ export interface GoogleCalendarEventItem {
   attendees?: { email: string; displayName?: string }[];
 }
 
-export type PaymentMethodType = 'efectivo' | 'bre_b_nu' | 'transferencia' | 'pasarela';
+export type PaymentMethodType = 'efectivo' | 'bre_b_nu' | 'transferencia' | 'pasarela' | 'online_card';
 export type PaymentApprovalStatus = 'pending' | 'approved' | 'rejected';
 
 export interface PaymentRequest {
@@ -545,5 +554,49 @@ export interface SystemLinkBinding {
   syncFrequency?: string;
   iconName?: string;
 }
+
+// =========================================================================
+// MÓDULO DE EDICIÓN Y EXPERIENCIAS UNIVERSALES (MINIMALISMO & ALTO CONTRASTE)
+// =========================================================================
+export type UniversalBlockType = 'welcome' | 'inquiry' | 'action' | 'custom';
+
+export interface UniversalExperienceBlock {
+  id: string;
+  type: UniversalBlockType;
+  title: string;
+  subtitle?: string;
+  content: string;
+  questions?: string[];
+  actionLabel?: string;
+  actionUrl?: string;
+}
+
+export type ExperienceFormat =
+  | 'workshop'
+  | 'session_1on1'
+  | 'retreat'
+  | 'circle'
+  | 'masterclass';
+
+export interface OntologicalExperience {
+  id: string;
+  type: ExperienceFormat;
+  title: string;
+  subtitle: string; // Objetivo ontológico central
+  step: number; // Orden secuencial en el camino
+  category: string; // ej. "Taller Vivencial", "Sesión 1 a 1", "Retiro Ontológico", "Círculo de Liderazgo"
+  meetUrl: string; // Enlace directo Google Meet
+  colorPhotoUrl: string; // Fotografía central a color (único elemento en color)
+  dateStr: string; // Horario / Fecha humana
+  guidingQuestions: string[]; // Preguntas guía para el facilitador / indagación
+  blocks: UniversalExperienceBlock[]; // Módulos universales apilables (Bienvenida, Indagación, Acción)
+  isPublished: boolean;
+  isTemplate?: boolean;
+  templateName?: string;
+  badgeLabel?: string; // ej. "Estación 01", "Nodo 03"
+  updatedAt: string;
+  createdAt?: string;
+}
+
 
 

@@ -46,6 +46,9 @@ const ExecutiveAnalyticsCharts = lazy(() =>
 const AdminAcademicManager = lazy(() =>
   import('./admin/AdminAcademicManager').then((m) => ({ default: m.AdminAcademicManager }))
 );
+const ExperienceEditorManager = lazy(() =>
+  import('./admin/ExperienceEditorManager').then((m) => ({ default: m.ExperienceEditorManager }))
+);
 
 function SectionLoadingFallback({ title = 'Cargando Módulo...' }: { title?: string }) {
   return (
@@ -114,8 +117,8 @@ export const CoachDashboard: React.FC<CoachDashboardProps> = ({
   onRefreshClients,
   onOpenRegistrationPortal,
 }) => {
-  // Navigation tabs: Clientes vs Eventos y sesiones vs Validación de Pagos vs Google Workspace Hub vs Gemini AI
-  const [activeMainTab, setActiveMainTab] = useState<'clients' | 'crm' | 'events_sessions' | 'academic' | 'events' | 'payments' | 'workspace' | 'gemini'>('clients');
+  // Navigation tabs: Clientes vs Eventos y sesiones vs Validación de Pagos vs Google Workspace Hub vs Gemini AI vs Experiencias B&W
+  const [activeMainTab, setActiveMainTab] = useState<'clients' | 'crm' | 'events_sessions' | 'academic' | 'events' | 'payments' | 'workspace' | 'gemini' | 'experiences'>('clients');
   const [academicInitialSubTab, setAcademicInitialSubTab] = useState<AcademicAdminSubTab>('events');
 
   // Sub-view inside 'clients' tab: Pipeline (CRM Kan-Ban) vs Directory (table/scale 20-30+) vs Workstation (1 on 1 session view)
@@ -421,7 +424,7 @@ export const CoachDashboard: React.FC<CoachDashboardProps> = ({
 
           {/* Funciones de la Consola: Botones delgados, lineales y con altura compacta */}
           <div className="w-full pt-1">
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-2.5 w-full max-w-7xl mx-auto">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-2.5 w-full max-w-7xl mx-auto">
               {/* Función 1: Clientes (Unifica Pipeline CRM & Clientes Ancla) */}
               <button
                 id="coach-nav-clients-btn"
@@ -578,12 +581,12 @@ export const CoachDashboard: React.FC<CoachDashboardProps> = ({
                 </div>
               </button>
 
-              {/* Función 7: Gemini 3.7 Copiloto */}
+              {/* Función: Gemini 3.7 Copiloto */}
               <button
                 id="coach-nav-gemini-btn"
                 type="button"
                 onClick={() => setActiveMainTab('gemini')}
-                className={`group px-3 py-2 sm:py-2.5 rounded-xl transition-all cursor-pointer text-left flex items-center gap-2.5 w-full col-span-2 sm:col-span-1 lg:col-span-1 ${
+                className={`group px-3 py-2 sm:py-2.5 rounded-xl transition-all cursor-pointer text-left flex items-center gap-2.5 w-full ${
                   activeMainTab === 'gemini'
                     ? 'bg-black text-white dark:bg-white dark:text-black shadow-sm ring-1 ring-black/10 dark:ring-white/20'
                     : 'glass-panel-opal hover:bg-white/90 dark:hover:bg-[#202026] text-neutral-800 dark:text-neutral-200 border border-white/60 dark:border-white/10 shadow-2xs hover:border-black/20 dark:hover:border-white/20'
@@ -611,6 +614,43 @@ export const CoachDashboard: React.FC<CoachDashboardProps> = ({
                     activeMainTab === 'gemini' ? 'text-white/80 dark:text-black/70' : 'text-gray-500 dark:text-neutral-400'
                   }`}>
                     Copiloto Ontológico
+                  </span>
+                </div>
+              </button>
+
+              {/* Función: Editor de Experiencias B&W */}
+              <button
+                id="coach-nav-experiences-btn"
+                type="button"
+                onClick={() => setActiveMainTab('experiences')}
+                className={`group px-3 py-2 sm:py-2.5 rounded-xl transition-all cursor-pointer text-left flex items-center gap-2.5 w-full ${
+                  activeMainTab === 'experiences'
+                    ? 'bg-black text-white dark:bg-white dark:text-black shadow-sm ring-1 ring-black/10 dark:ring-white/20'
+                    : 'glass-panel-opal hover:bg-white/90 dark:hover:bg-[#202026] text-neutral-800 dark:text-neutral-200 border border-white/60 dark:border-white/10 shadow-2xs hover:border-black/20 dark:hover:border-white/20'
+                }`}
+              >
+                <div className={`p-1.5 rounded-lg shrink-0 ${
+                  activeMainTab === 'experiences'
+                    ? 'bg-white/20 dark:bg-black/20 text-white dark:text-black'
+                    : 'bg-neutral-100 dark:bg-neutral-800 text-black dark:text-white'
+                }`}>
+                  <Layers className="w-3.5 h-3.5" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between gap-1">
+                    <span className="text-xs font-semibold truncate leading-tight">Experiencias</span>
+                    <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono font-bold shrink-0 ${
+                      activeMainTab === 'experiences'
+                        ? 'bg-white/20 dark:bg-black/20 text-white dark:text-black'
+                        : 'bg-black/10 dark:bg-white/20 text-black dark:text-white'
+                    }`}>
+                      Lienzo B&W
+                    </span>
+                  </div>
+                  <span className={`text-[10px] block truncate font-light leading-tight mt-0.5 ${
+                    activeMainTab === 'experiences' ? 'text-white/80 dark:text-black/70' : 'text-gray-500 dark:text-neutral-400'
+                  }`}>
+                    Constructor Visual
                   </span>
                 </div>
               </button>
@@ -966,6 +1006,17 @@ export const CoachDashboard: React.FC<CoachDashboardProps> = ({
                 }
               }}
             />
+          </Suspense>
+        </div>
+      ) : null}
+
+      {/* ========================================================================= */}
+      {/* VIEW: CONSTRUCTOR / EDITOR DE EXPERIENCIAS (LIENZO B&W)                   */}
+      {/* ========================================================================= */}
+      {activeMainTab === 'experiences' ? (
+        <div className="flex-1 flex flex-col p-4 sm:p-8 lg:p-10 max-w-7xl mx-auto w-full space-y-6">
+          <Suspense fallback={<SectionLoadingFallback title="Cargando Constructor de Experiencias B&W..." />}>
+            <ExperienceEditorManager />
           </Suspense>
         </div>
       ) : null}
