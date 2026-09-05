@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, lazy, Suspense } from 'react';
 import { User } from './types';
 import { OntologicalStore } from './services/store';
 import { ThemeManager } from './services/theme';
@@ -11,19 +11,54 @@ import { FirestoreSyncService } from './services/firestoreSync';
 import { auth } from './services/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 import { Header } from './components/Header';
-import { LoginView } from './components/LoginView';
-import { ClientDashboard } from './components/ClientDashboard';
-import { CoachDashboard } from './components/CoachDashboard';
-import { WebhookConfigModal } from './components/WebhookConfigModal';
-import { EventRegistrationLanding } from './components/EventRegistrationLanding';
-import { VideoConferenceModal } from './components/VideoConferenceModal';
 import whiteWavesBg from './assets/images/white_waves_bg_1788461168119.jpg';
+
+// Lazy load heavy dashboard views and secondary modals to prevent initial load freeze
+const LoginView = lazy(() =>
+  import('./components/LoginView').then((m) => ({ default: m.LoginView }))
+);
+const ClientDashboard = lazy(() =>
+  import('./components/ClientDashboard').then((m) => ({ default: m.ClientDashboard }))
+);
+const CoachDashboard = lazy(() =>
+  import('./components/CoachDashboard').then((m) => ({ default: m.CoachDashboard }))
+);
+const EventRegistrationLanding = lazy(() =>
+  import('./components/EventRegistrationLanding').then((m) => ({
+    default: m.EventRegistrationLanding,
+  }))
+);
+const WebhookConfigModal = lazy(() =>
+  import('./components/WebhookConfigModal').then((m) => ({
+    default: m.WebhookConfigModal,
+  }))
+);
+const VideoConferenceModal = lazy(() =>
+  import('./components/VideoConferenceModal').then((m) => ({
+    default: m.VideoConferenceModal,
+  }))
+);
+
+function AppLoadingFallback({ message = 'Cargando Espacio de Trabajo...' }: { message?: string }) {
+  return (
+    <div className="min-h-[60vh] flex flex-col items-center justify-center p-8 space-y-4">
+      <div className="relative w-12 h-12 flex items-center justify-center">
+        <div className="absolute inset-0 rounded-full border-2 border-emerald-500/20 border-t-emerald-600 animate-spin" />
+        <div className="w-3 h-3 rounded-full bg-emerald-600 animate-pulse" />
+      </div>
+      <p className="text-xs font-mono text-neutral-500 dark:text-neutral-400 tracking-wider uppercase animate-pulse">
+        {message}
+      </p>
+    </div>
+  );
+}
 
 export default function App() {
   const [allUsers, setAllUsers] = useState<User[]>(() => OntologicalStore.getUsers());
   const [currentUser, setCurrentUser] = useState<User | null>(() =>
     OntologicalStore.getCurrentUser()
   );
+  const [auditCoach, setAuditCoach] = useState<User | null>(null);
   const [dashboardKey, setDashboardKey] = useState(0);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isVideoConferencesOpen, setIsVideoConferencesOpen] = useState(false);
@@ -96,98 +131,152 @@ export default function App() {
   };
 
   const handleSwitchUser = (user: User) => {
-    // Strict isolation: only the coach/administrator has access to switch or supervise workspaces
-    if (currentUser?.role !== 'coach') {
-      console.warn('Acceso denegado: sólo el administrador puede cambiar de perfil.');
+    // Only coach or an active audit session can switch profiles
+    const isCurrentlyCoach = currentUser?.role === 'coach';
+    if (!isCurrentlyCoach && !auditCoach) {
+      console.warn('Acceso denegado: sólo el administrador puede cambiar o supervisar perfiles.');
       return;
     }
-    OntologicalStore.setCurrentUser(user.uid);
-    setCurrentUser(user);
+
+    if (user.role === 'client') {
+      // Retain coach identity in auditCoach when switching into client workspace
+      if (isCurrentlyCoach && currentUser) {
+        setAuditCoach(currentUser);
+      }
+      OntologicalStore.setCurrentUser(user.uid);
+      setCurrentUser(user);
+    } else if (user.role === 'coach') {
+      // Returning to coach dashboard
+      setAuditCoach(null);
+      OntologicalStore.setCurrentUser(user.uid);
+      setCurrentUser(user);
+    }
     refreshUsers();
   };
 
+  const handleReturnToAdmin = () => {
+    const coach =
+      auditCoach ||
+      allUsers.find((u) => u.role === 'coach') ||
+      OntologicalStore.getUsers().find((u) => u.role === 'coach');
+    if (coach) {
+      setAuditCoach(null);
+      OntologicalStore.setCurrentUser(coach.uid);
+      setCurrentUser(coach);
+      refreshUsers();
+    }
+  };
+
   const renderContent = () => {
-    if (viewMode === 'register') {
-      return (
-        <EventRegistrationLanding
-          onEnterPlatform={(user) => {
-            if (user) {
-              handleLogin(user);
-            } else {
-              setViewMode('app');
-            }
-          }}
-          onNavigateToLogin={() => setViewMode('app')}
-        />
-      );
-    }
-
-    if (!currentUser) {
-      return (
-        <>
-          <LoginView
-            onLogin={handleLogin}
-            availableUsers={allUsers}
-            onNavigateToRegister={() => setViewMode('register')}
-            onOpenVideoConferences={() => setIsVideoConferencesOpen(true)}
-          />
-          <VideoConferenceModal
-            isOpen={isVideoConferencesOpen}
-            onClose={() => setIsVideoConferencesOpen(false)}
-            currentUser={null}
-          />
-        </>
-      );
-    }
-
     const safeAllUsers = Array.isArray(allUsers) ? allUsers : [];
     const clients = safeAllUsers.filter((u) => u && u.role === 'client');
-    const isCoach = currentUser.role === 'coach';
+    const isCoach = currentUser?.role === 'coach';
+    const canSwitchProfiles = isCoach || Boolean(auditCoach);
 
     return (
-      <>
-        <Header
-          currentUser={currentUser}
-          onLogout={handleLogout}
-          onSwitchUser={isCoach ? handleSwitchUser : undefined}
-          allUsers={isCoach ? allUsers : []}
-          onOpenSettings={isCoach ? () => setIsSettingsOpen(true) : undefined}
-          onOpenRegistrationPortal={isCoach ? () => setViewMode('register') : undefined}
-          onOpenVideoConferences={() => setIsVideoConferencesOpen(true)}
-          onNavigateHome={handleNavigateHome}
-          onUserUpdated={refreshUsers}
-        />
-
-        <div className="flex-1">
-          {currentUser.role === 'coach' ? (
-            <CoachDashboard
-              key={`coach-${currentUser.uid}-${dashboardKey}`}
-              coach={currentUser}
-              clients={clients}
-              onRefreshClients={refreshUsers}
-              onOpenRegistrationPortal={() => setViewMode('register')}
+      <Suspense fallback={<AppLoadingFallback />}>
+        {viewMode === 'register' ? (
+          <EventRegistrationLanding
+            onEnterPlatform={(user) => {
+              if (user) {
+                handleLogin(user);
+              } else {
+                setViewMode('app');
+              }
+            }}
+            onNavigateToLogin={() => setViewMode('app')}
+          />
+        ) : !currentUser ? (
+          <>
+            <LoginView
+              onLogin={handleLogin}
+              availableUsers={allUsers}
+              onNavigateToRegister={() => setViewMode('register')}
+              onOpenVideoConferences={() => setIsVideoConferencesOpen(true)}
             />
-          ) : (
-            <ClientDashboard
-              key={`client-${currentUser.uid}-${dashboardKey}`}
-              client={currentUser}
+            {isVideoConferencesOpen && (
+              <VideoConferenceModal
+                isOpen={isVideoConferencesOpen}
+                onClose={() => setIsVideoConferencesOpen(false)}
+                currentUser={null}
+              />
+            )}
+          </>
+        ) : (
+          <>
+            {/* Sticky banner when Master Coach is auditing/simulating a client workspace */}
+            {auditCoach && (
+              <aside
+                aria-label="Modo Auditoría y Simulación"
+                className="sticky top-0 z-50 w-full bg-gradient-to-r from-amber-600 via-amber-500 to-amber-600 text-white px-4 py-2 text-xs flex flex-wrap items-center justify-between gap-3 shadow-md border-b border-amber-400/40"
+              >
+                <div className="flex items-center gap-2 font-medium">
+                  <span className="w-2 h-2 rounded-full bg-white animate-ping shrink-0" />
+                  <span>
+                    <strong>Modo Auditoría & Simulación:</strong> Espacio de trabajo de{' '}
+                    <u>{currentUser.name}</u>. Puedes interactuar, registrar bitácoras y simular el flujo del cliente.
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleReturnToAdmin}
+                  className="px-3 py-1 rounded-lg bg-black/90 hover:bg-black text-white text-xs font-semibold transition-all cursor-pointer shadow-xs flex items-center gap-1.5 shrink-0"
+                >
+                  <span>Volver a Consola Coach</span>
+                </button>
+              </aside>
+            )}
+
+            <Header
+              currentUser={currentUser}
               onLogout={handleLogout}
+              onSwitchUser={canSwitchProfiles ? handleSwitchUser : undefined}
+              allUsers={canSwitchProfiles ? allUsers : []}
+              isAuditMode={Boolean(auditCoach)}
+              onReturnToAdmin={handleReturnToAdmin}
+              onOpenSettings={isCoach ? () => setIsSettingsOpen(true) : undefined}
+              onOpenRegistrationPortal={isCoach ? () => setViewMode('register') : undefined}
+              onOpenVideoConferences={() => setIsVideoConferencesOpen(true)}
+              onNavigateHome={handleNavigateHome}
               onUserUpdated={refreshUsers}
             />
-          )}
-        </div>
 
-        <WebhookConfigModal
-          isOpen={isSettingsOpen}
-          onClose={() => setIsSettingsOpen(false)}
-        />
+            <div className="flex-1">
+              {currentUser.role === 'coach' ? (
+                <CoachDashboard
+                  key={`coach-${currentUser.uid}-${dashboardKey}`}
+                  coach={currentUser}
+                  clients={clients}
+                  onRefreshClients={refreshUsers}
+                  onOpenRegistrationPortal={() => setViewMode('register')}
+                />
+              ) : (
+                <ClientDashboard
+                  key={`client-${currentUser.uid}-${dashboardKey}`}
+                  client={currentUser}
+                  onLogout={handleLogout}
+                  onUserUpdated={refreshUsers}
+                />
+              )}
+            </div>
 
-        <VideoConferenceModal
-          isOpen={isVideoConferencesOpen}
-          onClose={() => setIsVideoConferencesOpen(false)}
-          currentUser={currentUser}
-        />
-      </>
+            {isSettingsOpen && (
+              <WebhookConfigModal
+                isOpen={isSettingsOpen}
+                onClose={() => setIsSettingsOpen(false)}
+              />
+            )}
+
+            {isVideoConferencesOpen && (
+              <VideoConferenceModal
+                isOpen={isVideoConferencesOpen}
+                onClose={() => setIsVideoConferencesOpen(false)}
+                currentUser={currentUser}
+              />
+            )}
+          </>
+        )}
+      </Suspense>
     );
   };
 

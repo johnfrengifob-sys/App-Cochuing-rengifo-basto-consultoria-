@@ -13,6 +13,11 @@ import {
   CheckCircle2,
   ShieldAlert,
   X,
+  Users,
+  Search,
+  ArrowLeft,
+  Check,
+  ExternalLink,
 } from 'lucide-react';
 import { ThemeToggle } from './ThemeToggle';
 import { BrandLogo } from './BrandLogo';
@@ -24,6 +29,8 @@ interface HeaderProps {
   onLogout: () => void;
   onSwitchUser?: (user: User) => void;
   allUsers?: User[];
+  isAuditMode?: boolean;
+  onReturnToAdmin?: () => void;
   onOpenSettings?: () => void;
   onOpenRegistrationPortal?: () => void;
   onOpenVideoConferences?: () => void;
@@ -36,6 +43,8 @@ export const Header: React.FC<HeaderProps> = ({
   onLogout,
   onSwitchUser,
   allUsers = [],
+  isAuditMode = false,
+  onReturnToAdmin,
   onOpenSettings,
   onOpenRegistrationPortal,
   onOpenVideoConferences,
@@ -57,6 +66,9 @@ export const Header: React.FC<HeaderProps> = ({
   const [notification, setNotification] = useState<{ message: string; type: 'success' | 'info' } | null>(null);
 
   const menuRef = useRef<HTMLDivElement>(null);
+  const clientsDropdownRef = useRef<HTMLDivElement>(null);
+  const [isClientsDropdownOpen, setIsClientsDropdownOpen] = useState(false);
+  const [clientFilterQuery, setClientFilterQuery] = useState('');
 
   // Close dropdown on click outside or Escape key
   useEffect(() => {
@@ -64,10 +76,14 @@ export const Header: React.FC<HeaderProps> = ({
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
         setIsMenuOpen(false);
       }
+      if (clientsDropdownRef.current && !clientsDropdownRef.current.contains(event.target as Node)) {
+        setIsClientsDropdownOpen(false);
+      }
     };
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         setIsMenuOpen(false);
+        setIsClientsDropdownOpen(false);
         setIsCancelModalOpen(false);
         setIsDeleteModalOpen(false);
       }
@@ -158,29 +174,197 @@ export const Header: React.FC<HeaderProps> = ({
             </button>
           )}
 
-          {/* Role switcher: STRICTLY EXCLUSIVE to Coach / Administrator */}
-          {isCoach && allUsers.length > 0 && onSwitchUser && (
-            <div className="hidden xl:flex items-center gap-1.5 p-1 bg-white/50 dark:bg-[#18181B]/50 backdrop-blur-md rounded-full border border-white/60 dark:border-white/10 text-xs">
-              <span className="text-[10px] uppercase font-medium tracking-wider text-gray-400 dark:text-neutral-500 px-2.5 flex items-center gap-1">
-                <Lock className="w-3 h-3" />
-                Supervisión Admin:
-              </span>
-              {allUsers.map((u) => {
-                const isActive = u.uid === currentUser.uid;
-                return (
-                  <button
-                    key={u.uid}
-                    onClick={() => onSwitchUser(u)}
-                    className={`px-3 py-1 rounded-full transition-all text-xs font-medium cursor-pointer ${
-                      isActive
-                        ? 'bg-black text-white dark:bg-white dark:text-black shadow-xs'
-                        : 'text-gray-600 dark:text-neutral-400 hover:text-black dark:hover:text-white'
-                    }`}
-                  >
-                    {u.name.split(' ')[0]} ({u.role === 'coach' ? 'Coach' : 'Cliente'})
-                  </button>
-                );
-              })}
+          {/* Dropdown "Clientes" - Synthesized client list for navigation and direct inspection */}
+          {(isCoach || isAuditMode) && allUsers.length > 0 && onSwitchUser && (
+            <div ref={clientsDropdownRef} className="relative">
+              <button
+                type="button"
+                id="header-clients-dropdown-button"
+                onClick={() => setIsClientsDropdownOpen(!isClientsDropdownOpen)}
+                className={`flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-medium transition-all cursor-pointer shadow-2xs border ${
+                  isClientsDropdownOpen || isAuditMode
+                    ? 'bg-black text-white dark:bg-white dark:text-black border-transparent shadow-xs'
+                    : 'bg-white/70 dark:bg-[#18181B]/70 hover:bg-white dark:hover:bg-[#202024] text-neutral-800 dark:text-neutral-200 border-gray-200/80 dark:border-white/10'
+                }`}
+                title="Menú desplegable de clientes para inspección de espacios"
+                aria-expanded={isClientsDropdownOpen}
+              >
+                <Users className="w-3.5 h-3.5 text-emerald-500" />
+                <span className="font-semibold">Clientes</span>
+                <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono font-bold ${
+                  isClientsDropdownOpen || isAuditMode
+                    ? 'bg-white/20 dark:bg-black/20 text-white dark:text-black'
+                    : 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300'
+                }`}>
+                  {allUsers.filter((u) => u.role === 'client').length}
+                </span>
+                <ChevronDown
+                  className={`w-3.5 h-3.5 transition-transform duration-200 ${
+                    isClientsDropdownOpen ? 'rotate-180' : ''
+                  }`}
+                />
+              </button>
+
+              {isClientsDropdownOpen && (
+                <div
+                  role="menu"
+                  aria-label="Directorio de clientes para supervisión"
+                  className="absolute left-0 sm:right-0 sm:left-auto mt-2 w-80 sm:w-96 rounded-2xl bg-white/95 dark:bg-[#18181B]/95 backdrop-blur-2xl border border-gray-200/90 dark:border-neutral-700 shadow-2xl z-50 overflow-hidden text-left animate-in fade-in slide-in-from-top-2 duration-150 divide-y divide-gray-100 dark:divide-neutral-800"
+                >
+                  {/* Header info */}
+                  <div className="p-3.5 bg-gray-50/60 dark:bg-neutral-900/60 flex items-center justify-between">
+                    <div>
+                      <div className="text-xs font-bold text-black dark:text-white flex items-center gap-1.5">
+                        <Users className="w-3.5 h-3.5 text-emerald-500" />
+                        <span>Directorio & Auditoría</span>
+                      </div>
+                      <p className="text-[10px] text-gray-500 dark:text-neutral-400 font-light mt-0.5">
+                        Selecciona un cliente para inspeccionar su espacio y simular respuestas.
+                      </p>
+                    </div>
+                    {isAuditMode && onReturnToAdmin && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          onReturnToAdmin();
+                          setIsClientsDropdownOpen(false);
+                        }}
+                        className="px-2.5 py-1 rounded-lg bg-black text-white dark:bg-white dark:text-black text-[10px] font-semibold hover:opacity-90 transition-all cursor-pointer shrink-0"
+                      >
+                        Salir de Auditoría
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Search box */}
+                  <div className="p-2.5">
+                    <div className="relative">
+                      <Search className="w-3.5 h-3.5 text-gray-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
+                      <input
+                        type="text"
+                        placeholder="Buscar por nombre o empresa..."
+                        value={clientFilterQuery}
+                        onChange={(e) => setClientFilterQuery(e.target.value)}
+                        className="w-full pl-8 pr-3 py-1.5 rounded-xl bg-gray-100/70 dark:bg-neutral-800/70 text-xs text-black dark:text-white placeholder:text-gray-400 focus:outline-none focus:ring-1 focus:ring-black dark:focus:ring-white transition-all font-light"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Clients List */}
+                  <div className="max-h-72 overflow-y-auto p-1.5 space-y-1">
+                    {/* Coach Option: Return to Coach Console */}
+                    {allUsers
+                      .filter((u) => u.role === 'coach')
+                      .map((coach) => {
+                        const isSelected = currentUser.uid === coach.uid;
+                        return (
+                          <button
+                            key={coach.uid}
+                            type="button"
+                            onClick={() => {
+                              onSwitchUser(coach);
+                              setIsClientsDropdownOpen(false);
+                            }}
+                            className={`w-full p-2 rounded-xl flex items-center gap-3 text-left transition-all cursor-pointer ${
+                              isSelected
+                                ? 'bg-black/5 dark:bg-white/10 ring-1 ring-black/10 dark:ring-white/20'
+                                : 'hover:bg-gray-100/80 dark:hover:bg-neutral-800/80'
+                            }`}
+                          >
+                            <img
+                              src={coach.avatarUrl}
+                              alt={coach.name}
+                              referrerPolicy="no-referrer"
+                              className="w-8 h-8 rounded-full object-cover ring-1 ring-black/10 dark:ring-white/10 shrink-0"
+                            />
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-1.5">
+                                <span className="text-xs font-semibold text-black dark:text-white truncate">
+                                  {coach.name}
+                                </span>
+                                <span className="text-[9px] px-1.5 py-0.2 rounded-md bg-black text-white dark:bg-white dark:text-black font-bold uppercase tracking-wider">
+                                  Master Coach
+                                </span>
+                              </div>
+                              <span className="text-[10px] text-gray-500 dark:text-neutral-400 truncate block">
+                                Consola Principal de Administración
+                              </span>
+                            </div>
+                            {isSelected && (
+                              <Check className="w-3.5 h-3.5 text-black dark:text-white shrink-0" />
+                            )}
+                          </button>
+                        );
+                      })}
+
+                    <div className="px-2 py-1 text-[10px] font-semibold text-gray-400 dark:text-neutral-500 uppercase tracking-wider">
+                      Clientes Registrados ({allUsers.filter((u) => u.role === 'client').length})
+                    </div>
+
+                    {allUsers
+                      .filter((u) => u.role === 'client')
+                      .filter(
+                        (u) =>
+                          u.name.toLowerCase().includes(clientFilterQuery.toLowerCase()) ||
+                          (u.company && u.company.toLowerCase().includes(clientFilterQuery.toLowerCase())) ||
+                          (u.title && u.title.toLowerCase().includes(clientFilterQuery.toLowerCase()))
+                      )
+                      .map((client) => {
+                        const isSelected = currentUser.uid === client.uid;
+                        const statusDotColor =
+                          client.status === 'inactive'
+                            ? 'bg-rose-500'
+                            : client.status === 'waiting'
+                            ? 'bg-amber-500'
+                            : 'bg-emerald-500';
+                        return (
+                          <button
+                            key={client.uid}
+                            type="button"
+                            onClick={() => {
+                              onSwitchUser(client);
+                              setIsClientsDropdownOpen(false);
+                            }}
+                            className={`w-full p-2.5 rounded-xl flex items-center gap-3 text-left transition-all cursor-pointer group ${
+                              isSelected
+                                ? 'bg-emerald-50 dark:bg-emerald-950/40 ring-1 ring-emerald-500/40'
+                                : 'hover:bg-gray-100/80 dark:hover:bg-neutral-800/80'
+                            }`}
+                          >
+                            <div className="relative shrink-0">
+                              <img
+                                src={client.avatarUrl}
+                                alt={client.name}
+                                referrerPolicy="no-referrer"
+                                className="w-8 h-8 rounded-full object-cover ring-1 ring-black/10 dark:ring-white/10"
+                              />
+                              <span
+                                className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border border-white dark:border-neutral-900 ${statusDotColor}`}
+                              />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center justify-between gap-1">
+                                <span className="text-xs font-semibold text-black dark:text-white truncate">
+                                  {client.name}
+                                </span>
+                                <span className="text-[9px] px-1.5 py-0.2 rounded-md font-mono bg-gray-100 dark:bg-neutral-800 text-gray-700 dark:text-neutral-300 shrink-0">
+                                  Sesión {client.programProgress || 1}/12
+                                </span>
+                              </div>
+                              <div className="text-[10px] text-gray-500 dark:text-neutral-400 truncate mt-0.5 font-light">
+                                {client.title || client.programName || 'Proceso Ontológico'}
+                              </div>
+                            </div>
+                            <div className="opacity-0 group-hover:opacity-100 transition-opacity text-[10px] font-medium text-emerald-600 dark:text-emerald-400 flex items-center gap-0.5 shrink-0">
+                              <span>Inspeccionar</span>
+                              <ChevronRight className="w-3 h-3" />
+                            </div>
+                          </button>
+                        );
+                      })}
+                  </div>
+                </div>
+              )}
             </div>
           )}
 

@@ -24,10 +24,15 @@ import {
   ClientEmailLog,
   AutomatedTriggerConfig,
   PricingPackage,
+  SystemLinkBinding,
 } from '../types';
 import promotionalEventBannerImg from '../assets/images/proximo_evento_banner_1788270380574.jpg';
 import coachAvatarImg from '../assets/images/regenerated_image_1788287101599.jpg';
 import { FirestoreSyncService } from './firestoreSync';
+import {
+  INITIAL_CRONOGRAMA_EVENTS as RAIZ_BALANCE_WORKSHOPS,
+  MASTER_PROGRAM_RAIZ_BALANCE,
+} from '../data/raizBalanceWorkshops';
 
 export const COMPANY_INFO = {
   fullName: 'Rengifo Basto Consultoría Ontológica',
@@ -419,6 +424,174 @@ export let PROGRAM_NODES: ProgramNodeInfo[] = [
         description: 'Compendio integral de protocolos y herramientas para toda la vida.',
       },
     ],
+  },
+  {
+    step: 7,
+    weekLabel: 'Semana 7',
+    level: 'Nivel II',
+    levelTitle: 'Arquitectura Lingüística & Compromisos',
+    sessionTitle: 'El Arte de la Escucha Comprometida y el Silencio Fecundo',
+    objective:
+      'Trascender la escucha automática para habitar la presencia atenta, desactivar la necesidad de validación inmediata y generar espacios de coordinación impecables.',
+    tangibleOutcomes: [
+      'Diferenciación entre oír biológicamente y escuchar ontológicamente con empatía profunda.',
+      'Identificación de los 4 filtros automáticos que distorsionan las conversaciones directivas.',
+      'Instalación del silencio como competencia de liderazgo y contención emocional.',
+    ],
+    keyQuestion:
+      '¿Desde qué juicio o necesidad interna estás escuchando a quienes te rodean?',
+    levelPrompt:
+      'Registra las conversaciones donde interrumpes o completas mentalmente las frases del otro sin concederle legitimidad.',
+    methodology: {
+      linguistic: 'Distinción entre relato del hablante e interpretaciones del oyente; validación del quiebre ajeno.',
+      somatic: 'Relajación del diafragma, contacto visual sereno y postura de recepción abierta.',
+      emotional: 'Curiosidad genuina, paciencia reflexiva y disolución de la urgencia reactiva.',
+    },
+    dailyMicroPractice: {
+      title: 'Pausa de Escucha sin Interrupción (3 Minutos)',
+      description: 'En al menos dos interacciones hoy, escucha activamente sin juzgar, opinar ni dar consejos.',
+      frequency: 'Diaria (2 interacciones clave)',
+    },
+  },
+  {
+    step: 8,
+    weekLabel: 'Semana 8',
+    level: 'Nivel II',
+    levelTitle: 'Arquitectura Lingüística & Compromisos',
+    sessionTitle: 'Gestión Adaptativa de la Culpa, Miedo e Ira Directiva',
+    objective:
+      'Comprender la raíz ontológica de las emociones complejas para transformarlas en energía de acción lúcida y cuidado legítimo.',
+    tangibleOutcomes: [
+      'Mapeo de la culpa como señal de un estándar ético quebrantado que requiere reparación, no castigo.',
+      'Canalización de la ira directiva hacia la delimitación firme y el reclamo constructivo.',
+      'Distinción entre miedo prudencial (anticipación de riesgos) y miedo paralizante.',
+    ],
+    keyQuestion:
+      '¿Qué emoción estás silenciando en tu cuerpo y qué mensaje de dignidad te está entregando?',
+    levelPrompt:
+      'Explora el costo somático de sostener el resentimiento o la culpa acumulada en tus roles.',
+    methodology: {
+      linguistic: 'Reencuadre de la ira en juicio de injusticia; reconstrucción de promesas incumplidas.',
+      somatic: 'Descompresión de mandíbula, cuello y espalda media mediante exhalación sonora.',
+      emotional: 'Transición del resentimiento a la aceptación activa y la paz interna.',
+    },
+    dailyMicroPractice: {
+      title: 'Desahogo Somático y Reencuadre Emocional',
+      description: 'Respira hondo 4 veces con exhalación larga al sentir frustración, identificando el estándar herido.',
+      frequency: 'Ante cada episodio de tensión',
+    },
+  },
+  {
+    step: 9,
+    weekLabel: 'Semana 9',
+    level: 'Nivel III',
+    levelTitle: 'Dirección & Trascendencia',
+    sessionTitle: 'Soberanía Relacional y Reconfiguración de Vínculos de Confianza',
+    objective:
+      'Construir o restaurar la confianza relacional en equipos y vínculos significativos mediante pilares de sinceridad, competencia e involucramiento.',
+    tangibleOutcomes: [
+      'Auditoría ontológica de la confianza en los 3 dominios: Sinceridad, Competencia y Confiabilidad.',
+      'Protocolo estructurado para reparar promesas rotas sin evasivas ni justificaciones defensivas.',
+      'Establecimiento de fronteras limpias frente a relaciones transaccionales desgastantes.',
+    ],
+    keyQuestion:
+      '¿En qué vínculos has perdido la credibilidad o dónde te cuesta volver a confiar plenamente?',
+    levelPrompt:
+      'Rediseña los acuerdos explícitos que devolverán la transparencia y la solidez a tus relaciones nucleares.',
+    methodology: {
+      linguistic: 'Declaraciones de confianza y disculpa ontológica con restitución de daños acordada.',
+      somatic: 'Calibración de la distancia interpersonal y postura de seguridad sin agresividad.',
+      emotional: 'Vulnerabilidad corajuda y disposición a renegociar el pacto vincular.',
+    },
+    dailyMicroPractice: {
+      title: 'Validación de Acuerdos Claros',
+      description: 'Antes de cerrar un compromiso, verifica explícitamente: "¿Qué entendemos ambos por cumplido?"',
+      frequency: 'Diaria en acuerdos de trabajo',
+    },
+  },
+  {
+    step: 10,
+    weekLabel: 'Semana 10',
+    level: 'Nivel III',
+    levelTitle: 'Dirección & Trascendencia',
+    sessionTitle: 'Presencia Ejecutiva, Autoridad Serena y Arraigo Corporal',
+    objective:
+      'Desarrollar una presencia directiva basada en el centramiento somático, la economía de palabras y la convicción profunda.',
+    tangibleOutcomes: [
+      'Desarticulación del síndrome del impostor y la necesidad compulsiva de agradar a todos.',
+      'Manejo del tono de voz, ritmo respiratorio y postura erguida ante comités o audiencias críticas.',
+      'Habilidad para sostener conversaciones difíciles sin perder el aplomo ni la calidez.',
+    ],
+    keyQuestion:
+      '¿Desde qué corporalidad estás comunicando tu valor y visión como líder?',
+    levelPrompt:
+      'Registra las situaciones donde achicas tu postura o dudas de tu autoridad legítima.',
+    methodology: {
+      linguistic: 'Actos de habla directos, precisos y asertivos, sin rodeos ni disculpas innecesarias.',
+      somatic: 'Arraigo podal (pies bien apoyados), mirada estable y apertura torácica serena.',
+      emotional: 'Dignidad serena, orgullo noble y desapego de la aprobación externa inmediata.',
+    },
+    dailyMicroPractice: {
+      title: 'Centramiento en 60 Segundos antes de Reuniones',
+      description: 'Ponte de pie, alinea columna, siente el suelo con los pies y exhala dos veces con calma.',
+      frequency: 'Antes de cada reunión directiva',
+    },
+  },
+  {
+    step: 11,
+    weekLabel: 'Semana 11',
+    level: 'Nivel III',
+    levelTitle: 'Dirección & Trascendencia',
+    sessionTitle: 'Diseño de Conversaciones de Futuro y Nuevas Posibilidades',
+    objective:
+      'Pasar de la gestión de la queja a la apertura deliberada de escenarios de futuro innovadores y sostenibles.',
+    tangibleOutcomes: [
+      'Diferenciación entre conversaciones sobre problemas pasados y conversaciones para la acción futura.',
+      'Diseño de ofertas atractivas y pedidos transformacionales a aliados estratégicos.',
+      'Construcción de un mapa de posibilidades inexploradas en los próximos 12 a 36 meses.',
+    ],
+    keyQuestion:
+      '¿Qué futuro estás invitando a existir con tus conversaciones cotidianas?',
+    levelPrompt:
+      'Formula tres proyectos ambiciosos que hoy parecen imposibles por falta de atrevimiento declarativo.',
+    methodology: {
+      linguistic: 'Declaraciones de visión, peticiones audaces y coordinación anticipatoria de acciones.',
+      somatic: 'Inclinación ligera hacia adelante: la corporalidad del explorador y el creador de futuros.',
+      emotional: 'Entusiasmo sereno, esperanza fundada y audacia reflexiva.',
+    },
+    dailyMicroPractice: {
+      title: 'Declaración de Intención Matutina',
+      description: 'Declara en voz alta al iniciar el día: "Hoy elijo ser el arquitecto de las posibilidades en..."',
+      frequency: 'Diaria (al iniciar la jornada)',
+    },
+  },
+  {
+    step: 12,
+    weekLabel: 'Semana 12',
+    level: 'Nivel III',
+    levelTitle: 'Dirección & Trascendencia',
+    sessionTitle: 'Consolidación del Nuevo Observador, Carta de Innegociables y Cierre',
+    objective:
+      'Sellar el proceso de transformación ontológica con protocolos de autoasistencia definitiva y autonomía duradera.',
+    tangibleOutcomes: [
+      'Consolidación del nuevo observador con soberanía lingüística, corporal y emocional integral.',
+      'Firma de la Carta Magna de Compromisos Innegociables de vida y liderazgo.',
+      'Establecimiento del sistema de monitoreo trimestral para sostener la coherencia personal.',
+    ],
+    keyQuestion:
+      '¿Quién eres hoy frente al mundo y cómo honrarás la dignidad de tu propia vida?',
+    levelPrompt:
+      'Sella tu pacto con tu propia coherencia, reconociendo tu evolución y celebrando el camino recorrido.',
+    methodology: {
+      linguistic: 'Declaración solemne de cierre de ciclo, agradecimiento y afirmación de soberanía.',
+      somatic: 'Integración postural global: solidez, arraigo, apertura y liviandad armónica.',
+      emotional: 'Gratitud profunda, plenitud y amor propio incondicional.',
+    },
+    dailyMicroPractice: {
+      title: 'El Anclaje Diario de Gratitud y Coherencia',
+      description: 'Cada noche, agradece 3 victorias ontológicas y renueva tus estándares innegociables.',
+      frequency: 'Diaria (al anochecer)',
+    },
   },
 ];
 
@@ -867,230 +1040,10 @@ const INITIAL_AI_INSIGHTS: AIInsight[] = [
   },
 ];
 
-const INITIAL_CRONOGRAMA_EVENTS: CronogramaEvent[] = [
-  {
-    id: 'event-conversatorio-1',
-    title: 'Primer Taller: Conversatorio Raíz & Balance',
-    subtitle: 'Fronteras, Límites No Dichos & Decodificación Somática (Taller Experiencial 1)',
-    category: 'Primer Taller • En Vivo',
-    eventType: 'Taller',
-    date: new Date(Date.now() + 1000 * 60 * 60 * 24 * 3 + 1000 * 60 * 60 * 5).toISOString(), // in ~3 days
-    displayDate: 'Jueves Próximo (En Vivo)',
-    time: '7:00 PM - 8:30 PM (GMT-5)',
-    mode: 'Online (Google Meet)',
-    meetUrl: 'https://meet.google.com/rbc-conversatorio-ontologico',
-    description:
-      'Inmersión ontológica en vivo guiada por John Fredy Rengifo Basto. Abordaremos el mapeo de la transparencia cotidiana, la decodificación adaptativa de las emociones en el cuerpo y la proclamación del "Basta" como acto fundacional de dignidad y soberanía relacional.',
-    imageUrl: promotionalEventBannerImg,
-    coverImage: promotionalEventBannerImg,
-    showOnHome: true,
-    capacityType: 'grupal',
-    capacity: 30,
-    priceAmount: 180000,
-    price: '$180.000 COP',
-    launchDate: '2026-09-01',
-    eventDate: new Date(Date.now() + 1000 * 60 * 60 * 24 * 3).toISOString(),
-    aiPromptUsed:
-      'High-end minimalist luxury advertising banner for an ontological coaching masterclass event named Raiz y Balance. Clean editorial aesthetic, subtle dark and warm neutral gradients, abstract geometric zen circle and botanical leaf silhouette, soft studio lighting, modern Swiss graphic design style, 8k resolution.',
-    facilitator: 'John Fredy Rengifo Basto (Master Coach Ontológico)',
-    spotsLeft: 8,
-    totalSpots: 30,
-    featured: true,
-    status: 'upcoming',
-    // 2. Definición del Contenido y Temario
-    syllabus: [
-      {
-        id: 'syl-1',
-        title: 'Bloque 1: Mapeo de la Transparencia y Quiebres Inconscientes',
-        duration: '30 min',
-        description: 'Identificación de las narrativas automáticas y mandatos introyectados que generan fatiga relacional.',
-      },
-      {
-        id: 'syl-2',
-        title: 'Bloque 2: Decodificación Somática y Sabiduría de las Emociones',
-        duration: '35 min',
-        description: 'Lectura de señales corporales (mandíbula, pecho, garganta) y discernimiento entre miedo prudencial y miedo paralizante.',
-      },
-      {
-        id: 'syl-3',
-        title: 'Bloque 3: El "Basta" Ontológico y la Arquitectura de Acuerdos',
-        duration: '25 min',
-        description: 'Diseño de actos del habla declarativos, pedidos impecables y compromisos innegociables de autoasistencia.',
-      },
-    ],
-    guidingQuestions: [
-      '¿En qué áreas de tu vida y liderazgo estás diciendo "Sí" por complacencia cuando tu cuerpo y tu energía reclaman un "Basta"?',
-      '¿Cuál es el costo somático, emocional y relacional de intentar controlarlo todo por desconfianza en el entorno?',
-      '¿Cómo cambiaría tu serenidad y autoridad si comunicaras tus límites con total calma y sin necesidad de justificarte?',
-    ],
-    supportMaterials: [
-      {
-        id: 'mat-1',
-        title: 'Guía de Trabajo: Protocolo de Declaraciones Fundamentales y Soberanía (PDF)',
-        type: 'pdf',
-        url: 'https://rbc.edu.co/recursos/protocolo-soberania-ontologica.pdf',
-        sizeOrDuration: '2.4 MB (6 Páginas)',
-        description: 'Estructuras lingüísticas para comunicar desacuerdos y límites sin fricción destructiva.',
-      },
-      {
-        id: 'mat-2',
-        title: 'Video-Masterclass: Decodificación Somática de Emociones Densas',
-        type: 'video',
-        url: 'https://vimeo.com/rbc/decodificacion-somatica',
-        sizeOrDuration: '22 min',
-        description: 'Explicación del arco somático y enraizamiento torácico.',
-      },
-      {
-        id: 'mat-3',
-        title: 'Presentación Ejecutiva: Actos del Habla y Coordinación de Acciones',
-        type: 'presentation',
-        url: 'https://slides.google.com/rbc/actos-del-habla-ejecutivo',
-        sizeOrDuration: '28 diapositivas',
-        description: 'Diapositivas oficiales del encuentro con distinciones de Rafael Echeverría e ICF.',
-      },
-    ],
-    // 3. Evaluación y Cuaderno Descargable
-    postWorkshopQuestions: [
-      {
-        id: 'pwq-1',
-        question: '¿Cuál fue el quiebre principal o revelación que emergió durante esta sesión?',
-        type: 'textarea',
-        category: 'reflexion',
-        required: true,
-      },
-      {
-        id: 'pwq-2',
-        question: '¿Qué sensación corporal o mensaje somático lograste decodificar en tu cuerpo?',
-        type: 'textarea',
-        category: 'somatica',
-        required: true,
-      },
-      {
-        id: 'pwq-3',
-        question: '¿A qué compromiso o nuevo acuerdo te declaras leal para esta semana?',
-        type: 'textarea',
-        category: 'compromiso',
-        required: true,
-      },
-      {
-        id: 'pwq-4',
-        question: '¿Cómo calificarías la profundidad y claridad de lo vivido en esta sesión (1 al 5)?',
-        type: 'rating_scale',
-        category: 'evaluacion',
-        required: true,
-      },
-    ],
-    workbookSubmissions: [
-      {
-        id: 'sub-andres-1',
-        eventId: 'event-conversatorio-1',
-        participantName: 'Andrés Quintero',
-        participantEmail: 'andres.quintero@fintech.co',
-        participantPhone: '+57 310 987 6543',
-        submittedAt: new Date(Date.now() - 1000 * 60 * 60 * 12).toISOString(),
-        answers: {
-          'pwq-1': 'Me di cuenta de que mi autoexigencia extrema no es excelencia, sino un miedo inconsciente a perder autoridad si delego.',
-          'pwq-2': 'Sentí la tensión en la mandíbula y el cuello disminuir en el momento en que declaré que no tengo que solucionar todas las urgencias de los comités.',
-          'pwq-3': 'Me comprometo a delegar el reporte de operaciones del viernes sin pedir borradores intermedios y a apagar el chat a las 7:00 PM.',
-          'pwq-4': 5,
-        },
-        somaticObservation: 'Apertura torácica visible y alivio en la postura.',
-        coachFeedback: 'Excelente deconstrucción de la omnipotencia. Sostener la pausa respiratoria.',
-      },
-      {
-        id: 'sub-carolina-2',
-        eventId: 'event-conversatorio-1',
-        participantName: 'Carolina Gómez',
-        participantEmail: 'carolina.gomez@empresa.com',
-        participantPhone: '+57 315 123 4567',
-        submittedAt: new Date(Date.now() - 1000 * 60 * 60 * 26).toISOString(),
-        answers: {
-          'pwq-1': 'Reconocí que la culpa que siento al decir "no" viene de una creencia aprendida de complacencia que ya no me sirve como líder.',
-          'pwq-2': 'Identifiqué la pesadez en el plexo solar antes de las reuniones de negociación.',
-          'pwq-3': 'Emitir mi primera declaración de límite con la junta directiva sobre tiempos de entrega realistas.',
-          'pwq-4': 5,
-        },
-        somaticObservation: 'Conexión profunda con su centro de dignidad.',
-      },
-    ],
-  },
-  {
-    id: 'event-masterclass-2',
-    title: 'Masterclass: La Sabiduría Adaptativa del Miedo y la Culpa',
-    subtitle: 'Metodología de Autoasistencia Ontológica y Reencuadre Somático',
-    category: 'Masterclass Ontológica',
-    eventType: 'Masterclass',
-    date: new Date(Date.now() + 1000 * 60 * 60 * 24 * 17).toISOString(),
-    displayDate: 'Jueves 18 de Septiembre',
-    time: '7:00 PM - 9:00 PM (GMT-5)',
-    mode: 'Online (Google Meet)',
-    meetUrl: 'https://meet.google.com/rbc-masterclass-ontologica',
-    description:
-      'Sesión especializada para directivos y líderes. Cómo transformar la autocrítica destructiva y la exigencia descalificadora en discernimiento compasivo, auto-asistencia y coordinación de acciones impecables.',
-    imageUrl: promotionalEventBannerImg,
-    coverImage: promotionalEventBannerImg,
-    showOnHome: false, // Visible solo internamente
-    capacityType: 'grupal',
-    capacity: 25,
-    priceAmount: 220000,
-    price: '$220.000 COP',
-    launchDate: '2026-09-08',
-    eventDate: new Date(Date.now() + 1000 * 60 * 60 * 24 * 17).toISOString(),
-    aiPromptUsed:
-      'Minimalist executive leadership conference banner with serene botanical shadow and zen layout.',
-    facilitator: 'John Fredy Rengifo Basto',
-    spotsLeft: 14,
-    totalSpots: 25,
-    featured: false,
-    status: 'upcoming',
-    syllabus: [
-      {
-        id: 'syl-m1',
-        title: 'Bloque 1: El Juicio Automático de la Culpa y su Trampa',
-        duration: '40 min',
-        description: 'Diferencia ontológica entre remordimiento improductivo y responsabilidad transformadora.',
-      },
-      {
-        id: 'syl-m2',
-        title: 'Bloque 2: Auto-asistencia y Calibración Somática',
-        duration: '50 min',
-        description: 'Prácticas corporales para habitar la vulnerabilidad directiva sin perder firmeza.',
-      },
-    ],
-    guidingQuestions: [
-      '¿Qué juicio maestro sobre ti mismo se activa cuando las cosas no salen de acuerdo al estándar idealizado?',
-      '¿De qué te está protegiendo la exigencia desmedida?',
-    ],
-    supportMaterials: [
-      {
-        id: 'mat-m1',
-        title: 'Ficha de Autoasistencia Ontológica (PDF)',
-        type: 'pdf',
-        url: 'https://rbc.edu.co/recursos/ficha-autoasistencia.pdf',
-        sizeOrDuration: '1.2 MB',
-      },
-    ],
-    postWorkshopQuestions: [
-      {
-        id: 'pwq-m1',
-        question: '¿Qué juicio maestro lograste desafiar en esta masterclass?',
-        type: 'textarea',
-        category: 'reflexion',
-        required: true,
-      },
-      {
-        id: 'pwq-m2',
-        question: '¿Qué práctica somática implementarás en tu rutina diaria?',
-        type: 'textarea',
-        category: 'somatica',
-        required: true,
-      },
-    ],
-    workbookSubmissions: [],
-  },
-];
+const INITIAL_CRONOGRAMA_EVENTS: CronogramaEvent[] = RAIZ_BALANCE_WORKSHOPS;
 
 const INITIAL_PROGRAMS: OntologicalProgram[] = [
+  MASTER_PROGRAM_RAIZ_BALANCE,
   {
     id: 'prog-1',
     name: 'Certeza, Fronteras & Dirección Personal',
@@ -1256,8 +1209,8 @@ const STORAGE_KEYS = {
   POST_SESSION_FORMS: 'rbc_post_session_forms_v2',
   FORMS: 'rbc_forms_v2',
   AI_INSIGHTS: 'rbc_ai_insights_v2',
-  CRONOGRAMA_EVENTS: 'rbc_cronograma_events_v2',
-  PROGRAMS: 'rbc_programs_v2',
+  CRONOGRAMA_EVENTS: 'rbc_cronograma_events_v3_raiz_balance',
+  PROGRAMS: 'rbc_programs_v3_raiz_balance',
   PAYMENT_REQUESTS: 'rbc_payment_requests_v2',
   PROGRAM_NODES: 'rbc_program_nodes_v2',
   QUESTIONNAIRES: 'rbc_dynamic_questionnaires_v2',
@@ -1275,6 +1228,7 @@ const STORAGE_KEYS = {
   CLIENT_EMAIL_LOGS: 'rbc_client_email_logs_v2',
   AUTOMATED_TRIGGERS: 'rbc_automated_triggers_v2',
   PRICING_PACKAGES: 'rbc_pricing_packages_v2',
+  SYSTEM_LINK_BINDINGS: 'rbc_system_link_bindings_v2',
 };
 
 export const INITIAL_AUTOMATED_TRIGGERS: AutomatedTriggerConfig[] = [
@@ -1398,6 +1352,97 @@ export const INITIAL_PRICING_PACKAGES: PricingPackage[] = [
       'Diagnóstico general de la coherencia del equipo post-taller',
     ],
     active: true,
+  },
+];
+
+export const INITIAL_SYSTEM_LINK_BINDINGS: SystemLinkBinding[] = [
+  {
+    id: 'link-meet-sessions',
+    functionKey: 'meet_sessions',
+    functionTitle: 'Sesiones Ontológicas 1 a 1 (Google Meet Privado)',
+    category: 'Comunicaciones',
+    targetUrl: 'https://meet.google.com/qmv-rbco-ses',
+    status: 'active',
+    notes: 'Sala virtual privada y cifrada para acompañamiento individual y seguimiento somático del Coachee.',
+    syncFrequency: 'Tiempo Real',
+    iconName: 'Video',
+  },
+  {
+    id: 'link-meet-workshops',
+    functionKey: 'meet_workshops',
+    functionTitle: 'Talleres Grupales & Masterclasses (Google Meet)',
+    category: 'Comunicaciones',
+    targetUrl: 'https://meet.google.com/hxt-rbco-grp',
+    status: 'active',
+    notes: 'Espacio plenario para conversatorios de cohorte y los 5 talleres temáticos con capacidad hasta 50 asistentes.',
+    syncFrequency: 'Programado por Cronograma',
+    iconName: 'Users',
+  },
+  {
+    id: 'link-make-webhook',
+    functionKey: 'make_webhook_ai',
+    functionTitle: 'Webhook Make.com (Pipeline IA Ontológico)',
+    category: 'Inteligencia Artificial',
+    targetUrl: 'https://hook.eu2.make.com/rbc-diagnostico-ai-prod',
+    status: 'active',
+    notes: 'Endpoint receptor de bitácoras y respuestas para procesamiento semántico y somático automatizado.',
+    syncFrequency: 'Al enviar formulario',
+    iconName: 'Zap',
+  },
+  {
+    id: 'link-sheets-directory',
+    functionKey: 'sheets_directory',
+    functionTitle: 'Directorio de Asistencia & CRM (Google Sheets)',
+    category: 'Google Workspace',
+    targetUrl: 'https://docs.google.com/spreadsheets/d/1RBC_Asistencia_2026_LiveSync/edit',
+    status: 'active',
+    notes: 'Matriz centralizada de registro de participantes, asistencias en vivo y estados de pago.',
+    syncFrequency: 'Bidireccional cada 5 min',
+    iconName: 'Table',
+  },
+  {
+    id: 'link-drive-workbooks',
+    functionKey: 'drive_workbooks',
+    functionTitle: 'Repositorio de Bitácoras & Recursos (Google Drive)',
+    category: 'Google Workspace',
+    targetUrl: 'https://drive.google.com/drive/folders/1RBC_Materiales_Ontologicos_Consultoria',
+    status: 'active',
+    notes: 'Carpeta en la nube con fichas de ejercicios, manuales PDF y grabaciones de talleres.',
+    syncFrequency: 'Continuo',
+    iconName: 'Folder',
+  },
+  {
+    id: 'link-calendar-agenda',
+    functionKey: 'calendar_agenda',
+    functionTitle: 'Agenda Pública de Citas 20 min (Google Calendar)',
+    category: 'Google Workspace',
+    targetUrl: 'https://calendar.google.com/calendar/appointments/schedules/AcZssZ2026RBC_Agenda',
+    status: 'active',
+    notes: 'Enlace de auto-agendamiento para sesiones de diagnóstico y valoración de 20 minutos.',
+    syncFrequency: 'Instantáneo',
+    iconName: 'Calendar',
+  },
+  {
+    id: 'link-breb-payment',
+    functionKey: 'bre_b_nu_payment',
+    functionTitle: 'Pasarela Bre-B Nu (@ASL775) & Validación WhatsApp',
+    category: 'Financiero & Pasarelas',
+    targetUrl: 'https://wa.me/573234642257?text=Hola%20Coach%20John%20adjunto%20comprobante%20de%20pago',
+    status: 'active',
+    notes: 'Validación directa de comprobantes de pago sin intermediarios ni comisiones bancarias.',
+    syncFrequency: 'Validación Manual por Coach',
+    iconName: 'CreditCard',
+  },
+  {
+    id: 'link-form-quiebres',
+    functionKey: 'form_quiebres',
+    functionTitle: 'Cuestionario de Quiebres & Somática (Formulario de Entrada)',
+    category: 'Evaluación & Quiebres',
+    targetUrl: 'https://forms.gle/RBC_Diagnostico_Ontologico_Inicial_2026',
+    status: 'active',
+    notes: 'Evaluación preliminar de autopercepción, mandatos introyectados y nivel de tensión corporal.',
+    syncFrequency: 'Al iniciar proceso',
+    iconName: 'FileText',
   },
 ];
 
@@ -2184,7 +2229,7 @@ export class OntologicalStore {
       STORAGE_KEYS.PROGRAM_NODES,
       PROGRAM_NODES
     );
-    const safe = Array.isArray(list) && list.length > 0 ? list : PROGRAM_NODES;
+    const safe = Array.isArray(list) && list.length >= 12 ? list : PROGRAM_NODES;
     safe.forEach((node) => {
       if (!node.roadmapSteps || node.roadmapSteps.length === 0) {
         node.roadmapSteps = DEFAULT_ROADMAP_STEPS[node.step] || [];
@@ -2443,15 +2488,49 @@ export class OntologicalStore {
   }
 
   static getCronogramaEvents(): CronogramaEvent[] {
+    // Limpieza de claves previas de versiones anteriores para iniciar desde cero
+    if (typeof window !== 'undefined') {
+      try {
+        if (localStorage.getItem('rbc_cronograma_events_v2')) {
+          localStorage.removeItem('rbc_cronograma_events_v2');
+          localStorage.removeItem('rbc_cronograma_events');
+        }
+      } catch {}
+    }
+
     const list = this.load<CronogramaEvent[]>(
       STORAGE_KEYS.CRONOGRAMA_EVENTS,
       INITIAL_CRONOGRAMA_EVENTS
     );
-    return Array.isArray(list) ? list : INITIAL_CRONOGRAMA_EVENTS;
+
+    // Si la lista está vacía o contiene eventos que no corresponden a Raíz y Balance, restablecer
+    if (!Array.isArray(list) || list.length === 0 || !list.some((e) => e.id.includes('raiz') || e.id.includes('taller-1'))) {
+      this.saveCronogramaEvents(INITIAL_CRONOGRAMA_EVENTS);
+      return INITIAL_CRONOGRAMA_EVENTS;
+    }
+    return list;
   }
 
   static saveCronogramaEvents(events: CronogramaEvent[]): void {
     this.save(STORAGE_KEYS.CRONOGRAMA_EVENTS, events);
+    // Sincronización transparente con Firestore
+    try {
+      FirestoreSyncService.syncAllCronogramaEvents(events);
+    } catch (e) {
+      console.warn('Sync events warning:', e);
+    }
+  }
+
+  static resetCronogramaEventsToDefault(): CronogramaEvent[] {
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.removeItem('rbc_cronograma_events_v2');
+        localStorage.removeItem('rbc_cronograma_events');
+        localStorage.removeItem(STORAGE_KEYS.CRONOGRAMA_EVENTS);
+      } catch {}
+    }
+    this.saveCronogramaEvents(INITIAL_CRONOGRAMA_EVENTS);
+    return INITIAL_CRONOGRAMA_EVENTS;
   }
 
   static getUpcomingEvent(): CronogramaEvent {
@@ -4857,6 +4936,59 @@ export class OntologicalStore {
     const packages = this.getPricingPackages();
     const filtered = packages.filter((p) => p.id !== id);
     this.savePricingPackages(filtered);
+  }
+
+  // =========================================================================
+  // --- CEREBRO: ENRUTAMIENTO Y VINCULACIÓN DE ENLACES DEL SISTEMA ---
+  // =========================================================================
+  static getSystemLinkBindings(): SystemLinkBinding[] {
+    const list = this.load<SystemLinkBinding[]>(
+      STORAGE_KEYS.SYSTEM_LINK_BINDINGS,
+      INITIAL_SYSTEM_LINK_BINDINGS
+    );
+    return Array.isArray(list) && list.length > 0 ? list : INITIAL_SYSTEM_LINK_BINDINGS;
+  }
+
+  static saveSystemLinkBindings(bindings: SystemLinkBinding[]): void {
+    this.save(STORAGE_KEYS.SYSTEM_LINK_BINDINGS, bindings);
+  }
+
+  static getSystemLinkUrl(functionKey: string, fallback = ''): string {
+    const list = this.getSystemLinkBindings();
+    const found = list.find((b) => b.functionKey === functionKey);
+    return (found && found.targetUrl) ? found.targetUrl : fallback;
+  }
+
+  static updateSystemLinkBinding(
+    id: string,
+    patch: Partial<SystemLinkBinding>
+  ): SystemLinkBinding | null {
+    const list = this.getSystemLinkBindings();
+    let updated: SystemLinkBinding | null = null;
+    const mapped = list.map((item) => {
+      if (item.id === id) {
+        updated = { ...item, ...patch };
+        return updated;
+      }
+      return item;
+    });
+    if (updated) {
+      this.saveSystemLinkBindings(mapped);
+      // Synchronize with core subsystem endpoints if applicable
+      const boundItem = updated as SystemLinkBinding;
+      if (boundItem.targetUrl) {
+        if (boundItem.functionKey === 'make_webhook_ai') {
+          this.setWebhookUrl(boundItem.targetUrl);
+        } else if (boundItem.functionKey === 'calendar_agenda') {
+          this.save(STORAGE_KEYS.CALENDAR_URL, boundItem.targetUrl);
+        } else if (boundItem.functionKey === 'meet_workshops') {
+          const events = this.getCronogramaEvents();
+          const updatedEvents = events.map((e) => ({ ...e, meetUrl: boundItem.targetUrl }));
+          this.saveCronogramaEvents(updatedEvents);
+        }
+      }
+    }
+    return updated;
   }
 }
 

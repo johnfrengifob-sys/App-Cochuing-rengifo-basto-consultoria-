@@ -25,6 +25,7 @@ export interface User {
   totalInvested?: string; // Monto total invertido en su progreso
   primaryBreakdown?: string; // Quiebre principal sintético (ej: "Gestión de la ira", "Trato con sus padres", etc.)
   lastActivityAt?: string;
+  transformationSpacesEnabled?: boolean; // Espacio 'Tu camino de transformación' habilitado desde el panel admin
 }
 
 export type ProspectStatus =
@@ -150,10 +151,10 @@ export interface ProgramNodeInfo {
     description: string;
     frequency: string;
   };
-  reinforcementPack: LevelReinforcementPack;
-  studyMaterials: {
+  reinforcementPack?: LevelReinforcementPack;
+  studyMaterials?: {
     title: string;
-    type: 'Guía de Trabajo' | 'Ficha de Ejercicio' | 'Matriz de Diagnóstico' | 'Protocolo Somático';
+    type: 'Guía de Trabajo' | 'Ficha de Ejercicio' | 'Matriz de Diagnóstico' | 'Protocolo Somático' | string;
     pages: string;
     description: string;
   }[];
@@ -241,7 +242,11 @@ export type EventCategory =
   | 'Programa de Acompañamiento'
   | 'Seminario Ejecutivo'
   | 'Primer Taller • En Vivo'
-  | 'Taller de Apertura';
+  | 'Taller de Apertura'
+  | 'Taller Grupal en Vivo'
+  | 'Workshop Ejecutivo'
+  | 'Conversatorio de Cierre'
+  | string;
 
 export interface OntologicalProgram {
   id: string;
@@ -477,4 +482,31 @@ export interface PricingPackage {
   includes: string[];
   active: boolean;
 }
+
+export interface SystemLinkBinding {
+  id: string;
+  functionKey:
+    | 'meet_sessions'
+    | 'meet_workshops'
+    | 'make_webhook_ai'
+    | 'sheets_directory'
+    | 'drive_workbooks'
+    | 'calendar_agenda'
+    | 'bre_b_nu_payment'
+    | 'form_quiebres';
+  functionTitle: string;
+  category:
+    | 'Comunicaciones'
+    | 'Inteligencia Artificial'
+    | 'Google Workspace'
+    | 'Financiero & Pasarelas'
+    | 'Evaluación & Quiebres';
+  targetUrl: string;
+  status: 'active' | 'inactive' | 'testing';
+  notes: string;
+  lastTestedAt?: string;
+  syncFrequency?: string;
+  iconName?: string;
+}
+
 

@@ -361,8 +361,29 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
       </section>
 
       {/* ========================================================================= */}
-      {/* 1. MAPA INTERACTIVO DE LAS 6 SESIONES: SÚPER VISUAL Y CLARO */}
+      {/* 1. TU CAMINO DE TRANSFORMACIÓN (EN BLANCO HASTA HABILITACIÓN DESDE EL ADMIN) */}
       {/* ========================================================================= */}
+      {!client.transformationSpacesEnabled ? (
+        <section className="p-8 sm:p-12 rounded-3xl border border-dashed border-gray-300 dark:border-neutral-800 text-center space-y-4 bg-white/40 dark:bg-neutral-900/30 backdrop-blur-xs">
+          <div className="w-14 h-14 rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 mx-auto flex items-center justify-center">
+            <Compass className="w-7 h-7 stroke-[1.5]" />
+          </div>
+          <div className="space-y-2 max-w-lg mx-auto">
+            <h2 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white tracking-tight">
+              Tu Camino de Transformación
+            </h2>
+            <p className="text-xs sm:text-sm text-gray-500 dark:text-neutral-400 leading-relaxed font-light">
+              Este espacio permanece en blanco y será habilitado formalmente desde el panel del Administrador y Master Coach (John Fredy Rengifo Basto) una vez se active tu ciclo de sesiones individuales.
+            </p>
+          </div>
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/30">
+            <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+            <span>Espacio en blanco • Pendiente de habilitación desde el panel admin</span>
+          </div>
+        </section>
+      ) : (
+        <>
+      {/* 1. MAPA INTERACTIVO DE LAS 6 SESIONES: SÚPER VISUAL Y CLARO */}
       <section className="space-y-3">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-1">
           <div>
@@ -658,6 +679,8 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
           </div>
         </div>
       </section>
+      </>
+      )}
 
       {/* ========================================================================= */}
       {/* 3. TALLER EN VIVO ABIERTO EN COMUNIDAD (Barra compacta con afiche desplegable) */}
@@ -740,9 +763,10 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
       )}
 
       {/* ========================================================================= */}
-      {/* 3. ESPACIO DE TRABAJO COMPLETO DE LA SESIÓN SELECCIONADA */}
+      {/* 3. ESPACIO DE TRABAJO COMPLETO DE LA SESIÓN SELECCIONADA (SOLO SI ESTÁ HABILITADO) */}
       {/* ========================================================================= */}
-      <section id="session-workspace-content" className="w-full">
+      {client.transformationSpacesEnabled && (
+        <section id="session-workspace-content" className="w-full">
         <div className="glass-panel-sheer rounded-3xl p-5 sm:p-7 lg:p-8 space-y-6 sm:space-y-7">
           {/* Header: Selected Session & Level Information */}
           <div className="pb-6 border-b border-black/5 dark:border-white/10 space-y-4">
@@ -1308,6 +1332,7 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
             ) : null}
           </div>
       </section>
+      )}
 
       {/* Payment and Unlock Modal for Inactive Areas */}
       <PaymentUnlockModal

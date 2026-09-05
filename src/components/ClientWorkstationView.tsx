@@ -41,6 +41,7 @@ import {
   Award,
   Compass,
   Shield,
+  ShieldCheck,
   Copy,
   Users,
   Trash2,
@@ -601,6 +602,47 @@ export const ClientWorkstationView: React.FC<ClientWorkstationViewProps> = ({
                 <Edit2 className="w-3.5 h-3.5" />
               </button>
             )}
+          </div>
+
+          {/* Card 3: Control de Habilitación de "Tu Camino de Transformación" en el panel del participante */}
+          <div className="glass-panel-opal rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 col-span-1 md:col-span-2 border border-emerald-500/20 bg-emerald-50/20 dark:bg-emerald-950/10">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500 dark:text-neutral-400 flex items-center gap-1.5">
+                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                  Panel del Participante: Espacios de "Tu Camino de Transformación"
+                </span>
+                <span
+                  className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                    client.transformationSpacesEnabled
+                      ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30'
+                      : 'bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/30'
+                  }`}
+                >
+                  {client.transformationSpacesEnabled ? 'Habilitado y Visible' : 'En Blanco (Oculto)'}
+                </span>
+              </div>
+              <p className="text-xs text-gray-600 dark:text-neutral-400 font-light leading-relaxed">
+                {client.transformationSpacesEnabled
+                  ? 'El participante tiene acceso interactivo a sus 6 sesiones, bitácoras somáticas y cuadernos de trabajo.'
+                  : 'Configurado para permanecer en blanco en la vista del coachee hasta que lo habilites formalmente aquí.'}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                const nextState = !client.transformationSpacesEnabled;
+                OntologicalStore.updateUser(client.uid, { transformationSpacesEnabled: nextState });
+                if (onRefreshClients) onRefreshClients();
+              }}
+              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 shrink-0 shadow-2xs ${
+                client.transformationSpacesEnabled
+                  ? 'bg-neutral-200 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-200 hover:bg-red-500 hover:text-white'
+                  : 'bg-emerald-600 text-white hover:bg-emerald-700 dark:bg-emerald-500 dark:hover:bg-emerald-600'
+              }`}
+            >
+              {client.transformationSpacesEnabled ? 'Deshabilitar (Volver a Blanco)' : 'Habilitar para el Coachee'}
+            </button>
           </div>
         </div>
 

@@ -7,7 +7,7 @@ import {
   onSnapshot,
 } from 'firebase/firestore';
 import { db, auth, handleFirestoreError, OperationType, testFirestoreConnection } from './firebase';
-import { Prospect, EventRegistration, Session, User, PaymentRequest, FormSubmission } from '../types';
+import { Prospect, EventRegistration, Session, User, PaymentRequest, FormSubmission, CronogramaEvent } from '../types';
 
 export class FirestoreSyncService {
   private static isInitialized = false;
@@ -76,6 +76,60 @@ export class FirestoreSyncService {
       );
     } catch (error) {
       console.warn('Firestore syncEventRegistration notice:', error);
+    }
+  }
+
+  // Synchronize or save a cronograma event / workshop to Firestore
+  static async syncCronogramaEvent(event: CronogramaEvent): Promise<void> {
+    const collectionPath = 'cronogramaEvents';
+    try {
+      const eventRef = doc(db, collectionPath, event.id);
+      await setDoc(
+        eventRef,
+        {
+          id: event.id,
+          title: event.title,
+          subtitle: event.subtitle || '',
+          category: event.category,
+          eventType: event.eventType || 'Taller',
+          date: event.date,
+          displayDate: event.displayDate,
+          time: event.time,
+          mode: event.mode,
+          meetUrl: event.meetUrl || '',
+          description: event.description,
+          imageUrl: event.imageUrl,
+          coverImage: event.coverImage || event.imageUrl,
+          showOnHome: event.showOnHome !== false,
+          capacityType: event.capacityType || 'grupal',
+          capacity: event.capacity || 12,
+          spotsLeft: event.spotsLeft || 12,
+          totalSpots: event.totalSpots || 12,
+          priceAmount: event.priceAmount || 180000,
+          price: event.price || '$180.000 COP',
+          currency: event.currency || 'COP',
+          launchDate: event.launchDate || '',
+          eventDate: event.eventDate || '',
+          facilitator: event.facilitator,
+          featured: Boolean(event.featured),
+          status: event.status,
+          syllabus: event.syllabus || [],
+          guidingQuestions: event.guidingQuestions || [],
+          supportMaterials: event.supportMaterials || [],
+          postWorkshopQuestions: event.postWorkshopQuestions || [],
+          updatedAt: new Date().toISOString(),
+        },
+        { merge: true }
+      );
+    } catch (error) {
+      console.warn('Firestore syncCronogramaEvent notice:', error);
+    }
+  }
+
+  // Synchronize all workshops to Firestore
+  static async syncAllCronogramaEvents(events: CronogramaEvent[]): Promise<void> {
+    for (const evt of events) {
+      await this.syncCronogramaEvent(evt);
     }
   }
 

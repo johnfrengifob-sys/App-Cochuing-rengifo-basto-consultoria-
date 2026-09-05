@@ -33,9 +33,10 @@ export const VideoConferenceModal: React.FC<VideoConferenceModalProps> = ({
 
   if (!isOpen) return null;
 
-  // Retrieve current events configured in the store
+  // Retrieve current events and system link bindings configured in the store
   const events = OntologicalStore.getCronogramaEvents();
-  const calendarUrl = OntologicalStore.getCalendarUrl();
+  const calendarUrl = OntologicalStore.getSystemLinkUrl('calendar_agenda', OntologicalStore.getCalendarUrl());
+  const directMeetUrl = OntologicalStore.getSystemLinkUrl('meet_sessions', 'https://meet.google.com/qmv-rbco-ses');
 
   // If user is client, retrieve their next session
   let nextClientSession: Session | undefined;
@@ -113,7 +114,7 @@ export const VideoConferenceModal: React.FC<VideoConferenceModalProps> = ({
 
             <div className="flex flex-wrap items-center gap-2 pt-1">
               <a
-                href={nextClientSession.meetLink}
+                href={nextClientSession.meetLink || directMeetUrl}
                 target="_blank"
                 rel="noreferrer"
                 className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer shadow-2xs"
@@ -125,10 +126,60 @@ export const VideoConferenceModal: React.FC<VideoConferenceModalProps> = ({
 
               <button
                 type="button"
-                onClick={() => handleCopy(nextClientSession!.meetLink, 'client-session')}
+                onClick={() => handleCopy(nextClientSession!.meetLink || directMeetUrl, 'client-session')}
                 className="px-3 py-2 rounded-xl bg-white dark:bg-[#1E1E22] border border-gray-200 dark:border-neutral-700 text-xs text-gray-700 dark:text-neutral-300 hover:text-black dark:hover:text-white transition-colors flex items-center gap-1.5 cursor-pointer"
               >
                 {copiedLink === 'client-session' ? (
+                  <>
+                    <Check className="w-3.5 h-3.5 text-emerald-500" />
+                    <span className="text-emerald-600 dark:text-emerald-400 font-medium">¡Enlace Copiado!</span>
+                  </>
+                ) : (
+                  <>
+                    <Copy className="w-3.5 h-3.5 text-gray-400" />
+                    <span>Copiar Enlace</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Direct 1-on-1 Meet Room (Synced with CerebroVinculacionManager) */}
+        {(!currentUser || currentUser.role === 'coach' || !nextClientSession) && (
+          <div className="p-4 sm:p-5 rounded-2xl bg-blue-500/5 dark:bg-blue-500/10 border border-blue-500/20 space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] font-semibold uppercase tracking-wider text-blue-700 dark:text-blue-400 flex items-center gap-1.5">
+                <Video className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                Sala Virtual Directa de Sesiones 1 a 1 (Google Meet)
+              </span>
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/60 text-blue-800 dark:text-blue-200 font-mono font-medium">
+                Enlace Oficial
+              </span>
+            </div>
+
+            <div className="text-xs text-gray-600 dark:text-neutral-300 font-light">
+              Sala permanente para sesiones quincenales, diagnósticos confidenciales y consultas ontológicas privadas con John Fredy Rengifo Basto.
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2 pt-1">
+              <a
+                href={directMeetUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer shadow-2xs"
+              >
+                <Video className="w-3.5 h-3.5" />
+                <span>Entrar a Sala 1 a 1 en Meet</span>
+                <ExternalLink className="w-3 h-3" />
+              </a>
+
+              <button
+                type="button"
+                onClick={() => handleCopy(directMeetUrl, 'direct-meet')}
+                className="px-3 py-2 rounded-xl bg-white dark:bg-[#1E1E22] border border-gray-200 dark:border-neutral-700 text-xs text-gray-700 dark:text-neutral-300 hover:text-black dark:hover:text-white transition-colors flex items-center gap-1.5 cursor-pointer"
+              >
+                {copiedLink === 'direct-meet' ? (
                   <>
                     <Check className="w-3.5 h-3.5 text-emerald-500" />
                     <span className="text-emerald-600 dark:text-emerald-400 font-medium">¡Enlace Copiado!</span>

@@ -1,13 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
 import {
   ShieldCheck,
   Workflow,
   Zap,
   Ticket,
+  Link2,
 } from 'lucide-react';
-import { AdminAutomationsManager } from './AdminAutomationsManager';
-import { AutomatedTriggersManager } from '../AutomatedTriggersManager';
-import { ProgramsAndEventsManager } from '../ProgramsAndEventsManager';
 import { OntologicalStore } from '../../services/store';
 import {
   CronogramaEvent,
@@ -15,9 +13,34 @@ import {
   EventRegistration,
 } from '../../types';
 
+const AdminAutomationsManager = lazy(() =>
+  import('./AdminAutomationsManager').then((m) => ({ default: m.AdminAutomationsManager }))
+);
+const AutomatedTriggersManager = lazy(() =>
+  import('../AutomatedTriggersManager').then((m) => ({ default: m.AutomatedTriggersManager }))
+);
+const ProgramsAndEventsManager = lazy(() =>
+  import('../ProgramsAndEventsManager').then((m) => ({ default: m.ProgramsAndEventsManager }))
+);
+const CerebroVinculacionManager = lazy(() =>
+  import('../CerebroVinculacionManager').then((m) => ({ default: m.CerebroVinculacionManager }))
+);
+
+function SubPanelFallback({ title = 'Cargando Sub-Panel...' }: { title?: string }) {
+  return (
+    <div className="p-10 rounded-2xl glass-panel-opal border border-white/60 dark:border-white/10 flex flex-col items-center justify-center space-y-3 min-h-[260px]">
+      <div className="w-7 h-7 rounded-full border-2 border-emerald-500/20 border-t-emerald-600 animate-spin" />
+      <span className="text-xs font-mono text-neutral-500 dark:text-neutral-400 tracking-wider uppercase animate-pulse">
+        {title}
+      </span>
+    </div>
+  );
+}
+
 export type AcademicAdminSubTab =
   | 'events'
   | 'activadores'
+  | 'cerebro'
   | 'triggers'
   | 'automations'
   | 'participants'
@@ -52,7 +75,9 @@ export const AdminAcademicManager: React.FC<AdminAcademicManagerProps> = ({
   onRefreshRegistrations: propOnRefreshRegistrations,
   onOpenRegistrationPortal,
 }) => {
-  const [currentTab, setCurrentTab] = useState<'events' | 'activadores'>(() => {
+  const [currentTab, setCurrentTab] = useState<'events' | 'activadores' | 'cerebro' | 'espacios'>(() => {
+    if (initialSubTab === 'cerebro') return 'cerebro';
+    if (initialSubTab === 'espacios') return 'espacios';
     if (
       initialSubTab === 'automations' ||
       initialSubTab === 'triggers' ||
@@ -75,7 +100,11 @@ export const AdminAcademicManager: React.FC<AdminAcademicManagerProps> = ({
 
   useEffect(() => {
     if (initialSubTab) {
-      if (initialSubTab === 'automations') {
+      if (initialSubTab === 'cerebro') {
+        setCurrentTab('cerebro');
+      } else if (initialSubTab === 'espacios') {
+        setCurrentTab('espacios');
+      } else if (initialSubTab === 'automations') {
         setCurrentTab('activadores');
         setActivadoresMode('automations');
       } else if (initialSubTab === 'triggers' || initialSubTab === 'activadores') {
@@ -179,19 +208,10 @@ export const AdminAcademicManager: React.FC<AdminAcademicManagerProps> = ({
           }`}
         >
           <Ticket className="w-3.5 h-3.5 text-rose-500" />
-          <span>Eventos & Asistentes</span>
-          <span
-            className={`text-[10px] px-2 py-0.5 rounded-full font-mono font-medium ${
-              currentTab === 'events'
-                ? 'bg-white/20 dark:bg-black/20 text-white dark:text-black'
-                : 'bg-rose-100 dark:bg-rose-950 text-rose-700 dark:text-rose-300'
-            }`}
-          >
-            {rawEvents.length} ev. · {rawRegistrations.length} asis.
-          </span>
+          <span>Eventos</span>
         </button>
 
-        {/* Tab 2: Activadores (Agrupa Activadores y Automatizaciones Make.com) */}
+        {/* Tab 2: Activadores */}
         <button
           type="button"
           onClick={() => setCurrentTab('activadores')}
@@ -203,31 +223,44 @@ export const AdminAcademicManager: React.FC<AdminAcademicManagerProps> = ({
         >
           <Zap className="w-3.5 h-3.5 text-amber-500" />
           <span>Activadores</span>
-          <span
-            className={`text-[10px] px-2 py-0.5 rounded-full font-mono font-medium ${
-              currentTab === 'activadores'
-                ? 'bg-white/20 dark:bg-black/20 text-white dark:text-black'
-                : 'bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-300'
-            }`}
-          >
-            {activeTriggersCount} activas · Make.com
-          </span>
+        </button>
+
+        {/* Tab 3: Cerebro & Vinculación */}
+        <button
+          type="button"
+          onClick={() => setCurrentTab('cerebro')}
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-medium transition-all cursor-pointer shrink-0 ${
+            currentTab === 'cerebro'
+              ? 'bg-black text-white dark:bg-white dark:text-black shadow-xs font-semibold'
+              : 'text-neutral-600 dark:text-neutral-400 hover:text-black dark:hover:text-white hover:bg-white/70 dark:hover:bg-neutral-800/70'
+          }`}
+        >
+          <Link2 className="w-3.5 h-3.5 text-indigo-500" />
+          <span>Cerebro & Enlaces</span>
         </button>
       </div>
 
       {/* Render Active Sub-Panel */}
       <div key={version}>
         {currentTab === 'events' && (
-          <ProgramsAndEventsManager
-            cronogramaEvents={rawEvents}
-            programs={rawPrograms}
-            eventRegistrations={rawRegistrations}
-            onRefreshEvents={handleRefresh}
-            onRefreshPrograms={handleRefresh}
-            onRefreshRegistrations={handleRefresh}
-            onOpenRegistrationPortal={onOpenRegistrationPortal}
-            initialSubTab={eventsInitialSubTab}
-          />
+          <Suspense fallback={<SubPanelFallback title="Cargando Programas y Eventos..." />}>
+            <ProgramsAndEventsManager
+              cronogramaEvents={rawEvents}
+              programs={rawPrograms}
+              eventRegistrations={rawRegistrations}
+              onRefreshEvents={handleRefresh}
+              onRefreshPrograms={handleRefresh}
+              onRefreshRegistrations={handleRefresh}
+              onOpenRegistrationPortal={onOpenRegistrationPortal}
+              initialSubTab={eventsInitialSubTab}
+            />
+          </Suspense>
+        )}
+
+        {currentTab === 'cerebro' && (
+          <Suspense fallback={<SubPanelFallback title="Cargando Cerebro de Vinculaciones & Enlaces..." />}>
+            <CerebroVinculacionManager />
+          </Suspense>
         )}
 
         {currentTab === 'activadores' && (
@@ -273,11 +306,13 @@ export const AdminAcademicManager: React.FC<AdminAcademicManagerProps> = ({
               </div>
             </div>
 
-            {activadoresMode === 'triggers' ? (
-              <AutomatedTriggersManager />
-            ) : (
-              <AdminAutomationsManager onRefresh={handleRefresh} />
-            )}
+            <Suspense fallback={<SubPanelFallback title="Cargando Módulo de Automatización..." />}>
+              {activadoresMode === 'triggers' ? (
+                <AutomatedTriggersManager />
+              ) : (
+                <AdminAutomationsManager onRefresh={handleRefresh} />
+              )}
+            </Suspense>
           </div>
         )}
       </div>

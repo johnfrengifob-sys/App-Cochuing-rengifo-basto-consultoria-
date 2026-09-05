@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
 import {
   User,
   FormSubmission,
@@ -21,14 +21,42 @@ import { PromotionalEventBanner } from './PromotionalEventBanner';
 import { ClientTrafficStatusBadge } from './ClientTrafficStatusBadge';
 import { ClientDirectoryTable } from './ClientDirectoryTable';
 import { ExecutiveMetricsBar } from './ExecutiveMetricsBar';
-import { ClientWorkstationView } from './ClientWorkstationView';
-import { GoogleWorkspaceHub } from './GoogleWorkspaceHub';
-import { GeminiOntologicalCopilot } from './GeminiOntologicalCopilot';
-import { CrmPipelineManager } from './CrmPipelineManager';
-import { ProgramsAndEventsManager } from './ProgramsAndEventsManager';
-import { PaymentValidationManager } from './PaymentValidationManager';
-import { AdminAcademicManager, AcademicAdminSubTab } from './admin/AdminAcademicManager';
 import { FirebaseFirestoreMonitor } from './FirebaseFirestoreMonitor';
+import type { AcademicAdminSubTab } from './admin/AdminAcademicManager';
+
+// Lazy load secondary dashboard modules to keep the primary view fast and prevent initial load freeze
+const ClientWorkstationView = lazy(() =>
+  import('./ClientWorkstationView').then((m) => ({ default: m.ClientWorkstationView }))
+);
+const GoogleWorkspaceHub = lazy(() =>
+  import('./GoogleWorkspaceHub').then((m) => ({ default: m.GoogleWorkspaceHub }))
+);
+const GeminiOntologicalCopilot = lazy(() =>
+  import('./GeminiOntologicalCopilot').then((m) => ({ default: m.GeminiOntologicalCopilot }))
+);
+const CrmPipelineManager = lazy(() =>
+  import('./CrmPipelineManager').then((m) => ({ default: m.CrmPipelineManager }))
+);
+const PaymentValidationManager = lazy(() =>
+  import('./PaymentValidationManager').then((m) => ({ default: m.PaymentValidationManager }))
+);
+const ExecutiveAnalyticsCharts = lazy(() =>
+  import('./ExecutiveAnalyticsCharts').then((m) => ({ default: m.ExecutiveAnalyticsCharts }))
+);
+const AdminAcademicManager = lazy(() =>
+  import('./admin/AdminAcademicManager').then((m) => ({ default: m.AdminAcademicManager }))
+);
+
+function SectionLoadingFallback({ title = 'Cargando Módulo...' }: { title?: string }) {
+  return (
+    <div className="p-8 rounded-2xl glass-panel-opal border border-white/60 dark:border-white/10 flex flex-col items-center justify-center space-y-3 min-h-[300px]">
+      <div className="w-8 h-8 rounded-full border-2 border-emerald-500/20 border-t-emerald-600 animate-spin" />
+      <span className="text-xs font-mono text-neutral-500 dark:text-neutral-400 tracking-wider uppercase animate-pulse">
+        {title}
+      </span>
+    </div>
+  );
+}
 import {
   Users,
   Sparkles,
@@ -742,23 +770,25 @@ export const CoachDashboard: React.FC<CoachDashboardProps> = ({
 
           {/* Sub-View Content */}
           {clientsViewMode === 'pipeline' ? (
-            <CrmPipelineManager
-              embedded={true}
-              prospects={prospects}
-              clients={clients}
-              eventRegistrations={eventRegistrations}
-              onRefreshProspects={handleRefreshProspects}
-              onRefreshClients={handleRefreshClientsList}
-              onSelectClientAndOpenWorkstation={(cid) => {
-                handleSelectClient(cid, true);
-                setClientsViewMode('workstation');
-              }}
-              onOpenMakeModal={() => {
-                setAcademicInitialSubTab('automations');
-                setActiveMainTab('academic');
-              }}
-              onOpenRegistrationPortal={onOpenRegistrationPortal}
-            />
+            <Suspense fallback={<SectionLoadingFallback title="Cargando Pipeline CRM..." />}>
+              <CrmPipelineManager
+                embedded={true}
+                prospects={prospects}
+                clients={clients}
+                eventRegistrations={eventRegistrations}
+                onRefreshProspects={handleRefreshProspects}
+                onRefreshClients={handleRefreshClientsList}
+                onSelectClientAndOpenWorkstation={(cid) => {
+                  handleSelectClient(cid, true);
+                  setClientsViewMode('workstation');
+                }}
+                onOpenMakeModal={() => {
+                  setAcademicInitialSubTab('automations');
+                  setActiveMainTab('academic');
+                }}
+                onOpenRegistrationPortal={onOpenRegistrationPortal}
+              />
+            </Suspense>
           ) : clientsViewMode === 'directory' ? (
             <ClientDirectoryTable
               clients={clients}
@@ -777,30 +807,32 @@ export const CoachDashboard: React.FC<CoachDashboardProps> = ({
               }}
             />
           ) : selectedClient ? (
-            <ClientWorkstationView
-              client={selectedClient}
-              selectedClient={selectedClient}
-              clients={clients}
-              forms={forms}
-              insights={insights}
-              sessions={sessions}
-              isGeneratingAI={isGeneratingAI}
-              generationFeedback={generationFeedback}
-              onRefreshClients={handleRefreshClientsList}
-              onSelectClient={(clientId) => handleSelectClient(clientId, true)}
-              onBackToDirectory={() => setClientsViewMode('directory')}
-              onGenerateAI={handleGenerateAIAnalysis}
-              onGenerateAIAnalysis={handleGenerateAIAnalysis}
-              onOpenNewSession={() => setShowNewSessionModal(true)}
-              onOpenNewSessionModal={() => setShowNewSessionModal(true)}
-              onAdvanceStep={(clientId) => handleAdvanceStep(clientId || selectedClient.uid)}
-              onUpdateStatus={handleUpdateClientStatus}
-              onUpdateClientStatus={(status) => handleUpdateClientStatus(selectedClient.uid, status)}
-              onUpdateBreakdown={handleUpdateClientBreakdown}
-              onUpdateClientBreakdown={(breakdown) => handleUpdateClientBreakdown(selectedClient.uid, breakdown)}
-              onUpdateInvested={handleUpdateClientInvested}
-              onUpdateClientInvested={(invested) => handleUpdateClientInvested(selectedClient.uid, invested)}
-            />
+            <Suspense fallback={<SectionLoadingFallback title="Cargando Estación de Trabajo Directiva..." />}>
+              <ClientWorkstationView
+                client={selectedClient}
+                selectedClient={selectedClient}
+                clients={clients}
+                forms={forms}
+                insights={insights}
+                sessions={sessions}
+                isGeneratingAI={isGeneratingAI}
+                generationFeedback={generationFeedback}
+                onRefreshClients={handleRefreshClientsList}
+                onSelectClient={(clientId) => handleSelectClient(clientId, true)}
+                onBackToDirectory={() => setClientsViewMode('directory')}
+                onGenerateAI={handleGenerateAIAnalysis}
+                onGenerateAIAnalysis={handleGenerateAIAnalysis}
+                onOpenNewSession={() => setShowNewSessionModal(true)}
+                onOpenNewSessionModal={() => setShowNewSessionModal(true)}
+                onAdvanceStep={(clientId) => handleAdvanceStep(clientId || selectedClient.uid)}
+                onUpdateStatus={handleUpdateClientStatus}
+                onUpdateClientStatus={(status) => handleUpdateClientStatus(selectedClient.uid, status)}
+                onUpdateBreakdown={handleUpdateClientBreakdown}
+                onUpdateClientBreakdown={(breakdown) => handleUpdateClientBreakdown(selectedClient.uid, breakdown)}
+                onUpdateInvested={handleUpdateClientInvested}
+                onUpdateClientInvested={(invested) => handleUpdateClientInvested(selectedClient.uid, invested)}
+              />
+            </Suspense>
           ) : (
             <div className="text-center py-16 bg-white dark:bg-[#151518] rounded-3xl border border-gray-100 dark:border-neutral-800">
               <Users className="w-8 h-8 text-gray-300 dark:text-neutral-600 mx-auto mb-2" />
@@ -819,49 +851,62 @@ export const CoachDashboard: React.FC<CoachDashboardProps> = ({
         /* ========================================================================= */
         /* VIEW 2: GESTIÓN & VALIDACIÓN DE PAGOS (EFECTIVO & BRE-B NU)                */
         /* ========================================================================= */
-        <div className="flex-1 flex flex-col p-4 sm:p-8 lg:p-10 max-w-7xl mx-auto w-full space-y-6">
-          <PaymentValidationManager
-            requests={paymentRequests}
-            clients={clients}
-            coachName={coach.name}
-            onRequestUpdated={() => {
-              setPaymentRequests(OntologicalStore.getPaymentRequests());
-              handleRefreshClientsList();
-            }}
-            onClientUnlocked={() => {
-              handleRefreshClientsList();
-            }}
-          />
+        <div className="flex-1 flex flex-col p-4 sm:p-8 lg:p-10 max-w-7xl mx-auto w-full space-y-8">
+          <Suspense fallback={<SectionLoadingFallback title="Cargando Métricas y Validación de Pagos..." />}>
+            {/* Executive Analytics: Ingresos, Pagos Pendientes & Horas Directivas */}
+            <ExecutiveAnalyticsCharts
+              clients={clients}
+              paymentRequests={paymentRequests}
+              sessions={allSessions}
+            />
+
+            <PaymentValidationManager
+              requests={paymentRequests}
+              clients={clients}
+              coachName={coach.name}
+              onRequestUpdated={() => {
+                setPaymentRequests(OntologicalStore.getPaymentRequests());
+                handleRefreshClientsList();
+              }}
+              onClientUnlocked={() => {
+                handleRefreshClientsList();
+              }}
+            />
+          </Suspense>
         </div>
       ) : activeMainTab === 'events' || activeMainTab === 'academic' || activeMainTab === 'events_sessions' ? (
         /* ========================================================================= */
         /* VIEW 3: EVENTOS Y SESIONES (MEET EN VIVO, PROGRAMAS, FORMACIÓN & AGENDA)  */
         /* ========================================================================= */
         <div className="flex-1 flex flex-col p-4 sm:p-8 lg:p-10 max-w-7xl mx-auto w-full space-y-6">
-          <AdminAcademicManager
-            initialSubTab={academicInitialSubTab || 'events'}
-            cronogramaEvents={cronogramaEvents}
-            programs={programs}
-            eventRegistrations={eventRegistrations}
-            onRefreshEvents={handleRefreshEvents}
-            onRefreshPrograms={handleRefreshPrograms}
-            onRefreshRegistrations={handleRefreshRegistrations}
-            onOpenRegistrationPortal={onOpenRegistrationPortal}
-          />
+          <Suspense fallback={<SectionLoadingFallback title="Cargando Gestión Académica, Enlaces & Espacios..." />}>
+            <AdminAcademicManager
+              initialSubTab={academicInitialSubTab || 'events'}
+              cronogramaEvents={cronogramaEvents}
+              programs={programs}
+              eventRegistrations={eventRegistrations}
+              onRefreshEvents={handleRefreshEvents}
+              onRefreshPrograms={handleRefreshPrograms}
+              onRefreshRegistrations={handleRefreshRegistrations}
+              onOpenRegistrationPortal={onOpenRegistrationPortal}
+            />
+          </Suspense>
         </div>
       ) : activeMainTab === 'workspace' ? (
         /* ========================================================================= */
         /* VIEW 4: GOOGLE WORKSPACE HUB (DRIVE, SHEETS, FORMS, CALENDAR & MEET)     */
         /* ========================================================================= */
         <div className="flex-1 flex flex-col p-4 sm:p-8 lg:p-10 max-w-7xl mx-auto w-full space-y-6">
-          <GoogleWorkspaceHub
-            clients={clients}
-            sessions={allSessions}
-            onOpenClient={(cid) => {
-              handleSelectClient(cid, true);
-              setActiveMainTab('clients');
-            }}
-          />
+          <Suspense fallback={<SectionLoadingFallback title="Cargando Google Workspace Hub..." />}>
+            <GoogleWorkspaceHub
+              clients={clients}
+              sessions={allSessions}
+              onOpenClient={(cid) => {
+                handleSelectClient(cid, true);
+                setActiveMainTab('clients');
+              }}
+            />
+          </Suspense>
         </div>
       ) : activeMainTab === 'gemini' ? (
         /* ========================================================================= */
@@ -899,27 +944,29 @@ export const CoachDashboard: React.FC<CoachDashboardProps> = ({
             </div>
           </div>
 
-          <GeminiOntologicalCopilot
-            currentClient={clients.find((c) => c.uid === selectedClientId) || clients[0]}
-            userRole="coach"
-            onApplyInsightToClient={(diag) => {
-              if (selectedClientId) {
-                OntologicalStore.saveAIInsight({
-                  id: 'insight-gemini-' + Date.now(),
-                  clientId: selectedClientId,
-                  sessionId: 'session-gemini',
-                  sessionStep: 1,
-                  linguisticBarriers: diag.linguisticBarriers,
-                  somaticIndicators: diag.somaticIndicators,
-                  recommendedShift: diag.recommendedShift,
-                  powerfulQuestions: diag.powerfulQuestions,
-                  confidenceScore: diag.somaticScore,
-                  generatedAt: new Date().toISOString(),
-                });
-                onRefreshClients?.();
-              }
-            }}
-          />
+          <Suspense fallback={<SectionLoadingFallback title="Iniciando Copiloto Ontológico Gemini 3.7..." />}>
+            <GeminiOntologicalCopilot
+              currentClient={clients.find((c) => c.uid === selectedClientId) || clients[0]}
+              userRole="coach"
+              onApplyInsightToClient={(diag) => {
+                if (selectedClientId) {
+                  OntologicalStore.saveAIInsight({
+                    id: 'insight-gemini-' + Date.now(),
+                    clientId: selectedClientId,
+                    sessionId: 'session-gemini',
+                    sessionStep: 1,
+                    linguisticBarriers: diag.linguisticBarriers,
+                    somaticIndicators: diag.somaticIndicators,
+                    recommendedShift: diag.recommendedShift,
+                    powerfulQuestions: diag.powerfulQuestions,
+                    confidenceScore: diag.somaticScore,
+                    generatedAt: new Date().toISOString(),
+                  });
+                  onRefreshClients?.();
+                }
+              }}
+            />
+          </Suspense>
         </div>
       ) : null}
 
