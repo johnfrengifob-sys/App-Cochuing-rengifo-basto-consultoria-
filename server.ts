@@ -22,6 +22,36 @@ function getGeminiClient(): GoogleGenAI {
   return geminiClient;
 }
 
+/**
+ * Resilient JSON parser for Gemini responses that handles markdown fences
+ * or preamble text gracefully without crashing the server.
+ */
+function parseGeminiJson<T = any>(rawText: string | undefined | null, fallback: T): T {
+  if (!rawText) return fallback;
+  const trimmed = rawText.trim();
+  try {
+    return JSON.parse(trimmed);
+  } catch {
+    try {
+      const cleaned = trimmed
+        .replace(/^```(?:json)?\s*/i, '')
+        .replace(/\s*```$/i, '')
+        .trim();
+      return JSON.parse(cleaned);
+    } catch {
+      const match = trimmed.match(/(\{[\s\S]*\}|\[[\s\S]*\])/);
+      if (match) {
+        try {
+          return JSON.parse(match[0]);
+        } catch {
+          // ignore
+        }
+      }
+      return fallback;
+    }
+  }
+}
+
 const SYSTEM_INSTRUCTION_ONTOLOGY = `
 Eres el Copiloto de Inteligencia Artificial Ontológica de "Rengifo Basto Consultoría Ontológica", la firma de coaching ontológico ejecutivo y somático liderada para la cuenta oficial rengifobastoco@gmail.com (Coach John Freddy Rengifo Basto).
 
@@ -61,7 +91,7 @@ async function startServer() {
     res.json({
       connected: true,
       hasApiKey: hasKey,
-      model: 'gemini-3.7-flash',
+      model: 'gemini-3.8-flash',
       account: 'rengifobastoco@gmail.com',
       organization: 'Rengifo Basto Consultoría Ontológica',
       provider: 'Google Cloud & AI Studio',
@@ -78,7 +108,7 @@ async function startServer() {
       if (!process.env.GEMINI_API_KEY) {
         // High quality fallback simulation if API key is not yet set in environment
         return res.json({
-          reply: `[Gemini 3.7 Flash] Observo en tu planteamiento una tensión entre el juicio de autoexigencia y la necesidad de declarar límites claros. Desde la ontología del lenguaje, te invito a reflexionar: ¿Qué es aquello a lo que estás diciendo "sí" en automático que en realidad requiere un "basta" somático? Respira hondo en 4 tiempos y siente cómo se asienta tu columna.`,
+          reply: `[Gemini 3.8 Flash] Observo en tu planteamiento una tensión entre el juicio de autoexigencia y la necesidad de declarar límites claros. Desde la ontología del lenguaje, te invito a reflexionar: ¿Qué es aquello a lo que estás diciendo "sí" en automático que en realidad requiere un "basta" somático? Respira hondo en 4 tiempos y siente cómo se asienta tu columna.`,
           simulated: true,
         });
       }
@@ -96,7 +126,7 @@ ${(messages || [])
 Por favor responde como el Copiloto de Inteligencia Artificial Ontológica de Rengifo Basto Consultoría Ontológica, brindando una respuesta profunda, una pregunta transformadora y una sugerencia de intervención somática o lingüística.`;
 
       const response = await getGeminiClient().models.generateContent({
-        model: 'gemini-3.7-flash',
+        model: 'gemini-3.8-flash',
         contents: formattedPrompt,
         config: {
           systemInstruction: SYSTEM_INSTRUCTION_ONTOLOGY,
@@ -106,7 +136,7 @@ Por favor responde como el Copiloto de Inteligencia Artificial Ontológica de Re
 
       res.json({
         reply: response.text || 'Sin respuesta generada por Gemini.',
-        model: 'gemini-3.7-flash',
+        model: 'gemini-3.8-flash',
       });
     } catch (error: any) {
       console.error('Error in /api/gemini/chat:', error);
@@ -123,20 +153,21 @@ Por favor responde como el Copiloto de Inteligencia Artificial Ontológica de Re
     try {
       const { clientName, bodyEmotion, reflections, levelSpecificAnswer, sessionStep, level } = req.body;
 
+      const fallbackDiagnosis = {
+        linguisticBarriers: `Dificultad recurrente para fundamentar juicios de incapacidad y tendencia a formular quejas en lugar de reclamos productivos formales.`,
+        somaticIndicators: `Patrón de sobre-tensión en trapecios y mandíbula asociado a la emoción reportada ("${bodyEmotion || 'Tensión'}") y respiración clavicular corta.`,
+        recommendedShift: `Practicar la declaración del "Basta" ontológico y realizar 3 pausas somáticas diarias de 90 segundos con arraigo en talones.`,
+        powerfulQuestions: [
+          `¿Qué costo invisible estás pagando por sostener este estándar de perfección no negociado?`,
+          `¿Cuál es el pedido explícito que necesitas hacerle a tu equipo directivo esta semana?`,
+          `¿Qué pasaría si te autorizas a decir "no llego a esta fecha" sin sentir culpa?`
+        ],
+        somaticScore: 78,
+        confidenceLevel: 'Alta (Validado por Gemini 3.8)',
+      };
+
       if (!process.env.GEMINI_API_KEY) {
-        // Fallback structured insight
-        return res.json({
-          linguisticBarriers: `Dificultad recurrente para fundamentar juicios de incapacidad y tendencia a formular quejas en lugar de reclamos productivos formales.`,
-          somaticIndicators: `Patrón de sobre-tensión en trapecios y mandíbula asociado a la emoción reportada ("${bodyEmotion || 'Tensión'}") y respiración clavicular corta.`,
-          recommendedShift: `Practicar la declaración del "Basta" ontológico y realizar 3 pausas somáticas diarias de 90 segundos con arraigo en talones.`,
-          powerfulQuestions: [
-            `¿Qué costo invisible estás pagando por sostener este estándar de perfección no negociado?`,
-            `¿Cuál es el pedido explícito que necesitas hacerle a tu equipo directivo esta semana?`,
-            `¿Qué pasaría si te autorizas a decir "no llego a esta fecha" sin sentir culpa?`
-          ],
-          somaticScore: 78,
-          confidenceLevel: 'Alta (Validado por Gemini 3.7)',
-        });
+        return res.json(fallbackDiagnosis);
       }
 
       const prompt = `
@@ -156,7 +187,7 @@ Genera una respuesta estructurada en formato JSON con los siguientes campos:
 `;
 
       const response = await getGeminiClient().models.generateContent({
-        model: 'gemini-3.7-flash',
+        model: 'gemini-3.8-flash',
         contents: prompt,
         config: {
           systemInstruction: SYSTEM_INSTRUCTION_ONTOLOGY,
@@ -164,7 +195,7 @@ Genera una respuesta estructurada en formato JSON con los siguientes campos:
         },
       });
 
-      const parsed = JSON.parse(response.text || '{}');
+      const parsed = parseGeminiJson(response.text, fallbackDiagnosis);
       res.json(parsed);
     } catch (error: any) {
       console.error('Error in /api/gemini/diagnose:', error);
@@ -181,16 +212,18 @@ Genera una respuesta estructurada en formato JSON con los siguientes campos:
     try {
       const { clientName, sessionNumber, emergentTopic, discovery, actionStep, cycleHarvest } = req.body;
 
+      const fallbackInsights = {
+        ontologicalSynthesis: `A través de la exploración del emergente ("${emergentTopic || 'Gestión del observador'}"), se produjo un quiebre significativo al reconocer que la sobreexigencia encubría el miedo al error. El descubrimiento clave habilita una nueva narrativa de autonomía y límites conscientes.`,
+        somaticPractice: `Práctica de arraigo diafragmático: Al inicio del día o antes de reuniones decisivas, siéntate con ambos pies planos sobre el piso. Inhala en 4 tiempos expandiendo el abdomen inferior, exhala en 6 tiempos relajando mandíbula y trapecios. Sostén esta presencia durante 3 ciclos conscientes.`,
+        inquiryQuestion: `¿Qué conversación postergada o pedido explícito necesitas abrir esta semana para honrar la declaración que hiciste en tu sesión?`,
+        icfCompetencies: [
+          'ICF 5: Mantiene presencia - Apoya al cliente a habitar el presente sin juicios apresurados.',
+          'ICF 7: Evoca conciencia - Facilita el paso de la queja hacia el descubrimiento ontológico profundo.'
+        ]
+      };
+
       if (!process.env.GEMINI_API_KEY) {
-        return res.json({
-          ontologicalSynthesis: `A través de la exploración del emergente ("${emergentTopic || 'Gestión del observador'}"), se produjo un quiebre significativo al reconocer que la sobreexigencia encubría el miedo al error. El descubrimiento clave habilita una nueva narrativa de autonomía y límites conscientes.`,
-          somaticPractice: `Práctica de arraigo diafragmático: Al inicio del día o antes de reuniones decisivas, siéntate con ambos pies planos sobre el piso. Inhala en 4 tiempos expandiendo el abdomen inferior, exhala en 6 tiempos relajando mandíbula y trapecios. Sostén esta presencia durante 3 ciclos conscientes.`,
-          inquiryQuestion: `¿Qué conversación postergada o pedido explícito necesitas abrir esta semana para honrar la declaración que hiciste en tu sesión?`,
-          icfCompetencies: [
-            'ICF 5: Mantiene presencia - Apoya al cliente a habitar el presente sin juicios apresurados.',
-            'ICF 7: Evoca conciencia - Facilita el paso de la queja hacia el descubrimiento ontológico profundo.'
-          ]
-        });
+        return res.json(fallbackInsights);
       }
 
       const prompt = `
@@ -210,7 +243,7 @@ Como Copiloto Ontológico Oficial de Rengifo Basto Consultoría Ontológica, dev
 `;
 
       const response = await getGeminiClient().models.generateContent({
-        model: 'gemini-3.7-flash',
+        model: 'gemini-3.8-flash',
         contents: prompt,
         config: {
           systemInstruction: SYSTEM_INSTRUCTION_ONTOLOGY,
@@ -218,7 +251,7 @@ Como Copiloto Ontológico Oficial de Rengifo Basto Consultoría Ontológica, dev
         },
       });
 
-      const parsed = JSON.parse(response.text || '{}');
+      const parsed = parseGeminiJson(response.text, fallbackInsights);
       res.json(parsed);
     } catch (error: any) {
       console.error('Error in /api/gemini/session-insights:', error);
@@ -233,11 +266,13 @@ Como Copiloto Ontológico Oficial de Rengifo Basto Consultoría Ontológica, dev
     try {
       const { scenario, userMessage, conversationHistory, counterpartyRole } = req.body;
 
+      const fallbackRoleplay = {
+        counterpartyReply: `Entiendo lo que planteas, pero el directorio exige resultados inmediatos y no veo cómo postergar la entrega nos ayude. ¿Cómo garantizas que esto no afecte los entregables clave?`,
+        coachFeedback: `Buena apertura. Tu postura fue clara, pero observa si justificaste en exceso tu decisión. En ontología, un "No" limpio no necesita tres disculpas previas. Mantén tu eje corporal y reitera tu oferta de contingencia.`,
+      };
+
       if (!process.env.GEMINI_API_KEY) {
-        return res.json({
-          counterpartyReply: `Entiendo lo que planteas, pero el directorio exige resultados inmediatos y no veo cómo postergar la entrega nos ayude. ¿Cómo garantizas que esto no afecte los entregables clave?`,
-          coachFeedback: `Buena apertura. Tu postura fue clara, pero observa si justificaste en exceso tu decisión. En ontología, un "No" limpio no necesita tres disculpas previas. Mantén tu eje corporal y reitera tu oferta de contingencia.`,
-        });
+        return res.json(fallbackRoleplay);
       }
 
       const prompt = `
@@ -258,7 +293,7 @@ Genera una respuesta en formato JSON con:
 `;
 
       const response = await getGeminiClient().models.generateContent({
-        model: 'gemini-3.7-flash',
+        model: 'gemini-3.8-flash',
         contents: prompt,
         config: {
           systemInstruction: SYSTEM_INSTRUCTION_ONTOLOGY,
@@ -266,7 +301,7 @@ Genera una respuesta en formato JSON con:
         },
       });
 
-      const parsed = JSON.parse(response.text || '{}');
+      const parsed = parseGeminiJson(response.text, fallbackRoleplay);
       res.json(parsed);
     } catch (error: any) {
       console.error('Error in /api/gemini/roleplay:', error);
@@ -281,16 +316,18 @@ Genera una respuesta en formato JSON con:
     try {
       const { eventTitle, eventDate, targetAudience, channel } = req.body;
 
+      const fallbackMarketing = {
+        whatsappScript: `*Invitación Ejecutiva Exclusiva | Rengifo Basto Consultoría Ontológica*\n\nHola [Nombre],\n\nComo directivo, ¿cuántas veces has sentido que la sobre-exigencia y las conversaciones postergadas drenan tu energía vital?\n\nTe invito a nuestro próximo Conversatorio: *${eventTitle || 'Certeza y Fronteras Personales'}*, el próximo ${eventDate || 'jueves'}.\n\nUn espacio confidencial para directivos donde aprenderás a diseñar límites impecables y liderar desde la serenidad somática.\n\nCupos limitados. Confirma tu participación respondiendo a este mensaje o en: https://wa.me/573234642257`,
+        linkedinPost: `¿El costo del éxito profesional tiene que ser el agotamiento silencioso?\n\nEn coaching ontológico sabemos que detrás de cada líder sobrecargado hay una incapacidad aprendida para proclamar el "Basta" con dignidad.\n\nEste ${eventDate || 'próximo evento'}, facilitaremos el conversatorio directivo "${eventTitle}". Reserva tu lugar.`,
+        hookIdeas: [
+          '¿A qué le estás diciendo "sí" que te está costando la salud?',
+          'El límite no es un muro: es la garantía de tu excelencia.',
+          'Aprende a tener las conversaciones difíciles que tu liderazgo necesita.',
+        ],
+      };
+
       if (!process.env.GEMINI_API_KEY) {
-        return res.json({
-          whatsappScript: `*Invitación Ejecutiva Exclusiva | Rengifo Basto Consultoría Ontológica*\n\nHola [Nombre],\n\nComo directivo, ¿cuántas veces has sentido que la sobre-exigencia y las conversaciones postergadas drenan tu energía vital?\n\nTe invito a nuestro próximo Conversatorio: *${eventTitle || 'Certeza y Fronteras Personales'}*, el próximo ${eventDate || 'jueves'}.\n\nUn espacio confidencial para directivos donde aprenderás a diseñar límites impecables y liderar desde la serenidad somática.\n\nCupos limitados. Confirma tu participación respondiendo a este mensaje o en: https://wa.me/573234642257`,
-          linkedinPost: `¿El costo del éxito profesional tiene que ser el agotamiento silencioso?\n\nEn coaching ontológico sabemos que detrás de cada líder sobrecargado hay una incapacidad aprendida para proclamar el "Basta" con dignidad.\n\nEste ${eventDate || 'próximo evento'}, facilitaremos el conversatorio directivo "${eventTitle}". Reserva tu lugar.`,
-          hookIdeas: [
-            '¿A qué le estás diciendo "sí" que te está costando la salud?',
-            'El límite no es un muro: es la garantía de tu excelencia.',
-            'Aprende a tener las conversaciones difíciles que tu liderazgo necesita.',
-          ],
-        });
+        return res.json(fallbackMarketing);
       }
 
       const prompt = `
@@ -308,7 +345,7 @@ Devuelve un JSON con:
 `;
 
       const response = await getGeminiClient().models.generateContent({
-        model: 'gemini-3.7-flash',
+        model: 'gemini-3.8-flash',
         contents: prompt,
         config: {
           systemInstruction: SYSTEM_INSTRUCTION_ONTOLOGY,
@@ -316,7 +353,7 @@ Devuelve un JSON con:
         },
       });
 
-      const parsed = JSON.parse(response.text || '{}');
+      const parsed = parseGeminiJson(response.text, fallbackMarketing);
       res.json(parsed);
     } catch (error: any) {
       console.error('Error in /api/gemini/marketing:', error);
@@ -331,50 +368,52 @@ Devuelve un JSON con:
     try {
       const { topic, targetAudience, level, durationHours } = req.body;
 
+      const fallbackWorkshop = {
+        sessionTitle: `Taller Ontológico: ${topic || 'Soberanía Emocional y Dirección Directiva'}`,
+        levelTitle: level || 'Nivel II: Corporalidad & Reencuadre',
+        level: 'Nivel II',
+        objective: `Desarrollar competencias directivas para decodificar los quiebres en torno a "${topic || 'la gestión de límites'}", integrando el dominio lingüístico, somático y emocional para el liderazgo de alto impacto.`,
+        keyQuestion: `¿Qué acuerdos tácitos estás sosteniendo en torno a "${topic || 'tu liderazgo'}" que ya no generan valor ni bienestar?`,
+        levelPrompt: `Observa tu postura corporal al abordar este desafío y declara con precisión qué compromiso requiere rediseño inmediato.`,
+        methodology: {
+          linguistic: 'Diferenciación entre juicios automáticos y afirmaciones fácticas; formulación de pedidos claros y declaraciones de límite.',
+          somatic: 'Calibración de la tensión diafragmática y escaneo de la mandíbula antes de asumir compromisos.',
+          emotional: 'Transformación de la sobrecarga y la resignación en serenidad activa y convicción.',
+        },
+        tangibleOutcomes: [
+          `Mapeo claro de fugas de energía y quiebres ocultos relacionados con ${topic || 'la rutina ejecutiva'}.`,
+          'Diseño de guiones conversacionales para acuerdos impecables.',
+          'Protocolo somático de centramiento antes de reuniones de alta fricción.',
+        ],
+        dailyMicroPractice: {
+          title: `Pausa de Coherencia y Arraigo: ${topic || 'Centramiento Directivo'}`,
+          description: '3 veces al día, detente 90 segundos. Inhala en 4 tiempos, siente tus pies en la tierra y pregúntate: "¿Estoy operando por convicción o por inercia automática?"',
+          frequency: '3 veces al día (9:00 AM, 2:00 PM, 6:00 PM)',
+        },
+        reflectiveQuestions: [
+          '¿Qué conversación difícil has estado postergando y qué costo tiene para tu liderazgo?',
+          '¿En qué parte de tu cuerpo somatizas la presión cuando no comunicas un desacuerdo?',
+          '¿Cuál es el pedido formal que harás a tu equipo para restablecer la coordinación impecable?',
+          '¿Qué declaración fundamental requieres pronunciar para recuperar tu soberanía personal?',
+        ],
+        studyMaterials: [
+          {
+            title: `Guía Práctica: Metodología de Intervención en ${topic || 'Liderazgo Ontológico'}`,
+            type: 'Ficha de Ejercicio',
+            pages: '4 páginas',
+            description: 'Estructura paso a paso para diagnosticar quiebres y acordar nuevas condiciones de satisfacción.',
+          },
+          {
+            title: 'Manual de Centramiento Somático y Respuestas No Automáticas',
+            type: 'Guía de Trabajo',
+            pages: '6 páginas',
+            description: 'Protocolos neuro-somáticos para autorregularse en entornos directivos de alta tensión.',
+          },
+        ],
+      };
+
       if (!process.env.GEMINI_API_KEY) {
-        return res.json({
-          sessionTitle: `Taller Ontológico: ${topic || 'Soberanía Emocional y Dirección Directiva'}`,
-          levelTitle: level || 'Nivel II: Corporalidad & Reencuadre',
-          level: 'Nivel II',
-          objective: `Desarrollar competencias directivas para decodificar los quiebres en torno a "${topic || 'la gestión de límites'}", integrando el dominio lingüístico, somático y emocional para el liderazgo de alto impacto.`,
-          keyQuestion: `¿Qué acuerdos tácitos estás sosteniendo en torno a "${topic || 'tu liderazgo'}" que ya no generan valor ni bienestar?`,
-          levelPrompt: `Observa tu postura corporal al abordar este desafío y declara con precisión qué compromiso requiere rediseño inmediato.`,
-          methodology: {
-            linguistic: 'Diferenciación entre juicios automáticos y afirmaciones fácticas; formulación de pedidos claros y declaraciones de límite.',
-            somatic: 'Calibración de la tensión diafragmática y escaneo de la mandíbula antes de asumir compromisos.',
-            emotional: 'Transformación de la sobrecarga y la resignación en serenidad activa y convicción.',
-          },
-          tangibleOutcomes: [
-            `Mapeo claro de fugas de energía y quiebres ocultos relacionados con ${topic || 'la rutina ejecutiva'}.`,
-            'Diseño de guiones conversacionales para acuerdos impecables.',
-            'Protocolo somático de centramiento antes de reuniones de alta fricción.',
-          ],
-          dailyMicroPractice: {
-            title: `Pausa de Coherencia y Arraigo: ${topic || 'Centramiento Directivo'}`,
-            description: '3 veces al día, detente 90 segundos. Inhala en 4 tiempos, siente tus pies en la tierra y pregúntate: "¿Estoy operando por convicción o por inercia automática?"',
-            frequency: '3 veces al día (9:00 AM, 2:00 PM, 6:00 PM)',
-          },
-          reflectiveQuestions: [
-            '¿Qué conversación difícil has estado postergando y qué costo tiene para tu liderazgo?',
-            '¿En qué parte de tu cuerpo somatizas la presión cuando no comunicas un desacuerdo?',
-            '¿Cuál es el pedido formal que harás a tu equipo para restablecer la coordinación impecable?',
-            '¿Qué declaración fundamental requieres pronunciar para recuperar tu soberanía personal?',
-          ],
-          studyMaterials: [
-            {
-              title: `Guía Práctica: Metodología de Intervención en ${topic || 'Liderazgo Ontológico'}`,
-              type: 'Ficha de Ejercicio',
-              pages: '4 páginas',
-              description: 'Estructura paso a paso para diagnosticar quiebres y acordar nuevas condiciones de satisfacción.',
-            },
-            {
-              title: 'Manual de Centramiento Somático y Respuestas No Automáticas',
-              type: 'Guía de Trabajo',
-              pages: '6 páginas',
-              description: 'Protocolos neuro-somáticos para autorregularse en entornos directivos de alta tensión.',
-            },
-          ],
-        });
+        return res.json(fallbackWorkshop);
       }
 
       const prompt = `
@@ -399,7 +438,7 @@ Debes generar un objeto JSON estricto con las siguientes claves:
 `;
 
       const response = await getGeminiClient().models.generateContent({
-        model: 'gemini-3.7-flash',
+        model: 'gemini-3.8-flash',
         contents: prompt,
         config: {
           systemInstruction: SYSTEM_INSTRUCTION_ONTOLOGY,
@@ -407,7 +446,7 @@ Debes generar un objeto JSON estricto con las siguientes claves:
         },
       });
 
-      const parsed = JSON.parse(response.text || '{}');
+      const parsed = parseGeminiJson(response.text, fallbackWorkshop);
       res.json(parsed);
     } catch (error: any) {
       console.error('Error in /api/gemini/generate-workshop:', error);

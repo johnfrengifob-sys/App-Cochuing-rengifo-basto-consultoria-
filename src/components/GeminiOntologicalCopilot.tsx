@@ -23,6 +23,7 @@ import {
 import { GeminiService, GeminiChatMessage, GeminiRoleplayResult, GeminiMarketingResult } from '../services/geminiService';
 import { GoogleWorkspaceService } from '../services/googleWorkspace';
 import { User as UserType } from '../types';
+import { safeCopyToClipboard } from '../utils/clipboard';
 
 interface GeminiOntologicalCopilotProps {
   currentClient?: UserType | null;
@@ -43,8 +44,8 @@ export const GeminiOntologicalCopilot: React.FC<GeminiOntologicalCopilotProps> =
       role: 'assistant',
       content:
         userRole === 'coach'
-          ? `Hola Coach. Soy tu Copiloto de Inteligencia Artificial Ontológica (Gemini 3.7 Flash) para Rengifo Basto Consultoría Ontológica. ¿En qué caso directivo o diseño conversacional podemos profundizar hoy?`
-          : `Bienvenido a tu espacio de Indagación y Mentoría Ontológica con Gemini 3.7. Aquí puedes explorar tus quiebres, preparar conversaciones difíciles y calibrar tu coherencia somática.`,
+          ? `Hola Coach. Soy tu Copiloto de Inteligencia Artificial Ontológica (Gemini 3.8 Flash) para Rengifo Basto Consultoría Ontológica. ¿En qué caso directivo o diseño conversacional podemos profundizar hoy?`
+          : `Bienvenido a tu espacio de Indagación y Mentoría Ontológica con Gemini 3.8. Aquí puedes explorar tus quiebres, preparar conversaciones difíciles y calibrar tu coherencia somática.`,
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     },
   ]);
@@ -200,8 +201,8 @@ export const GeminiOntologicalCopilot: React.FC<GeminiOntologicalCopilotProps> =
     }
   };
 
-  const copyToClipboard = (text: string, id: string) => {
-    navigator.clipboard.writeText(text);
+  const copyToClipboard = async (text: string, id: string) => {
+    await safeCopyToClipboard(text);
     setCopiedId(id);
     setTimeout(() => setCopiedId(null), 2500);
   };

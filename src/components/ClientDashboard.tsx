@@ -26,6 +26,7 @@ import { User, Session, PostSessionForm, CronogramaEvent, ProgramNodeInfo } from
 import { OntologicalStore, COMPANY_INFO, PROGRAM_NODES, BRE_B_NU_CONFIG } from '../services/store';
 import { FirestoreSyncService } from '../services/firestoreSync';
 import { PDFGenerator } from '../utils/pdfGenerator';
+import { safeCopyToClipboard } from '../utils/clipboard';
 import { PostSessionWorkbookModal } from './PostSessionWorkbookModal';
 import { CURATED_EXPERIENCE_PHOTOS } from '../data/initialExperiences';
 import coachAvatarImg from '../assets/images/regenerated_image_1788287101599.jpg';
@@ -179,8 +180,8 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
 
   // Estado de copiado de llave de pago Bre-B Nu
   const [copiedPaymentKey, setCopiedPaymentKey] = useState(false);
-  const handleCopyPaymentKey = () => {
-    navigator.clipboard.writeText(BRE_B_NU_CONFIG.llave);
+  const handleCopyPaymentKey = async () => {
+    await safeCopyToClipboard(BRE_B_NU_CONFIG.llave);
     setCopiedPaymentKey(true);
     setTimeout(() => setCopiedPaymentKey(false), 2500);
   };

@@ -7,6 +7,7 @@ import {
   WorkshopWorkbookSubmission,
 } from '../types';
 import { OntologicalStore } from '../services/store';
+import { safeCopyToClipboard } from '../utils/clipboard';
 import {
   Calendar,
   Clock,
@@ -202,8 +203,8 @@ export const ProgramsAndEventsManager: React.FC<ProgramsAndEventsManagerProps> =
   );
 
   // Handlers for Google Meet
-  const handleCopyMasterMeet = () => {
-    navigator.clipboard.writeText(masterMeetUrl);
+  const handleCopyMasterMeet = async () => {
+    await safeCopyToClipboard(masterMeetUrl);
     setCopiedMeetFeedback(true);
     setTimeout(() => setCopiedMeetFeedback(false), 2500);
   };

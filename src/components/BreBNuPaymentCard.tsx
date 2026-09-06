@@ -12,6 +12,7 @@ import {
   Smartphone,
 } from 'lucide-react';
 import { BRE_B_NU_CONFIG } from '../services/store';
+import { safeCopyToClipboard } from '../utils/clipboard';
 
 interface BreBNuPaymentCardProps {
   amount: string;
@@ -39,8 +40,8 @@ export const BreBNuPaymentCard: React.FC<BreBNuPaymentCardProps> = ({
   const [copiedKey, setCopiedKey] = useState(false);
   const [dragOver, setDragOver] = useState(false);
 
-  const handleCopyKey = () => {
-    navigator.clipboard.writeText(BRE_B_NU_CONFIG.llave);
+  const handleCopyKey = async () => {
+    await safeCopyToClipboard(BRE_B_NU_CONFIG.llave);
     setCopiedKey(true);
     setTimeout(() => setCopiedKey(false), 2500);
   };

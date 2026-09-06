@@ -893,7 +893,7 @@ export const CoachDashboard: React.FC<CoachDashboardProps> = ({
         /* ========================================================================= */
         <div className="flex-1 flex flex-col p-4 sm:p-8 lg:p-10 max-w-7xl mx-auto w-full space-y-8">
           <Suspense fallback={<SectionLoadingFallback title="Cargando Métricas y Validación de Pagos..." />}>
-            {/* Executive Analytics: Ingresos, Pagos Pendientes & Horas Directivas */}
+            {/* Executive Analytics: Ingresos, Proyecciones & Validación de Pagos */}
             <ExecutiveAnalyticsCharts
               clients={clients}
               paymentRequests={paymentRequests}

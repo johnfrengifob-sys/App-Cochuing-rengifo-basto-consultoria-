@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { OntologicalStore, COMPANY_INFO } from '../services/store';
 import { User, Session } from '../types';
+import { safeCopyToClipboard } from '../utils/clipboard';
 
 interface VideoConferenceModalProps {
   isOpen: boolean;
@@ -60,8 +61,8 @@ export const VideoConferenceModal: React.FC<VideoConferenceModalProps> = ({
     }
   };
 
-  const handleCopy = (url: string, label: string) => {
-    navigator.clipboard.writeText(url);
+  const handleCopy = async (url: string, label: string) => {
+    await safeCopyToClipboard(url);
     setCopiedLink(label);
     setTimeout(() => {
       setCopiedLink(null);

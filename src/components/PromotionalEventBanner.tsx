@@ -3,6 +3,7 @@ import { CronogramaEvent } from '../types';
 import { OntologicalStore } from '../services/store';
 import { LiquidGlassButton } from './LiquidGlassButton';
 import { downloadWorkshopNotebookPdf } from '../services/notebookPdfGenerator';
+import { safeCopyToClipboard } from '../utils/clipboard';
 import {
   Calendar,
   Clock,
@@ -105,13 +106,13 @@ export const PromotionalEventBanner: React.FC<PromotionalEventBannerProps> = ({
     }
   };
 
-  const handleCopyMeetLink = () => {
-    navigator.clipboard.writeText(meetUrl);
+  const handleCopyMeetLink = async () => {
+    await safeCopyToClipboard(meetUrl);
     setCopiedMeetNotice(true);
     setTimeout(() => setCopiedMeetNotice(false), 3000);
   };
 
-  const handleShare = () => {
+  const handleShare = async () => {
     if (navigator.share) {
       navigator.share({
         title: event.title,
@@ -119,7 +120,7 @@ export const PromotionalEventBanner: React.FC<PromotionalEventBannerProps> = ({
         url: window.location.href,
       }).catch(() => {});
     } else {
-      navigator.clipboard.writeText(
+      await safeCopyToClipboard(
         `Próximo taller ontológico: ${event.title} - ${event.displayDate} a las ${event.time}. Sala Meet: ${meetUrl}`
       );
       setShowShareNotice(true);

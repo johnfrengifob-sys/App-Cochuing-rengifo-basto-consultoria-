@@ -53,7 +53,7 @@ export class GeminiService {
       return {
         connected: true,
         hasApiKey: true,
-        model: 'gemini-3.7-flash',
+        model: 'gemini-3.8-flash',
         account: 'rengifobastoco@gmail.com',
         organization: 'Rengifo Basto Consultoría Ontológica',
         provider: 'Google Cloud & AI Studio',
@@ -84,12 +84,12 @@ export class GeminiService {
       return data.reply || 'Sin respuesta del modelo.';
     } catch (err: any) {
       console.warn('Gemini chat request fallback:', err);
-      return `[Gemini 3.7 Ontología] Como facilitador ontológico, observo que este quiebre representa una oportunidad para recalibrar los acuerdos tácitos. Te propongo identificar: ¿Qué juicio estás tratando como una verdad inamovible y qué afirmación fáctica puedes verificar hoy?`;
+      return `[Gemini 3.8 Ontología] Como facilitador ontológico, observo que este quiebre representa una oportunidad para recalibrar los acuerdos tácitos. Te propongo identificar: ¿Qué juicio estás tratando como una verdad inamovible y qué afirmación fáctica puedes verificar hoy?`;
     }
   }
 
   /**
-   * Deep Ontological Diagnosis powered by Gemini 3.7 Flash
+   * Deep Ontological Diagnosis powered by Gemini 3.8 Flash
    */
   static async generateDeepDiagnosis(params: {
     clientName: string;
@@ -121,7 +121,7 @@ export class GeminiService {
           '¿Cuál es el pedido concreto que harás esta semana?',
         ],
         somaticScore: data.somaticScore || 82,
-        confidenceLevel: data.confidenceLevel || 'Validado por Gemini 3.7 Flash',
+        confidenceLevel: data.confidenceLevel || 'Validado por Gemini 3.8 Flash',
       };
     } catch (err: any) {
       console.warn('Gemini diagnosis fallback:', err);
