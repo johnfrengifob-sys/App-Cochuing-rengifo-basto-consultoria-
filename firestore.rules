@@ -108,7 +108,7 @@ service cloud.firestore {
       return data.id is string && data.id.size() <= 128 &&
              data.clientId is string && data.clientId.size() <= 128 &&
              data.voucherCode is string && data.voucherCode.size() > 0 && data.voucherCode.size() <= 50 &&
-             data.status in ['pending', 'verified', 'rejected'];
+             data.status in ['pending', 'approved', 'verified', 'rejected'];
     }
 
     // 4. COLLECTION SECURITY RULES

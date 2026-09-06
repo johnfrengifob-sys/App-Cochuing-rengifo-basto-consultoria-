@@ -188,15 +188,15 @@ export const AdminAutomationsManager: React.FC<AdminAutomationsManagerProps> = (
       )}
 
       {/* Top Header Card */}
-      <div className="p-6 rounded-3xl bg-linear-to-br from-neutral-900 via-indigo-950 to-neutral-900 text-white shadow-xl relative overflow-hidden border border-indigo-900/50">
-        <div className="absolute right-0 top-0 w-80 h-80 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="p-6 rounded-3xl banner-executive text-white shadow-xl relative overflow-hidden">
+        <div className="absolute right-0 top-0 w-80 h-80 bg-white/5 rounded-full blur-3xl pointer-events-none" />
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-2">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/20 border border-indigo-400/30 text-indigo-300 text-xs font-semibold backdrop-blur-md">
-              <Workflow className="w-3.5 h-3.5 text-indigo-400" />
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/20 text-neutral-300 text-xs font-semibold backdrop-blur-md">
+              <Workflow className="w-3.5 h-3.5 text-neutral-300" />
               <span>Arquitectura Make.com & Webhooks Cloud</span>
             </div>
-            <h3 className="text-xl md:text-2xl font-black tracking-tight text-white flex items-center gap-2.5">
+            <h3 className="text-xl md:text-2xl font-bold tracking-tight text-white flex items-center gap-2.5">
               <span>Centro de Escenarios & Automatizaciones Académicas</span>
             </h3>
             <p className="text-xs md:text-sm text-neutral-300 font-light max-w-2xl leading-relaxed">

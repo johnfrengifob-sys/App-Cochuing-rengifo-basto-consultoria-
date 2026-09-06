@@ -66,3 +66,28 @@
   box-shadow: 0 4px 16px -2px rgba(0, 0, 0, 0.4);
 }
 
+/* Typography Helper Utilities */
+.font-editorial {
+  font-family: 'Cormorant Garamond', Georgia, serif;
+}
+
+.font-sans-clean {
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* Homogeneous Executive Dark Banners (Pure obsidian & high contrast neutral, avoiding arbitrary indigo/purple) */
+.banner-executive {
+  background: linear-gradient(135deg, #0a0a0d 0%, #15151a 50%, #0d0d12 100%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+}
+
+/* Custom Scrollbar */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+

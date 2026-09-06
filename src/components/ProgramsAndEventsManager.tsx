@@ -479,15 +479,15 @@ export const ProgramsAndEventsManager: React.FC<ProgramsAndEventsManagerProps> =
             </div>
           </div>
 
-          <div className="p-3.5 rounded-2xl bg-indigo-50/40 dark:bg-indigo-950/20 border border-indigo-100 dark:border-indigo-900/40">
-            <span className="text-[10px] font-semibold text-indigo-700 dark:text-indigo-400 uppercase tracking-wider block">
+          <div className="p-3.5 rounded-2xl bg-neutral-50 dark:bg-neutral-800/60 border border-neutral-200/80 dark:border-neutral-800">
+            <span className="text-[10px] font-semibold text-neutral-600 dark:text-neutral-400 uppercase tracking-wider block">
               Cuadernos PDF
             </span>
             <div className="flex items-baseline gap-2 mt-0.5">
-              <span className="text-lg font-black text-indigo-700 dark:text-indigo-300">
+              <span className="text-lg font-black text-black dark:text-white">
                 {totalSubmissionsCount}
               </span>
-              <span className="text-[11px] text-indigo-600/70 dark:text-indigo-400 font-light">
+              <span className="text-[11px] text-neutral-500 font-light">
                 generados
               </span>
             </div>
@@ -508,7 +508,7 @@ export const ProgramsAndEventsManager: React.FC<ProgramsAndEventsManagerProps> =
                 : 'text-gray-600 dark:text-neutral-400 hover:text-black dark:hover:text-white'
             }`}
           >
-            <Calendar className="w-3.5 h-3.5 text-indigo-500" />
+            <Calendar className="w-3.5 h-3.5 text-neutral-700 dark:text-neutral-300" />
             <span>Eventos y Talleres</span>
             <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-gray-200 dark:bg-neutral-700 font-mono">
               {safeEvents.length}
@@ -525,36 +525,11 @@ export const ProgramsAndEventsManager: React.FC<ProgramsAndEventsManagerProps> =
                 : 'text-gray-600 dark:text-neutral-400 hover:text-black dark:hover:text-white'
             }`}
           >
-            <BookOpen className="w-3.5 h-3.5 text-emerald-500" />
+            <BookOpen className="w-3.5 h-3.5 text-neutral-700 dark:text-neutral-300" />
             <span>Sesiones de Consultoría</span>
-            <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 font-mono">
+            <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-neutral-200 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-300 font-mono">
               {programNodes.length} Módulos
             </span>
-          </button>
-
-          {/* Pestaña Editor */}
-          <button
-            type="button"
-            onClick={() => {
-              if (!editingEventId && safeEvents.length > 0) {
-                handleOpenEditEvent(safeEvents[0]);
-              } else {
-                setActiveSubTab('editor');
-              }
-            }}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
-              activeSubTab === 'editor'
-                ? 'bg-white dark:bg-neutral-800 text-black dark:text-white shadow-xs'
-                : 'text-gray-600 dark:text-neutral-400 hover:text-black dark:hover:text-white'
-            }`}
-          >
-            <Edit3 className="w-3.5 h-3.5 text-amber-500" />
-            <span>Editor del Taller</span>
-            {editingEventId && (
-              <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400">
-                Editando
-              </span>
-            )}
           </button>
 
           {/* Pestaña Cuadernos Descargables */}
@@ -567,9 +542,9 @@ export const ProgramsAndEventsManager: React.FC<ProgramsAndEventsManagerProps> =
                 : 'text-gray-600 dark:text-neutral-400 hover:text-black dark:hover:text-white'
             }`}
           >
-            <Award className="w-3.5 h-3.5 text-emerald-500" />
+            <Award className="w-3.5 h-3.5 text-neutral-700 dark:text-neutral-300" />
             <span>Cuadernos y Memorias</span>
-            <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 font-mono">
+            <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-neutral-200 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-300 font-mono">
               PDF
             </span>
           </button>
@@ -584,7 +559,7 @@ export const ProgramsAndEventsManager: React.FC<ProgramsAndEventsManagerProps> =
                 : 'text-gray-600 dark:text-neutral-400 hover:text-black dark:hover:text-white'
             }`}
           >
-            <Users className="w-3.5 h-3.5 text-blue-500" />
+            <Users className="w-3.5 h-3.5 text-neutral-700 dark:text-neutral-300" />
             <span>Asistentes & Sala Meet</span>
             <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-gray-200 dark:bg-neutral-700 font-mono">
               {safeRegistrations.length}
@@ -597,7 +572,7 @@ export const ProgramsAndEventsManager: React.FC<ProgramsAndEventsManagerProps> =
           <button
             type="button"
             onClick={handleOpenCreateEvent}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-50 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 text-xs font-semibold cursor-pointer shrink-0"
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-black dark:bg-white text-white dark:text-black hover:bg-neutral-800 dark:hover:bg-neutral-200 text-xs font-semibold cursor-pointer shrink-0 transition-all shadow-xs"
           >
             <Plus className="w-3.5 h-3.5" />
             <span>Crear Taller</span>

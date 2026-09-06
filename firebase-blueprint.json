@@ -372,7 +372,7 @@
         },
         "status": {
           "type": "string",
-          "enum": ["pending", "verified", "rejected"]
+          "enum": ["pending", "approved", "verified", "rejected"]
         },
         "unlockedModule": {
           "type": "string",

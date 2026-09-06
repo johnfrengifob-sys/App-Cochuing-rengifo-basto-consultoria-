@@ -231,23 +231,23 @@ export const AdminMeetWorkshopsManager: React.FC<AdminMeetWorkshopsManagerProps>
       )}
 
       {/* SALA VIRTUAL GOOGLE MEET CENTRAL */}
-      <div className="p-6 rounded-3xl bg-linear-to-br from-neutral-900 via-indigo-950 to-neutral-900 text-white shadow-xl relative overflow-hidden border border-indigo-900/50">
-        <div className="absolute right-0 top-0 w-80 h-80 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="p-6 rounded-3xl banner-executive text-white shadow-xl relative overflow-hidden">
+        <div className="absolute right-0 top-0 w-80 h-80 bg-white/5 rounded-full blur-3xl pointer-events-none" />
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-2">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/20 border border-indigo-400/30 text-indigo-300 text-xs font-semibold backdrop-blur-md">
-              <Radio className="w-3.5 h-3.5 animate-pulse text-indigo-400" />
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/20 text-neutral-300 text-xs font-semibold backdrop-blur-md">
+              <Radio className="w-3.5 h-3.5 animate-pulse text-rose-400" />
               <span>Sala Google Meet</span>
             </div>
-            <h3 className="text-xl md:text-2xl font-black tracking-tight text-white flex items-center gap-2.5">
+            <h3 className="text-xl md:text-2xl font-bold tracking-tight text-white flex items-center gap-2.5">
               <span>Encuentros y Talleres</span>
             </h3>
             <p className="text-xs md:text-sm text-neutral-300 font-light max-w-2xl leading-relaxed">
               Enlace centralizado de Google Meet configurado para las transmisiones en vivo, talleres de profundización, conversatorios quincenales y sesiones grupales sincrónicas.
             </p>
 
-            <div className="pt-2 flex items-center gap-2 text-xs font-mono text-indigo-200">
-              <LinkIcon className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
+            <div className="pt-2 flex items-center gap-2 text-xs font-mono text-neutral-300">
+              <LinkIcon className="w-3.5 h-3.5 text-neutral-400 shrink-0" />
               <span className="truncate max-w-md bg-white/10 px-2.5 py-1 rounded-lg border border-white/10">
                 {masterMeetUrl}
               </span>
@@ -262,9 +262,9 @@ export const AdminMeetWorkshopsManager: React.FC<AdminMeetWorkshopsManagerProps>
               rel="noopener noreferrer"
               className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-white text-black hover:bg-neutral-100 text-xs font-bold transition-all shadow-md cursor-pointer group"
             >
-              <Video className="w-4 h-4 text-indigo-600 group-hover:scale-110 transition-transform" />
+              <Video className="w-4 h-4 text-black group-hover:scale-110 transition-transform" />
               <span>Ingresar a la Sala Meet</span>
-              <ExternalLink className="w-3.5 h-3.5 text-neutral-400" />
+              <ExternalLink className="w-3.5 h-3.5 text-neutral-500" />
             </a>
 
             <button
@@ -341,8 +341,8 @@ export const AdminMeetWorkshopsManager: React.FC<AdminMeetWorkshopsManagerProps>
       <div className="p-6 rounded-3xl bg-white dark:bg-[#18181B] border border-gray-200 dark:border-neutral-800 shadow-sm space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-100 dark:border-indigo-900/60 text-[10px] font-semibold text-indigo-700 dark:text-indigo-300 uppercase tracking-wider mb-1">
-              <Calendar className="w-3 h-3 text-indigo-600" />
+            <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full bg-neutral-100 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-[10px] font-semibold text-neutral-800 dark:text-neutral-200 uppercase tracking-wider mb-1">
+              <Calendar className="w-3 h-3 text-neutral-600 dark:text-neutral-300" />
               <span>Programación Pedagógica en Vivo</span>
             </div>
             <h4 className="text-lg font-bold text-black dark:text-white">
@@ -506,7 +506,7 @@ export const AdminMeetWorkshopsManager: React.FC<AdminMeetWorkshopsManagerProps>
                       href={meetUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold transition-all cursor-pointer shadow-2xs"
+                      className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-black text-white dark:bg-white dark:text-black hover:bg-neutral-800 dark:hover:bg-neutral-200 text-xs font-semibold transition-all cursor-pointer shadow-2xs"
                     >
                       <Video className="w-3.5 h-3.5" />
                       <span>Abrir Meet</span>

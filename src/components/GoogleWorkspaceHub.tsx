@@ -656,11 +656,11 @@ export const GoogleWorkspaceHub: React.FC<GoogleWorkspaceHubProps> = ({
       {activeTab === 'brain' && (
         <div className="space-y-6 animate-fade-in">
           {/* Header Description & Search */}
-          <div className="glass-panel-sheer rounded-3xl p-6 sm:p-8 shadow-2xs space-y-5 border-purple-200/70 dark:border-purple-900/50">
+          <div className="glass-panel-sheer rounded-3xl p-6 sm:p-8 shadow-2xs space-y-5 border-neutral-200/80 dark:border-neutral-800">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div className="space-y-1">
-                <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full bg-purple-100 dark:bg-purple-900/60 text-purple-700 dark:text-purple-300 text-[10px] font-bold uppercase tracking-wider">
-                  <Brain className="w-3 h-3" />
+                <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full bg-neutral-100 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-200 text-[10px] font-bold uppercase tracking-wider">
+                  <Brain className="w-3 h-3 text-neutral-600 dark:text-neutral-400" />
                   <span>Base de Conocimiento Central RBC</span>
                 </div>
                 <h3 className="text-xl font-bold text-black dark:text-white">
@@ -678,7 +678,7 @@ export const GoogleWorkspaceHub: React.FC<GoogleWorkspaceHubProps> = ({
                 <button
                   type="button"
                   onClick={() => setShowGenerateModal(true)}
-                  className="px-4 py-2.5 rounded-2xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold transition-colors flex items-center gap-1.5 shadow-sm"
+                  className="px-4 py-2.5 rounded-2xl bg-black dark:bg-white text-white dark:text-black hover:bg-neutral-800 dark:hover:bg-neutral-200 text-xs font-semibold transition-all flex items-center gap-1.5 shadow-xs cursor-pointer"
                 >
                   <Plus className="w-3.5 h-3.5" />
                   <span>Crear Nuevo</span>
@@ -686,7 +686,7 @@ export const GoogleWorkspaceHub: React.FC<GoogleWorkspaceHubProps> = ({
                 <button
                   type="button"
                   onClick={() => setShowLinkModal(true)}
-                  className="px-4 py-2.5 rounded-2xl border border-purple-200 dark:border-purple-800 bg-white dark:bg-neutral-900 hover:bg-purple-50 dark:hover:bg-purple-950/40 text-purple-800 dark:text-purple-300 text-xs font-bold transition-colors flex items-center gap-1.5"
+                  className="px-4 py-2.5 rounded-2xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-800 dark:text-neutral-200 text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer shadow-xs"
                 >
                   <Link2 className="w-3.5 h-3.5" />
                   <span>Vincular Link</span>
@@ -703,7 +703,7 @@ export const GoogleWorkspaceHub: React.FC<GoogleWorkspaceHubProps> = ({
                   placeholder="Buscar en el cerebro por título, etiqueta, axioma o cliente..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-9 pr-4 py-2 rounded-2xl bg-white dark:bg-neutral-900 border border-gray-200 dark:border-neutral-800 text-xs font-medium focus:ring-1 focus:ring-purple-500 outline-none"
+                  className="w-full pl-9 pr-4 py-2 rounded-2xl bg-white dark:bg-neutral-900 border border-gray-200 dark:border-neutral-800 text-xs font-medium focus:ring-1 focus:ring-black dark:focus:ring-white outline-none"
                 />
               </div>
 
@@ -735,7 +735,7 @@ export const GoogleWorkspaceHub: React.FC<GoogleWorkspaceHubProps> = ({
               .map((doc) => (
                 <div
                   key={doc.id}
-                  className="card-solid-white rounded-3xl p-5 hover:border-purple-300 dark:hover:border-purple-700/60 transition-all flex flex-col justify-between shadow-2xs hover:shadow-md space-y-4"
+                  className="card-solid-white rounded-3xl p-5 hover:border-neutral-400 dark:hover:border-neutral-600 transition-all flex flex-col justify-between shadow-2xs hover:shadow-md space-y-4"
                 >
                   <div className="space-y-3">
                     {/* Top Row: Category Badge + Options */}
@@ -787,9 +787,9 @@ export const GoogleWorkspaceHub: React.FC<GoogleWorkspaceHubProps> = ({
 
                     {/* Content Snippet / Axiomas */}
                     {doc.contentSnippet && (
-                      <div className="p-3 rounded-2xl bg-purple-50/40 dark:bg-purple-950/20 border border-purple-100 dark:border-purple-900/40 text-[11px] text-purple-900 dark:text-purple-300 font-normal italic space-y-1">
-                        <div className="font-bold uppercase tracking-wider text-[9px] text-purple-700 dark:text-purple-400 flex items-center gap-1 not-italic">
-                          <Sparkles className="w-3 h-3" />
+                      <div className="p-3 rounded-2xl bg-neutral-50 dark:bg-neutral-900/80 border border-neutral-200/80 dark:border-neutral-800 text-[11px] text-neutral-800 dark:text-neutral-200 font-normal italic space-y-1">
+                        <div className="font-bold uppercase tracking-wider text-[9px] text-neutral-600 dark:text-neutral-400 flex items-center gap-1 not-italic">
+                          <Sparkles className="w-3 h-3 text-neutral-500" />
                           <span>Axioma / Resumen para IA:</span>
                         </div>
                         <p className="line-clamp-3 leading-snug">{doc.contentSnippet}</p>
@@ -828,7 +828,7 @@ export const GoogleWorkspaceHub: React.FC<GoogleWorkspaceHubProps> = ({
                         <button
                           type="button"
                           onClick={() => copyKnowledgeSnippet(doc)}
-                          className="p-2 text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-950/40 rounded-xl transition-colors"
+                          className="p-2 text-neutral-600 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-xl transition-colors cursor-pointer"
                           title="Copiar axiomas y resumen para nutrir al Copiloto Gemini"
                         >
                           <Brain className="w-3.5 h-3.5" />
@@ -980,10 +980,10 @@ export const GoogleWorkspaceHub: React.FC<GoogleWorkspaceHubProps> = ({
               <button
                 type="button"
                 onClick={() => setSelectedCategoryFilter('knowledge_base')}
-                className={`px-3 py-1.5 rounded-xl text-[11px] font-semibold transition-colors ${
+                className={`px-3 py-1.5 rounded-xl text-[11px] font-semibold transition-colors cursor-pointer ${
                   selectedCategoryFilter === 'knowledge_base'
-                    ? 'bg-purple-600 text-white'
-                    : 'bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300'
+                    ? 'bg-black text-white dark:bg-white dark:text-black shadow-xs'
+                    : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 hover:text-black dark:hover:text-white'
                 }`}
               >
                 Cerebro
@@ -1344,11 +1344,11 @@ export const GoogleWorkspaceHub: React.FC<GoogleWorkspaceHubProps> = ({
             </div>
 
             {/* Active Form Card with Links */}
-            <div className="p-6 rounded-2xl bg-gradient-to-br from-purple-50/50 to-white dark:from-purple-950/20 dark:to-neutral-900 border border-purple-200/60 dark:border-purple-800/40 space-y-4">
+            <div className="p-6 rounded-2xl bg-white dark:bg-neutral-900 border border-neutral-200/80 dark:border-neutral-800 space-y-4 shadow-2xs">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-2xl bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300 flex items-center justify-center font-bold">
-                    <FileText className="w-5 h-5" />
+                  <div className="w-10 h-10 rounded-2xl bg-neutral-100 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-200 flex items-center justify-center font-bold">
+                    <FileText className="w-5 h-5 text-neutral-700 dark:text-neutral-300" />
                   </div>
                   <div>
                     <h4 className="text-sm font-bold text-black dark:text-white">
@@ -1372,7 +1372,7 @@ export const GoogleWorkspaceHub: React.FC<GoogleWorkspaceHubProps> = ({
                   href={config.forms.activeFormUrl || 'https://docs.google.com/forms/u/0/'}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-semibold text-xs transition-colors inline-flex items-center gap-1.5 shadow-xs"
+                  className="px-4 py-2 rounded-xl bg-black dark:bg-white text-white dark:text-black hover:bg-neutral-800 dark:hover:bg-neutral-200 font-semibold text-xs transition-colors inline-flex items-center gap-1.5 shadow-xs"
                 >
                   <ExternalLink className="w-3.5 h-3.5" />
                   <span>Ver Formulario (Vista Coachee)</span>
@@ -1640,8 +1640,8 @@ export const GoogleWorkspaceHub: React.FC<GoogleWorkspaceHubProps> = ({
             </button>
 
             <div>
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 text-[10px] font-bold uppercase tracking-wider mb-2">
-                <Sparkles className="w-3.5 h-3.5" />
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-neutral-100 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-200 text-[10px] font-bold uppercase tracking-wider mb-2">
+                <Sparkles className="w-3.5 h-3.5 text-neutral-600 dark:text-neutral-400" />
                 <span>Creación Asistida</span>
               </div>
               <h3 className="text-xl font-bold text-black dark:text-white">
@@ -1671,10 +1671,10 @@ export const GoogleWorkspaceHub: React.FC<GoogleWorkspaceHubProps> = ({
                         'El lenguaje es generativo: crea realidades a través de declaraciones, peticiones, ofertas y promesas.',
                     })
                   }
-                  className="p-2.5 rounded-xl border border-gray-200 dark:border-neutral-800 hover:border-purple-400 dark:hover:border-purple-600 text-left transition-colors bg-gray-50/60 dark:bg-neutral-900/60"
+                  className="p-2.5 rounded-xl border border-gray-200 dark:border-neutral-800 hover:border-black dark:hover:border-white text-left transition-colors bg-gray-50/60 dark:bg-neutral-900/60 cursor-pointer"
                 >
                   <div className="font-semibold text-black dark:text-white flex items-center gap-1.5">
-                    <Brain className="w-3.5 h-3.5 text-purple-500" />
+                    <Brain className="w-3.5 h-3.5 text-neutral-700 dark:text-neutral-300" />
                     <span>Marco Teórico OSAR</span>
                   </div>
                   <div className="text-[10px] text-gray-400 line-clamp-1">Google Doc • Cerebro</div>
@@ -1861,8 +1861,8 @@ export const GoogleWorkspaceHub: React.FC<GoogleWorkspaceHubProps> = ({
 
               {/* Content Snippet for AI Brain */}
               <div>
-                <label className="text-[11px] font-bold uppercase tracking-wider text-purple-600 dark:text-purple-400 block mb-1 flex items-center gap-1">
-                  <Brain className="w-3 h-3" />
+                <label className="text-[11px] font-bold uppercase tracking-wider text-neutral-800 dark:text-neutral-200 block mb-1 flex items-center gap-1">
+                  <Brain className="w-3 h-3 text-neutral-600 dark:text-neutral-400" />
                   <span>Axiomas o Puntos Clave para el Cerebro de la App</span>
                 </label>
                 <textarea
@@ -1870,7 +1870,7 @@ export const GoogleWorkspaceHub: React.FC<GoogleWorkspaceHubProps> = ({
                   placeholder="Pega las distinciones, axiomas o conceptos ontológicos que el Copiloto Gemini debe recordar..."
                   value={genSnippet}
                   onChange={(e) => setGenSnippet(e.target.value)}
-                  className="w-full px-4 py-2 rounded-2xl bg-purple-50/30 dark:bg-purple-950/20 border border-purple-200/80 dark:border-purple-900/40 text-xs font-medium focus:ring-1 focus:ring-purple-500 outline-none"
+                  className="w-full px-4 py-2 rounded-2xl bg-neutral-50 dark:bg-neutral-900 border border-neutral-200/80 dark:border-neutral-800 text-xs font-medium focus:ring-1 focus:ring-black dark:focus:ring-white outline-none"
                 />
               </div>
 
@@ -1885,7 +1885,7 @@ export const GoogleWorkspaceHub: React.FC<GoogleWorkspaceHubProps> = ({
                     placeholder="OSAR, Liderazgo, ICF, Sesión 1"
                     value={genTags}
                     onChange={(e) => setGenTags(e.target.value)}
-                    className="w-full px-4 py-2 rounded-2xl bg-white dark:bg-neutral-900 border border-gray-200 dark:border-neutral-800 text-xs font-medium focus:ring-1 focus:ring-purple-500 outline-none"
+                    className="w-full px-4 py-2 rounded-2xl bg-white dark:bg-neutral-900 border border-gray-200 dark:border-neutral-800 text-xs font-medium focus:ring-1 focus:ring-black dark:focus:ring-white outline-none"
                   />
                 </div>
 
@@ -1896,7 +1896,7 @@ export const GoogleWorkspaceHub: React.FC<GoogleWorkspaceHubProps> = ({
                   <select
                     value={genClientUid}
                     onChange={(e) => setGenClientUid(e.target.value)}
-                    className="w-full px-3 py-2 rounded-2xl bg-white dark:bg-neutral-900 border border-gray-200 dark:border-neutral-800 text-xs font-medium focus:ring-1 focus:ring-purple-500 outline-none"
+                    className="w-full px-3 py-2 rounded-2xl bg-white dark:bg-neutral-900 border border-gray-200 dark:border-neutral-800 text-xs font-medium focus:ring-1 focus:ring-black dark:focus:ring-white outline-none"
                   >
                     <option value="">General / Cerebro Master</option>
                     {clients.map((c) => (
@@ -1915,13 +1915,13 @@ export const GoogleWorkspaceHub: React.FC<GoogleWorkspaceHubProps> = ({
                   id="genBrainCheck"
                   checked={genIsBrain}
                   onChange={(e) => setGenIsBrain(e.target.checked)}
-                  className="rounded text-purple-600 focus:ring-purple-500"
+                  className="rounded text-black dark:text-white focus:ring-black dark:focus:ring-white"
                 />
                 <label
                   htmlFor="genBrainCheck"
                   className="text-xs font-semibold text-black dark:text-white cursor-pointer select-none flex items-center gap-1.5"
                 >
-                  <Brain className="w-3.5 h-3.5 text-purple-500" />
+                  <Brain className="w-3.5 h-3.5 text-neutral-700 dark:text-neutral-300" />
                   <span>Incorporar este documento al Cerebro de la App</span>
                 </label>
               </div>
@@ -1931,13 +1931,13 @@ export const GoogleWorkspaceHub: React.FC<GoogleWorkspaceHubProps> = ({
                 <button
                   type="button"
                   onClick={() => setShowGenerateModal(false)}
-                  className="px-4 py-2 rounded-xl text-xs font-semibold text-gray-500 hover:text-black dark:hover:text-white"
+                  className="px-4 py-2 rounded-xl text-xs font-semibold text-gray-500 hover:text-black dark:hover:text-white cursor-pointer"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
-                  className="px-6 py-2.5 rounded-2xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs transition-colors flex items-center gap-2 shadow-md cursor-pointer"
+                  className="px-6 py-2.5 rounded-2xl bg-black dark:bg-white text-white dark:text-black hover:bg-neutral-800 dark:hover:bg-neutral-200 font-semibold text-xs transition-all flex items-center gap-2 shadow-md cursor-pointer"
                 >
                   <Sparkles className="w-4 h-4" />
                   <span>Generar y Abrir en Google Workspace</span>
@@ -2050,8 +2050,8 @@ export const GoogleWorkspaceHub: React.FC<GoogleWorkspaceHubProps> = ({
 
               {/* Snippet / Axioms */}
               <div>
-                <label className="text-[11px] font-bold uppercase tracking-wider text-purple-600 dark:text-purple-400 block mb-1 flex items-center gap-1">
-                  <Brain className="w-3 h-3" />
+                <label className="text-[11px] font-bold uppercase tracking-wider text-neutral-800 dark:text-neutral-200 block mb-1 flex items-center gap-1">
+                  <Brain className="w-3 h-3 text-neutral-600 dark:text-neutral-400" />
                   <span>Resumen / Axiomas para el Cerebro de la App (Opcional)</span>
                 </label>
                 <textarea
@@ -2059,7 +2059,7 @@ export const GoogleWorkspaceHub: React.FC<GoogleWorkspaceHubProps> = ({
                   placeholder="Sintetiza aquí los aprendizajes o axiomas para alimentar las respuestas del Copiloto de IA..."
                   value={linkSnippet}
                   onChange={(e) => setLinkSnippet(e.target.value)}
-                  className="w-full px-4 py-2 rounded-2xl bg-purple-50/30 dark:bg-purple-950/20 border border-purple-200/80 dark:border-purple-900/40 text-xs font-medium focus:ring-1 focus:ring-purple-500 outline-none"
+                  className="w-full px-4 py-2 rounded-2xl bg-neutral-50 dark:bg-neutral-900 border border-neutral-200/80 dark:border-neutral-800 text-xs font-medium focus:ring-1 focus:ring-black dark:focus:ring-white outline-none"
                 />
               </div>
 
@@ -2074,7 +2074,7 @@ export const GoogleWorkspaceHub: React.FC<GoogleWorkspaceHubProps> = ({
                     placeholder="Liderazgo, Conversaciones, 2026"
                     value={linkTags}
                     onChange={(e) => setLinkTags(e.target.value)}
-                    className="w-full px-4 py-2 rounded-2xl bg-white dark:bg-neutral-900 border border-gray-200 dark:border-neutral-800 text-xs font-medium focus:ring-1 focus:ring-purple-500 outline-none"
+                    className="w-full px-4 py-2 rounded-2xl bg-white dark:bg-neutral-900 border border-gray-200 dark:border-neutral-800 text-xs font-medium focus:ring-1 focus:ring-black dark:focus:ring-white outline-none"
                   />
                 </div>
 
@@ -2085,7 +2085,7 @@ export const GoogleWorkspaceHub: React.FC<GoogleWorkspaceHubProps> = ({
                   <select
                     value={linkClientUid}
                     onChange={(e) => setLinkClientUid(e.target.value)}
-                    className="w-full px-3 py-2 rounded-2xl bg-white dark:bg-neutral-900 border border-gray-200 dark:border-neutral-800 text-xs font-medium focus:ring-1 focus:ring-purple-500 outline-none"
+                    className="w-full px-3 py-2 rounded-2xl bg-white dark:bg-neutral-900 border border-gray-200 dark:border-neutral-800 text-xs font-medium focus:ring-1 focus:ring-black dark:focus:ring-white outline-none"
                   >
                     <option value="">General / Cerebro Master</option>
                     {clients.map((c) => (
@@ -2104,13 +2104,13 @@ export const GoogleWorkspaceHub: React.FC<GoogleWorkspaceHubProps> = ({
                   id="linkBrainCheck"
                   checked={linkIsBrain}
                   onChange={(e) => setLinkIsBrain(e.target.checked)}
-                  className="rounded text-purple-600 focus:ring-purple-500"
+                  className="rounded text-black dark:text-white focus:ring-black dark:focus:ring-white"
                 />
                 <label
                   htmlFor="linkBrainCheck"
                   className="text-xs font-semibold text-black dark:text-white cursor-pointer select-none flex items-center gap-1.5"
                 >
-                  <Brain className="w-3.5 h-3.5 text-purple-500" />
+                  <Brain className="w-3.5 h-3.5 text-neutral-700 dark:text-neutral-300" />
                   <span>Vincular al Cerebro de la App</span>
                 </label>
               </div>
@@ -2170,7 +2170,7 @@ export const GoogleWorkspaceHub: React.FC<GoogleWorkspaceHubProps> = ({
                   required
                   value={editingDoc.name}
                   onChange={(e) => setEditingDoc({ ...editingDoc, name: e.target.value })}
-                  className="w-full px-4 py-2.5 rounded-2xl bg-white dark:bg-neutral-900 border border-gray-200 dark:border-neutral-800 text-xs font-medium focus:ring-1 focus:ring-purple-500 outline-none"
+                  className="w-full px-4 py-2.5 rounded-2xl bg-white dark:bg-neutral-900 border border-gray-200 dark:border-neutral-800 text-xs font-medium focus:ring-1 focus:ring-black dark:focus:ring-white outline-none"
                 />
               </div>
 
@@ -2183,7 +2183,7 @@ export const GoogleWorkspaceHub: React.FC<GoogleWorkspaceHubProps> = ({
                   required
                   value={editingDoc.webViewLink}
                   onChange={(e) => setEditingDoc({ ...editingDoc, webViewLink: e.target.value })}
-                  className="w-full px-4 py-2.5 rounded-2xl bg-white dark:bg-neutral-900 border border-gray-200 dark:border-neutral-800 text-xs font-medium focus:ring-1 focus:ring-purple-500 outline-none"
+                  className="w-full px-4 py-2.5 rounded-2xl bg-white dark:bg-neutral-900 border border-gray-200 dark:border-neutral-800 text-xs font-medium focus:ring-1 focus:ring-black dark:focus:ring-white outline-none"
                 />
               </div>
 
@@ -2199,7 +2199,7 @@ export const GoogleWorkspaceHub: React.FC<GoogleWorkspaceHubProps> = ({
                       category: e.target.value as WorkspaceDocumentCategory,
                     })
                   }
-                  className="w-full px-3.5 py-2.5 rounded-2xl bg-white dark:bg-neutral-900 border border-gray-200 dark:border-neutral-800 text-xs font-medium focus:ring-1 focus:ring-purple-500 outline-none"
+                  className="w-full px-3.5 py-2.5 rounded-2xl bg-white dark:bg-neutral-900 border border-gray-200 dark:border-neutral-800 text-xs font-medium focus:ring-1 focus:ring-black dark:focus:ring-white outline-none"
                 >
                   <option value="knowledge_base">🧠 Cerebro Ontológico (Base de Conocimiento)</option>
                   <option value="doc">📄 Google Docs (Guías, Protocolos y Modelos)</option>
@@ -2219,19 +2219,19 @@ export const GoogleWorkspaceHub: React.FC<GoogleWorkspaceHubProps> = ({
                   rows={2}
                   value={editingDoc.description || ''}
                   onChange={(e) => setEditingDoc({ ...editingDoc, description: e.target.value })}
-                  className="w-full px-4 py-2 rounded-2xl bg-white dark:bg-neutral-900 border border-gray-200 dark:border-neutral-800 text-xs font-medium focus:ring-1 focus:ring-purple-500 outline-none"
+                  className="w-full px-4 py-2 rounded-2xl bg-white dark:bg-neutral-900 border border-gray-200 dark:border-neutral-800 text-xs font-medium focus:ring-1 focus:ring-black dark:focus:ring-white outline-none"
                 />
               </div>
 
               <div>
-                <label className="text-[11px] font-bold uppercase tracking-wider text-purple-600 dark:text-purple-400 block mb-1">
+                <label className="text-[11px] font-bold uppercase tracking-wider text-neutral-800 dark:text-neutral-200 block mb-1">
                   Axiomas / Resumen para Cerebro IA
                 </label>
                 <textarea
                   rows={2}
                   value={editingDoc.contentSnippet || ''}
                   onChange={(e) => setEditingDoc({ ...editingDoc, contentSnippet: e.target.value })}
-                  className="w-full px-4 py-2 rounded-2xl bg-purple-50/30 dark:bg-purple-950/20 border border-purple-200/80 dark:border-purple-900/40 text-xs font-medium focus:ring-1 focus:ring-purple-500 outline-none"
+                  className="w-full px-4 py-2 rounded-2xl bg-neutral-50 dark:bg-neutral-900 border border-neutral-200/80 dark:border-neutral-800 text-xs font-medium focus:ring-1 focus:ring-black dark:focus:ring-white outline-none"
                 />
               </div>
 
@@ -2243,7 +2243,7 @@ export const GoogleWorkspaceHub: React.FC<GoogleWorkspaceHubProps> = ({
                   onChange={(e) =>
                     setEditingDoc({ ...editingDoc, isBrainDocument: e.target.checked })
                   }
-                  className="rounded text-purple-600 focus:ring-purple-500"
+                  className="rounded text-black dark:text-white focus:ring-black dark:focus:ring-white"
                 />
                 <label
                   htmlFor="editBrainCheck"
@@ -2257,7 +2257,7 @@ export const GoogleWorkspaceHub: React.FC<GoogleWorkspaceHubProps> = ({
                 <button
                   type="button"
                   onClick={() => setEditingDoc(null)}
-                  className="px-4 py-2 rounded-xl text-xs font-semibold text-gray-500 hover:text-black dark:hover:text-white"
+                  className="px-4 py-2 rounded-xl text-xs font-semibold text-gray-500 hover:text-black dark:hover:text-white cursor-pointer"
                 >
                   Cancelar
                 </button>

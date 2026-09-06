@@ -717,21 +717,21 @@ export const ClientDirectoryTable: React.FC<ClientDirectoryTableProps> = ({
                         )}
                       </td>
 
-                      {/* 5. Progreso en Nodo (1 a 6) */}
+                      {/* 5. Progreso en Nodo */}
                       <td className="py-4 px-4 text-center">
                         <div className="inline-flex flex-col items-center gap-1">
                           <span className="font-semibold text-xs text-black dark:text-white">
-                            Nodo {progress}/6
+                            Nodo {progress}/{OntologicalStore.getProgramNodes().length || 12}
                           </span>
                           {/* Mini Progress bar */}
                           <div className="w-16 h-1.5 rounded-full bg-gray-100 dark:bg-neutral-800 overflow-hidden">
                             <div
                               className="h-full bg-black dark:bg-white rounded-full transition-all"
-                              style={{ width: `${(progress / 6) * 100}%` }}
+                              style={{ width: `${Math.min(100, (progress / (OntologicalStore.getProgramNodes().length || 12)) * 100)}%` }}
                             />
                           </div>
                           <span className="text-[9px] text-gray-400 font-light">
-                            {Math.round((progress / 6) * 100)}% completado
+                            {Math.round((progress / (OntologicalStore.getProgramNodes().length || 12)) * 100)}% completado
                           </span>
                         </div>
                       </td>

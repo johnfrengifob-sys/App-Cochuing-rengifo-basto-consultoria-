@@ -55,6 +55,7 @@ export const EventRegistrationLanding: React.FC<EventRegistrationLandingProps> =
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showIcfModal, setShowIcfModal] = useState(false);
   const [showPrivacyDetails, setShowPrivacyDetails] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
 
   // Success / Confirmed Pass State
   const [confirmedRegistration, setConfirmedRegistration] = useState<{
@@ -108,12 +109,13 @@ export const EventRegistrationLanding: React.FC<EventRegistrationLandingProps> =
 
   const handleSubmitRegistration = (e: React.FormEvent) => {
     e.preventDefault();
+    setFormError(null);
     if (!name.trim() || !email.trim() || !phone.trim()) {
-      alert('Por favor completa todos los campos requeridos para reservar tu cupo.');
+      setFormError('Por favor completa todos los campos requeridos para reservar tu cupo.');
       return;
     }
     if (!acceptedTerms) {
-      alert('Debes aceptar los términos de confidencialidad ICF y privacidad para continuar.');
+      setFormError('Debes aceptar los términos de confidencialidad ICF y privacidad para continuar.');
       return;
     }
 
@@ -329,6 +331,12 @@ export const EventRegistrationLanding: React.FC<EventRegistrationLandingProps> =
                 </div>
 
                 <form onSubmit={handleSubmitRegistration} className="space-y-4">
+                  {formError && (
+                    <div className="p-3 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/60 text-xs text-rose-700 dark:text-rose-300 flex items-center gap-2">
+                      <AlertCircle className="w-4 h-4 shrink-0 text-rose-600 dark:text-rose-400" />
+                      <span>{formError}</span>
+                    </div>
+                  )}
                   <div>
                     <label className="block text-[11px] font-semibold uppercase tracking-wider text-black dark:text-white mb-1">
                       Nombre Completo *

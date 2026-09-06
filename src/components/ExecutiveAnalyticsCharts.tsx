@@ -213,14 +213,14 @@ export const ExecutiveAnalyticsCharts: React.FC<ExecutiveAnalyticsChartsProps> =
         <div className="glass-panel-opal p-5 rounded-2xl border border-white/60 dark:border-white/10 shadow-2xs">
           <div className="flex items-center justify-between text-gray-500 dark:text-neutral-400 mb-2">
             <span className="text-xs font-medium uppercase tracking-wider">Proyección de Cierre</span>
-            <div className="p-1.5 rounded-lg bg-purple-50 dark:bg-purple-950/50 text-purple-600 dark:text-purple-400">
+            <div className="p-1.5 rounded-lg bg-neutral-100 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-200">
               <Sparkles className="w-4 h-4" />
             </div>
           </div>
           <div className="text-xl sm:text-2xl font-black text-black dark:text-white font-mono tracking-tight">
             {formatCOP(metrics.projectedRevenue)}
           </div>
-          <div className="text-[11px] text-purple-600 dark:text-purple-400 mt-2 font-medium">
+          <div className="text-[11px] text-emerald-600 dark:text-emerald-400 mt-2 font-medium">
             +35% estimado con Bre-B Nu
           </div>
         </div>

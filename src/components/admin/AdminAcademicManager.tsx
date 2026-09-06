@@ -155,15 +155,15 @@ export const AdminAcademicManager: React.FC<AdminAcademicManagerProps> = ({
   return (
     <div className="space-y-6">
       {/* Top Banner Header */}
-      <div className="p-6 rounded-3xl bg-linear-to-r from-neutral-900 via-indigo-950 to-neutral-900 text-white shadow-xl relative overflow-hidden">
-        <div className="absolute right-0 top-0 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="p-6 rounded-3xl banner-executive text-white shadow-xl relative overflow-hidden">
+        <div className="absolute right-0 top-0 w-96 h-96 bg-white/5 rounded-full blur-3xl pointer-events-none" />
         <div className="relative z-10 flex flex-col gap-5">
           <div className="space-y-2 max-w-3xl">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/20 text-indigo-300 text-xs font-semibold backdrop-blur-md">
-              <ShieldCheck className="w-3.5 h-3.5" />
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/20 text-neutral-300 text-xs font-semibold backdrop-blur-md">
+              <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
               <span>Eventos y Sesiones</span>
             </div>
-            <h2 className="text-xl md:text-2xl font-black tracking-tight text-white flex items-center gap-2.5">
+            <h2 className="text-xl md:text-2xl font-bold tracking-tight text-white flex items-center gap-2.5">
               <span>Eventos y Sesiones</span>
             </h2>
             <p className="text-xs md:text-sm text-neutral-300 font-light leading-relaxed">
@@ -177,7 +177,7 @@ export const AdminAcademicManager: React.FC<AdminAcademicManagerProps> = ({
               <span className="text-[9px] text-rose-300 block font-medium uppercase tracking-wider">
                 Talleres
               </span>
-              <span className="text-base font-black font-mono text-white">{rawEvents.length}</span>
+              <span className="text-base font-bold font-mono text-white">{rawEvents.length}</span>
               <span className="text-[9px] text-neutral-300 block">{homeEventsCount} en Home</span>
             </div>
 
@@ -185,7 +185,7 @@ export const AdminAcademicManager: React.FC<AdminAcademicManagerProps> = ({
               <span className="text-[9px] text-emerald-300 block font-medium uppercase tracking-wider">
                 Módulos de Sesión
               </span>
-              <span className="text-base font-black font-mono text-white">{programNodes.length}</span>
+              <span className="text-base font-bold font-mono text-white">{programNodes.length}</span>
               <span className="text-[9px] text-emerald-200 block">Estructurados</span>
             </div>
 
@@ -193,25 +193,25 @@ export const AdminAcademicManager: React.FC<AdminAcademicManagerProps> = ({
               <span className="text-[9px] text-amber-300 block font-medium uppercase tracking-wider">
                 Asistentes
               </span>
-              <span className="text-base font-black font-mono text-white">{rawRegistrations.length}</span>
+              <span className="text-base font-bold font-mono text-white">{rawRegistrations.length}</span>
               <span className="text-[9px] text-neutral-300 block">Pre-Registros</span>
             </div>
 
             <div className="p-2.5 rounded-2xl bg-white/10 backdrop-blur-md border border-white/10 text-center">
-              <span className="text-[9px] text-sky-300 block font-medium uppercase tracking-wider">
+              <span className="text-[9px] text-neutral-300 block font-medium uppercase tracking-wider">
                 Activadores
               </span>
-              <span className="text-base font-black font-mono text-white">
+              <span className="text-base font-bold font-mono text-white">
                 {activeTriggersCount} / {automatedTriggers.length}
               </span>
               <span className="text-[9px] text-neutral-300 block">Reglas Activas</span>
             </div>
 
             <div className="p-2.5 rounded-2xl bg-white/10 backdrop-blur-md border border-white/10 text-center col-span-2 sm:col-span-1">
-              <span className="text-[9px] text-indigo-300 block font-medium uppercase tracking-wider">
+              <span className="text-[9px] text-neutral-300 block font-medium uppercase tracking-wider">
                 Automatizaciones
               </span>
-              <span className="text-base font-black font-mono text-white">4 Fases</span>
+              <span className="text-base font-bold font-mono text-white">4 Fases</span>
               <span className="text-[9px] text-neutral-300 block">Make.com Webhooks</span>
             </div>
           </div>
@@ -278,7 +278,7 @@ export const AdminAcademicManager: React.FC<AdminAcademicManagerProps> = ({
               : 'text-neutral-600 dark:text-neutral-400 hover:text-black dark:hover:text-white hover:bg-white/70 dark:hover:bg-neutral-800/70'
           }`}
         >
-          <Link2 className="w-3.5 h-3.5 text-indigo-500" />
+          <Link2 className="w-3.5 h-3.5 text-neutral-700 dark:text-neutral-300" />
           <span>Cerebro & Enlaces</span>
         </button>
 

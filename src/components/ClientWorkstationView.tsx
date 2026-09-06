@@ -1603,16 +1603,16 @@ export const ClientWorkstationView: React.FC<ClientWorkstationViewProps> = ({
 
                 <div>
                   <label className="block text-xs font-semibold text-gray-700 dark:text-neutral-300 mb-1">
-                    Avance de Nodos (1 al 6)
+                    Avance de Nodos (1 al {PROGRAM_NODES.length})
                   </label>
                   <select
                     value={editClientData.programProgress}
                     onChange={(e) => setEditClientData({ ...editClientData, programProgress: Number(e.target.value) })}
                     className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 dark:border-neutral-700 bg-gray-50/50 dark:bg-[#151518] text-xs font-medium text-black dark:text-white focus:outline-hidden"
                   >
-                    {[1, 2, 3, 4, 5, 6].map((st) => (
-                      <option key={st} value={st}>
-                        Nodo {st}: {PROGRAM_NODES.find((n) => n.step === st)?.sessionTitle || `Paso ${st}`}
+                    {PROGRAM_NODES.map((node) => (
+                      <option key={node.step} value={node.step}>
+                        Nodo {node.step}: {node.sessionTitle}
                       </option>
                     ))}
                   </select>

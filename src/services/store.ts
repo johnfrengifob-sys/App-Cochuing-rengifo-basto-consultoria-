@@ -3829,10 +3829,11 @@ export class OntologicalStore {
 
   static advanceClientProgress(clientId: string): User | null {
     const users = this.getUsers();
+    const maxNodes = this.getProgramNodes().length || 12;
     let updatedUser: User | null = null;
     const updatedUsers = users.map((u) => {
       if (u.uid === clientId) {
-        const nextProgress = Math.min(6, (u.programProgress || 1) + 1);
+        const nextProgress = Math.min(maxNodes, (u.programProgress || 1) + 1);
         updatedUser = { ...u, programProgress: nextProgress };
         return updatedUser;
       }
@@ -3850,18 +3851,19 @@ export class OntologicalStore {
     paymentStatus: PaymentStatus = 'Completado'
   ): User | null {
     const users = this.getUsers();
+    const totalNodes = this.getProgramNodes().length || 12;
     let updatedUser: User | null = null;
     const updatedUsers = users.map((u) => {
       if (u.uid === clientId) {
         const currentProgress = u.programProgress || 1;
         // If targetStep is greater than currentProgress, set it;
-        // if targetStep <= currentProgress, advance by at least 1 step (up to 6)
+        // if targetStep <= currentProgress, advance by at least 1 step (up to totalNodes)
         const resolvedStep =
           targetStep > currentProgress
             ? targetStep
-            : Math.min(6, currentProgress + 1);
+            : Math.min(totalNodes, currentProgress + 1);
 
-        const nextProgress = Math.min(6, Math.max(currentProgress, resolvedStep));
+        const nextProgress = Math.min(totalNodes, Math.max(currentProgress, resolvedStep));
         updatedUser = {
           ...u,
           programProgress: nextProgress,
@@ -3877,10 +3879,10 @@ export class OntologicalStore {
       this.saveUsers(updatedUsers);
 
       // Apertura de estado en las sesiones pagadas
-      const isFullPlan = paymentStatus === 'Pago Único' || targetStep === 6;
+      const isFullPlan = paymentStatus === 'Pago Único' || targetStep >= totalNodes;
       const stepsToOpen = isFullPlan
-        ? [1, 2, 3, 4, 5, 6]
-        : Array.from({ length: targetStep }, (_, i) => i + 1);
+        ? Array.from({ length: totalNodes }, (_, i) => i + 1)
+        : Array.from({ length: Math.min(totalNodes, targetStep) }, (_, i) => i + 1);
 
       this.openSessionsForPayment(
         clientId,
@@ -4024,10 +4026,11 @@ export class OntologicalStore {
     const targetPaymentStatus: PaymentStatus =
       approvedReq.planType === 'full' ? 'Pago Único' : 'Cuota 1 de 2';
 
-    // If full plan, unlock all 6 steps of the 12-week program; otherwise target step
+    // If full plan, unlock all steps of the program; otherwise target step
+    const totalProgramSteps = this.getProgramNodes().length || 12;
     const stepToUnlock =
       approvedReq.planType === 'full'
-        ? 6
+        ? totalProgramSteps
         : Math.max(approvedReq.targetStep || 2, 2);
 
     const updatedUser = this.unlockNodeForClient(
@@ -4039,7 +4042,7 @@ export class OntologicalStore {
     // Apertura de estado en las sesiones que pagó:
     const stepsToOpen: number[] =
       approvedReq.planType === 'full'
-        ? [1, 2, 3, 4, 5, 6]
+        ? Array.from({ length: totalProgramSteps }, (_, i) => i + 1)
         : [approvedReq.targetStep || stepToUnlock];
 
     const openedSessions = this.openSessionsForPayment(
@@ -4133,9 +4136,10 @@ export class OntologicalStore {
     };
 
     // Apertura de estado en las sesiones pagadas
+    const totalProgramSteps = this.getProgramNodes().length || 12;
     const stepsToOpen: number[] =
       planType === 'full'
-        ? [1, 2, 3, 4, 5, 6]
+        ? Array.from({ length: totalProgramSteps }, (_, i) => i + 1)
         : [targetStep];
 
     const openedSessions = this.openSessionsForPayment(
@@ -4200,13 +4204,16 @@ export class OntologicalStore {
     const progress = user?.programProgress || 1;
     const now = Date.now();
     const sessions: Session[] = [];
+    const programNodes = this.getProgramNodes();
+    const sessionCount = programNodes.length > 0 ? programNodes.length : 6;
 
-    for (let num = 1; num <= 6; num++) {
+    for (let num = 1; num <= sessionCount; num++) {
       const isPast = num < progress;
       const diffDays = (num - progress) * 14;
       const sessionDate = new Date(now + diffDays * 24 * 60 * 60 * 1000).toISOString();
       const status: 'completed' | 'scheduled' = isPast ? 'completed' : 'scheduled';
-      const isMilestone = num === 4 || num === 8 || num === 12;
+      const isMilestone = num === 4 || num === 8 || num === 12 || num === sessionCount;
+      const nodeInfo = programNodes.find((n) => n.step === num);
 
       sessions.push({
         id: `sess-${clientId}-${num}`,
@@ -4217,10 +4224,12 @@ export class OntologicalStore {
         status: status,
         isPaid: true,
         durationMinutes: 60,
-        ontologicalFocus: isMilestone ? 'Cierre de Ciclo & Cosecha Ontológica' : 'Acompañamiento del Emergente (Lienzo en Blanco)',
-        notes: isMilestone
-          ? 'Cierre de ciclo: integración de descubrimientos, patrones y cambios de perspectiva observados.'
-          : 'Pregunta de apertura: "¿Qué es importante para ti traer a este espacio hoy?". Espacio abierto al emergente.',
+        ontologicalFocus: nodeInfo?.sessionTitle || (isMilestone ? 'Cierre de Ciclo & Cosecha Ontológica' : 'Acompañamiento del Emergente (Lienzo en Blanco)'),
+        notes: nodeInfo
+          ? `Sesión ${num}: ${nodeInfo.level} • ${nodeInfo.sessionTitle}`
+          : (isMilestone
+            ? 'Cierre de ciclo: integración de descubrimientos, patrones y cambios de perspectiva observados.'
+            : 'Pregunta de apertura: "¿Qué es importante para ti traer a este espacio hoy?". Espacio abierto al emergente.'),
         programNodeStep: num,
       });
     }
