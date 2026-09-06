@@ -7,6 +7,7 @@ import {
   Link2,
   CalendarCheck2,
   Layers,
+  BookOpen,
 } from 'lucide-react';
 import { OntologicalStore } from '../../services/store';
 import {
@@ -139,6 +140,7 @@ export const AdminAcademicManager: React.FC<AdminAcademicManagerProps> = ({
   const rawEvents = propEvents || OntologicalStore.getCronogramaEvents();
   const rawRegistrations = propRegistrations || OntologicalStore.getEventRegistrations();
   const rawSessions = OntologicalStore.getSessions();
+  const programNodes = OntologicalStore.getProgramNodes();
   const automatedTriggers = OntologicalStore.getAutomatedTriggers();
   const activeTriggersCount = automatedTriggers.filter((t) => t.enabled).length;
   const homeEventsCount = rawEvents.filter((e) => e.showOnHome !== false).length;
@@ -181,10 +183,10 @@ export const AdminAcademicManager: React.FC<AdminAcademicManagerProps> = ({
 
             <div className="p-2.5 rounded-2xl bg-white/10 backdrop-blur-md border border-white/10 text-center">
               <span className="text-[9px] text-emerald-300 block font-medium uppercase tracking-wider">
-                Sesiones 1 a 1
+                Módulos de Sesión
               </span>
-              <span className="text-base font-black font-mono text-white">{rawSessions.length}</span>
-              <span className="text-[9px] text-emerald-200 block">Sincronizadas</span>
+              <span className="text-base font-black font-mono text-white">{programNodes.length}</span>
+              <span className="text-[9px] text-emerald-200 block">Estructurados</span>
             </div>
 
             <div className="p-2.5 rounded-2xl bg-white/10 backdrop-blur-md border border-white/10 text-center">
@@ -235,7 +237,7 @@ export const AdminAcademicManager: React.FC<AdminAcademicManagerProps> = ({
           <span>Eventos y Talleres ({rawEvents.length})</span>
         </button>
 
-        {/* Tab 2: Sesiones 1 a 1 */}
+        {/* Tab 2: Módulos de Sesiones de Consultoría */}
         <button
           type="button"
           onClick={() => {
@@ -248,8 +250,8 @@ export const AdminAcademicManager: React.FC<AdminAcademicManagerProps> = ({
               : 'text-neutral-600 dark:text-neutral-400 hover:text-black dark:hover:text-white hover:bg-white/70 dark:hover:bg-neutral-800/70'
           }`}
         >
-          <CalendarCheck2 className="w-3.5 h-3.5 text-emerald-500" />
-          <span>Sesiones de Consultoría ({rawSessions.length})</span>
+          <BookOpen className="w-3.5 h-3.5 text-emerald-500" />
+          <span>Sesiones de Consultoría ({programNodes.length} Módulos)</span>
         </button>
 
         {/* Tab 3: Activadores */}

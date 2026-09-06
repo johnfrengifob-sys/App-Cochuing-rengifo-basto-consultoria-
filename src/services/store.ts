@@ -2292,6 +2292,167 @@ export class OntologicalStore {
     this.save(STORAGE_KEYS.PROGRAM_NODES, nodes);
     PROGRAM_NODES.length = 0;
     PROGRAM_NODES.push(...nodes);
+    try {
+      window.dispatchEvent(new CustomEvent('rbc-program-nodes-updated'));
+    } catch {
+      // ignore
+    }
+  }
+
+  static addProgramNode(nodeData: Partial<ProgramNodeInfo>): ProgramNodeInfo {
+    const nodes = this.getProgramNodes();
+    const maxStep = nodes.reduce((max, n) => Math.max(max, n.step || 0), 0);
+    const newStep = maxStep + 1;
+    const newNode: ProgramNodeInfo = {
+      step: newStep,
+      weekLabel: nodeData.weekLabel || `Módulo ${newStep}`,
+      level: nodeData.level || 'Nivel I',
+      levelTitle: nodeData.levelTitle || 'Módulo de Consultoría',
+      sessionTitle: nodeData.sessionTitle || `Nuevo Módulo de Sesión ${newStep}`,
+      objective: nodeData.objective || 'Definir el objetivo ontológico de transformación para esta sesión.',
+      tangibleOutcomes: nodeData.tangibleOutcomes && nodeData.tangibleOutcomes.length > 0
+        ? [...nodeData.tangibleOutcomes]
+        : ['Identificación precisa del quiebre y nuevas posibilidades de acción.'],
+      keyQuestion: nodeData.keyQuestion || '¿Qué quiebre esencial requiere tu atención consciente hoy?',
+      levelPrompt: nodeData.levelPrompt || 'Registra las distinciones y reflexiones clave de este espacio.',
+      methodology: nodeData.methodology || {
+        linguistic: 'Distinciones de habla, actos declarativos y pedidos.',
+        somatic: 'Centramiento, respiración consciente y presencia corporal.',
+        emotional: 'Identificación de estados de ánimo y apertura emocional.',
+      },
+      dailyMicroPractice: nodeData.dailyMicroPractice || {
+        title: 'Práctica de Auto-Observación Consciente',
+        description: 'Pausa reflexiva de 90 segundos para registrar evidencias de cambio en la rutina diaria.',
+        frequency: 'Diaria (1 vez al día)',
+      },
+      studyMaterials: nodeData.studyMaterials || [
+        {
+          title: `Guía de Indagación - Módulo ${newStep}`,
+          type: 'Guía de Trabajo',
+          pages: '4 páginas',
+          description: 'Herramienta para profundizar la distinción de la sesión.',
+        },
+      ],
+      reflectiveQuestions: nodeData.reflectiveQuestions || [
+        '¿Qué juicio maestro limitante descubriste durante esta sesión?',
+        '¿A qué nueva acción te comprometes a partir de este descubrimiento?',
+      ],
+      roadmapSteps: [
+        {
+          id: `step-${newStep}-1`,
+          stepNumber: 1,
+          title: 'Centramiento Somático y Apertura',
+          durationMinutes: 10,
+          phaseType: 'Centramiento & Apertura',
+          description: 'Alineación corporal y fijación de intención.',
+        },
+        {
+          id: `step-${newStep}-2`,
+          stepNumber: 2,
+          title: 'Exploración del Quiebre Ontológico',
+          durationMinutes: 30,
+          phaseType: 'Dinámica Vivencial',
+          description: 'Indagación sobre narrativas, juicios y posibilidades.',
+        },
+        {
+          id: `step-${newStep}-3`,
+          stepNumber: 3,
+          title: 'Cierre y Compromisos de Acción',
+          durationMinutes: 20,
+          phaseType: 'Cierre & Acuerdos',
+          description: 'Declaración de acuerdos y micro-práctica de integración.',
+        },
+      ],
+    };
+    nodes.push(newNode);
+    this.saveProgramNodes(nodes);
+
+    // Also register questionnaire for this step if not exists
+    const questionnaires = this.getQuestionnaires();
+    const exists = questionnaires.some(
+      (q) => q.targetType === 'workshop_node' && q.targetStep === newStep
+    );
+    if (!exists) {
+      const newQ: DynamicQuestionnaire = {
+        id: `questionnaire-step-${newStep}`,
+        targetType: 'workshop_node',
+        targetStep: newStep,
+        title: `Cuestionario Reflexivo - ${newNode.sessionTitle}`,
+        description: `Batería de preguntas de auto-observación para el Módulo ${newStep}.`,
+        updatedAt: new Date().toISOString(),
+        questions: [
+          {
+            id: `q-${newStep}-1`,
+            questionnaireId: `questionnaire-step-${newStep}`,
+            order: 1,
+            label: '¿Qué emoción o sensación corporal predominó en ti al abordar este tema?',
+            placeholder: 'Describe las sensaciones físicas y el tono emocional...',
+            helperText: 'Registra sin juzgar lo que tu cuerpo experimentó.',
+            type: 'textarea',
+            required: true,
+            category: 'somático',
+          },
+          {
+            id: `q-${newStep}-2`,
+            questionnaireId: `questionnaire-step-${newStep}`,
+            order: 2,
+            label: '¿Cuál es el juicio maestro o narrativa aprendida que descubres detrás de esta situación?',
+            placeholder: 'Identifica el juicio que condiciona tu actuar...',
+            helperText: 'Distingue entre el hecho fáctico y tu interpretación subjetiva.',
+            type: 'textarea',
+            required: true,
+            category: 'lingüístico',
+          },
+          {
+            id: `q-${newStep}-3`,
+            questionnaireId: `questionnaire-step-${newStep}`,
+            order: 3,
+            label: '¿Cuál es tu nivel de claridad respecto a las nuevas acciones a seguir?',
+            type: 'rating_scale',
+            required: true,
+            scaleMin: 1,
+            scaleMax: 5,
+            scaleMinLabel: 'Muy difuso',
+            scaleMaxLabel: 'Claridad total',
+            category: 'metodológico',
+          },
+          {
+            id: `q-${newStep}-4`,
+            questionnaireId: `questionnaire-step-${newStep}`,
+            order: 4,
+            label: 'Declara aquí el compromiso o nuevo límite que asumes para esta semana:',
+            placeholder: 'Escribe tu declaración en primera persona ("Elijo...", "Declaro que...")',
+            helperText: 'Asegúrate de que sea una acción concreta y medible.',
+            type: 'textarea',
+            required: true,
+            category: 'acuerdos',
+          },
+        ],
+      };
+      questionnaires.push(newQ);
+      this.saveQuestionnaires(questionnaires);
+    }
+
+    return newNode;
+  }
+
+  static deleteProgramNode(step: number): boolean {
+    const nodes = this.getProgramNodes();
+    if (nodes.length <= 1) return false;
+    const filtered = nodes.filter((n) => n.step !== step);
+    this.saveProgramNodes(filtered);
+    return true;
+  }
+
+  static duplicateProgramNode(step: number): ProgramNodeInfo | null {
+    const nodes = this.getProgramNodes();
+    const source = nodes.find((n) => n.step === step);
+    if (!source) return null;
+    return this.addProgramNode({
+      ...source,
+      sessionTitle: `${source.sessionTitle} (Copia)`,
+      weekLabel: `${source.weekLabel} (Copia)`,
+    });
   }
 
   static updateProgramNode(

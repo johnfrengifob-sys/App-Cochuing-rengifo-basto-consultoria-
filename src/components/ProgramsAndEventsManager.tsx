@@ -76,17 +76,21 @@ export const ProgramsAndEventsManager: React.FC<ProgramsAndEventsManagerProps> =
   const safeEvents = Array.isArray(cronogramaEvents) ? cronogramaEvents : [];
   const safeRegistrations = Array.isArray(eventRegistrations) ? eventRegistrations : [];
 
-  // Track sessions from store for real-time badge and synchronization
+  // Track sessions and session modules from store for real-time badge and synchronization
   const [allSessions, setAllSessions] = useState(() => OntologicalStore.getSessions());
+  const [programNodes, setProgramNodes] = useState(() => OntologicalStore.getProgramNodes());
 
   useEffect(() => {
     const handleSessionsUpdate = () => {
       setAllSessions(OntologicalStore.getSessions());
+      setProgramNodes(OntologicalStore.getProgramNodes());
     };
     window.addEventListener('rbc-sessions-updated', handleSessionsUpdate);
+    window.addEventListener('rbc-program-nodes-updated', handleSessionsUpdate);
     window.addEventListener('storage', handleSessionsUpdate);
     return () => {
       window.removeEventListener('rbc-sessions-updated', handleSessionsUpdate);
+      window.removeEventListener('rbc-program-nodes-updated', handleSessionsUpdate);
       window.removeEventListener('storage', handleSessionsUpdate);
     };
   }, []);
@@ -510,7 +514,7 @@ export const ProgramsAndEventsManager: React.FC<ProgramsAndEventsManagerProps> =
             </span>
           </button>
 
-          {/* Pestaña Sesiones de Consultoría (1 a 1) */}
+          {/* Pestaña Sesiones de Consultoría (Módulos & Contenido) */}
           <button
             type="button"
             onClick={() => setActiveSubTab('sessions')}
@@ -520,10 +524,10 @@ export const ProgramsAndEventsManager: React.FC<ProgramsAndEventsManagerProps> =
                 : 'text-gray-600 dark:text-neutral-400 hover:text-black dark:hover:text-white'
             }`}
           >
-            <CalendarCheck2 className="w-3.5 h-3.5 text-emerald-500" />
+            <BookOpen className="w-3.5 h-3.5 text-emerald-500" />
             <span>Sesiones de Consultoría</span>
             <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 font-mono">
-              {allSessions.length}
+              {programNodes.length} Módulos
             </span>
           </button>
 

@@ -150,15 +150,15 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
     OntologicalStore.getCronogramaEvents()
   );
 
-  // Estados de navegación e interacción modular (acordeón largo)
+  // Estados de navegación e interacción modular (todos cerrados por defecto al entrar)
   const [expandedModules, setExpandedModules] = useState<{
     rutaGrafica: boolean;
     talleres: boolean;
     bitacoras: boolean;
   }>({
-    rutaGrafica: true, // Módulo principal desplegado por defecto
-    talleres: true,    // Taller desplegado para visualización inmediata
-    bitacoras: false,
+    rutaGrafica: false, // Inicia cerrado
+    talleres: false,    // Inicia cerrado
+    bitacoras: false,   // Inicia cerrado
   });
 
   const toggleModule = (moduleKey: 'rutaGrafica' | 'talleres' | 'bitacoras') => {
@@ -511,10 +511,24 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
     PDFGenerator.generateSessionWorkbookPDF(form, activeUser, sess || currentSession);
   };
 
-  // Contar talleres acreditados
+  // Contar talleres acreditados y sesiones completadas para el avance integral
   const accreditedWorkshopsCount = useMemo(() => {
     return CORE_WORKSHOPS.filter((w) => isWorkshopAttended(w)).length;
   }, [activeUser, cronogramaEvents, currentSessionNumber]);
+
+  const completedSessionsCount = useMemo(() => {
+    const completedExplicit = sessions.filter((s) => s.status === 'completed').length;
+    // Si el participante está en el encuentro N, ha completado al menos N-1 encuentros
+    const progressiveCount = Math.max(0, currentSessionNumber - 1);
+    return Math.min(12, Math.max(completedExplicit, progressiveCount));
+  }, [sessions, currentSessionNumber]);
+
+  const totalJourneyItems = 12 + CORE_WORKSHOPS.length; // 12 sesiones + 3 talleres = 15 hitos totales
+  const completedJourneyItems = completedSessionsCount + accreditedWorkshopsCount;
+  const overallProgressPercentage = Math.min(
+    100,
+    Math.round((completedJourneyItems / totalJourneyItems) * 100)
+  );
 
   return (
     <div className="relative isolate min-h-screen bg-transparent text-black dark:text-white font-sans antialiased selection:bg-black selection:text-white dark:selection:bg-white dark:selection:text-black">
@@ -524,14 +538,14 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
         style={{ backgroundImage: `url(${whiteWavesBg})` }}
       >
         {/* Velo de calibración óptica con transparencia graduada */}
-        <div className="absolute inset-0 bg-white/70 dark:bg-neutral-950/80 backdrop-blur-[2px]" />
+        <div className="absolute inset-0 bg-white/60 dark:bg-neutral-950/75 backdrop-blur-[1px]" />
       </div>
 
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-10 space-y-7">
         {/* ========================================================================= */}
         {/* 1. CABECERA LIMPIA: SIN BOTONES DE PAGO NI PROGRESO INDEPENDIENTE          */}
         {/* ========================================================================= */}
-        <header className="rounded-3xl border border-black/10 dark:border-white/10 bg-white/35 dark:bg-neutral-950/45 backdrop-blur-md p-6 sm:p-7 space-y-5 shadow-xs transition-all">
+        <header className="rounded-3xl border border-black/10 dark:border-white/10 bg-white/20 dark:bg-neutral-950/30 backdrop-blur-xl p-6 sm:p-7 space-y-5 shadow-xs transition-all">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex items-center gap-4">
               <div className="relative">
@@ -567,7 +581,7 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
                 <button
                   type="button"
                   onClick={onLogout}
-                  className="text-xs text-neutral-500 hover:text-black dark:hover:text-white transition-colors cursor-pointer px-3 py-1.5 rounded-xl hover:bg-neutral-100 dark:hover:bg-neutral-900 border border-transparent hover:border-black/10 dark:hover:border-white/10"
+                  className="text-xs text-neutral-500 hover:text-black dark:hover:text-white transition-colors cursor-pointer px-3 py-1.5 rounded-xl hover:bg-white/40 dark:hover:bg-neutral-900/40 border border-transparent hover:border-black/10 dark:hover:border-white/10"
                 >
                   Cerrar sesión
                 </button>
@@ -575,16 +589,16 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
             </div>
           </div>
 
-          {/* BLOQUE CENTRAL UNIFICADO DE PROGRESO CON ACENTO SUTIL DE COLOR */}
-          <div className="p-4 rounded-2xl border border-black/10 dark:border-white/10 bg-white/45 dark:bg-neutral-900/50 backdrop-blur-md flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs shadow-xs">
+          {/* BLOQUE CENTRAL UNIFICADO DE PROGRESO CON ACENTO SUTIL DE COLOR Y LÍNEA CIRCULAR DE AVANCE */}
+          <div className="p-4 sm:p-5 rounded-2xl border border-black/10 dark:border-white/10 bg-white/25 dark:bg-neutral-900/35 backdrop-blur-md flex flex-col md:flex-row md:items-center justify-between gap-4 text-xs shadow-xs">
             <div className="flex items-center gap-2.5 flex-wrap">
               {/* Indicador pulsante con acento según el ciclo */}
               <span className={`w-2 h-2 rounded-full ${activeCycleAccent.dot} shrink-0 animate-pulse`} />
-              <span className="font-bold text-black dark:text-white">
+              <span className="font-bold text-black dark:text-white text-xs sm:text-sm">
                 Ciclo {currentCycle} de 3
               </span>
               <span className="text-neutral-400 dark:text-neutral-600">•</span>
-              <span className="text-neutral-700 dark:text-neutral-300 font-medium">
+              <span className="text-neutral-700 dark:text-neutral-300 font-medium text-xs sm:text-sm">
                 Encuentro {currentSessionNumber} de 12
               </span>
               <span className="text-neutral-400 dark:text-neutral-600">•</span>
@@ -593,12 +607,63 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
               </span>
             </div>
 
-            <div className="flex items-center gap-2">
-              <span
-                className={`text-[10px] font-mono px-2.5 py-0.5 rounded-full font-medium border ${activeCycleAccent.border} ${activeCycleAccent.softBg} ${activeCycleAccent.badgeText}`}
-              >
-                {isCycleMilestone ? '★ Cosecha del Ciclo' : 'Lienzo en Blanco'}
-              </span>
+            {/* LÍNEA CIRCULAR DE AVANCE DEL PROCESO COMPLETO (SESIONES + TALLERES) */}
+            <div className="flex items-center gap-3 self-start md:self-auto pt-2.5 md:pt-0 border-t md:border-t-0 border-black/5 dark:border-white/5">
+              {/* Anillo circular de carga con porcentaje */}
+              <div className="relative w-11 h-11 flex items-center justify-center shrink-0">
+                <svg className="w-11 h-11 -rotate-90 transform" viewBox="0 0 44 44">
+                  {/* Anillo de fondo */}
+                  <circle
+                    cx="22"
+                    cy="22"
+                    r="17"
+                    className="text-black/10 dark:text-white/10"
+                    strokeWidth="3.5"
+                    stroke="currentColor"
+                    fill="transparent"
+                  />
+                  {/* Anillo de avance dinámico */}
+                  <circle
+                    cx="22"
+                    cy="22"
+                    r="17"
+                    className={`${activeCycleAccent.text} transition-all duration-700 ease-out`}
+                    strokeWidth="3.5"
+                    strokeDasharray={2 * Math.PI * 17}
+                    strokeDashoffset={
+                      2 * Math.PI * 17 - (2 * Math.PI * 17 * overallProgressPercentage) / 100
+                    }
+                    strokeLinecap="round"
+                    stroke="currentColor"
+                    fill="transparent"
+                  />
+                </svg>
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <span className="text-[10px] font-mono font-bold text-black dark:text-white">
+                    {overallProgressPercentage}%
+                  </span>
+                </div>
+              </div>
+
+              {/* Indicadores contextuales: detalle de avance sumando talleres y sesiones */}
+              <div className="space-y-0.5">
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">
+                    Avance Integral
+                  </span>
+                  <span
+                    className={`text-[9px] font-mono px-2 py-0.5 rounded-full font-medium border ${activeCycleAccent.border} ${activeCycleAccent.softBg} ${activeCycleAccent.badgeText}`}
+                  >
+                    {isCycleMilestone ? '★ Cosecha del Ciclo' : 'Lienzo en Blanco'}
+                  </span>
+                </div>
+                <div className="text-[11px] text-neutral-600 dark:text-neutral-300 font-mono">
+                  <strong className="text-black dark:text-white font-semibold">
+                    {completedJourneyItems} de {totalJourneyItems}
+                  </strong>{' '}
+                  hitos ({completedSessionsCount}/12 sesiones + {accreditedWorkshopsCount}/3 talleres)
+                </div>
+              </div>
             </div>
           </div>
         </header>
@@ -608,7 +673,7 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
         {/* ========================================================================= */}
         <section
           id="tu-momento-actual"
-          className="rounded-3xl border border-black/10 dark:border-white/15 bg-white/35 dark:bg-neutral-950/45 backdrop-blur-md overflow-hidden shadow-sm hover:shadow-md transition-shadow"
+          className="rounded-3xl border border-black/10 dark:border-white/15 bg-white/20 dark:bg-neutral-950/30 backdrop-blur-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow"
         >
           {/* Fotografía a color curada */}
           <div className="relative h-56 sm:h-64 w-full overflow-hidden border-b border-black/10 dark:border-white/10">
@@ -635,8 +700,8 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
 
           {/* Contenido Interior del Lienzo */}
           <div className="p-6 sm:p-8 space-y-6">
-            {/* Pregunta de Apertura Ontológica: Contenedor blanco limpio sin línea de color */}
-            <div className="p-5 rounded-2xl bg-white dark:bg-neutral-900 border border-black/10 dark:border-white/10 space-y-2 shadow-xs">
+            {/* Pregunta de Apertura Ontológica: Contenedor limpio con transparencia elegante */}
+            <div className="p-5 rounded-2xl bg-white/30 dark:bg-neutral-900/40 backdrop-blur-md border border-black/10 dark:border-white/10 space-y-2 shadow-xs">
               <div>
                 <span className="text-[10px] font-bold uppercase tracking-widest text-neutral-500 dark:text-neutral-400 block font-mono">
                   Pregunta de Apertura Ontológica
@@ -654,7 +719,7 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
 
             {/* Cosecha de Ciclo (Hito de 4 sesiones) */}
             {isCycleMilestone && (
-              <div className="p-5 rounded-2xl bg-neutral-100/90 dark:bg-neutral-900/90 border border-black dark:border-white space-y-3 backdrop-blur-xs">
+              <div className="p-5 rounded-2xl bg-white/30 dark:bg-neutral-900/45 backdrop-blur-md border border-black dark:border-white space-y-3">
                 <div className="flex items-center gap-2">
                   <Sparkles className="w-4 h-4 text-amber-500" />
                   <h3 className="text-xs font-bold text-black dark:text-white uppercase tracking-wider font-mono">
@@ -669,7 +734,7 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
                   <li>¿Cómo se ha transformado tu manera de observar tus quiebres y decisiones?</li>
                 </ul>
                 {currentPostForm?.cycleHarvest && (
-                  <div className="mt-2 p-3.5 rounded-xl bg-white dark:bg-black border border-black/15 dark:border-white/15 text-xs text-neutral-800 dark:text-neutral-200 font-light shadow-2xs">
+                  <div className="mt-2 p-3.5 rounded-xl bg-white/40 dark:bg-black/40 backdrop-blur-sm border border-black/15 dark:border-white/15 text-xs text-neutral-800 dark:text-neutral-200 font-light shadow-2xs">
                     <strong className="font-semibold text-black dark:text-white block mb-0.5">
                       Tu cosecha registrada:
                     </strong>
@@ -687,7 +752,7 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {/* Próximo Encuentro */}
-                <div className="p-5 rounded-2xl border border-black/10 dark:border-white/10 bg-white/40 dark:bg-neutral-900/40 backdrop-blur-sm space-y-3">
+                <div className="p-5 rounded-2xl border border-black/10 dark:border-white/10 bg-white/25 dark:bg-neutral-900/35 backdrop-blur-md space-y-3">
                   <div className="flex items-center gap-2 text-xs font-bold text-black dark:text-white">
                     <Clock className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                     <span>Tu Próxima Sesión</span>
@@ -710,7 +775,7 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
                       href="https://calendar.google.com"
                       target="_blank"
                       rel="noreferrer"
-                      className="px-4 py-2 rounded-xl border border-black/15 dark:border-white/15 bg-white/80 dark:bg-black/80 text-xs font-semibold hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors inline-flex items-center gap-1.5 cursor-pointer"
+                      className="px-4 py-2 rounded-xl border border-black/15 dark:border-white/15 bg-white/50 dark:bg-black/50 backdrop-blur-xs text-xs font-semibold hover:bg-white/70 dark:hover:bg-neutral-800 transition-colors inline-flex items-center gap-1.5 cursor-pointer"
                     >
                       <Calendar className="w-3.5 h-3.5 text-neutral-500" />
                       <span>Reprogramar</span>
@@ -719,7 +784,7 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
                 </div>
 
                 {/* Memoria de Sesión & Cuestionario Posterior */}
-                <div className="p-5 rounded-2xl border border-black/10 dark:border-white/10 bg-white/40 dark:bg-neutral-900/40 backdrop-blur-sm space-y-3">
+                <div className="p-5 rounded-2xl border border-black/10 dark:border-white/10 bg-white/25 dark:bg-neutral-900/35 backdrop-blur-md space-y-3">
                   <div className="flex items-center gap-2 text-xs font-bold text-black dark:text-white">
                     <FileText className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
                     <span>Memoria y Bitácora Posterior</span>
@@ -754,7 +819,7 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
                       <button
                         type="button"
                         onClick={() => handleOpenBitacora(currentSession)}
-                        className="px-3.5 py-2 rounded-xl border border-black/15 dark:border-white/15 bg-white/80 dark:bg-black/80 text-xs font-semibold hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
+                        className="px-3.5 py-2 rounded-xl border border-black/15 dark:border-white/15 bg-white/50 dark:bg-black/50 backdrop-blur-xs text-xs font-semibold hover:bg-white/70 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
                       >
                         Editar registro
                       </button>
@@ -765,7 +830,7 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
 
               {/* Síntesis del Tema Emergente */}
               {currentPostForm && (
-                <div className="p-4 rounded-2xl border border-black/10 dark:border-white/10 bg-white/40 dark:bg-neutral-900/40 backdrop-blur-sm space-y-3">
+                <div className="p-4 rounded-2xl border border-black/10 dark:border-white/10 bg-white/25 dark:bg-neutral-900/35 backdrop-blur-md space-y-3">
                   <div>
                     <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-500 font-mono">
                       El tema emergente de este encuentro:
@@ -792,12 +857,12 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
         {/* ========================================================================= */}
         {/* 3. MÓDULO 1: TU RUTA GRÁFICA (BOTÓN GENERAL LARGO Y EXPANDIBLE)           */}
         {/* ========================================================================= */}
-        <div className="rounded-3xl border border-black/10 dark:border-white/15 bg-white/35 dark:bg-neutral-950/45 backdrop-blur-md overflow-hidden shadow-sm hover:shadow-md transition-all">
+        <div className="rounded-3xl border border-black/10 dark:border-white/15 bg-white/20 dark:bg-neutral-950/30 backdrop-blur-xl overflow-hidden shadow-sm hover:shadow-md transition-all">
           {/* Botón General Largo de Apertura/Cierre */}
           <button
             type="button"
             onClick={() => toggleModule('rutaGrafica')}
-            className="w-full p-5 sm:p-6 text-left flex items-center justify-between gap-4 cursor-pointer hover:bg-white/40 dark:hover:bg-neutral-900/40 transition-colors select-none group"
+            className="w-full p-5 sm:p-6 text-left flex items-center justify-between gap-4 cursor-pointer hover:bg-white/30 dark:hover:bg-neutral-900/30 transition-colors select-none group"
           >
             <div className="flex items-center gap-4">
               <div className="w-11 h-11 rounded-2xl bg-emerald-500/10 dark:bg-emerald-500/15 border border-emerald-500/25 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 transition-transform group-hover:scale-105">
@@ -863,10 +928,10 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
                           isSelected
                             ? 'ring-2 ring-black dark:ring-white bg-black text-white dark:bg-white dark:text-black border-black dark:border-white shadow-sm'
                             : isCurrent
-                            ? 'bg-white dark:bg-neutral-900 border-black dark:border-white text-black dark:text-white font-semibold shadow-2xs'
+                            ? 'bg-white/80 dark:bg-neutral-900/80 backdrop-blur-xs border-black dark:border-white text-black dark:text-white font-semibold shadow-2xs'
                             : isCompleted
-                            ? 'bg-white/90 dark:bg-neutral-900/80 border-black/15 dark:border-white/15 text-neutral-800 dark:text-neutral-200 hover:border-black/30 dark:hover:border-white/30'
-                            : 'bg-white/40 dark:bg-neutral-900/30 border-black/10 dark:border-white/10 text-neutral-400 dark:text-neutral-500 hover:bg-white/60 dark:hover:bg-neutral-900/50'
+                            ? 'bg-white/50 dark:bg-neutral-900/50 backdrop-blur-xs border-black/15 dark:border-white/15 text-neutral-800 dark:text-neutral-200 hover:border-black/30 dark:hover:border-white/30'
+                            : 'bg-white/25 dark:bg-neutral-900/25 backdrop-blur-xs border-black/10 dark:border-white/10 text-neutral-400 dark:text-neutral-500 hover:bg-white/40 dark:hover:bg-neutral-900/40'
                         }`}
                       >
                         <div className="flex items-center justify-between w-full">
@@ -906,9 +971,9 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
                 </div>
               </div>
 
-              {/* INFORMACIÓN DETALLADA: CONTENEDOR BLANCO LIMPIO SIN LÍNEA DE COLOR */}
+              {/* INFORMACIÓN DETALLADA: CONTENEDOR CON TRANSPARENCIA ELEGANTE */}
               <div
-                className="p-5 sm:p-6 rounded-2xl bg-white dark:bg-neutral-900 border border-black/10 dark:border-white/10 shadow-sm space-y-4 relative overflow-hidden"
+                className="p-5 sm:p-6 rounded-2xl bg-white/30 dark:bg-neutral-900/40 backdrop-blur-md border border-black/10 dark:border-white/10 shadow-sm space-y-4 relative overflow-hidden"
               >
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-black/10 dark:border-white/10">
                   <div className="space-y-0.5">
@@ -917,7 +982,7 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
                         Estación {selectedStationNumber} •{' '}
                         {selectedNodeInfo?.sessionTitle || `Sesión ${selectedStationNumber}`}
                       </span>
-                      <span className="text-[10px] px-2 py-0.5 rounded-full font-mono uppercase bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 border border-black/10 dark:border-white/10">
+                      <span className="text-[10px] px-2 py-0.5 rounded-full font-mono uppercase bg-neutral-100/70 dark:bg-neutral-800/70 text-neutral-700 dark:text-neutral-300 border border-black/10 dark:border-white/10">
                         Ciclo {Math.ceil(selectedStationNumber / 4)}:{' '}
                         {selectedStationNumber % 4 === 0 ? 'Consolidación' : 'Exploración Libre'}
                       </span>
@@ -935,12 +1000,12 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
                         Estación Completada
                       </span>
                     ) : selectedStationNumber === currentSessionNumber ? (
-                      <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-black dark:text-white bg-neutral-100 dark:bg-neutral-800 border border-black/20 dark:border-white/20 px-2.5 py-1 rounded-full">
+                      <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-black dark:text-white bg-white/60 dark:bg-neutral-800/60 backdrop-blur-xs border border-black/20 dark:border-white/20 px-2.5 py-1 rounded-full">
                         <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                         Estación Activa • Encuentro Actual
                       </span>
                     ) : (
-                      <span className="inline-flex items-center gap-1 text-[11px] text-neutral-500 font-mono bg-neutral-50 dark:bg-neutral-800/40 border border-black/5 dark:border-white/5 px-2.5 py-1 rounded-full">
+                      <span className="inline-flex items-center gap-1 text-[11px] text-neutral-500 font-mono bg-white/20 dark:bg-neutral-800/30 border border-black/5 dark:border-white/5 px-2.5 py-1 rounded-full">
                         ○ En tu Ruta Próxima
                       </span>
                     )}
@@ -951,7 +1016,7 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
                 {selectedForm ? (
                   <div className="space-y-3 text-xs">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <div className="p-3.5 rounded-xl bg-neutral-50 dark:bg-neutral-950/60 border border-black/10 dark:border-white/10 space-y-1">
+                      <div className="p-3.5 rounded-xl bg-white/25 dark:bg-neutral-950/40 backdrop-blur-xs border border-black/10 dark:border-white/10 space-y-1">
                         <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-500 font-mono block">
                           Tema Emergente & Quiebre Exploratorio:
                         </span>
@@ -960,7 +1025,7 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
                         </p>
                       </div>
 
-                      <div className="p-3.5 rounded-xl bg-neutral-50 dark:bg-neutral-950/60 border border-black/10 dark:border-white/10 space-y-1">
+                      <div className="p-3.5 rounded-xl bg-white/25 dark:bg-neutral-950/40 backdrop-blur-xs border border-black/10 dark:border-white/10 space-y-1">
                         <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-500 font-mono block">
                           Paso a la Acción & Compromiso Asumido:
                         </span>
@@ -974,7 +1039,7 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
                     </div>
 
                     {selectedForm.discovery && (
-                      <div className="p-3.5 rounded-xl bg-neutral-50 dark:bg-neutral-950/60 border border-black/10 dark:border-white/10 space-y-1">
+                      <div className="p-3.5 rounded-xl bg-white/25 dark:bg-neutral-950/40 backdrop-blur-xs border border-black/10 dark:border-white/10 space-y-1">
                         <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-500 font-mono block">
                           Descubrimiento / Cambio de Perspectiva:
                         </span>
@@ -985,7 +1050,7 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
                     )}
 
                     {selectedForm.cycleHarvest && (
-                      <div className="p-3.5 rounded-xl bg-neutral-950 text-white dark:bg-white dark:text-black space-y-1 shadow-2xs border border-amber-500/30">
+                      <div className="p-3.5 rounded-xl bg-neutral-950/90 text-white dark:bg-white/90 dark:text-black space-y-1 shadow-2xs border border-amber-500/30 backdrop-blur-xs">
                         <span className="text-[10px] font-bold uppercase tracking-widest font-mono block text-amber-400 dark:text-amber-600">
                           ★ Cosecha del Ciclo Registrada:
                         </span>
@@ -1009,7 +1074,7 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
                       <button
                         type="button"
                         onClick={() => handleOpenBitacora(selectedSession)}
-                        className="px-3.5 py-2 rounded-xl border border-black/15 dark:border-white/15 bg-white dark:bg-neutral-800 text-xs font-medium hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors inline-flex items-center gap-1.5 cursor-pointer"
+                        className="px-3.5 py-2 rounded-xl border border-black/15 dark:border-white/15 bg-white/50 dark:bg-neutral-800/60 backdrop-blur-xs text-xs font-medium hover:bg-white/70 dark:hover:bg-neutral-700 transition-colors inline-flex items-center gap-1.5 cursor-pointer"
                       >
                         <FileText className="w-3.5 h-3.5" />
                         <span>Ver / Editar Bitácora Completa</span>
@@ -1035,7 +1100,7 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
                       <button
                         type="button"
                         onClick={() => handleOpenBitacora(selectedSession)}
-                        className="px-4 py-2 rounded-xl border border-black/15 dark:border-white/15 bg-white dark:bg-neutral-800 text-xs font-semibold hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors inline-flex items-center gap-1.5 cursor-pointer"
+                        className="px-4 py-2 rounded-xl border border-black/15 dark:border-white/15 bg-white/50 dark:bg-neutral-800/60 backdrop-blur-xs text-xs font-semibold hover:bg-white/70 dark:hover:bg-neutral-700 transition-colors inline-flex items-center gap-1.5 cursor-pointer"
                       >
                         <FileText className="w-3.5 h-3.5" />
                         <span>Registrar Bitácora de la Sesión</span>
@@ -1047,7 +1112,7 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
                   /* ESTACIÓN INACTIVA: SOLO INFORMACIÓN DE PAGO                      */
                   /* ================================================================ */
                   <div className="space-y-4 text-xs">
-                    <div className="p-4 sm:p-5 rounded-2xl bg-neutral-50 dark:bg-neutral-950/60 border border-black/10 dark:border-white/10 space-y-4">
+                    <div className="p-4 sm:p-5 rounded-2xl bg-white/20 dark:bg-neutral-950/40 backdrop-blur-xs border border-black/10 dark:border-white/10 space-y-4">
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-black/10 dark:border-white/10">
                         <div className="flex items-center gap-2">
                           <span className="w-2.5 h-2.5 rounded-full bg-neutral-400 dark:bg-neutral-500 shrink-0" />
@@ -1062,7 +1127,7 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
 
                       {/* Opciones de Inversión */}
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <div className="p-3.5 rounded-xl border border-black/10 dark:border-white/10 bg-white dark:bg-neutral-900 space-y-1 shadow-2xs">
+                        <div className="p-3.5 rounded-xl border border-black/10 dark:border-white/10 bg-white/30 dark:bg-neutral-900/40 backdrop-blur-xs space-y-1 shadow-2xs">
                           <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-500 font-mono block">
                             Inversión por Ciclo (4 Sesiones)
                           </span>
@@ -1074,7 +1139,7 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
                           </p>
                         </div>
 
-                        <div className="p-3.5 rounded-xl border border-black/10 dark:border-white/10 bg-white dark:bg-neutral-900 space-y-1 shadow-2xs">
+                        <div className="p-3.5 rounded-xl border border-black/10 dark:border-white/10 bg-white/30 dark:bg-neutral-900/40 backdrop-blur-xs space-y-1 shadow-2xs">
                           <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-500 font-mono block">
                             Inversión Integral (12 Sesiones)
                           </span>
@@ -1088,7 +1153,7 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
                       </div>
 
                       {/* Canales Oficiales de Pago */}
-                      <div className="p-3.5 rounded-xl border border-black/10 dark:border-white/10 bg-white dark:bg-neutral-900 space-y-3 shadow-2xs">
+                      <div className="p-3.5 rounded-xl border border-black/10 dark:border-white/10 bg-white/30 dark:bg-neutral-900/40 backdrop-blur-xs space-y-3 shadow-2xs">
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                           <div className="flex items-center gap-2.5">
                             <Smartphone className="w-4 h-4 text-black dark:text-white shrink-0" />
@@ -1109,7 +1174,7 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
                             <button
                               type="button"
                               onClick={handleCopyPaymentKey}
-                              className="px-3 py-1.5 rounded-lg border border-black/15 dark:border-white/15 bg-neutral-100 dark:bg-neutral-800 text-black dark:text-white font-semibold text-[11px] hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors inline-flex items-center gap-1.5 cursor-pointer shadow-2xs"
+                              className="px-3 py-1.5 rounded-lg border border-black/15 dark:border-white/15 bg-white/50 dark:bg-neutral-800/60 backdrop-blur-xs text-black dark:text-white font-semibold text-[11px] hover:bg-white/70 dark:hover:bg-neutral-700 transition-colors inline-flex items-center gap-1.5 cursor-pointer shadow-2xs"
                               title="Copiar llave de pago"
                             >
                               {copiedPaymentKey ? (
@@ -1160,12 +1225,12 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
         {/* ========================================================================= */}
         {/* 4. MÓDULO 2: HISTORIAL DE TALLERES ASISTIDOS (BOTÓN GENERAL EXPANDIBLE)    */}
         {/* ========================================================================= */}
-        <div className="rounded-3xl border border-black/10 dark:border-white/15 bg-white/35 dark:bg-neutral-950/45 backdrop-blur-md overflow-hidden shadow-sm hover:shadow-md transition-all">
+        <div className="rounded-3xl border border-black/10 dark:border-white/15 bg-white/20 dark:bg-neutral-950/30 backdrop-blur-xl overflow-hidden shadow-sm hover:shadow-md transition-all">
           {/* Botón General Largo de Apertura/Cierre */}
           <button
             type="button"
             onClick={() => toggleModule('talleres')}
-            className="w-full p-5 sm:p-6 text-left flex items-center justify-between gap-4 cursor-pointer hover:bg-white/40 dark:hover:bg-neutral-900/40 transition-colors select-none group"
+            className="w-full p-5 sm:p-6 text-left flex items-center justify-between gap-4 cursor-pointer hover:bg-white/30 dark:hover:bg-neutral-900/30 transition-colors select-none group"
           >
             <div className="flex items-center gap-4">
               <div className="w-11 h-11 rounded-2xl bg-amber-500/10 dark:bg-amber-500/15 border border-amber-500/25 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0 transition-transform group-hover:scale-105">
@@ -1203,59 +1268,78 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
           {/* Contenido Interior Desplegado */}
           {expandedModules.talleres && (
             <div className="px-5 sm:px-8 pb-6 sm:pb-8 pt-2 space-y-6 border-t border-black/5 dark:border-white/5">
-              {/* Selector Paralelo de Talleres (Raíz, Tallo, Florecimiento) */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-2">
-                {CORE_WORKSHOPS.map((ws) => {
+              {/* Selector Compacto de Talleres (Fase 1, Fase 2, Fase 3) */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-2.5 pt-2">
+                {CORE_WORKSHOPS.map((ws, idx) => {
                   const attended = isWorkshopAttended(ws);
                   const isSelected = selectedWorkshopId === ws.id;
+                  const phaseNum = idx + 1;
 
                   return (
                     <button
                       key={ws.id}
                       type="button"
                       onClick={() => setSelectedWorkshopId(ws.id)}
-                      className={`p-3.5 rounded-2xl border text-left flex flex-col justify-between transition-all cursor-pointer select-none relative ${
+                      className={`p-3 sm:py-3 sm:px-3.5 rounded-2xl border text-left flex items-center justify-between gap-2.5 transition-all cursor-pointer select-none ${
                         isSelected
                           ? 'ring-2 ring-black dark:ring-white bg-black text-white dark:bg-white dark:text-black border-black dark:border-white shadow-sm'
-                          : 'bg-white/40 dark:bg-neutral-900/40 backdrop-blur-xs border-black/10 dark:border-white/10 text-neutral-800 dark:text-neutral-200 hover:border-black/30 dark:hover:border-white/30'
+                          : 'bg-white/25 dark:bg-neutral-900/35 backdrop-blur-xs border-black/10 dark:border-white/10 text-neutral-800 dark:text-neutral-200 hover:border-black/30 dark:hover:border-white/30'
                       }`}
                     >
-                      <div>
-                        <div className="flex items-center justify-between gap-2 mb-1.5">
-                          <span className="text-[10px] font-mono uppercase font-bold tracking-wider opacity-80">
-                            {ws.phase}
-                          </span>
-                          {attended ? (
-                            <span
-                              className={`text-[10px] font-mono px-2 py-0.5 rounded-full font-semibold ${
-                                isSelected
-                                  ? 'bg-white text-black dark:bg-black dark:text-white'
-                                  : 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/60'
-                              }`}
-                            >
-                              ✓ Acreditado
-                            </span>
-                          ) : (
-                            <span
-                              className={`text-[10px] font-mono px-2 py-0.5 rounded-full ${
-                                isSelected
-                                  ? 'bg-white/20 text-white dark:bg-black/20 dark:text-black'
-                                  : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-500'
-                              }`}
-                            >
-                              ○ Programado
-                            </span>
-                          )}
-                        </div>
-                        <div className="font-semibold text-xs sm:text-sm tracking-tight leading-snug">
-                          {ws.title}
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <span
+                          className={`w-7 h-7 rounded-xl flex items-center justify-center text-xs font-mono font-bold shrink-0 ${
+                            isSelected
+                              ? 'bg-white/20 text-white dark:bg-black/20 dark:text-black'
+                              : 'bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/20'
+                          }`}
+                        >
+                          F{phaseNum}
+                        </span>
+                        <div className="min-w-0">
+                          <div className="text-xs font-bold font-mono uppercase tracking-wide truncate">
+                            Fase {phaseNum}: {ws.stageName}
+                          </div>
+                          <div
+                            className={`text-[11px] truncate font-light ${
+                              isSelected
+                                ? 'text-neutral-300 dark:text-neutral-700'
+                                : 'text-neutral-500 dark:text-neutral-400'
+                            }`}
+                          >
+                            {ws.stageName === 'Raíz'
+                              ? 'Balance Ontológico'
+                              : ws.stageName === 'Tallo'
+                              ? 'Soberanía Relacional'
+                              : 'Integración & Cosecha'}
+                          </div>
                         </div>
                       </div>
 
-                      <div className="mt-2 text-[10px] opacity-75 font-mono">
-                        {attended
-                          ? 'Memoria y respuestas disponibles'
-                          : 'Acceso vivencial de cohorte'}
+                      <div className="shrink-0">
+                        {attended ? (
+                          <span
+                            className={`text-[10px] font-mono px-2 py-0.5 rounded-full font-medium inline-flex items-center gap-1 ${
+                              isSelected
+                                ? 'bg-white text-black dark:bg-black dark:text-white'
+                                : 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30'
+                            }`}
+                            title="Taller Acreditado"
+                          >
+                            ✓ <span className="hidden lg:inline">Acreditado</span>
+                          </span>
+                        ) : (
+                          <span
+                            className={`text-[10px] font-mono px-2 py-0.5 rounded-full ${
+                              isSelected
+                                ? 'bg-white/20 text-white dark:bg-black/20 dark:text-black'
+                                : 'bg-neutral-100/70 dark:bg-neutral-800/70 text-neutral-500'
+                            }`}
+                            title="Taller Programado"
+                          >
+                            ○ <span className="hidden lg:inline">Programado</span>
+                          </span>
+                        )}
                       </div>
                     </button>
                   );
@@ -1270,14 +1354,14 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
                 const details = getWorkshopMemoryDetails(activeWorkshop);
 
                 return (
-                  <div className="p-5 sm:p-6 rounded-2xl bg-white dark:bg-neutral-900 border border-black/10 dark:border-white/10 shadow-sm space-y-4">
+                  <div className="p-5 sm:p-6 rounded-2xl bg-white/30 dark:bg-neutral-900/40 backdrop-blur-md border border-black/10 dark:border-white/10 shadow-sm space-y-4">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-black/10 dark:border-white/10">
                       <div className="space-y-1">
                         <div className="flex items-center gap-2 flex-wrap">
                           <span className="text-xs font-bold uppercase tracking-wider font-mono text-black dark:text-white">
                             {activeWorkshop.title}
                           </span>
-                          <span className="text-[10px] px-2 py-0.5 rounded-full font-mono uppercase bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 border border-black/10 dark:border-white/10">
+                          <span className="text-[10px] px-2 py-0.5 rounded-full font-mono uppercase bg-neutral-100/70 dark:bg-neutral-800/70 text-neutral-700 dark:text-neutral-300 border border-black/10 dark:border-white/10">
                             {activeWorkshop.levelBadge}
                           </span>
                         </div>
@@ -1293,7 +1377,7 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
                             Asistencia Acreditada
                           </span>
                         ) : (
-                          <span className="inline-flex items-center gap-1.5 text-[11px] text-neutral-600 dark:text-neutral-400 font-mono bg-neutral-100 dark:bg-neutral-800 border border-black/10 dark:border-white/10 px-3 py-1 rounded-full">
+                          <span className="inline-flex items-center gap-1.5 text-[11px] text-neutral-600 dark:text-neutral-400 font-mono bg-white/20 dark:bg-neutral-800/30 border border-black/10 dark:border-white/10 px-3 py-1 rounded-full">
                             ○ Taller en Tu Ruta
                           </span>
                         )}
@@ -1306,7 +1390,7 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
                       /* TALLER INACTIVO: SOLO INFORMACIÓN DE PAGO                    */
                       /* ============================================================ */
                       <div className="space-y-4 text-xs">
-                        <div className="p-4 sm:p-5 rounded-2xl bg-neutral-50 dark:bg-neutral-950/60 border border-black/10 dark:border-white/10 space-y-4">
+                        <div className="p-4 sm:p-5 rounded-2xl bg-white/20 dark:bg-neutral-950/40 backdrop-blur-xs border border-black/10 dark:border-white/10 space-y-4">
                           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-black/10 dark:border-white/10">
                             <div className="flex items-center gap-2">
                               <span className="w-2.5 h-2.5 rounded-full bg-neutral-400 dark:bg-neutral-500 shrink-0" />
@@ -1320,7 +1404,7 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
                           </div>
 
                           {/* Inversión del Taller */}
-                          <div className="p-3.5 rounded-xl border border-black/10 dark:border-white/10 bg-white dark:bg-neutral-900 space-y-1 shadow-2xs">
+                          <div className="p-3.5 rounded-xl border border-black/10 dark:border-white/10 bg-white/30 dark:bg-neutral-900/40 backdrop-blur-xs space-y-1 shadow-2xs">
                             <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-500 font-mono block">
                               Inversión Taller Individual Vivencial ({activeWorkshop.title})
                             </span>
@@ -1333,7 +1417,7 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
                           </div>
 
                           {/* Canales Oficiales de Pago */}
-                          <div className="p-3.5 rounded-xl border border-black/10 dark:border-white/10 bg-white dark:bg-neutral-900 space-y-3 shadow-2xs">
+                          <div className="p-3.5 rounded-xl border border-black/10 dark:border-white/10 bg-white/30 dark:bg-neutral-900/40 backdrop-blur-xs space-y-3 shadow-2xs">
                             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                               <div className="flex items-center gap-2.5">
                                 <Smartphone className="w-4 h-4 text-black dark:text-white shrink-0" />
@@ -1354,7 +1438,7 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
                                 <button
                                   type="button"
                                   onClick={handleCopyPaymentKey}
-                                  className="px-3 py-1.5 rounded-lg border border-black/15 dark:border-white/15 bg-neutral-100 dark:bg-neutral-800 text-black dark:text-white font-semibold text-[11px] hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors inline-flex items-center gap-1.5 cursor-pointer shadow-2xs"
+                                  className="px-3 py-1.5 rounded-lg border border-black/15 dark:border-white/15 bg-white/50 dark:bg-neutral-800/60 backdrop-blur-xs text-black dark:text-white font-semibold text-[11px] hover:bg-white/70 dark:hover:bg-neutral-700 transition-colors inline-flex items-center gap-1.5 cursor-pointer shadow-2xs"
                                   title="Copiar llave de pago"
                                 >
                                   {copiedPaymentKey ? (
@@ -1400,7 +1484,7 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
                       /* Contenido y Memorias Propias del Taller Acreditado */
                       <div className="space-y-4 text-xs">
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                          <div className="p-4 rounded-xl bg-neutral-50 dark:bg-neutral-950/60 border border-black/10 dark:border-white/10 space-y-1.5">
+                          <div className="p-4 rounded-xl bg-white/25 dark:bg-neutral-950/40 backdrop-blur-xs border border-black/10 dark:border-white/10 space-y-1.5">
                             <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-500 font-mono block">
                               Quiebre Ontológico Central del Taller:
                             </span>
@@ -1409,7 +1493,7 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
                             </p>
                           </div>
 
-                          <div className="p-4 rounded-xl bg-neutral-50 dark:bg-neutral-950/60 border border-black/10 dark:border-white/10 space-y-1.5">
+                          <div className="p-4 rounded-xl bg-white/25 dark:bg-neutral-950/40 backdrop-blur-xs border border-black/10 dark:border-white/10 space-y-1.5">
                             <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-500 font-mono block">
                               Compromisos Adquiridos & Declaraciones:
                             </span>
@@ -1419,7 +1503,7 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
                           </div>
                         </div>
 
-                        <div className="p-4 rounded-xl bg-neutral-50 dark:bg-neutral-950/40 border border-black/5 dark:border-white/5 space-y-1.5">
+                        <div className="p-4 rounded-xl bg-white/20 dark:bg-neutral-950/30 backdrop-blur-xs border border-black/5 dark:border-white/5 space-y-1.5">
                           <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-500 font-mono block">
                             Foco Temático y Práctica Somática Vivencial:
                           </span>
@@ -1446,7 +1530,7 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
                             href={activeWorkshop.meetLink}
                             target="_blank"
                             rel="noreferrer"
-                            className="px-4 py-2.5 rounded-xl border border-black/15 dark:border-white/15 bg-white dark:bg-neutral-800 text-xs font-semibold hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors inline-flex items-center gap-1.5 cursor-pointer"
+                            className="px-4 py-2.5 rounded-xl border border-black/15 dark:border-white/15 bg-white/50 dark:bg-neutral-800/60 backdrop-blur-xs text-xs font-semibold hover:bg-white/70 dark:hover:bg-neutral-700 transition-colors inline-flex items-center gap-1.5 cursor-pointer"
                           >
                             <Video className="w-3.5 h-3.5 text-neutral-500" />
                             <span>Sala Virtual de Talleres</span>
@@ -1464,12 +1548,12 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
         {/* ========================================================================= */}
         {/* 5. MÓDULO 3: HISTÓRICO DE BITÁCORAS 1 A 1 (BOTÓN GENERAL EXPANDIBLE)       */}
         {/* ========================================================================= */}
-        <div className="rounded-3xl border border-black/10 dark:border-white/15 bg-white/35 dark:bg-neutral-950/45 backdrop-blur-md overflow-hidden shadow-sm hover:shadow-md transition-all">
+        <div className="rounded-3xl border border-black/10 dark:border-white/15 bg-white/20 dark:bg-neutral-950/30 backdrop-blur-xl overflow-hidden shadow-sm hover:shadow-md transition-all">
           {/* Botón General Largo de Apertura/Cierre */}
           <button
             type="button"
             onClick={() => toggleModule('bitacoras')}
-            className="w-full p-5 sm:p-6 text-left flex items-center justify-between gap-4 cursor-pointer hover:bg-white/40 dark:hover:bg-neutral-900/40 transition-colors select-none group"
+            className="w-full p-5 sm:p-6 text-left flex items-center justify-between gap-4 cursor-pointer hover:bg-white/30 dark:hover:bg-neutral-900/30 transition-colors select-none group"
           >
             <div className="flex items-center gap-4">
               <div className="w-11 h-11 rounded-2xl bg-indigo-500/10 dark:bg-indigo-500/15 border border-indigo-500/25 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0 transition-transform group-hover:scale-105">
@@ -1508,7 +1592,7 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
           {expandedModules.bitacoras && (
             <div className="px-5 sm:px-8 pb-6 sm:pb-8 pt-2 space-y-3 border-t border-black/5 dark:border-white/5">
               {pastForms.length === 0 ? (
-                <p className="text-xs text-neutral-500 font-light italic p-4 rounded-2xl bg-white/40 dark:bg-neutral-900/40 backdrop-blur-xs border border-black/10 dark:border-white/10 mt-2">
+                <p className="text-xs text-neutral-500 font-light italic p-4 rounded-2xl bg-white/25 dark:bg-neutral-900/35 backdrop-blur-xs border border-black/10 dark:border-white/10 mt-2">
                   Aún no has registrado cuestionarios de bitácora posterior. Tras tu primer encuentro individual aparecerán aquí tus registros y cuadernos descargables.
                 </p>
               ) : (
@@ -1520,7 +1604,7 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
                   return (
                     <div
                       key={item.id}
-                      className="p-4 rounded-2xl border border-black/10 dark:border-white/10 bg-white/40 dark:bg-neutral-900/40 backdrop-blur-xs space-y-2 text-xs"
+                      className="p-4 rounded-2xl border border-black/10 dark:border-white/10 bg-white/25 dark:bg-neutral-900/35 backdrop-blur-xs space-y-2 text-xs"
                     >
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                         <div className="flex items-center gap-2 flex-wrap">
@@ -1542,7 +1626,7 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
                         <button
                           type="button"
                           onClick={() => handleDownloadMemory(item)}
-                          className="px-3 py-1.5 rounded-xl border border-black/15 dark:border-white/15 bg-white dark:bg-black text-xs font-semibold hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors inline-flex items-center gap-1.5 self-start sm:self-auto cursor-pointer shadow-2xs"
+                          className="px-3 py-1.5 rounded-xl border border-black/15 dark:border-white/15 bg-white/50 dark:bg-black/50 backdrop-blur-xs text-xs font-semibold hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors inline-flex items-center gap-1.5 self-start sm:self-auto cursor-pointer shadow-2xs"
                         >
                           <Download className="w-3.5 h-3.5 text-indigo-500" />
                           <span>Descargar PDF</span>
