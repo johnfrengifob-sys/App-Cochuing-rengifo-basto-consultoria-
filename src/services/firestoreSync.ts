@@ -694,12 +694,162 @@ export class FirestoreSyncService {
       const list: User[] = [];
       snap.forEach((d) => {
         const data = d.data();
-        list.push(data as User);
+        if (data && (data as User).email) {
+          list.push(data as User);
+        }
       });
       return list;
     } catch (error) {
-      console.warn('Firestore fetchUsers offline fallback:', error);
+      console.warn('Firestore fetchUsers notice (fallback to local):', error);
       return [];
+    }
+  }
+
+  // Fetch all event registrations safely
+  static async fetchEventRegistrations(): Promise<EventRegistration[]> {
+    const collectionPath = 'eventRegistrations';
+    try {
+      const snap = await getDocs(collection(db, collectionPath));
+      const list: EventRegistration[] = [];
+      snap.forEach((d) => {
+        const data = d.data() as EventRegistration;
+        if (data && (data.ticketCode || data.email)) {
+          list.push(data);
+        }
+      });
+      return list;
+    } catch (error) {
+      console.warn('Firestore fetchEventRegistrations notice:', error);
+      return [];
+    }
+  }
+
+  // Subscribe to real-time users collection updates
+  static subscribeToUsers(onUpdate: (users: User[]) => void): () => void {
+    const collectionPath = 'users';
+    try {
+      const q = collection(db, collectionPath);
+      return onSnapshot(
+        q,
+        (snapshot) => {
+          const list: User[] = [];
+          snapshot.forEach((docSnap) => {
+            const data = docSnap.data() as User;
+            if (data && data.email) {
+              list.push(data);
+            }
+          });
+          onUpdate(list);
+        },
+        (error) => {
+          console.warn('Firestore subscribeToUsers notice:', error);
+        }
+      );
+    } catch (error) {
+      console.warn('Could not subscribe to users in Firestore:', error);
+      return () => {};
+    }
+  }
+
+  // Subscribe to real-time event registrations
+  static subscribeToEventRegistrations(
+    onUpdate: (registrations: EventRegistration[]) => void
+  ): () => void {
+    const collectionPath = 'eventRegistrations';
+    try {
+      const q = collection(db, collectionPath);
+      return onSnapshot(
+        q,
+        (snapshot) => {
+          const list: EventRegistration[] = [];
+          snapshot.forEach((docSnap) => {
+            const data = docSnap.data() as EventRegistration;
+            if (data && (data.ticketCode || data.email)) {
+              list.push(data);
+            }
+          });
+          onUpdate(list);
+        },
+        (error) => {
+          console.warn('Firestore subscribeToEventRegistrations notice:', error);
+        }
+      );
+    } catch (error) {
+      console.warn('Could not subscribe to eventRegistrations in Firestore:', error);
+      return () => {};
+    }
+  }
+
+  // Look up a user in Firestore by email
+  static async findUserInFirestoreByEmail(email: string): Promise<User | null> {
+    if (!email || !email.trim()) return null;
+    const cleanEmail = email.trim().toLowerCase();
+
+    // 1. Try finding in users collection
+    try {
+      const usersSnap = await getDocs(collection(db, 'users'));
+      for (const d of usersSnap.docs) {
+        const u = d.data() as User;
+        if (u && u.email && u.email.trim().toLowerCase() === cleanEmail) {
+          return u;
+        }
+      }
+    } catch (e) {
+      console.warn('findUserInFirestoreByEmail in users notice:', e);
+    }
+
+    // 2. Try finding in eventRegistrations collection
+    try {
+      const regSnap = await getDocs(collection(db, 'eventRegistrations'));
+      for (const d of regSnap.docs) {
+        const reg = d.data() as EventRegistration;
+        if (reg && reg.email && reg.email.trim().toLowerCase() === cleanEmail) {
+          const synthesizedUser: User = {
+            uid: reg.userUid || `client-${Date.now()}`,
+            name: reg.name || cleanEmail.split('@')[0],
+            email: cleanEmail,
+            phone: reg.phone || '',
+            role: 'client',
+            title: 'Asistente Seminario Ontológico',
+            avatarUrl: `https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80`,
+            joinedAt: reg.registeredAt
+              ? reg.registeredAt.split('T')[0]
+              : new Date().toISOString().split('T')[0],
+            programProgress: 1,
+            programStep: 1,
+            paymentStatus: 'Pago Único',
+            programName: 'Certeza, Fronteras & Dirección Personal',
+            programFee: '$1.500.000 COP',
+            status: 'active',
+            transformationSpacesEnabled: true,
+            hasWorkshopsAccess: true,
+            hasSessionsAccess: true,
+            programAccessLevel: 'premium',
+          };
+          return synthesizedUser;
+        }
+      }
+    } catch (e) {
+      console.warn('findUserInFirestoreByEmail in eventRegistrations notice:', e);
+    }
+
+    return null;
+  }
+
+  // Pull all cloud records to keep client store in sync
+  static async syncAllFromFirestore(): Promise<{ usersCount: number; regsCount: number }> {
+    try {
+      const [remoteUsers, remoteRegs] = await Promise.all([
+        this.fetchUsers(),
+        this.fetchEventRegistrations(),
+      ]);
+      return {
+        usersCount: remoteUsers.length,
+        regsCount: remoteRegs.length,
+      };
+    } catch (e) {
+      console.warn('syncAllFromFirestore notice:', e);
+      return { usersCount: 0, regsCount: 0 };
     }
   }
 

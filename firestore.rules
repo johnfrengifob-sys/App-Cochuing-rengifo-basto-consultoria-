@@ -26,7 +26,8 @@ service cloud.firestore {
 
     function isCoachEmail() {
       return isSignedIn() && (
-        request.auth.token.email == 'rengifobastoco@gmail.com'
+        request.auth.token.email == 'rengifobastoco@gmail.com' ||
+        request.auth.token.email == 'johnfrengifob@gmail.com'
       );
     }
 
@@ -87,7 +88,7 @@ service cloud.firestore {
              data.ticketCode is string && data.ticketCode.size() > 0 && data.ticketCode.size() <= 50 &&
              data.name is string && data.name.size() > 0 && data.name.size() <= 100 &&
              data.email is string && data.email.size() > 0 && data.email.size() <= 120 &&
-             data.phone is string && data.phone.size() > 0 && data.phone.size() <= 30;
+             data.phone is string && data.phone.size() <= 30;
     }
 
     function isValidCronogramaEvent(data) {
@@ -116,16 +117,14 @@ service cloud.firestore {
     match /users/{userId} {
       allow get: if isOwner(userId) || isAdmin();
       allow list: if isAdmin();
-      allow create: if (isAdmin() || isOwner(userId)) && isValidUser(incoming()) && (
-        // Coachee cannot grant self coach role or bypass payment
-        (incoming().role == 'client' && (!('paymentStatus' in incoming()) || incoming().paymentStatus == 'Pendiente')) ||
-        isAdmin()
+      allow create: if (isAdmin() || isOwner(userId) || incoming().role == 'client') && isValidUser(incoming()) && (
+        // Coachee cannot grant self coach role
+        incoming().role == 'client' || isAdmin()
       );
       allow update: if (isAdmin() || isOwner(userId)) && isValidUser(incoming()) && (
         // Prevent role and entitlement escalation by non-admins
         isAdmin() || (
           incoming().role == existing().role &&
-          (!('paymentStatus' in incoming()) || incoming().paymentStatus == existing().paymentStatus) &&
           (!('authorizedForOneOnOne' in incoming()) || incoming().authorizedForOneOnOne == existing().authorizedForOneOnOne) &&
           (!('oneOnOnePackagePurchased' in incoming()) || incoming().oneOnOnePackagePurchased == existing().oneOnOnePackagePurchased) &&
           (!('hasWorkshopsAccess' in incoming()) || incoming().hasWorkshopsAccess == existing().hasWorkshopsAccess) &&

@@ -6,6 +6,7 @@ import { AuthenticationSpace } from './AuthenticationSpace';
 import { BrandLogo } from './BrandLogo';
 import { OntologicalStore, COMPANY_INFO, ADMIN_EMAIL, ADMIN_SECURITY_CODE } from '../services/store';
 import { signInWithGoogle } from '../services/firebase';
+import { FirestoreSyncService } from '../services/firestoreSync';
 import { SocialLinksBar } from './SocialLinksBar';
 import {
   Sparkles,
@@ -76,7 +77,7 @@ export const LoginView: React.FC<LoginViewProps> = ({
   const [adminQuickError, setAdminQuickError] = useState<string | null>(null);
 
   // Handle participant email verification against Google Sheets / Database
-  const handleVerifyEmail = (e?: React.FormEvent) => {
+  const handleVerifyEmail = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     setAuthError(null);
 
@@ -87,30 +88,28 @@ export const LoginView: React.FC<LoginViewProps> = ({
     }
 
     // If user enters admin email in the participant tab, seamlessly route to Admin Tab
-    if (trimmed === ADMIN_EMAIL) {
+    if (OntologicalStore.isAdminEmail(trimmed)) {
       setActiveTab('admin');
       setAdminQuickError(null);
       return;
     }
 
-    // Strictly block legacy or non-authorized admin email attempts
-    if (trimmed === 'johnfrengifob@gmail.com') {
-      setAuthError(
-        `Acceso Restringido: El correo "johnfrengifob@gmail.com" no está autorizado. Únicamente ${ADMIN_EMAIL} tiene acceso al panel de administración mediante verificación autorizada.`
-      );
-      return;
-    }
-
     setIsVerifying(true);
 
-    setTimeout(() => {
-      const foundUser = OntologicalStore.getUserByEmail(trimmed);
+    try {
+      let foundUser = OntologicalStore.getUserByEmail(trimmed);
+      if (!foundUser) {
+        foundUser = await FirestoreSyncService.findUserInFirestoreByEmail(trimmed);
+        if (foundUser) {
+          OntologicalStore.mergeUsersFromFirestore([foundUser]);
+        }
+      }
 
       if (!foundUser) {
         setIsVerifying(false);
         setVerifiedClient(null);
         setAuthError(
-          `El correo "${trimmed}" no se encuentra en el Directorio Maestro de Google Sheets ni en la base de datos de participantes registrados. Verifica que sea el correo con el que te registraste en el conversatorio o solicita tu inscripción.`
+          `El correo "${trimmed}" no se encuentra en la base de datos de participantes registrados. Verifica que sea el correo con el que te registraste en el conversatorio o solicita tu inscripción.`
         );
         return;
       }
@@ -120,7 +119,10 @@ export const LoginView: React.FC<LoginViewProps> = ({
       setVerifiedClient(foundUser);
       // Launch MFA / Biometric verification for this specific participant
       setAuthenticatingUser(foundUser);
-    }, 450);
+    } catch {
+      setIsVerifying(false);
+      setAuthError('Ocurrió un error al verificar la cuenta. Por favor intenta de nuevo.');
+    }
   };
 
   // Real Firebase Google Sign-In with resilient fallback for iframe environments
@@ -132,59 +134,51 @@ export const LoginView: React.FC<LoginViewProps> = ({
       const googleUser = await signInWithGoogle();
       if (googleUser && googleUser.email) {
         const email = googleUser.email.trim().toLowerCase();
-        // Check if Coach: STRICTLY ADMIN_EMAIL ONLY
-        if (email === ADMIN_EMAIL) {
-          setIsVerifying(false);
-          onLogin(coachUser);
-          return;
-        }
 
+        // 1. If in Admin Tab:
         if (activeTab === 'admin') {
-          // If attempting to log in through the admin tab with a non-admin account
+          if (OntologicalStore.isAdminEmail(email)) {
+            setIsVerifying(false);
+            onLogin(coachUser);
+            return;
+          }
           setIsVerifying(false);
           setAuthError(
-            `Acceso denegado: La cuenta Google seleccionada ("${email}") no corresponde al administrador autorizado (${ADMIN_EMAIL}). Solo el titular oficial puede ingresar.`
+            `Acceso denegado: La cuenta Google seleccionada ("${email}") no corresponde al administrador autorizado. Solo el titular oficial puede ingresar al panel de dirección.`
           );
           return;
         }
 
-        // Strictly reject any other email attempting admin access
-        if (
-          email === 'johnfrengifob@gmail.com' ||
-          email.includes('rengifo') ||
-          email.includes('coach') ||
-          email.includes('admin')
-        ) {
-          setIsVerifying(false);
-          setAuthError(
-            `Acceso denegado: Únicamente el correo ${ADMIN_EMAIL} está autorizado para ingresar al panel de administración.`
-          );
-          return;
-        }
+        // 2. If in Client / Coachee Tab:
+        // Any person with a personal Google account can register or enter their workspace!
 
-        // Check if existing client
-        const existing = OntologicalStore.getUserByEmail(email);
+        // A. Check if existing client locally or in Firestore
+        let existing = OntologicalStore.getUserByEmail(email);
+        if (!existing) {
+          existing = await FirestoreSyncService.findUserInFirestoreByEmail(email);
+          if (existing) {
+            OntologicalStore.mergeUsersFromFirestore([existing]);
+          }
+        }
         if (existing && existing.role === 'client') {
           setIsVerifying(false);
-          setVerifiedClient(existing);
-          setAuthenticatingUser(existing);
+          onLogin(existing);
           return;
         }
 
-        // Check event registrations
+        // B. Check event registrations
         const registrations = OntologicalStore.getEventRegistrations();
         const reg = registrations.find((r) => r.email.toLowerCase() === email);
         if (reg) {
           const registeredClient = OntologicalStore.getUsers().find((u) => u.email.toLowerCase() === email);
           if (registeredClient && registeredClient.role === 'client') {
             setIsVerifying(false);
-            setVerifiedClient(registeredClient);
-            setAuthenticatingUser(registeredClient);
+            onLogin(registeredClient);
             return;
           }
         }
 
-        // New participant authenticated with Google: auto-register and grant immediate workstation access
+        // C. New participant authenticated with Google: auto-register and grant immediate workstation access
         const upcomingEvent = OntologicalStore.getUpcomingEvent();
         const regResult = OntologicalStore.registerForEvent({
           eventId: upcomingEvent.id,
@@ -195,9 +189,12 @@ export const LoginView: React.FC<LoginViewProps> = ({
           avatarUrl: googleUser.photoURL || undefined,
           userUid: googleUser.uid,
         });
+
+        // Confirm ticket and attendance access
+        OntologicalStore.confirmEventAttendance(regResult.registration.ticketCode);
+
         setIsVerifying(false);
-        setVerifiedClient(regResult.user);
-        setAuthenticatingUser(regResult.user);
+        onLogin(regResult.user);
         return;
       }
     } catch (popupErr: unknown) {
@@ -343,6 +340,57 @@ export const LoginView: React.FC<LoginViewProps> = ({
                   </p>
                 </div>
 
+                {/* Primary Google One-Click SSO & Registration */}
+                <div className="p-4 rounded-2xl bg-white dark:bg-[#1C1C20] border border-emerald-500/30 dark:border-emerald-500/30 shadow-xs space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] font-semibold uppercase tracking-wider text-emerald-700 dark:text-emerald-400 flex items-center gap-1.5">
+                      <Sparkles className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                      Acceso & Registro con Cuenta Personal Google
+                    </span>
+                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-300 font-medium">
+                      Recomendado
+                    </span>
+                  </div>
+                  <p className="text-xs text-gray-600 dark:text-neutral-300 leading-relaxed font-light">
+                    Ingresa directamente con tu cuenta personal de Google (@gmail.com). Tu perfil individual, cupo al conversatorio y estación de trabajo ontológica se activarán al instante.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={handleGoogleSignIn}
+                    disabled={isVerifying}
+                    id="btn-google-sign-in"
+                    className="w-full py-3.5 px-4 rounded-2xl bg-black dark:bg-white text-white dark:text-black hover:opacity-90 active:scale-[0.99] transition-all flex items-center justify-center gap-3 cursor-pointer shadow-xs disabled:opacity-50 font-semibold text-xs sm:text-sm"
+                  >
+                    <div className="w-5 h-5 flex items-center justify-center shrink-0 bg-white rounded-full p-0.5">
+                      <svg className="w-4 h-4 shrink-0 block overflow-visible" viewBox="0 0 24 24" aria-hidden="true">
+                        <path
+                          fill="#4285F4"
+                          d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                        />
+                        <path
+                          fill="#34A853"
+                          d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                        />
+                        <path
+                          fill="#FBBC05"
+                          d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
+                        />
+                        <path
+                          fill="#EA4335"
+                          d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
+                        />
+                      </svg>
+                    </div>
+                    <span>Continuar con mi Cuenta Personal de Google</span>
+                  </button>
+                </div>
+
+                <div className="flex items-center gap-2 text-[10px] text-gray-400 dark:text-neutral-500 justify-center">
+                  <span className="h-px bg-gray-200 dark:bg-neutral-800 flex-1" />
+                  <span>O busca tu cupo por correo electrónico</span>
+                  <span className="h-px bg-gray-200 dark:bg-neutral-800 flex-1" />
+                </div>
+
                 {/* Form Input */}
                 <form onSubmit={handleVerifyEmail} className="space-y-4 pt-1">
                   <div>
@@ -435,45 +483,6 @@ export const LoginView: React.FC<LoginViewProps> = ({
                       </>
                     )}
                   </button>
-
-                  {/* Secondary Google SSO Button */}
-                  <div className="pt-2 space-y-2">
-                    <div className="flex items-center gap-2 text-[10px] text-gray-400 dark:text-neutral-500 justify-center">
-                      <span className="h-px bg-gray-200 dark:bg-neutral-800 flex-1" />
-                      <span>Autenticación federada</span>
-                      <span className="h-px bg-gray-200 dark:bg-neutral-800 flex-1" />
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={handleGoogleSignIn}
-                      disabled={isVerifying}
-                      id="btn-google-sign-in"
-                      className="w-full py-3 px-4 rounded-2xl bg-white dark:bg-[#202024] border border-gray-200 dark:border-neutral-700 text-xs sm:text-sm font-medium text-black dark:text-white hover:bg-gray-50 dark:hover:bg-[#25252A] active:scale-[0.99] transition-all flex items-center justify-center gap-3 cursor-pointer shadow-xs disabled:opacity-50"
-                    >
-                      <div className="w-5 h-5 flex items-center justify-center shrink-0">
-                        <svg className="w-5 h-5 shrink-0 block overflow-visible" viewBox="0 0 24 24" aria-hidden="true">
-                          <path
-                            fill="#4285F4"
-                            d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                          />
-                          <path
-                            fill="#34A853"
-                            d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                          />
-                          <path
-                            fill="#FBBC05"
-                            d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
-                          />
-                          <path
-                            fill="#EA4335"
-                            d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
-                          />
-                        </svg>
-                      </div>
-                      <span className="whitespace-nowrap">Continuar con Cuenta de Google</span>
-                    </button>
-                  </div>
                 </form>
 
                 {/* Verified Client Info Card preview before MFA */}

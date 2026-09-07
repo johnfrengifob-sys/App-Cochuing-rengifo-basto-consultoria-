@@ -82,33 +82,93 @@ export default function App() {
     ThemeManager.init();
     FirestoreSyncService.init().catch(() => {});
 
+    // Listen for custom broadcast events when store updates
+    const handleStoreUsersUpdated = () => {
+      refreshUsers();
+    };
+    const handleStoreRegsUpdated = () => {
+      refreshUsers();
+    };
+    window.addEventListener('rbc-users-updated', handleStoreUsersUpdated);
+    window.addEventListener('rbc-event-registrations-updated', handleStoreRegsUpdated);
+
+    // Subscribe to real-time Firestore users & event registrations
+    const unsubUsers = FirestoreSyncService.subscribeToUsers((remoteUsers) => {
+      OntologicalStore.mergeUsersFromFirestore(remoteUsers);
+      refreshUsers();
+    });
+
+    const unsubRegs = FirestoreSyncService.subscribeToEventRegistrations((remoteRegs) => {
+      OntologicalStore.mergeEventRegistrationsFromFirestore(remoteRegs);
+      refreshUsers();
+    });
+
+    // Initial sync sweep from Firestore
+    FirestoreSyncService.syncAllFromFirestore()
+      .then(({ usersCount, regsCount }) => {
+        if (usersCount > 0 || regsCount > 0) {
+          refreshUsers();
+        }
+      })
+      .catch(() => {});
+
     // Listen for Firebase Auth user state changes
-    const unsubscribeAuth = onAuthStateChanged(auth, (firebaseUser) => {
+    const unsubscribeAuth = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser && firebaseUser.email) {
-        const email = firebaseUser.email.toLowerCase();
-        const existing = OntologicalStore.getUserByEmail(email);
-        if (existing) {
-          if (existing.role === 'coach' && existing.email.toLowerCase() !== ADMIN_EMAIL) {
-            console.warn('Usuario no autorizado para rol de administrador:', email);
-            OntologicalStore.setCurrentUser(null);
-            setCurrentUser(null);
-            return;
-          }
-          OntologicalStore.setCurrentUser(existing.uid);
-          setCurrentUser(existing);
-        } else if (email === ADMIN_EMAIL) {
-          const coach = OntologicalStore.getUsers().find(
-            (u) => u.role === 'coach' && u.email.toLowerCase() === ADMIN_EMAIL
-          );
+        const email = firebaseUser.email.toLowerCase().trim();
+
+        // 1. If Coach / Admin Google Account
+        if (OntologicalStore.isAdminEmail(email)) {
+          await FirestoreSyncService.syncAllFromFirestore().catch(() => {});
+          const coach = OntologicalStore.getUsers().find((u) => u.role === 'coach');
           if (coach) {
             OntologicalStore.setCurrentUser(coach.uid);
             setCurrentUser(coach);
+            setAllUsers(OntologicalStore.getUsers());
+            return;
           }
         }
+
+        // 2. If Existing Participant / Client (local or remote)
+        let existing = OntologicalStore.getUserByEmail(email);
+        if (!existing) {
+          existing = await FirestoreSyncService.findUserInFirestoreByEmail(email);
+          if (existing) {
+            OntologicalStore.mergeUsersFromFirestore([existing]);
+          }
+        }
+
+        if (existing && existing.role === 'client') {
+          OntologicalStore.setCurrentUser(existing.uid);
+          setCurrentUser(existing);
+          setAllUsers(OntologicalStore.getUsers());
+          return;
+        }
+
+        // 3. New Registration with Personal Google Account
+        const upcomingEvent = OntologicalStore.getUpcomingEvent();
+        const regResult = OntologicalStore.registerForEvent({
+          eventId: upcomingEvent.id,
+          name: firebaseUser.displayName || email.split('@')[0],
+          email: email,
+          phone: firebaseUser.phoneNumber || '',
+          googleAuthConnected: true,
+          avatarUrl: firebaseUser.photoURL || undefined,
+          userUid: firebaseUser.uid,
+        });
+
+        OntologicalStore.confirmEventAttendance(regResult.registration.ticketCode);
+        OntologicalStore.setCurrentUser(regResult.user.uid);
+        setCurrentUser(regResult.user);
+        setAllUsers(OntologicalStore.getUsers());
       }
     });
 
     return () => {
+      window.removeEventListener('rbc-users-updated', handleStoreUsersUpdated);
+      window.removeEventListener('rbc-event-registrations-updated', handleStoreRegsUpdated);
+      unsubUsers();
+      unsubRegs();
       unsubscribeAuth();
     };
   }, []);

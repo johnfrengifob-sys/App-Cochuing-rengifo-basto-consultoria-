@@ -58,6 +58,16 @@ export const COMPANY_INFO = {
 };
 
 export const ADMIN_EMAIL = 'rengifobastoco@gmail.com';
+export const ADMIN_EMAILS: string[] = [
+  'rengifobastoco@gmail.com',
+  'johnfrengifob@gmail.com',
+];
+
+export const isAdminEmail = (email?: string | null): boolean => {
+  if (!email) return false;
+  const clean = email.toLowerCase().trim();
+  return ADMIN_EMAILS.includes(clean);
+};
 export const ADMIN_SECURITY_CODE = '4658';
 
 export const BRE_B_NU_CONFIG = {
@@ -2918,7 +2928,45 @@ export class OntologicalStore {
           u.uid !== 'client-andres' &&
           !u.email.includes('example.com')
       );
-      this.saveUsers(safeUsers);
+      this.save(STORAGE_KEYS.USERS, safeUsers);
+    }
+
+    // Auto-materialize any registered attendees from eventRegistrations who do not yet have a user account
+    const rawRegistrations = this.load<EventRegistration[]>(STORAGE_KEYS.EVENT_REGISTRATIONS, []);
+    if (Array.isArray(rawRegistrations) && rawRegistrations.length > 0) {
+      let addedFromRegs = false;
+      rawRegistrations.forEach((reg) => {
+        if (!reg.email) return;
+        const normalizedEmail = reg.email.trim().toLowerCase();
+        const exists = safeUsers.some((u) => u.email.trim().toLowerCase() === normalizedEmail);
+        if (!exists) {
+          const newUser: User = {
+            uid: reg.userUid || `client-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+            name: reg.name || 'Participante Conversatorio',
+            email: normalizedEmail,
+            phone: reg.phone || '',
+            role: 'client',
+            title: 'Asistente Seminario Ontológico',
+            avatarUrl: `https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80`,
+            joinedAt: reg.registeredAt ? reg.registeredAt.split('T')[0] : new Date().toISOString().split('T')[0],
+            programProgress: 1,
+            programStep: 1,
+            paymentStatus: 'Pago Único',
+            programName: 'Certeza, Fronteras & Dirección Personal',
+            programFee: '$1.500.000 COP',
+            status: 'active',
+            transformationSpacesEnabled: true,
+            hasWorkshopsAccess: true,
+            hasSessionsAccess: true,
+            programAccessLevel: 'premium',
+          };
+          safeUsers.push(newUser);
+          addedFromRegs = true;
+        }
+      });
+      if (addedFromRegs) {
+        this.save(STORAGE_KEYS.USERS, safeUsers);
+      }
     }
 
     // Ensure coach profile is always accurately named, has ADMIN_EMAIL, and has the latest avatar
@@ -2962,6 +3010,89 @@ export class OntologicalStore {
 
   static saveUsers(users: User[]): void {
     this.save(STORAGE_KEYS.USERS, users);
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('rbc-users-updated', { detail: { users } }));
+    }
+  }
+
+  static mergeUsersFromFirestore(remoteUsers: User[]): User[] {
+    if (!Array.isArray(remoteUsers) || remoteUsers.length === 0) {
+      return this.getUsers();
+    }
+    const currentUsers = this.getUsers();
+    const mergedMap = new Map<string, User>();
+
+    currentUsers.forEach((u) => {
+      const key = u.email ? u.email.trim().toLowerCase() : u.uid;
+      mergedMap.set(key, u);
+    });
+
+    let changed = false;
+    remoteUsers.forEach((ru) => {
+      if (!ru || !ru.email) return;
+      const key = ru.email.trim().toLowerCase();
+      // Never overwrite coach role unless it's genuinely coach
+      if (isAdminEmail(key)) {
+        return;
+      }
+      const existing = mergedMap.get(key);
+      if (!existing) {
+        mergedMap.set(key, {
+          ...ru,
+          role: 'client',
+          status: ru.status || 'active',
+          transformationSpacesEnabled: ru.transformationSpacesEnabled ?? true,
+          hasWorkshopsAccess: ru.hasWorkshopsAccess ?? true,
+          hasSessionsAccess: ru.hasSessionsAccess ?? true,
+        });
+        changed = true;
+      } else {
+        mergedMap.set(key, {
+          ...existing,
+          ...ru,
+          uid: existing.uid || ru.uid,
+          role: existing.role === 'coach' ? 'coach' : 'client',
+        });
+        changed = true;
+      }
+    });
+
+    const result = Array.from(mergedMap.values());
+    if (changed) {
+      this.saveUsers(result);
+    }
+    return result;
+  }
+
+  static mergeEventRegistrationsFromFirestore(remoteRegs: EventRegistration[]): EventRegistration[] {
+    if (!Array.isArray(remoteRegs) || remoteRegs.length === 0) {
+      return this.getEventRegistrations();
+    }
+    const currentRegs = this.getEventRegistrations();
+    const regMap = new Map<string, EventRegistration>();
+
+    currentRegs.forEach((r) => {
+      const key = r.ticketCode || r.id || `${r.email}-${r.eventId}`;
+      regMap.set(key, r);
+    });
+
+    let changed = false;
+    remoteRegs.forEach((rr) => {
+      if (!rr) return;
+      const key = rr.ticketCode || rr.id || `${rr.email}-${rr.eventId}`;
+      if (!regMap.has(key)) {
+        regMap.set(key, rr);
+        changed = true;
+      }
+    });
+
+    const result = Array.from(regMap.values());
+    if (changed) {
+      this.saveEventRegistrations(result);
+      // Automatically materialize new clients in safeUsers
+      this.getUsers();
+    }
+    return result;
   }
 
   static updateClientStatus(clientId: string, status: 'active' | 'waiting' | 'inactive'): User | null {
@@ -3151,27 +3282,54 @@ export class OntologicalStore {
     // 1. Direct match with existing users
     const directMatch = users.find((u) => u.email.trim().toLowerCase() === normalized);
     if (directMatch) {
-      // If a user has coach role, verify their email is strictly ADMIN_EMAIL
-      if (directMatch.role === 'coach' && directMatch.email.trim().toLowerCase() !== ADMIN_EMAIL) {
+      // If a user has coach role, verify their email is an authorized coach email
+      if (directMatch.role === 'coach' && !isAdminEmail(directMatch.email)) {
         return null;
       }
       return directMatch;
     }
 
-    // 2. Strict check for Master Coach Admin email: only ADMIN_EMAIL (rengifobastoco@gmail.com)
-    if (normalized === ADMIN_EMAIL) {
+    // 2. Check for Master Coach Admin emails
+    if (isAdminEmail(normalized)) {
       const coach = users.find((u) => u.role === 'coach');
       if (coach) {
-        return { ...coach, email: ADMIN_EMAIL };
+        return { ...coach, email: normalized };
       }
+    }
+
+    // 3. Check for Event Registration match
+    const registrations = this.getEventRegistrations();
+    const regMatch = registrations.find((r) => r.email && r.email.trim().toLowerCase() === normalized);
+    if (regMatch) {
+      const attendeeUser: User = {
+        uid: regMatch.userUid || `client-${Date.now()}`,
+        name: regMatch.name || 'Participante Conversatorio',
+        email: normalized,
+        phone: regMatch.phone || '',
+        role: 'client',
+        title: 'Asistente Seminario Ontológico',
+        avatarUrl: `https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80`,
+        joinedAt: regMatch.registeredAt ? regMatch.registeredAt.split('T')[0] : new Date().toISOString().split('T')[0],
+        programProgress: 1,
+        programStep: 1,
+        paymentStatus: 'Pago Único',
+        programName: 'Certeza, Fronteras & Dirección Personal',
+        programFee: '$1.500.000 COP',
+        status: 'active',
+        transformationSpacesEnabled: true,
+        hasWorkshopsAccess: true,
+        hasSessionsAccess: true,
+        programAccessLevel: 'premium',
+      };
+      this.saveUsers([...users, attendeeUser]);
+      return attendeeUser;
     }
 
     return null;
   }
 
   static isAdminEmail(email?: string | null): boolean {
-    if (!email) return false;
-    return email.trim().toLowerCase() === ADMIN_EMAIL;
+    return isAdminEmail(email);
   }
 
   static verifyAdminSecurityCode(code?: string | null): boolean {
