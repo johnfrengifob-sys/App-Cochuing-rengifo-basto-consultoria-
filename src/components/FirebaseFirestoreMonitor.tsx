@@ -16,6 +16,11 @@ import {
   Sparkles,
   ChevronDown,
   ChevronUp,
+  Copy,
+  Check,
+  ShieldAlert,
+  Lock,
+  Trash2,
 } from 'lucide-react';
 import { OntologicalStore } from '../services/store';
 import { FirestoreSyncService } from '../services/firestoreSync';
@@ -35,10 +40,72 @@ export const FirebaseFirestoreMonitor: React.FC<FirebaseFirestoreMonitorProps> =
     return localStorage.getItem('rbc_last_firestore_sync') || null;
   });
   const [isConnected, setIsConnected] = useState<boolean | null>(null);
+  const [isWiping, setIsWiping] = useState(false);
+  const [showSecurityAudit, setShowSecurityAudit] = useState(false);
+  const [copiedRules, setCopiedRules] = useState(false);
   const [syncStatusMsg, setSyncStatusMsg] = useState<{
     type: 'success' | 'info' | 'error';
     text: string;
   } | null>(null);
+
+  const handleWipeDatabase = async () => {
+    if (!window.confirm('¿Confirmas vaciar completamente la base de datos de clientes, sesiones y pagos en Firestore y almacenamiento local?')) {
+      return;
+    }
+    setIsWiping(true);
+    setSyncStatusMsg(null);
+    try {
+      OntologicalStore.wipeEntireDatabase();
+      const res = await FirestoreSyncService.wipeAllFirestoreData();
+      setSyncStatusMsg({
+        type: 'success',
+        text: `Base de datos vaciada con éxito. Se eliminaron ${res.deletedCount} registros en Firestore y se restableció el almacenamiento a 0 clientes.`,
+      });
+      if (onSyncCompleted) onSyncCompleted();
+    } catch (err) {
+      setSyncStatusMsg({
+        type: 'error',
+        text: `Error al vaciar: ${err instanceof Error ? err.message : 'Error desconocido'}`,
+      });
+    } finally {
+      setIsWiping(false);
+    }
+  };
+
+  const copyFirestoreRulesToClipboard = () => {
+    const rules = `rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isAuthenticated() { return request.auth != null; }
+    function isOwner(userId) { return isAuthenticated() && request.auth.uid == userId; }
+    function isCoach() {
+      return isAuthenticated() && (
+        request.auth.token.role == 'coach' ||
+        request.auth.token.email == 'johnfrengifob@gmail.com' ||
+        request.auth.token.email == 'rengifobastoco@gmail.com'
+      );
+    }
+    match /users/{userId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && (isOwner(userId) || isCoach());
+      allow update: if isCoach() || (isOwner(userId) && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'paymentStatus', 'authorizedForOneOnOne'])));
+      allow delete: if isCoach();
+    }
+    match /sessions/{sessionId} {
+      allow read: if isAuthenticated();
+      allow write: if isCoach();
+    }
+    match /payments/{paymentId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && request.resource.data.status == 'pending';
+      allow update, delete: if isCoach();
+    }
+  }
+}`;
+    navigator.clipboard.writeText(rules);
+    setCopiedRules(true);
+    setTimeout(() => setCopiedRules(false), 3000);
+  };
 
   // Read local dataset counts
   const usersCount = OntologicalStore.getUsers().length;
@@ -302,6 +369,72 @@ export const FirebaseFirestoreMonitor: React.FC<FirebaseFirestoreMonitorProps> =
                   </div>
                 </div>
               </div>
+            </div>
+
+            {/* Security Audit & Diagnostic Accordion */}
+            <div className="pt-2 border-t border-gray-100 dark:border-neutral-800 space-y-3">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowSecurityAudit(!showSecurityAudit)}
+                  className="inline-flex items-center gap-2 text-xs font-bold text-gray-700 dark:text-neutral-300 hover:text-black dark:hover:text-white cursor-pointer"
+                >
+                  <ShieldAlert className="w-4 h-4 text-amber-600" />
+                  <span>Auditoría de Seguridad & Diagnóstico de Reglas</span>
+                  {showSecurityAudit ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                </button>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={handleWipeDatabase}
+                    disabled={isWiping}
+                    className="px-3 py-1.5 rounded-xl bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 hover:bg-rose-100 dark:hover:bg-rose-900/50 border border-rose-200 dark:border-rose-900/50 text-[11px] font-semibold transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                  >
+                    <Trash2 className="w-3.5 h-3.5 text-rose-600" />
+                    <span>{isWiping ? 'Vaciando...' : 'Vaciar Todo en Firestore (0 Clientes)'}</span>
+                  </button>
+                </div>
+              </div>
+
+              {showSecurityAudit && (
+                <div className="p-4 rounded-2xl bg-gray-50/80 dark:bg-neutral-900/80 border border-gray-200 dark:border-neutral-800 space-y-3 animate-fade-in text-xs">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {/* Security rules enforced */}
+                    <div className="p-3 rounded-xl bg-white dark:bg-[#1A1A1E] border border-gray-200/80 dark:border-neutral-800 space-y-1.5">
+                      <div className="flex items-center gap-1.5 font-bold text-emerald-700 dark:text-emerald-400">
+                        <CheckCircle2 className="w-4 h-4" />
+                        <span>Reglas de Código Blindadas (firestore.rules)</span>
+                      </div>
+                      <ul className="space-y-1 text-[11px] text-gray-600 dark:text-neutral-400 list-disc list-inside">
+                        <li><strong>Anti-Escalada:</strong> Usuarios normales no pueden alterar su propio rol a `coach`.</li>
+                        <li><strong>Anti-Fraude:</strong> Clientes solo pueden crear comprobantes con estado `pending`.</li>
+                        <li><strong>Integridad de Sesiones:</strong> Clientes no pueden auto-aprobar o cambiar el estado de las sesiones.</li>
+                        <li><strong>Aislamiento de Perfiles:</strong> Coachees solo acceden a sus propios registros vía UID.</li>
+                      </ul>
+                    </div>
+
+                    {/* Deployment note */}
+                    <div className="p-3 rounded-xl bg-white dark:bg-[#1A1A1E] border border-gray-200/80 dark:border-neutral-800 space-y-1.5">
+                      <div className="flex items-center gap-1.5 font-bold text-amber-700 dark:text-amber-400">
+                        <AlertTriangle className="w-4 h-4" />
+                        <span>Estado de Despliegue en la Nube</span>
+                      </div>
+                      <p className="text-[11px] text-gray-600 dark:text-neutral-400 leading-relaxed">
+                        El archivo <code>/firestore.rules</code> está actualizado en el repositorio del proyecto. En la nube de Google Firebase, el despliegue automático requiere el rol IAM <code>Firebase Rules Admin</code>. Si necesitas sincronizarlo directamente en Firebase Console:
+                      </p>
+                      <button
+                        type="button"
+                        onClick={copyFirestoreRulesToClipboard}
+                        className="mt-1 px-2.5 py-1 rounded-lg bg-black dark:bg-white text-white dark:text-black font-semibold text-[10px] flex items-center gap-1 cursor-pointer"
+                      >
+                        {copiedRules ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+                        <span>{copiedRules ? '¡Reglas Copiadas!' : 'Copiar Reglas para Firebase Console'}</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         )}

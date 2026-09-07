@@ -118,12 +118,20 @@ service cloud.firestore {
       allow get: if isOwner(userId) || isAdmin();
       allow list: if isAdmin();
       allow create: if (isAdmin() || isOwner(userId)) && isValidUser(incoming()) && (
-        // Coachee cannot grant self coach role
-        (incoming().role == 'client') || isAdmin()
+        // Coachee cannot grant self coach role or bypass payment
+        (incoming().role == 'client' && (!('paymentStatus' in incoming()) || incoming().paymentStatus == 'Pendiente')) ||
+        isAdmin()
       );
       allow update: if (isAdmin() || isOwner(userId)) && isValidUser(incoming()) && (
-        // Prevent role escalation by non-admins
-        (incoming().role == existing().role) || isAdmin()
+        // Prevent role and entitlement escalation by non-admins
+        isAdmin() || (
+          incoming().role == existing().role &&
+          (!('paymentStatus' in incoming()) || incoming().paymentStatus == existing().paymentStatus) &&
+          (!('authorizedForOneOnOne' in incoming()) || incoming().authorizedForOneOnOne == existing().authorizedForOneOnOne) &&
+          (!('oneOnOnePackagePurchased' in incoming()) || incoming().oneOnOnePackagePurchased == existing().oneOnOnePackagePurchased) &&
+          (!('hasWorkshopsAccess' in incoming()) || incoming().hasWorkshopsAccess == existing().hasWorkshopsAccess) &&
+          (!('hasSessionsAccess' in incoming()) || incoming().hasSessionsAccess == existing().hasSessionsAccess)
+        )
       );
       allow delete: if isAdmin() || isOwner(userId);
     }
@@ -143,7 +151,9 @@ service cloud.firestore {
         isAdmin() || (
           isSignedIn() &&
           existing().clientId == request.auth.uid &&
-          incoming().clientId == existing().clientId
+          incoming().clientId == existing().clientId &&
+          // Coachee cannot self-mark session as completed or alter status
+          incoming().status == existing().status
         )
       );
     }
@@ -200,7 +210,9 @@ service cloud.firestore {
       allow get: if isAdmin() || (isSignedIn() && existing().clientId == request.auth.uid);
       allow list: if isAdmin() || (isSignedIn() && resource.data.clientId == request.auth.uid);
       allow create: if isSignedIn() && isValidPayment(incoming()) && (
-        incoming().clientId == request.auth.uid || isAdmin()
+        // Coachee can only submit pending payment vouchers
+        (incoming().clientId == request.auth.uid && incoming().status == 'pending') ||
+        isAdmin()
       );
       allow update, delete: if isAdmin() && isValidPayment(incoming());
     }

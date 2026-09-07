@@ -600,78 +600,7 @@ export let PROGRAM_NODES: ProgramNodeInfo[] = [
   },
 ];
 
-const INITIAL_PROSPECTS: Prospect[] = [
-  {
-    id: 'prosp-1',
-    name: 'Carlos Mendoza',
-    whatsapp: '+57 310 892 3411',
-    email: 'carlos.mendoza@innovatech.co',
-    status: 'matriz_enviada',
-    origin: 'Conversatorio Raíz y Balance',
-    notes: 'Descargó plantilla de WhatsApp tras conversatorio del jueves. Interesado en límites y delegación directiva.',
-    matrixSentAt: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(),
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 26).toISOString(),
-  },
-  {
-    id: 'prosp-2',
-    name: 'Valentina Ramos',
-    whatsapp: '+57 315 442 1980',
-    email: 'valentina.ramos@estudiolegal.com',
-    status: 'matriz_enviada',
-    origin: 'Conversatorio Raíz y Balance',
-    notes: 'Socia de firma de abogados. Manifestó sobrecarga y falta de límites en clientes clave.',
-    matrixSentAt: new Date(Date.now() - 1000 * 60 * 60 * 18).toISOString(),
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 20).toISOString(),
-  },
-  {
-    id: 'prosp-3',
-    name: 'Andrés Felipe Gómez',
-    whatsapp: '+57 300 781 2299',
-    email: 'afgomez@grupoandino.com',
-    status: 'sesion_20min_agendada',
-    origin: 'Conversatorio Raíz y Balance',
-    notes: 'Agendó sesión de 20 min en Google Calendar para mañana 3:00 PM. Foco en quiebre vocacional y directivo.',
-    matrixSentAt: new Date(Date.now() - 1000 * 60 * 60 * 48).toISOString(),
-    session20minDate: new Date(Date.now() + 1000 * 60 * 60 * 20).toISOString(),
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 50).toISOString(),
-  },
-  {
-    id: 'prosp-4',
-    name: 'Elena Santamaría',
-    whatsapp: '+57 312 905 6677',
-    email: 'elena.santamaria@retailcol.com',
-    status: 'sesion_20min_agendada',
-    origin: 'Conversatorio Raíz y Balance',
-    notes: 'Sesión de 20 min agendada para el viernes 10:30 AM. Excelente perfil directivo.',
-    matrixSentAt: new Date(Date.now() - 1000 * 60 * 60 * 72).toISOString(),
-    session20minDate: new Date(Date.now() + 1000 * 60 * 60 * 44).toISOString(),
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 74).toISOString(),
-  },
-  {
-    id: 'prosp-5',
-    name: 'Sofía Restrepo',
-    whatsapp: '+57 318 200 4590',
-    email: 'sofia.restrepo@example.com',
-    status: 'convertido',
-    origin: 'Conversatorio Raíz y Balance',
-    notes: 'Cierre exitoso tras sesión de 20 min. Ingresó al programa 1 a 1.',
-    matrixSentAt: new Date(Date.now() - 1000 * 60 * 60 * 240).toISOString(),
-    convertedAt: new Date(Date.now() - 1000 * 60 * 60 * 200).toISOString(),
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 250).toISOString(),
-  },
-  {
-    id: 'prosp-6',
-    name: 'Mateo Valencia',
-    whatsapp: '+57 301 654 8833',
-    email: 'mateo.valencia@example.com',
-    status: 'convertido',
-    origin: 'Conversatorio Raíz y Balance',
-    notes: 'Convertido con pago en 2 cuotas. Foco en comunicación asertiva con socios.',
-    matrixSentAt: new Date(Date.now() - 1000 * 60 * 60 * 300).toISOString(),
-    convertedAt: new Date(Date.now() - 1000 * 60 * 60 * 260).toISOString(),
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 310).toISOString(),
-  },
-];
+const INITIAL_PROSPECTS: Prospect[] = [];
 
 const INITIAL_USERS: User[] = [
   {
@@ -683,411 +612,15 @@ const INITIAL_USERS: User[] = [
     avatarUrl: coachAvatarImg,
     joinedAt: '2023-01-10',
   },
-  {
-    uid: 'client-1',
-    name: 'Sofía Restrepo',
-    email: 'sofia.restrepo@example.com',
-    role: 'client',
-    title: 'Directora de Operaciones',
-    avatarUrl:
-      'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=400&q=80',
-    joinedAt: '2024-02-15',
-    programProgress: 3, // Currently on Session 3 (Nivel II: Corporalidad & Reencuadre)
-    paymentStatus: 'Completado',
-    programName: 'Certeza, Fronteras & Dirección Personal',
-    programFee: '$1.500.000 COP',
-    status: 'active',
-    totalInvested: '$1.500.000 COP',
-    primaryBreakdown: 'Autoexigencia y límites no dichos con directivos',
-    lastActivityAt: new Date(Date.now() - 1000 * 60 * 60 * 5).toISOString(),
-    transformationSpacesEnabled: true,
-    hasWorkshopsAccess: true,
-    hasSessionsAccess: true,
-    programAccessLevel: 'free',
-    authorizedForOneOnOne: true,
-    oneOnOnePackagePurchased: true,
-  },
-  {
-    uid: 'client-2',
-    name: 'Mateo Valencia',
-    email: 'mateo.valencia@example.com',
-    role: 'client',
-    title: 'Fundador & Diseñador de Producto',
-    avatarUrl:
-      'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=400&q=80',
-    joinedAt: '2024-03-01',
-    programProgress: 2, // Currently on Session 2 (Nivel I: Fronteras y Límites No Dichos)
-    paymentStatus: 'Cuota 1 de 2',
-    programName: 'Certeza, Fronteras & Dirección Personal',
-    programFee: '$1.500.000 COP',
-    status: 'active',
-    totalInvested: '$750.000 COP',
-    primaryBreakdown: 'Gestión de la ira y reactividad con socios',
-    lastActivityAt: new Date(Date.now() - 1000 * 60 * 60 * 22).toISOString(),
-    transformationSpacesEnabled: true,
-    hasWorkshopsAccess: true,
-    hasSessionsAccess: true,
-    programAccessLevel: 'premium',
-    authorizedForOneOnOne: false,
-    oneOnOnePackagePurchased: false,
-  },
-  {
-    uid: 'client-3',
-    name: 'Camila Duarte',
-    email: 'camila.duarte@example.com',
-    role: 'client',
-    title: 'Líder de Transformación Digital',
-    avatarUrl:
-      'https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=400&q=80',
-    joinedAt: '2024-04-12',
-    programProgress: 5, // Currently on Session 5 (Nivel III: Diseño de Futuro)
-    paymentStatus: 'Pago Único',
-    programName: 'Certeza, Fronteras & Dirección Personal',
-    programFee: '$1.500.000 COP',
-    status: 'active',
-    totalInvested: '$1.500.000 COP',
-    primaryBreakdown: 'Crisis de identidad directiva y propósito',
-    lastActivityAt: new Date(Date.now() - 1000 * 60 * 60 * 48).toISOString(),
-    transformationSpacesEnabled: true,
-    hasWorkshopsAccess: true,
-    hasSessionsAccess: false,
-    programAccessLevel: 'premium',
-    authorizedForOneOnOne: false,
-    oneOnOnePackagePurchased: false,
-  },
-  {
-    uid: 'client-4',
-    name: 'Alejandro Morales',
-    email: 'alejandro.morales@example.com',
-    role: 'client',
-    title: 'Gerente Comercial Regional',
-    avatarUrl:
-      'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=400&q=80',
-    joinedAt: '2024-05-02',
-    programProgress: 1,
-    paymentStatus: 'Cuota 1 de 2',
-    programName: 'Certeza, Fronteras & Dirección Personal',
-    programFee: '$1.500.000 COP',
-    status: 'waiting',
-    totalInvested: '$750.000 COP',
-    primaryBreakdown: 'Trato y sanación con sus padres & lealtad invisible',
-    lastActivityAt: new Date(Date.now() - 1000 * 60 * 60 * 72).toISOString(),
-    transformationSpacesEnabled: true,
-    hasWorkshopsAccess: true,
-    hasSessionsAccess: false,
-    programAccessLevel: 'premium',
-    authorizedForOneOnOne: true,
-    oneOnOnePackagePurchased: false,
-  },
-  {
-    uid: 'client-5',
-    name: 'Valentina Jaramillo',
-    email: 'valentina.j@example.com',
-    role: 'client',
-    title: 'Consultora de Estrategia & M&A',
-    avatarUrl:
-      'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80',
-    joinedAt: '2024-01-20',
-    programProgress: 6,
-    paymentStatus: 'Completado',
-    programName: 'Certeza, Fronteras & Dirección Personal',
-    programFee: '$1.500.000 COP',
-    status: 'inactive',
-    totalInvested: '$3.000.000 COP',
-    primaryBreakdown: 'Miedo al juicio externo y soberanía de decisión',
-    lastActivityAt: new Date(Date.now() - 1000 * 60 * 60 * 240).toISOString(),
-    transformationSpacesEnabled: true,
-    hasWorkshopsAccess: true,
-    hasSessionsAccess: true,
-    programAccessLevel: 'free',
-    authorizedForOneOnOne: true,
-    oneOnOnePackagePurchased: true,
-  },
-  {
-    uid: 'client-6',
-    name: 'Daniel Echeverri',
-    email: 'daniel.echeverri@example.com',
-    role: 'client',
-    title: 'CFO & Asesor Financiero',
-    avatarUrl:
-      'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=400&q=80',
-    joinedAt: '2024-06-10',
-    programProgress: 2,
-    paymentStatus: 'Pago Único',
-    programName: 'Certeza, Fronteras & Dirección Personal',
-    programFee: '$1.500.000 COP',
-    status: 'active',
-    totalInvested: '$1.500.000 COP',
-    primaryBreakdown: 'Control obsesivo y delegación con angustia',
-    lastActivityAt: new Date(Date.now() - 1000 * 60 * 60 * 12).toISOString(),
-    transformationSpacesEnabled: true,
-    hasWorkshopsAccess: true,
-    hasSessionsAccess: false,
-    programAccessLevel: 'premium',
-    authorizedForOneOnOne: false,
-    oneOnOnePackagePurchased: false,
-  },
-  {
-    uid: 'client-andres',
-    name: 'Andrés Quintero',
-    email: 'andres.quintero@example.com',
-    role: 'client',
-    title: 'Director de Innovación & Emprendimiento',
-    avatarUrl:
-      'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=400&q=80',
-    joinedAt: '2024-03-10',
-    programProgress: 2,
-    paymentStatus: 'Completado', // Supuestamente ya pagó todo el taller
-    programName: 'Certeza, Fronteras & Dirección Personal',
-    programFee: '$1.500.000 COP',
-    status: 'active',
-    totalInvested: '$1.500.000 COP',
-    primaryBreakdown: 'Quiebre de autoexigencia extrema, delegación y presencia directiva',
-    lastActivityAt: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
-    transformationSpacesEnabled: true,
-    hasWorkshopsAccess: true,
-    hasSessionsAccess: true,
-    programAccessLevel: 'free',
-    authorizedForOneOnOne: true,
-    oneOnOnePackagePurchased: true,
-    completedWorkshopIds: ['taller-1-raiz'],
-    enrolledWorkshopIds: ['taller-1-raiz', 'taller-2-tallo'],
-  },
 ];
 
-const INITIAL_SESSIONS: Session[] = [
-  {
-    id: 'sess-andres-1',
-    clientId: 'client-andres',
-    sessionNumber: 1,
-    date: new Date(Date.now() - 1000 * 60 * 60 * 24 * 14).toISOString(),
-    meetLink: 'https://meet.google.com/rbc-andres-ses1',
-    status: 'completed',
-    isPaid: true,
-    paymentValidatedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 30).toISOString(),
-    notes: 'Sesión 1: Mapeo del quiebre de autoexigencia y deconstrucción de la omnipotencia operativa.',
-  },
-  {
-    id: 'sess-andres-2',
-    clientId: 'client-andres',
-    sessionNumber: 2,
-    date: new Date(Date.now() - 1000 * 60 * 60 * 3).toISOString(), // Finished today
-    meetLink: 'https://meet.google.com/rbc-andres-ses2',
-    status: 'completed',
-    isPaid: true,
-    paymentValidatedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 30).toISOString(),
-    notes: 'Sesión 2: Reencuadre de la culpa al delegar y diseño de conversaciones de oferta y confianza.',
-  },
-  {
-    id: 'sess-andres-3',
-    clientId: 'client-andres',
-    sessionNumber: 3,
-    date: new Date(Date.now() + 1000 * 60 * 60 * 24 * 11).toISOString(),
-    meetLink: 'https://meet.google.com/rbc-andres-ses3',
-    status: 'scheduled',
-    isPaid: true,
-    paymentValidatedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 30).toISOString(),
-    notes: 'Sesión 3: Decodificación somática de la presencia directiva y acuerdos de equipo.',
-  },
-  {
-    id: 'sess-andres-4',
-    clientId: 'client-andres',
-    sessionNumber: 4,
-    date: new Date(Date.now() + 1000 * 60 * 60 * 24 * 25).toISOString(),
-    meetLink: 'https://meet.google.com/rbc-andres-ses4',
-    status: 'scheduled',
-    isPaid: true,
-    paymentValidatedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 30).toISOString(),
-    notes: 'Sesión 4: Distinción ontológica entre hechos y juicios en la toma de decisiones estratégicas.',
-  },
-  {
-    id: 'sess-andres-5',
-    clientId: 'client-andres',
-    sessionNumber: 5,
-    date: new Date(Date.now() + 1000 * 60 * 60 * 24 * 39).toISOString(),
-    meetLink: 'https://meet.google.com/rbc-andres-ses5',
-    status: 'scheduled',
-    isPaid: true,
-    paymentValidatedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 30).toISOString(),
-    notes: 'Sesión 5: Rediseño de la soberanía emocional, límites impecables y autonomía directiva.',
-  },
-  {
-    id: 'sess-andres-6',
-    clientId: 'client-andres',
-    sessionNumber: 6,
-    date: new Date(Date.now() + 1000 * 60 * 60 * 24 * 53).toISOString(),
-    meetLink: 'https://meet.google.com/rbc-andres-ses6',
-    status: 'scheduled',
-    isPaid: true,
-    paymentValidatedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 30).toISOString(),
-    notes: 'Sesión 6: Cierre del ciclo, consolidación de la nueva identidad y plan de sostenibilidad.',
-  },
-  {
-    id: 'sess-103',
-    clientId: 'client-1',
-    sessionNumber: 3,
-    date: new Date(Date.now() + 1000 * 60 * 60 * 26).toISOString(), // Tomorrow afternoon
-    meetLink: 'https://meet.google.com/rbc-onto-ses3',
-    status: 'scheduled',
-    isPaid: true,
-    paymentValidatedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 6).toISOString(),
-    notes: 'Sesión 3: Decodificación somática de la opresión en el pecho y mandatos de autoexigencia.',
-  },
-  {
-    id: 'sess-102',
-    clientId: 'client-1',
-    sessionNumber: 2,
-    date: new Date(Date.now() - 1000 * 60 * 60 * 24 * 14).toISOString(),
-    meetLink: 'https://meet.google.com/rbc-onto-ses2',
-    status: 'completed',
-    isPaid: true,
-    paymentValidatedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 6).toISOString(),
-    notes: 'Sesión 2: Mapeo de límites no dichos y rediseño del "No" ontológico.',
-  },
-  {
-    id: 'sess-101',
-    clientId: 'client-1',
-    sessionNumber: 1,
-    date: new Date(Date.now() - 1000 * 60 * 60 * 24 * 28).toISOString(),
-    meetLink: 'https://meet.google.com/rbc-onto-ses1',
-    status: 'completed',
-    isPaid: true,
-    paymentValidatedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 6).toISOString(),
-    notes: 'Sesión 1: Mapeo de la transparencia cotidiana y quiebres no declarados.',
-  },
-  {
-    id: 'sess-202',
-    clientId: 'client-2',
-    sessionNumber: 2,
-    date: new Date(Date.now() + 1000 * 60 * 60 * 72).toISOString(),
-    meetLink: 'https://meet.google.com/rbc-onto-ses2',
-    status: 'scheduled',
-    isPaid: true,
-    paymentValidatedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 10).toISOString(),
-    notes: 'Sesión 2: Distinción entre juicios y hechos en las relaciones con socios.',
-  },
-  {
-    id: 'sess-305',
-    clientId: 'client-3',
-    sessionNumber: 5,
-    date: new Date(Date.now() + 1000 * 60 * 60 * 96).toISOString(),
-    meetLink: 'https://meet.google.com/rbc-onto-ses5',
-    status: 'scheduled',
-    isPaid: true,
-    paymentValidatedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 20).toISOString(),
-    notes: 'Sesión 5: Declaración de nueva identidad y diseño de conversaciones de oferta.',
-  },
-];
+const INITIAL_SESSIONS: Session[] = [];
 
-const INITIAL_FORMS: FormSubmission[] = [
-  {
-    id: 'form-101',
-    clientId: 'client-1',
-    sessionId: 'sess-101',
-    sessionStep: 1,
-    level: 'Nivel I',
-    bodyEmotion: 'Pesadez y fatiga en la espalda por intentar sostener todas las decisiones.',
-    reflections: 'Reconocí que opero en transparencia creyendo que si no superviso todo, habrá caos.',
-    levelSpecificAnswer: 'Límite no dicho: Aceptar reuniones fuera de horario sin quejarme abiertamente.',
-    submittedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 27).toISOString(),
-  },
-  {
-    id: 'form-102',
-    clientId: 'client-1',
-    sessionId: 'sess-102',
-    sessionStep: 2,
-    level: 'Nivel I',
-    bodyEmotion: 'Tensión en la garganta al momento de tener que decir "no es posible para este viernes".',
-    reflections: 'Descubrí que asociaba el límite con la falta de compromiso, cuando en realidad es el guardián de la excelencia.',
-    levelSpecificAnswer: 'Proclamé mi primer límite oficial con la junta directiva sobre tiempos de entrega.',
-    submittedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 13).toISOString(),
-  },
-];
+const INITIAL_FORMS: FormSubmission[] = [];
 
-export const INITIAL_POST_SESSION_FORMS: PostSessionForm[] = [
-  {
-    id: 'psf-andres-1',
-    sessionId: 'sess-andres-1',
-    sessionNumber: 1,
-    clientId: 'client-andres',
-    clientName: 'Andrés Quintero',
-    sessionDate: new Date(Date.now() - 1000 * 60 * 60 * 24 * 14).toISOString(),
-    submittedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 14 + 1000 * 60 * 65).toISOString(),
-    // Pregunta 1:
-    coacheeEmotionAndOpenness:
-      'Habitó una fuerte ansiedad encubierta en hiper-racionalización y urgencia operativa. En los primeros 25 minutos mostró una marcada resistencia corporal (mandíbula apretada, hombros elevados y tendencia a justificar su sobrecarga con métricas de la empresa). Al intervenir con una pausa somática y espejar su agotamiento, tuvo una apertura profunda y vulnerable para admitir el miedo a perder control.',
-    // Pregunta 2:
-    masterJudgmentAndNarrative:
-      'Juicio Maestro: "Si no lo controlo y resuelvo todo yo mismo, el proyecto colapsará y perderé mi valor como líder". Esta narrativa de omnipotencia y desconfianza básica estructuraba su resistencia radical a delegar en su equipo directivo.',
-    // Pregunta 3:
-    perspectiveShiftEvidence:
-      'Hacia el cierre de la sesión reconoció conmovido: "Pensaba que delegar era abandonar, pero ahora veo que exigir perfección absoluta es una forma de protegerme del miedo a no ser suficiente". Soltó la tensión física visiblemente y aceptó ceder el liderazgo del comité operativo de los martes.',
-    // Pregunta 4:
-    directivenessAndIcfCompetency:
-      'Hacia el minuto 43 sentí la tentación de sugerirle una metodología específica de gestión en vez de sostener el silencio reflexivo para que él diseñara su propio acuerdo de confianza. Debo cuidar con rigor la Competencia ICF 5 (Mantiene la Presencia) y Competencia ICF 7 (Evoca Conciencia), evitando actuar desde el rol de consultor directivo.',
-    workbookTitle: 'Deconstrucción de la Omnipotencia & Arquitectura de Confianza Directiva',
-    coacheeKeyDeclaration:
-      'Declaro que mi valor como líder radica en habilitar la autonomía de mi equipo y no en cargar con el peso del resultado solitario.',
-    agreedActionItems: [
-      'Delegar la entrega del informe semanal de operaciones sin intervenir en los borradores intermedios.',
-      'Realizar 3 pausas de centramiento y respiración diafragmática de 3 minutos antes de ingresar a comités directivos.',
-      'Anotar en la bitácora somática cada vez que surja el impulso automático de microgestión o fiscalización.',
-    ],
-    somaticHomework:
-      'Práctica de enraizamiento y soltura: 5 minutos al iniciar la jornada conectando los pies al suelo, abriendo el pecho y soltando la mandíbula antes de encender el ordenador.',
-  },
-  {
-    id: 'psf-andres-2',
-    sessionId: 'sess-andres-2',
-    sessionNumber: 2,
-    clientId: 'client-andres',
-    clientName: 'Andrés Quintero',
-    sessionDate: new Date(Date.now() - 1000 * 60 * 60 * 3).toISOString(),
-    submittedAt: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
-    coacheeEmotionAndOpenness:
-      'Llegó con sensación de alivio tras haber soltado la coordinación del comité de los martes, pero experimentando culpa residual e inquietud por no saber el minuto a minuto. Apertura alta para indagar de dónde viene esa culpa y redefinir su noción de responsabilidad directiva.',
-    masterJudgmentAndNarrative:
-      'Juicio Maestro: "Si no me siento culpable o agotado al final del día, siento que no estoy trabajando lo suficiente". Deconstrucción de la narrativa de que el valor profesional es proporcional al nivel de desgaste físico y mental.',
-    perspectiveShiftEvidence:
-      'Expresó con claridad: "Entiendo que el descanso y la confianza son actos de liderazgo estratégico, no de negligencia". Definió con convicción su primer protocolo de pedidos y promesas con su socia operativa.',
-    directivenessAndIcfCompetency:
-      'Cuidé el ritmo de la conversación y sostuve las pausas necesarias cuando él conectaba con la emoción del alivio. Competencia ICF 6 (Escucha Activa) y Competencia ICF 8 (Facilita el Crecimiento del Cliente) aplicadas con consistencia.',
-    workbookTitle: 'Deconstrucción de la Culpa & Diseño de Conversaciones de Confianza',
-    coacheeKeyDeclaration:
-      'Elijo liderar desde la serenidad, fundar mis pedidos con claridad y confiar en la capacidad de mi equipo sin castigarme con la culpa.',
-    agreedActionItems: [
-      'Establecer acuerdos de retroalimentación quincenales en lugar de revisiones diarias imprevistas.',
-      'Sostener la desconexión total después de las 7:00 PM sin responder mensajes no críticos.',
-      'Documentar en la bitácora los momentos de serenidad y eficacia experimentados durante la semana.',
-    ],
-    somaticHomework:
-      'Práctica de respiración en cuatro tiempos (box breathing) antes de responder solicitudes complejas.',
-  },
-];
+export const INITIAL_POST_SESSION_FORMS: PostSessionForm[] = [];
 
-const INITIAL_AI_INSIGHTS: AIInsight[] = [
-  {
-    id: 'insight-100',
-    clientId: 'client-1',
-    sessionId: 'sess-102',
-    sessionStep: 2,
-    linguisticBarriers: [
-      'Confusión recurrente entre afirmaciones descriptivas y juicios automáticos no fundamentados.',
-      'Generalizaciones absolutas: "si bajo la guardia, todo colapsará" (trampa de certeza lingüística).',
-      'Predominio de peticiones pasivas e implícitas en lugar de reclamos y promesas ontológicamente estructuradas.',
-    ],
-    limitingBeliefs: [
-      '"La vulnerabilidad es sinónimo de pérdida de autoridad e incompetencia"',
-      '"El valor propio depende exclusivamente del control milimétrico sobre los resultados ajenos"',
-      '"Cuidar de mí misma pone en riesgo el bienestar del colectivo"',
-    ],
-    emotionalWisdom:
-      'La experiencia somática reportada evidencia una señal adaptativa que busca proteger un valor fundamental. La tensión en la mandíbula y el enojo no deben ser suprimidos sino escuchados: revelan un desbalance entre la autoexigencia idealizada y la capacidad humana disponible en este momento. La transformación ontológica requiere mutar el auto-reproche en discernimiento compasivo, rediseñando la conversación de pedidos y estableciendo límites con serenidad.',
-    pulseFlag: 'Yellow',
-    generatedAt: new Date(Date.now() - 1000 * 60 * 60 * 38).toISOString(),
-    webhookStatus: 'sent',
-  },
-];
+const INITIAL_AI_INSIGHTS: AIInsight[] = [];
 
 const INITIAL_CRONOGRAMA_EVENTS: CronogramaEvent[] = RAIZ_BALANCE_WORKSHOPS;
 
@@ -1165,89 +698,9 @@ const INITIAL_PROGRAMS: OntologicalProgram[] = [
   },
 ];
 
-const INITIAL_EVENT_REGISTRATIONS: EventRegistration[] = [
-  {
-    id: 'reg-1',
-    ticketCode: 'RBC-EVT-98421',
-    eventId: 'event-1',
-    eventTitle: 'Conversatorio: Límites, Quiebres & Soberanía Personal',
-    eventDate: '2026-09-17T19:00:00.000Z',
-    name: 'Carlos Mendoza',
-    email: 'carlos.mendoza@innovatech.co',
-    phone: '+57 310 892 3411',
-    registeredAt: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(),
-    icfTermsAccepted: true,
-    privacyTermsAccepted: true,
-    attendedEvent: false,
-    googleAuthConnected: true,
-  },
-  {
-    id: 'reg-2',
-    ticketCode: 'RBC-EVT-55129',
-    eventId: 'event-1',
-    eventTitle: 'Conversatorio: Límites, Quiebres & Soberanía Personal',
-    eventDate: '2026-09-17T19:00:00.000Z',
-    name: 'Valentina Ramos',
-    email: 'valentina.ramos@estudiolegal.com',
-    phone: '+57 315 442 1980',
-    registeredAt: new Date(Date.now() - 1000 * 60 * 60 * 18).toISOString(),
-    icfTermsAccepted: true,
-    privacyTermsAccepted: true,
-    attendedEvent: false,
-    googleAuthConnected: true,
-  },
-];
+const INITIAL_EVENT_REGISTRATIONS: EventRegistration[] = [];
 
-const INITIAL_PAYMENT_REQUESTS: PaymentRequest[] = [
-  {
-    id: 'pay-req-1',
-    clientId: 'client-2',
-    clientName: 'Mateo Valencia',
-    clientEmail: 'mateo.valencia@example.com',
-    clientPhone: '+57 301 654 8833',
-    amount: '$500.000 COP',
-    concept: 'Desbloqueo Nivel II: Diseñando Conversaciones y Límites (Sesión 3)',
-    targetStep: 3,
-    planType: 'level',
-    method: 'efectivo',
-    notes: 'Pago en efectivo acordado para entregar en consultorio en la sesión presencial de este jueves.',
-    status: 'pending',
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 4).toISOString(),
-  },
-  {
-    id: 'pay-req-2',
-    clientId: 'client-4',
-    clientName: 'Alejandro Morales',
-    clientEmail: 'alejandro.morales@example.com',
-    clientPhone: '+57 311 555 4321',
-    amount: '$500.000 COP',
-    concept: 'Desbloqueo Nivel I: Fronteras, Declaraciones y Límites (Sesión 2)',
-    targetStep: 2,
-    planType: 'level',
-    method: 'bre_b_nu',
-    whatsappContacted: true,
-    notes: 'Transferencia realizada con Bre-B Nu a la llave @ASL775. Comprobante enviado por WhatsApp al +573234642257.',
-    status: 'pending',
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 12).toISOString(),
-  },
-  {
-    id: 'pay-req-3',
-    clientId: 'client-1',
-    clientName: 'Sofía Restrepo',
-    clientEmail: 'sofia.restrepo@example.com',
-    clientPhone: '+57 318 200 4590',
-    amount: '$1.500.000 COP',
-    concept: 'Programa Completo Certeza Ontológica (12 Semanas)',
-    targetStep: 6,
-    planType: 'full',
-    method: 'bre_b_nu',
-    notes: 'Pago total por Bre-B Nu @ASL775 validado por administración.',
-    status: 'approved',
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 7).toISOString(),
-    reviewedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 6).toISOString(),
-    reviewedBy: 'John Fredy Rengifo Basto',
-  },
-];
+const INITIAL_PAYMENT_REQUESTS: PaymentRequest[] = [];
 
 const STORAGE_KEYS = {
   USERS: 'rbc_users_v2',
@@ -1279,6 +732,7 @@ const STORAGE_KEYS = {
   PRICING_PACKAGES: 'rbc_pricing_packages_v2',
   SYSTEM_LINK_BINDINGS: 'rbc_system_link_bindings_v2',
   EXPERIENCES: 'rbc_ontological_experiences_v1',
+  DB_PURGED_CLEAN: 'rbc_db_purged_clean_v1',
 };
 
 export const INITIAL_AUTOMATED_TRIGGERS: AutomatedTriggerConfig[] = [
@@ -3100,6 +2554,8 @@ export class OntologicalStore {
     email: string;
     phone: string;
     googleAuthConnected?: boolean;
+    avatarUrl?: string;
+    userUid?: string;
   }): { registration: EventRegistration; user: User; prospect: Prospect } {
     const events = this.getCronogramaEvents();
     const targetEvent = events.find((e) => e.id === params.eventId) || events[0] || INITIAL_CRONOGRAMA_EVENTS[0];
@@ -3123,13 +2579,15 @@ export class OntologicalStore {
 
     if (!existingUser) {
       existingUser = {
-        uid: `client-${Date.now()}`,
+        uid: params.userUid || `client-${Date.now()}`,
         name: params.name.trim(),
         email: params.email.trim().toLowerCase(),
         phone: params.phone.trim(),
         role: 'client',
         title: 'Asistente Seminario Ontológico',
-        avatarUrl: `https://images.unsplash.com/photo-${1530000000000 + Math.floor(Math.random() * 99999999)}?auto=format&fit=crop&w=400&q=80`,
+        avatarUrl:
+          params.avatarUrl ||
+          `https://images.unsplash.com/photo-${1530000000000 + Math.floor(Math.random() * 99999999)}?auto=format&fit=crop&w=400&q=80`,
         joinedAt: new Date().toISOString().split('T')[0],
         programProgress: 1,
         paymentStatus: 'Pago Único',
@@ -3137,6 +2595,25 @@ export class OntologicalStore {
         programFee: '$1.500.000 COP',
       };
       this.saveUsers([...users, existingUser]);
+    } else {
+      let changed = false;
+      const updatedUser = { ...existingUser };
+      if (params.avatarUrl && (!existingUser.avatarUrl || existingUser.avatarUrl.includes('unsplash'))) {
+        updatedUser.avatarUrl = params.avatarUrl;
+        changed = true;
+      }
+      if (params.name && params.name.trim() && (!existingUser.name || existingUser.name.startsWith('Usuario') || existingUser.name === 'Carlos Mendoza')) {
+        updatedUser.name = params.name.trim();
+        changed = true;
+      }
+      if (params.phone && params.phone.trim() && !existingUser.phone) {
+        updatedUser.phone = params.phone.trim();
+        changed = true;
+      }
+      if (changed) {
+        existingUser = updatedUser;
+        this.saveUsers(users.map((u) => (u.uid === existingUser!.uid ? existingUser! : u)));
+      }
     }
 
     // 2. Create Event Registration
@@ -3367,16 +2844,78 @@ export class OntologicalStore {
     return { user: updatedUser, updatedRegistrations: updatedRegsList };
   }
 
-  static getUsers(): User[] {
-    const rawUsers = this.load<User[]>(STORAGE_KEYS.USERS, INITIAL_USERS);
-    let safeUsers = Array.isArray(rawUsers) ? rawUsers : INITIAL_USERS;
+  static isDatabasePurgedClean(): boolean {
+    return this.load<boolean>(STORAGE_KEYS.DB_PURGED_CLEAN, false);
+  }
 
-    // Ensure Andres Quintero is always present as a client who has 100% paid the workshop
-    if (!safeUsers.some((u) => u.uid === 'client-andres' || u.email === 'andres.quintero@example.com')) {
-      const andres = INITIAL_USERS.find((u) => u.uid === 'client-andres');
-      if (andres) {
-        safeUsers = [...safeUsers, andres];
-      }
+  static wipeEntireDatabase(): { coach: User; users: User[] } {
+    const coach = INITIAL_USERS.find((u) => u.role === 'coach') || INITIAL_USERS[0];
+    const users = [coach];
+
+    this.save(STORAGE_KEYS.DB_PURGED_CLEAN, true);
+    this.save(STORAGE_KEYS.USERS, users);
+    this.save(STORAGE_KEYS.SESSIONS, []);
+    this.save(STORAGE_KEYS.POST_SESSION_FORMS, []);
+    this.save(STORAGE_KEYS.FORMS, []);
+    this.save(STORAGE_KEYS.AI_INSIGHTS, []);
+    this.save(STORAGE_KEYS.PAYMENT_REQUESTS, []);
+    this.save(STORAGE_KEYS.EVENT_REGISTRATIONS, []);
+    this.save(STORAGE_KEYS.PROSPECTS, []);
+    this.save(STORAGE_KEYS.WORKSHOPS_VIEWED, {});
+
+    try {
+      FirestoreSyncService.wipeAllFirestoreData().catch(() => {});
+    } catch {
+      // ignore
+    }
+
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('rbc-users-updated', { detail: { users } }));
+      window.dispatchEvent(new CustomEvent('rbc-sessions-updated', { detail: { sessions: [] } }));
+      window.dispatchEvent(new CustomEvent('rbc-forms-updated', { detail: { forms: [] } }));
+      window.dispatchEvent(new CustomEvent('rbc-payments-updated', { detail: { payments: [] } }));
+      window.dispatchEvent(new CustomEvent('rbc-prospects-updated', { detail: { prospects: [] } }));
+      window.dispatchEvent(new Event('storage'));
+    }
+
+    return { coach, users };
+  }
+
+  static resetClientsDatabaseToSingleVerifiedClient(): { user: User; users: User[] } {
+    const wipeRes = this.wipeEntireDatabase();
+    return { user: wipeRes.coach, users: wipeRes.users };
+  }
+
+  static getUsers(): User[] {
+    const isPurged = this.isDatabasePurgedClean();
+    const rawUsers = this.load<User[]>(STORAGE_KEYS.USERS, [INITIAL_USERS[0]]);
+    let safeUsers = Array.isArray(rawUsers) ? rawUsers : [INITIAL_USERS[0]];
+
+    // Auto-clean Carolina Montoya and any legacy dummy users
+    const hasExcludedUsers = safeUsers.some(
+      (u) =>
+        u.uid === 'client-carolina' ||
+        u.email === 'carolina.montoya@innovacion.co' ||
+        u.uid === 'client-1' ||
+        u.uid === 'client-2' ||
+        u.uid === 'client-3' ||
+        u.uid === 'client-4' ||
+        u.uid === 'client-5' ||
+        u.uid === 'client-6' ||
+        u.uid === 'client-andres' ||
+        u.email === 'andres.quintero@example.com' ||
+        u.email === 'sofia.restrepo@example.com'
+    );
+
+    if (hasExcludedUsers) {
+      safeUsers = safeUsers.filter(
+        (u) =>
+          u.uid !== 'client-carolina' &&
+          u.email !== 'carolina.montoya@innovacion.co' &&
+          u.uid !== 'client-andres' &&
+          !u.email.includes('example.com')
+      );
+      this.saveUsers(safeUsers);
     }
 
     // Ensure coach profile is always accurately named and has the latest avatar, and ensure clients have default status & breakdown
@@ -3388,15 +2927,6 @@ export class OntologicalStore {
           avatarUrl: coachAvatarImg,
         };
       }
-      if (u.uid === 'client-andres' || u.name.toLowerCase().includes('andres quintero')) {
-        return {
-          ...u,
-          paymentStatus: 'Completado',
-          totalInvested: '$1.500.000 COP',
-          status: 'active',
-          primaryBreakdown: u.primaryBreakdown || 'Quiebre de autoexigencia extrema, delegación y presencia directiva',
-        };
-      }
       // Guarantee client defaults for status, totalInvested, primaryBreakdown and transformation journey
       const isActive = (u.status || 'active') === 'active';
       return {
@@ -3405,38 +2935,13 @@ export class OntologicalStore {
         transformationSpacesEnabled: u.transformationSpacesEnabled ?? isActive,
         hasWorkshopsAccess: u.hasWorkshopsAccess ?? true,
         hasSessionsAccess: u.hasSessionsAccess ?? true,
-        completedWorkshopIds:
-          u.completedWorkshopIds ||
-          (u.uid === 'client-1' || u.uid === 'client-andres' ? ['taller-1-raiz'] : []),
-        workshopMemories: u.workshopMemories || {
-          ...(u.uid === 'client-1' || u.uid === 'client-andres'
-            ? {
-                'taller-1-raiz': {
-                  pdfUrl: 'https://rbc.edu.co/memorias/taller-1-raiz.pdf',
-                  completedAt: '2025-03-01T10:00:00.000Z',
-                  commitments: 'Centramiento corporal antes de reuniones decisivas y registro del observador.',
-                  keyBreakthrough: 'Reconocimiento de la autoexigencia como juicio automático y no como verdad fáctica.',
-                },
-              }
-            : {}),
-        },
+        completedWorkshopIds: u.completedWorkshopIds || [],
+        workshopMemories: u.workshopMemories || {},
         welcomeMessage:
           u.welcomeMessage ||
           `Bienvenido(a) a tu Camino de Transformación. Este espacio sincroniza en tiempo real tu evolución en talleres y consultoría ontológica.`,
-        totalInvested:
-          u.totalInvested ||
-          (u.paymentStatus === 'Cuota 1 de 2'
-            ? '$750.000 COP'
-            : '$1.500.000 COP'),
-        primaryBreakdown:
-          u.primaryBreakdown ||
-          (u.uid === 'client-1'
-            ? 'Autoexigencia y límites no dichos con directivos'
-            : u.uid === 'client-2'
-            ? 'Gestión de la ira y reactividad con socios'
-            : u.uid === 'client-3'
-            ? 'Crisis de identidad directiva y propósito'
-            : 'Fronteras, auto-observación y claridad directiva'),
+        totalInvested: u.totalInvested || '$1.500.000 COP',
+        primaryBreakdown: u.primaryBreakdown || 'Quiebre de autoexigencia y presencia directiva',
       };
     });
   }
@@ -4178,12 +3683,13 @@ export class OntologicalStore {
 
   // --- SESSIONS ---
   static getSessions(): Session[] {
+    if (this.isDatabasePurgedClean()) {
+      const list = this.load<Session[]>(STORAGE_KEYS.SESSIONS, []);
+      return Array.isArray(list) ? list : [];
+    }
     const list = this.load<Session[]>(STORAGE_KEYS.SESSIONS, INITIAL_SESSIONS);
     let safeList = Array.isArray(list) ? list : INITIAL_SESSIONS;
-    if (!safeList.some((s) => s.clientId === 'client-andres')) {
-      const andresSessions = INITIAL_SESSIONS.filter((s) => s.clientId === 'client-andres');
-      safeList = [...safeList, ...andresSessions];
-    }
+    safeList = safeList.filter((s) => s.clientId !== 'client-carolina');
     return safeList;
   }
 
@@ -4310,9 +3816,7 @@ export class OntologicalStore {
       INITIAL_POST_SESSION_FORMS
     );
     let safeList = Array.isArray(list) ? list : INITIAL_POST_SESSION_FORMS;
-    if (!safeList.some((f) => f.id === 'psf-andres-1')) {
-      safeList = [...safeList, ...INITIAL_POST_SESSION_FORMS];
-    }
+    safeList = safeList.filter((f) => f.clientId !== 'client-carolina');
     return safeList;
   }
 
@@ -4353,13 +3857,11 @@ export class OntologicalStore {
   }
 
   static getWorkshopsViewed(clientId: string): number[] {
-    const map = this.load<Record<string, number[]>>(STORAGE_KEYS.WORKSHOPS_VIEWED, {
-      'user-andres-quintero': [1, 2],
-    });
+    const map = this.load<Record<string, number[]>>(STORAGE_KEYS.WORKSHOPS_VIEWED, {});
     if (!map[clientId]) {
       const user = this.getUserById(clientId);
       const initial: number[] = [];
-      const max = Math.min(user?.programProgress || 1, 2);
+      const max = Math.min(user?.programProgress || 1, 4);
       for (let i = 1; i <= max; i++) {
         initial.push(i);
       }
@@ -4370,9 +3872,7 @@ export class OntologicalStore {
   }
 
   static toggleWorkshopViewed(clientId: string, step: number): boolean {
-    const map = this.load<Record<string, number[]>>(STORAGE_KEYS.WORKSHOPS_VIEWED, {
-      'user-andres-quintero': [1, 2],
-    });
+    const map = this.load<Record<string, number[]>>(STORAGE_KEYS.WORKSHOPS_VIEWED, {});
     const current = map[clientId] || this.getWorkshopsViewed(clientId);
     const exists = current.includes(step);
     const updated = exists
@@ -4384,9 +3884,7 @@ export class OntologicalStore {
   }
 
   static setWorkshopViewed(clientId: string, step: number, viewed: boolean): void {
-    const map = this.load<Record<string, number[]>>(STORAGE_KEYS.WORKSHOPS_VIEWED, {
-      'user-andres-quintero': [1, 2],
-    });
+    const map = this.load<Record<string, number[]>>(STORAGE_KEYS.WORKSHOPS_VIEWED, {});
     const current = map[clientId] || [];
     const updated = viewed
       ? Array.from(new Set([...current, step])).sort((a, b) => a - b)

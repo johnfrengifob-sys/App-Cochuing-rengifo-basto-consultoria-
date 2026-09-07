@@ -1277,7 +1277,7 @@ export const ProgramsAndEventsManager: React.FC<ProgramsAndEventsManagerProps> =
                   required
                   value={regName}
                   onChange={(e) => setRegName(e.target.value)}
-                  placeholder="Ej: Carolina Rojas"
+                  placeholder="Ej: Camila Rojas"
                   className="w-full px-3 py-2 text-xs rounded-xl border border-gray-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-black dark:text-white"
                 />
               </div>

@@ -87,6 +87,10 @@ export const ClientDirectoryTable: React.FC<ClientDirectoryTableProps> = ({
   const [clientToDelete, setClientToDelete] = useState<User | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
+  // Reset database modal state
+  const [isResetModalOpen, setIsResetModalOpen] = useState(false);
+  const [isResetting, setIsResetting] = useState(false);
+
   // Add client modal state
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [newClientName, setNewClientName] = useState('');
@@ -262,6 +266,38 @@ export const ClientDirectoryTable: React.FC<ClientDirectoryTableProps> = ({
     } finally {
       setIsDeleting(false);
       setTimeout(() => setActionToast(null), 4500);
+    }
+  };
+
+  // Reset database handler
+  const handleConfirmResetDatabase = async () => {
+    setIsResetting(true);
+    try {
+      OntologicalStore.wipeEntireDatabase();
+      await FirestoreSyncService.wipeAllFirestoreData();
+
+      if (onRefreshClients) {
+        onRefreshClients();
+      }
+
+      setActionToast({
+        message: 'Base de datos completamente vaciada (0 clientes, 0 sesiones, 0 bitácoras). El sistema está en estado 100% limpio y seguro.',
+        type: 'success',
+      });
+      setIsResetModalOpen(false);
+    } catch (error) {
+      console.error('Error al modificar base de datos:', error);
+      setActionToast({
+        message: 'No se pudo completar el vaciado remoto de Firestore, pero el almacenamiento local ha sido actualizado con éxito.',
+        type: 'error',
+      });
+      if (onRefreshClients) {
+        onRefreshClients();
+      }
+      setIsResetModalOpen(false);
+    } finally {
+      setIsResetting(false);
+      setTimeout(() => setActionToast(null), 5000);
     }
   };
 
@@ -447,8 +483,19 @@ export const ClientDirectoryTable: React.FC<ClientDirectoryTableProps> = ({
             </button>
           </div>
 
-          {/* Action Tools: New Client Button & Table vs Cards Toggle */}
+          {/* Action Tools: Reset Database, Load Test Client, New Client Button & Table vs Cards Toggle */}
           <div className="flex items-center gap-2 shrink-0">
+            <button
+              type="button"
+              onClick={() => setIsResetModalOpen(true)}
+              className="px-3 py-2 rounded-xl bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 hover:bg-rose-100 dark:hover:bg-rose-900/50 border border-rose-200 dark:border-rose-900/50 text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
+              title="Vaciar completamente la base de datos (0 clientes, 0 sesiones, 0 bitácoras) tanto en Firestore como en memoria local"
+            >
+              <Trash2 className="w-3.5 h-3.5 text-rose-600 dark:text-rose-400" />
+              <span className="hidden sm:inline">Vaciar Toda la Base de Datos</span>
+              <span className="sm:hidden">Vaciar BD</span>
+            </button>
+
             <button
               type="button"
               onClick={() => {
@@ -1021,7 +1068,7 @@ export const ClientDirectoryTable: React.FC<ClientDirectoryTableProps> = ({
                     required
                     value={newClientName}
                     onChange={(e) => setNewClientName(e.target.value)}
-                    placeholder="Ej: Dra. Carolina Restrepo"
+                    placeholder="Ej: Dra. Camila Restrepo"
                     className="w-full px-3.5 py-2 rounded-xl bg-gray-50 dark:bg-neutral-900 border border-gray-200 dark:border-neutral-700 text-xs text-black dark:text-white placeholder-gray-400 focus:outline-hidden focus:border-black dark:focus:border-white transition-all"
                   />
                 </div>
@@ -1037,7 +1084,7 @@ export const ClientDirectoryTable: React.FC<ClientDirectoryTableProps> = ({
                     required
                     value={newClientEmail}
                     onChange={(e) => setNewClientEmail(e.target.value)}
-                    placeholder="carolina.restrepo@empresa.com"
+                    placeholder="camila.restrepo@empresa.com"
                     className="w-full px-3.5 py-2 rounded-xl bg-gray-50 dark:bg-neutral-900 border border-gray-200 dark:border-neutral-700 text-xs text-black dark:text-white placeholder-gray-400 focus:outline-hidden focus:border-black dark:focus:border-white transition-all"
                   />
                 </div>
@@ -1200,6 +1247,56 @@ export const ClientDirectoryTable: React.FC<ClientDirectoryTableProps> = ({
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Reset / Wipe Database Confirmation Modal */}
+      {isResetModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+          <div className="w-full max-w-md bg-white dark:bg-[#1C1C20] rounded-3xl border border-gray-200 dark:border-neutral-800 p-6 shadow-2xl space-y-4">
+            <div className="w-12 h-12 rounded-2xl flex items-center justify-center bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-900 text-rose-600 dark:text-rose-400">
+              <AlertTriangle className="w-6 h-6" />
+            </div>
+            <div>
+              <h3 className="text-base font-bold text-black dark:text-white">
+                ¿Vaciar completamente la base de datos (0 clientes)?
+              </h3>
+              <p className="text-xs text-gray-500 dark:text-neutral-400 font-light mt-1.5 leading-relaxed">
+                Esta acción eliminará todos los registros de clientes, sesiones agendadas, bitácoras de trabajo, registros de eventos y comprobantes de pago tanto en el almacenamiento local como en Firestore. El sistema quedará 100% en blanco, preservando únicamente tu perfil maestro de coach.
+              </p>
+            </div>
+            <div className="p-3 rounded-xl bg-gray-50 dark:bg-neutral-900 border border-gray-200 dark:border-neutral-800 text-[11px] text-gray-600 dark:text-neutral-400">
+              <span><strong>Estado resultante:</strong> Base de datos limpia (0 clientes). Administrador: John Fredy Rengifo Basto.</span>
+            </div>
+            <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-gray-100 dark:border-neutral-800">
+              <button
+                type="button"
+                disabled={isResetting}
+                onClick={() => setIsResetModalOpen(false)}
+                className="px-4 py-2 rounded-xl text-xs font-semibold text-gray-600 dark:text-neutral-300 hover:bg-gray-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                disabled={isResetting}
+                onClick={handleConfirmResetDatabase}
+                className="px-4 py-2 rounded-xl text-xs font-semibold text-white flex items-center gap-2 shadow-xs transition-colors cursor-pointer disabled:opacity-50 bg-rose-600 hover:bg-rose-700"
+              >
+                {isResetting ? (
+                  <>
+                    <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    <span>Vaciando base de datos...</span>
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="w-3.5 h-3.5" />
+                    <span>Confirmar y Vaciar</span>
+                  </>
+                )}
+              </button>
+            </div>
           </div>
         </div>
       )}

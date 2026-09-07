@@ -470,6 +470,99 @@ export class FirestoreSyncService {
     }
   }
 
+  // Clean old dummy user accounts from Firestore
+  static async cleanOldDummyUsersFromFirestore(): Promise<void> {
+    const dummyUids = [
+      'client-1',
+      'client-2',
+      'client-3',
+      'client-4',
+      'client-5',
+      'client-6',
+      'client-andres',
+    ];
+    for (const uid of dummyUids) {
+      try {
+        await this.deleteUser(uid);
+      } catch {
+        // ignore
+      }
+    }
+  }
+
+  // Wipe all clients, sessions, forms, payments and registrations from Firestore
+  static async wipeAllFirestoreData(): Promise<{ success: boolean; deletedCount: number }> {
+    let deletedCount = 0;
+    const collectionsToClear = [
+      'sessions',
+      'formSubmissions',
+      'postSessionForms',
+      'eventRegistrations',
+      'payments',
+      'prospects',
+      'aiInsights',
+    ];
+
+    for (const colName of collectionsToClear) {
+      try {
+        const snap = await getDocs(collection(db, colName));
+        for (const docSnap of snap.docs) {
+          try {
+            await deleteDoc(doc(db, colName, docSnap.id));
+            deletedCount++;
+          } catch {
+            // ignore item failure
+          }
+        }
+      } catch (e) {
+        console.warn(`Could not clear Firestore collection ${colName}:`, e);
+      }
+    }
+
+    // Clear non-coach users from users collection
+    try {
+      const usersSnap = await getDocs(collection(db, 'users'));
+      for (const userDoc of usersSnap.docs) {
+        const userData = userDoc.data() as User;
+        if (
+          userData.role !== 'coach' &&
+          userData.email !== 'johnfrengifob@gmail.com' &&
+          userData.email !== 'rengifobastoco@gmail.com'
+        ) {
+          try {
+            await deleteDoc(doc(db, 'users', userDoc.id));
+            deletedCount++;
+          } catch {
+            // ignore
+          }
+        }
+      }
+    } catch (e) {
+      console.warn('Could not clear Firestore users collection:', e);
+    }
+
+    // Explicitly delete known test client IDs
+    const knownClientIds = [
+      'client-carolina',
+      'client-andres',
+      'client-1',
+      'client-2',
+      'client-3',
+      'client-4',
+      'client-5',
+      'client-6',
+    ];
+    for (const cid of knownClientIds) {
+      try {
+        await this.deleteUser(cid);
+      } catch {
+        // ignore
+      }
+    }
+
+    return { success: true, deletedCount };
+  }
+
   // Synchronize form submission into Firestore
   static async syncFormSubmission(form: FormSubmission): Promise<void> {
     const collectionPath = 'formSubmissions';
