@@ -805,3 +805,5 @@ export const GeminiOntologicalCopilot: React.FC<GeminiOntologicalCopilotProps> =
     </div>
   );
 };
+
+export default GeminiOntologicalCopilot;

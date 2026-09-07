@@ -61,6 +61,7 @@ export default function App() {
   const [adminCodeError, setAdminCodeError] = useState<string | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isVideoConferencesOpen, setIsVideoConferencesOpen] = useState(false);
+  const [registerInitialEmail, setRegisterInitialEmail] = useState<string>('');
   const [viewMode, setViewMode] = useState<'app' | 'register'>(() => {
     try {
       const urlParams = new URLSearchParams(window.location.search);
@@ -188,6 +189,7 @@ export default function App() {
       <Suspense fallback={<AppLoadingFallback />}>
         {viewMode === 'register' ? (
           <EventRegistrationLanding
+            initialEmail={registerInitialEmail}
             onEnterPlatform={(user) => {
               if (user) {
                 handleLogin(user);
@@ -202,7 +204,10 @@ export default function App() {
             <LoginView
               onLogin={handleLogin}
               availableUsers={allUsers}
-              onNavigateToRegister={() => setViewMode('register')}
+              onNavigateToRegister={(prefillEmail) => {
+                if (prefillEmail) setRegisterInitialEmail(prefillEmail);
+                setViewMode('register');
+              }}
               onOpenVideoConferences={() => setIsVideoConferencesOpen(true)}
             />
             {isVideoConferencesOpen && (

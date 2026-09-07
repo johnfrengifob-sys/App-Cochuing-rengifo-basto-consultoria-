@@ -34,7 +34,7 @@ import {
 interface LoginViewProps {
   onLogin: (user: User) => void;
   availableUsers: User[];
-  onNavigateToRegister?: () => void;
+  onNavigateToRegister?: (email?: string) => void;
   onOpenVideoConferences?: () => void;
 }
 
@@ -183,6 +183,22 @@ export const LoginView: React.FC<LoginViewProps> = ({
             return;
           }
         }
+
+        // New participant authenticated with Google: auto-register and grant immediate workstation access
+        const upcomingEvent = OntologicalStore.getUpcomingEvent();
+        const regResult = OntologicalStore.registerForEvent({
+          eventId: upcomingEvent.id,
+          name: googleUser.displayName || email.split('@')[0],
+          email: email,
+          phone: googleUser.phoneNumber || '',
+          googleAuthConnected: true,
+          avatarUrl: googleUser.photoURL || undefined,
+          userUid: googleUser.uid,
+        });
+        setIsVerifying(false);
+        setVerifiedClient(regResult.user);
+        setAuthenticatingUser(regResult.user);
+        return;
       }
     } catch (popupErr: unknown) {
       const firebaseErr = popupErr as { code?: string };
@@ -266,7 +282,7 @@ export const LoginView: React.FC<LoginViewProps> = ({
 
       {/* Advertising Banner for the Next Event in the Schedule */}
       <div className="w-full max-w-5xl mx-auto">
-        <PromotionalEventBanner onRegisterInterest={onNavigateToRegister} />
+        <PromotionalEventBanner onRegisterInterest={() => onNavigateToRegister?.()} />
       </div>
 
       {/* Main Authentication Card - Translucent glass container */}
@@ -388,7 +404,7 @@ export const LoginView: React.FC<LoginViewProps> = ({
                           </span>
                           <button
                             type="button"
-                            onClick={onNavigateToRegister}
+                            onClick={() => onNavigateToRegister(emailInput.trim())}
                             className="px-3 py-1 rounded-xl bg-rose-600 text-white text-[11px] font-medium hover:bg-rose-700 transition-colors flex items-center gap-1 cursor-pointer"
                           >
                             <Sparkles className="w-3 h-3" />
