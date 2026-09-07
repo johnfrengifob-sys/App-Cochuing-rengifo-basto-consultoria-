@@ -73,7 +73,7 @@ export const FirebaseFirestoreMonitor: React.FC<FirebaseFirestoreMonitorProps> =
     }
   };
 
-  const copyFirestoreRulesToClipboard = () => {
+  const copyFirestoreRulesToClipboard = async () => {
     const rules = `rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {

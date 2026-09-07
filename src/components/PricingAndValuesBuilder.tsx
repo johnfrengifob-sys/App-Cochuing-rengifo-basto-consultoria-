@@ -101,7 +101,7 @@ export const PricingAndValuesBuilder: React.FC = () => {
       : 0;
   const finalPrice = calcPackage.basePriceCOP - discountAmount;
 
-  const handleCopyQuote = () => {
+  const handleCopyQuote = async () => {
     const text = `
 *PROPUESTA DE ACOMPAÑAMIENTO ONTOLÓGICO*
 Rengifo Basto Consultoría Ontológica

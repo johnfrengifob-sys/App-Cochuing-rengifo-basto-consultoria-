@@ -170,7 +170,7 @@ export const WorkshopsAndAcademicHub: React.FC = () => {
     }
   };
 
-  const handleCopySummary = () => {
+  const handleCopySummary = async () => {
     const text = `
 TALLER ONTOLÓGICO: ${generatedWorkshop.sessionTitle}
 NIVEL: ${generatedWorkshop.level} - ${generatedWorkshop.levelTitle}
