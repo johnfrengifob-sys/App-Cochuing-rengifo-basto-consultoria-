@@ -5,11 +5,12 @@
 
 import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { User } from './types';
-import { OntologicalStore } from './services/store';
+import { OntologicalStore, ADMIN_EMAIL, ADMIN_SECURITY_CODE } from './services/store';
 import { ThemeManager } from './services/theme';
 import { FirestoreSyncService } from './services/firestoreSync';
 import { auth } from './services/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
+import { Lock, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import { Header } from './components/Header';
 import { LoginView } from './components/LoginView';
 import { EventRegistrationLanding } from './components/EventRegistrationLanding';
@@ -54,6 +55,10 @@ export default function App() {
   );
   const [auditCoach, setAuditCoach] = useState<User | null>(null);
   const [dashboardKey, setDashboardKey] = useState(0);
+  const [pendingCoachAuth, setPendingCoachAuth] = useState<User | null>(null);
+  const [adminCodeInput, setAdminCodeInput] = useState('');
+  const [showModalCode, setShowModalCode] = useState(false);
+  const [adminCodeError, setAdminCodeError] = useState<string | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isVideoConferencesOpen, setIsVideoConferencesOpen] = useState(false);
   const [viewMode, setViewMode] = useState<'app' | 'register'>(() => {
@@ -82,10 +87,18 @@ export default function App() {
         const email = firebaseUser.email.toLowerCase();
         const existing = OntologicalStore.getUserByEmail(email);
         if (existing) {
+          if (existing.role === 'coach' && existing.email.toLowerCase() !== ADMIN_EMAIL) {
+            console.warn('Usuario no autorizado para rol de administrador:', email);
+            OntologicalStore.setCurrentUser(null);
+            setCurrentUser(null);
+            return;
+          }
           OntologicalStore.setCurrentUser(existing.uid);
           setCurrentUser(existing);
-        } else if (email === 'johnfrengifob@gmail.com') {
-          const coach = OntologicalStore.getUsers().find((u) => u.role === 'coach');
+        } else if (email === ADMIN_EMAIL) {
+          const coach = OntologicalStore.getUsers().find(
+            (u) => u.role === 'coach' && u.email.toLowerCase() === ADMIN_EMAIL
+          );
           if (coach) {
             OntologicalStore.setCurrentUser(coach.uid);
             setCurrentUser(coach);
@@ -140,10 +153,15 @@ export default function App() {
       OntologicalStore.setCurrentUser(user.uid);
       setCurrentUser(user);
     } else if (user.role === 'coach') {
-      // Returning to coach dashboard
-      setAuditCoach(null);
-      OntologicalStore.setCurrentUser(user.uid);
-      setCurrentUser(user);
+      // Returning to coach dashboard - must be ADMIN_EMAIL and verified with code 4658
+      if (user.email.toLowerCase() !== ADMIN_EMAIL) {
+        console.warn(`Acceso denegado: Únicamente ${ADMIN_EMAIL} puede acceder al panel administrador.`);
+        return;
+      }
+      setPendingCoachAuth(user);
+      setAdminCodeInput('');
+      setAdminCodeError(null);
+      return;
     }
     refreshUsers();
   };
@@ -151,13 +169,12 @@ export default function App() {
   const handleReturnToAdmin = () => {
     const coach =
       auditCoach ||
-      allUsers.find((u) => u.role === 'coach') ||
-      OntologicalStore.getUsers().find((u) => u.role === 'coach');
+      allUsers.find((u) => u.role === 'coach' && u.email.toLowerCase() === ADMIN_EMAIL) ||
+      OntologicalStore.getUsers().find((u) => u.role === 'coach' && u.email.toLowerCase() === ADMIN_EMAIL);
     if (coach) {
-      setAuditCoach(null);
-      OntologicalStore.setCurrentUser(coach.uid);
-      setCurrentUser(coach);
-      refreshUsers();
+      setPendingCoachAuth(coach);
+      setAdminCodeInput('');
+      setAdminCodeError(null);
     }
   };
 
@@ -286,6 +303,103 @@ export default function App() {
       </div>
 
       {renderContent()}
+
+      {/* Admin Verification Modal with Confidential Security Code */}
+      {pendingCoachAuth && (
+        <div className="fixed inset-0 z-50 bg-black/60 dark:bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="w-full max-w-md bg-white dark:bg-[#141416] text-black dark:text-neutral-100 rounded-3xl border border-gray-200 dark:border-neutral-800 shadow-2xl p-6 sm:p-7 space-y-4 animate-in zoom-in-95">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-600 dark:text-amber-400">
+                <Lock className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-black dark:text-white">
+                  Acceso Panel Administrador
+                </h3>
+                <p className="text-xs text-gray-500 dark:text-neutral-400 font-mono">
+                  {ADMIN_EMAIL}
+                </p>
+              </div>
+            </div>
+
+            <p className="text-xs text-gray-600 dark:text-neutral-400 leading-relaxed">
+              Por protocolo de seguridad estricto, ingrese su código confidencial de administrador para autorizar el acceso exclusivo a la consola directiva.
+            </p>
+
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                setAdminCodeError(null);
+                if (adminCodeInput.trim() !== ADMIN_SECURITY_CODE) {
+                  setAdminCodeError('Código de seguridad incorrecto. Verifique sus credenciales autorizadas.');
+                  return;
+                }
+                setAuditCoach(null);
+                OntologicalStore.setCurrentUser(pendingCoachAuth.uid);
+                setCurrentUser(pendingCoachAuth);
+                setPendingCoachAuth(null);
+                refreshUsers();
+              }}
+              className="space-y-3"
+            >
+              <div className="relative">
+                <input
+                  type={showModalCode ? 'text' : 'password'}
+                  inputMode="numeric"
+                  maxLength={8}
+                  autoFocus
+                  value={adminCodeInput}
+                  onChange={(e) => {
+                    setAdminCodeInput(e.target.value.replace(/[^0-9]/g, ''));
+                    if (adminCodeError) setAdminCodeError(null);
+                  }}
+                  placeholder="••••"
+                  className="w-full py-2.5 pl-4 pr-11 text-center tracking-widest text-xl font-mono font-bold rounded-xl bg-[#F9F9FB] dark:bg-[#1F1F23] border border-gray-200 dark:border-neutral-700 text-black dark:text-white focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white"
+                  id="app-admin-security-code-input"
+                  autoComplete="off"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowModalCode(!showModalCode)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-black dark:text-neutral-400 dark:hover:text-white transition-colors cursor-pointer p-1"
+                  title={showModalCode ? 'Ocultar código' : 'Ver código'}
+                  aria-label="Alternar visibilidad del código"
+                >
+                  {showModalCode ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+
+              {adminCodeError && (
+                <div className="p-2.5 rounded-xl bg-red-100 dark:bg-red-950/50 border border-red-200 dark:border-red-900/60 text-[11px] text-red-800 dark:text-red-300 flex items-center gap-1.5">
+                  <AlertCircle className="w-4 h-4 text-red-600 shrink-0" />
+                  <span>{adminCodeError}</span>
+                </div>
+              )}
+
+              <div className="flex items-center gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setPendingCoachAuth(null);
+                    setAdminCodeInput('');
+                    setAdminCodeError(null);
+                  }}
+                  className="flex-1 py-2.5 px-4 rounded-xl bg-gray-100 dark:bg-neutral-800 text-gray-700 dark:text-neutral-300 text-xs font-semibold hover:bg-gray-200 transition-colors cursor-pointer"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 py-2.5 px-4 rounded-xl bg-black dark:bg-white text-white dark:text-black text-xs font-semibold hover:opacity-90 transition-all cursor-pointer shadow-xs"
+                  id="btn-confirm-admin-security-code"
+                >
+                  Confirmar Acceso Directivo
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -11,6 +11,7 @@ import {
   DEFAULT_WELCOME_MESSAGE_TEMPLATE,
 } from '../services/store';
 import { LiquidGlassButton } from './LiquidGlassButton';
+import { safeCopyToClipboard } from '../utils/clipboard';
 import {
   Sliders,
   CheckCircle2,
@@ -182,14 +183,14 @@ export const WebhookConfigModal: React.FC<WebhookConfigModalProps> = ({
     OntologicalStore.setWelcomeTemplate(DEFAULT_WELCOME_MESSAGE_TEMPLATE);
   };
 
-  const handleCopyTemplate = () => {
-    navigator.clipboard.writeText(whatsAppTemplate);
+  const handleCopyTemplate = async () => {
+    await safeCopyToClipboard(whatsAppTemplate);
     setCopiedTemplate(true);
     setTimeout(() => setCopiedTemplate(false), 2000);
   };
 
-  const handleCopyWelcome = () => {
-    navigator.clipboard.writeText(welcomeTemplate);
+  const handleCopyWelcome = async () => {
+    await safeCopyToClipboard(welcomeTemplate);
     setCopiedWelcome(true);
     setTimeout(() => setCopiedWelcome(false), 2000);
   };

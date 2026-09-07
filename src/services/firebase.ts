@@ -3,21 +3,36 @@ import { getFirestore, Firestore, doc, getDocFromServer } from 'firebase/firesto
 import { getAuth, Auth, GoogleAuthProvider, signInWithPopup, signOut as firebaseSignOut } from 'firebase/auth';
 import config from '../../firebase-applet-config.json';
 
+interface FirebaseAppletConfig {
+  projectId: string;
+  appId: string;
+  apiKey: string;
+  authDomain: string;
+  storageBucket: string;
+  messagingSenderId: string;
+  measurementId?: string;
+  oAuthClientId?: string;
+  recaptchaSiteKey?: string;
+  firestoreDatabaseId?: string;
+}
+
+const typedConfig = config as FirebaseAppletConfig;
+
 const firebaseConfig = {
-  apiKey: config.apiKey,
-  authDomain: config.authDomain,
-  projectId: config.projectId,
-  storageBucket: config.storageBucket,
-  messagingSenderId: config.messagingSenderId,
-  appId: config.appId,
+  apiKey: typedConfig.apiKey,
+  authDomain: typedConfig.authDomain,
+  projectId: typedConfig.projectId,
+  storageBucket: typedConfig.storageBucket,
+  messagingSenderId: typedConfig.messagingSenderId,
+  appId: typedConfig.appId,
 };
 
 // Initialize Firebase client SDK safely
 export const firebaseApp = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 
 // Initialize Firestore with specific database ID from config if present
-export const db: Firestore = config.firestoreDatabaseId
-  ? getFirestore(firebaseApp, config.firestoreDatabaseId)
+export const db: Firestore = typedConfig.firestoreDatabaseId
+  ? getFirestore(firebaseApp, typedConfig.firestoreDatabaseId)
   : getFirestore(firebaseApp);
 
 // Initialize Firebase Auth
@@ -118,11 +133,14 @@ export async function signOutUser() {
   return await firebaseSignOut(auth);
 }
 
+export const OAUTH_CLIENT_ID = typedConfig.oAuthClientId;
+
 export const FIREBASE_METADATA = {
-  projectId: config.projectId,
-  firestoreDatabaseId: config.firestoreDatabaseId,
-  storageBucket: config.storageBucket,
-  authDomain: config.authDomain,
+  projectId: typedConfig.projectId,
+  firestoreDatabaseId: typedConfig.firestoreDatabaseId || '(default)',
+  storageBucket: typedConfig.storageBucket,
+  authDomain: typedConfig.authDomain,
+  oAuthClientId: typedConfig.oAuthClientId,
   status: 'CONNECTED',
 };
 

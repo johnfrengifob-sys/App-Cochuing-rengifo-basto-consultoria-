@@ -26,7 +26,6 @@ service cloud.firestore {
 
     function isCoachEmail() {
       return isSignedIn() && (
-        request.auth.token.email == 'johnfrengifob@gmail.com' ||
         request.auth.token.email == 'rengifobastoco@gmail.com'
       );
     }
@@ -186,9 +185,11 @@ service cloud.firestore {
       allow list, delete: if isAdmin();
       allow update: if isValidEventRegistration(incoming()) && (
         isAdmin() || (
-          // Coachee confirms attendance for their ticket
+          // Coachee confirms attendance or notes without altering core identity
           incoming().id == existing().id &&
-          incoming().ticketCode == existing().ticketCode
+          incoming().ticketCode == existing().ticketCode &&
+          incoming().email == existing().email &&
+          incoming().name == existing().name
         )
       );
     }

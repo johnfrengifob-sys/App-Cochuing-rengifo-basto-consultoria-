@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { Prospect, ProspectStatus, PaymentStatus, User, EventRegistration } from '../types';
 import { OntologicalStore } from '../services/store';
+import { safeCopyToClipboard } from '../utils/clipboard';
 import {
   Kanban,
   List,
@@ -113,9 +114,9 @@ export const CrmPipelineManager: React.FC<CrmPipelineManagerProps> = ({
         )
       : 0;
 
-  const handleCopyRegistrationLink = () => {
+  const handleCopyRegistrationLink = async () => {
     const url = `${window.location.origin}/?view=registro`;
-    navigator.clipboard.writeText(url);
+    await safeCopyToClipboard(url);
     setCopiedLinkFeedback(true);
     setTimeout(() => setCopiedLinkFeedback(false), 2500);
   };
@@ -1091,8 +1092,8 @@ export const CrmPipelineManager: React.FC<CrmPipelineManagerProps> = ({
                   />
                   <button
                     type="button"
-                    onClick={() => {
-                      navigator.clipboard.writeText(OntologicalStore.getCalendarUrl());
+                    onClick={async () => {
+                      await safeCopyToClipboard(OntologicalStore.getCalendarUrl());
                       setCopiedCalendarLink(true);
                       setTimeout(() => setCopiedCalendarLink(false), 2000);
                     }}

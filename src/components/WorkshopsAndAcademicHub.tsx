@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import { GeminiService } from '../services/geminiService';
 import { OntologicalStore } from '../services/store';
+import { safeCopyToClipboard } from '../utils/clipboard';
 import { AdminTemariosManager } from './admin/AdminTemariosManager';
 import { AdminCoursesManager } from './admin/AdminCoursesManager';
 import { AdminRoadmapStepsManager } from './admin/AdminRoadmapStepsManager';
@@ -199,7 +200,7 @@ ${generatedWorkshop.reflectiveQuestions.map((q, i) => `${i + 1}. ${q}`).join('\n
 Rengifo Basto Consultoría Ontológica
     `.trim();
 
-    navigator.clipboard.writeText(text);
+    await safeCopyToClipboard(text);
     setCopiedText(true);
     setTimeout(() => setCopiedText(false), 2500);
   };

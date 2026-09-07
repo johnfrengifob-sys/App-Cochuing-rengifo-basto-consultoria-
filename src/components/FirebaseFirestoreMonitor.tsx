@@ -23,6 +23,7 @@ import {
   Trash2,
 } from 'lucide-react';
 import { OntologicalStore } from '../services/store';
+import { safeCopyToClipboard } from '../utils/clipboard';
 import { FirestoreSyncService } from '../services/firestoreSync';
 import { testFirestoreConnection } from '../services/firebase';
 import config from '../../firebase-applet-config.json';
@@ -81,7 +82,6 @@ service cloud.firestore {
     function isCoach() {
       return isAuthenticated() && (
         request.auth.token.role == 'coach' ||
-        request.auth.token.email == 'johnfrengifob@gmail.com' ||
         request.auth.token.email == 'rengifobastoco@gmail.com'
       );
     }
@@ -102,7 +102,7 @@ service cloud.firestore {
     }
   }
 }`;
-    navigator.clipboard.writeText(rules);
+    await safeCopyToClipboard(rules);
     setCopiedRules(true);
     setTimeout(() => setCopiedRules(false), 3000);
   };

@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import { OntologicalStore } from '../services/store';
 import { SystemLinkBinding } from '../types';
+import { safeCopyToClipboard } from '../utils/clipboard';
 
 export const CerebroVinculacionManager: React.FC = () => {
   const [bindings, setBindings] = useState<SystemLinkBinding[]>(() =>
@@ -74,8 +75,8 @@ export const CerebroVinculacionManager: React.FC = () => {
     }
   };
 
-  const handleCopy = (id: string, url: string) => {
-    navigator.clipboard.writeText(url);
+  const handleCopy = async (id: string, url: string) => {
+    await safeCopyToClipboard(url);
     setCopiedId(id);
     setTimeout(() => setCopiedId(null), 2000);
   };

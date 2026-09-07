@@ -401,6 +401,7 @@ export interface GoogleWorkspaceConfig {
   drive: {
     enabled: boolean;
     rootFolderId?: string;
+    rootFolderUrl?: string;
     rootFolderName: string;
     reportsFolderId?: string;
     sheetsFolderId?: string;
@@ -454,6 +455,34 @@ export interface DriveExportedFile {
   clientName?: string;
   isBrainDocument?: boolean;
   contentSnippet?: string;
+}
+
+export interface GeminiGeneratedWorkspaceDoc {
+  id: string;
+  title: string;
+  category: WorkspaceDocumentCategory;
+  mimeType: string;
+  description: string;
+  tags: string[];
+  contentSnippet: string;
+  fullContent: string;
+  googleWorkspaceUrl: string;
+  openUrl: string;
+  appsScriptCode?: string;
+  suggestedFileName?: string;
+  integrationInstructions?: string;
+  tableSchema?: { column: string; description: string; sampleValue: string }[];
+  formQuestions?: { title: string; type: string; required: boolean; options?: string[] }[];
+  slidesOutline?: { slideNumber: number; title: string; bullets: string[]; speakerNotes?: string }[];
+  generatedAt?: string;
+}
+
+export interface GeminiWorkspaceSuiteResult {
+  suiteTitle: string;
+  generatedAt: string;
+  executiveSummary: string;
+  documents: GeminiGeneratedWorkspaceDoc[];
+  integrationWebhookUrl: string;
 }
 
 export interface GoogleCalendarEventItem {

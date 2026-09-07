@@ -16,14 +16,22 @@ import {
   ArrowRight,
   TrendingUp,
   FileText,
+  FileSpreadsheet,
   Activity,
   HeartPulse,
   Brain,
+  ExternalLink,
 } from 'lucide-react';
 import { GeminiService, GeminiChatMessage, GeminiRoleplayResult, GeminiMarketingResult } from '../services/geminiService';
-import { GoogleWorkspaceService } from '../services/googleWorkspace';
+import {
+  GoogleWorkspaceService,
+  OFFICIAL_CEREBRO_DRIVE_FOLDER_ID,
+  OFFICIAL_CEREBRO_DRIVE_FOLDER_URL,
+} from '../services/googleWorkspace';
+import { OntologicalStore } from '../services/store';
 import { User as UserType } from '../types';
 import { safeCopyToClipboard } from '../utils/clipboard';
+import { GeminiWorkspaceGenerator } from './GeminiWorkspaceGenerator';
 
 interface GeminiOntologicalCopilotProps {
   currentClient?: UserType | null;
@@ -38,7 +46,8 @@ export const GeminiOntologicalCopilot: React.FC<GeminiOntologicalCopilotProps> =
   onApplyInsightToClient,
   className = '',
 }) => {
-  const [activeTab, setActiveTab] = useState<'chat' | 'roleplay' | 'diagnose' | 'marketing'>('chat');
+  const [activeTab, setActiveTab] = useState<'chat' | 'roleplay' | 'diagnose' | 'marketing' | 'workspace_docs'>('chat');
+  const [noticeMessage, setNoticeMessage] = useState<string | null>(null);
   const [messages, setMessages] = useState<GeminiChatMessage[]>([
     {
       role: 'assistant',
@@ -110,6 +119,18 @@ export const GeminiOntologicalCopilot: React.FC<GeminiOntologicalCopilotProps> =
               }
             : null,
           role: userRole,
+          brainDriveContext: {
+            folderId: OFFICIAL_CEREBRO_DRIVE_FOLDER_ID,
+            folderUrl: OFFICIAL_CEREBRO_DRIVE_FOLDER_URL,
+            totalBrainDocuments: brainDocs.length,
+            documents: brainDocs.slice(0, 6).map((d) => ({
+              id: d.id,
+              name: d.name,
+              category: d.category,
+              link: d.webViewLink,
+              snippet: d.contentSnippet || d.description,
+            })),
+          },
         },
         userRole === 'client' ? 'client' : 'coach'
       );
@@ -208,9 +229,13 @@ export const GeminiOntologicalCopilot: React.FC<GeminiOntologicalCopilotProps> =
   };
 
   const PROMPT_SUGGESTIONS = [
+    '📁 Documentos vinculados en la carpeta Google Drive del Cerebro',
+    '📑 Generar suite completa de 5 documentos Workspace',
+    '📊 Crear matriz de quiebres y directorio en Sheets',
+    '📝 Diseñar cuestionario de intake somático en Forms',
+    '📄 Redactar contrato marco de consultoría en Docs',
     '¿Cómo distinguir si este quiebre es un juicio o una afirmación fáctica?',
     'Sugiéreme 3 preguntas de quiebre para un líder con exceso de perfeccionismo.',
-    '¿Qué micro-práctica somática ayuda a desarticular la tensión cervical?',
     'Ayúdame a redactar un "No" directivo limpio sin disculpas innecesarias.',
   ];
 
@@ -294,6 +319,20 @@ export const GeminiOntologicalCopilot: React.FC<GeminiOntologicalCopilotProps> =
               <span>Marketing IA</span>
             </button>
           )}
+
+          {userRole === 'coach' && (
+            <button
+              onClick={() => setActiveTab('workspace_docs')}
+              className={`px-3 py-1.5 rounded-xl text-xs font-medium transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${
+                activeTab === 'workspace_docs'
+                  ? 'bg-purple-600 text-white shadow-2xs font-semibold'
+                  : 'text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-950/40 font-semibold'
+              }`}
+            >
+              <FileSpreadsheet className="w-3.5 h-3.5" />
+              <span>Docs Workspace</span>
+            </button>
+          )}
         </div>
       </div>
 
@@ -367,6 +406,17 @@ export const GeminiOntologicalCopilot: React.FC<GeminiOntologicalCopilotProps> =
 
           {/* Quick Prompts & Brain Knowledge pills */}
           <div className="px-4 py-2.5 glass-panel-opal border-t border-white/60 dark:border-white/10 overflow-x-auto flex items-center gap-2">
+            <a
+              href={OFFICIAL_CEREBRO_DRIVE_FOLDER_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 text-[11px] font-bold shrink-0 border border-blue-200 dark:border-blue-800 transition-colors shadow-2xs"
+              title="Abrir carpeta en Google Drive vinculada al Cerebro (ID: 15laHG-2cFXvLiVoLp6GxJBWIBdXLB6bz)"
+            >
+              <span>📁 Carpeta Drive Cerebro RBC</span>
+              <ExternalLink className="w-3 h-3 opacity-70" />
+            </a>
+
             {brainDocs.length > 0 && (
               <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-purple-100 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 text-[10px] font-bold shrink-0 border border-purple-200 dark:border-purple-800/60">
                 <Brain className="w-3 h-3" />
@@ -390,8 +440,18 @@ export const GeminiOntologicalCopilot: React.FC<GeminiOntologicalCopilotProps> =
             {PROMPT_SUGGESTIONS.map((p, idx) => (
               <button
                 key={idx}
-                onClick={() => handleSendMessage(p)}
-                className="px-3 py-1 rounded-full card-solid-white text-[11px] text-gray-600 dark:text-neutral-300 hover:border-black dark:hover:border-white whitespace-nowrap cursor-pointer transition-all shadow-2xs shrink-0"
+                onClick={() => {
+                  if (p.startsWith('📑') || p.startsWith('📊') || p.startsWith('📝') || p.startsWith('📄')) {
+                    setActiveTab('workspace_docs');
+                  } else {
+                    handleSendMessage(p);
+                  }
+                }}
+                className={`px-3 py-1 rounded-full text-[11px] whitespace-nowrap cursor-pointer transition-all shadow-2xs shrink-0 ${
+                  p.startsWith('📑') || p.startsWith('📊') || p.startsWith('📝') || p.startsWith('📄')
+                    ? 'bg-purple-50 hover:bg-purple-100 dark:bg-purple-950/40 text-purple-800 dark:text-purple-300 border border-purple-200 dark:border-purple-800 font-semibold'
+                    : 'card-solid-white text-gray-600 dark:text-neutral-300 hover:border-black dark:hover:border-white'
+                }`}
               >
                 {p}
               </button>
@@ -703,6 +763,43 @@ export const GeminiOntologicalCopilot: React.FC<GeminiOntologicalCopilotProps> =
               </div>
             </div>
           )}
+        </div>
+      )}
+
+      {/* TAB 5: GENERADOR DE DOCUMENTOS GOOGLE WORKSPACE CON GEMINI */}
+      {activeTab === 'workspace_docs' && (
+        <div className="p-4 sm:p-6">
+          {noticeMessage && (
+            <div className="mb-4 p-3 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 text-xs text-emerald-800 dark:text-emerald-300 flex items-center justify-between">
+              <span>{noticeMessage}</span>
+              <button
+                type="button"
+                onClick={() => setNoticeMessage(null)}
+                className="text-xs font-bold text-emerald-600 dark:text-emerald-400 hover:underline cursor-pointer"
+              >
+                Cerrar
+              </button>
+            </div>
+          )}
+
+          <GeminiWorkspaceGenerator
+            clients={currentClient ? [currentClient] : OntologicalStore.getUsers().filter((u) => u.role === 'client')}
+            onDocumentSaved={(doc) => {
+              setNoticeMessage(`¡"${doc.name}" guardado exitosamente en el Cerebro de la App y Drive!`);
+              setTimeout(() => setNoticeMessage(null), 5000);
+            }}
+            onSuiteSaved={(docs) => {
+              setNoticeMessage(`¡Suite de ${docs.length} documentos guardada exitosamente en el Cerebro RBC!`);
+              setTimeout(() => setNoticeMessage(null), 5000);
+            }}
+            onShowNotice={(msg) => {
+              setNoticeMessage(msg);
+              setTimeout(() => setNoticeMessage(null), 5000);
+            }}
+            onNavigateTab={(_tab) => {
+              // Navigation handled
+            }}
+          />
         </div>
       )}
     </div>

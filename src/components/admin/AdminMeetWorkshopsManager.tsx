@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { OntologicalStore } from '../../services/store';
 import { CronogramaEvent, EventRegistration } from '../../types';
+import { safeCopyToClipboard } from '../../utils/clipboard';
 
 interface AdminMeetWorkshopsManagerProps {
   onRefresh?: () => void;
@@ -84,8 +85,8 @@ export const AdminMeetWorkshopsManager: React.FC<AdminMeetWorkshopsManagerProps>
     setTimeout(() => setNotification(null), 3500);
   };
 
-  const handleCopyLink = (url: string, label: string) => {
-    navigator.clipboard.writeText(url);
+  const handleCopyLink = async (url: string, label: string) => {
+    await safeCopyToClipboard(url);
     setCopiedLink(label);
     showNotification(`Enlace de Google Meet copiado: ${url}`);
     setTimeout(() => setCopiedLink(null), 2500);

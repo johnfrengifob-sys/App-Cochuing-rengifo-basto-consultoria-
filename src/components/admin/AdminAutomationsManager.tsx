@@ -34,6 +34,7 @@ import {
   DEFAULT_WHATSAPP_TEMPLATE,
   DEFAULT_WELCOME_MESSAGE_TEMPLATE,
 } from '../../services/store';
+import { safeCopyToClipboard } from '../../utils/clipboard';
 
 interface AdminAutomationsManagerProps {
   onRefresh?: () => void;
@@ -100,8 +101,8 @@ export const AdminAutomationsManager: React.FC<AdminAutomationsManagerProps> = (
     setTimeout(() => setToastMessage(null), 3000);
   };
 
-  const copyToClipboard = (text: string, key: string) => {
-    navigator.clipboard.writeText(text);
+  const copyToClipboard = async (text: string, key: string) => {
+    await safeCopyToClipboard(text);
     setCopiedKey(key);
     showToast('Copiado al portapapeles.');
     setTimeout(() => setCopiedKey(null), 2000);

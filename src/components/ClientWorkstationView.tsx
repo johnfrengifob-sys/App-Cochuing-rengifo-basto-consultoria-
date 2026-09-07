@@ -11,6 +11,7 @@ import {
 } from '../types';
 import { PROGRAM_NODES, OntologicalStore } from '../services/store';
 import { PDFGenerator } from '../utils/pdfGenerator';
+import { safeCopyToClipboard } from '../utils/clipboard';
 import { LiquidGlassButton } from './LiquidGlassButton';
 import { PulseBadge } from './PulseBadge';
 import { ClientTrafficStatusBadge } from './ClientTrafficStatusBadge';
@@ -971,8 +972,8 @@ export const ClientWorkstationView: React.FC<ClientWorkstationViewProps> = ({
 
               <button
                 type="button"
-                onClick={() => {
-                  navigator.clipboard.writeText(OntologicalStore.getCalendarUrl());
+                onClick={async () => {
+                  await safeCopyToClipboard(OntologicalStore.getCalendarUrl());
                   setCopiedCalendar(true);
                   setTimeout(() => setCopiedCalendar(false), 2000);
                 }}

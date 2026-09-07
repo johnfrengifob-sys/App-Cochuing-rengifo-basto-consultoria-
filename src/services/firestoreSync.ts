@@ -526,7 +526,6 @@ export class FirestoreSyncService {
         const userData = userDoc.data() as User;
         if (
           userData.role !== 'coach' &&
-          userData.email !== 'johnfrengifob@gmail.com' &&
           userData.email !== 'rengifobastoco@gmail.com'
         ) {
           try {

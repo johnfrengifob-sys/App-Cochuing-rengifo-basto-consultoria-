@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { User } from '../types';
 import { LiquidGlassButton } from './LiquidGlassButton';
+import { ADMIN_EMAIL, ADMIN_SECURITY_CODE } from '../services/store';
+import { signInWithGoogle } from '../services/firebase';
 import {
   ShieldCheck,
   KeyRound,
@@ -17,6 +19,7 @@ import {
   CameraOff,
   Radio,
   Fingerprint,
+  ShieldAlert,
 } from 'lucide-react';
 
 interface AuthenticationSpaceProps {
@@ -32,14 +35,21 @@ export const AuthenticationSpace: React.FC<AuthenticationSpaceProps> = ({
   onSuccess,
   onBack,
 }) => {
+  const isCoach = user.role === 'coach';
+  const isCoachAuthorizedEmail = user.email.trim().toLowerCase() === ADMIN_EMAIL;
+
   const [activeMethod, setActiveMethod] = useState<AuthMethod>('google');
   const [isVerifying, setIsVerifying] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  // OTP State
-  const [otpDigits, setOtpDigits] = useState<string[]>(['', '', '', '', '', '']);
-  const [generatedOtp, setGeneratedOtp] = useState<string>('849201');
+  // OTP State: 4 digits for Coach, 6 digits for standard clients
+  const [otpDigits, setOtpDigits] = useState<string[]>(
+    isCoach ? ['', '', '', ''] : ['', '', '', '', '', '']
+  );
+  const [generatedOtp, setGeneratedOtp] = useState<string>(
+    isCoach ? '' : '849201'
+  );
   const [timerSeconds, setTimerSeconds] = useState(58);
   const [canResend, setCanResend] = useState(false);
   const otpInputsRef = useRef<(HTMLInputElement | null)[]>([]);
@@ -50,10 +60,14 @@ export const AuthenticationSpace: React.FC<AuthenticationSpaceProps> = ({
   const [cameraActive, setCameraActive] = useState(false);
   const [cameraError, setCameraError] = useState<string | null>(null);
   const [faceScanProgress, setFaceScanProgress] = useState(0);
-  const [faceScanStatus, setFaceScanStatus] = useState<string>('Esperando alineación de rostro...');
+  const [faceScanStatus, setFaceScanStatus] = useState<string>(
+    'Esperando alineación de rostro...'
+  );
   const [isScanningFace, setIsScanningFace] = useState(false);
+  const [adminFaceScanned, setAdminFaceScanned] = useState(false);
+  const [adminFaceCode, setAdminFaceCode] = useState('');
 
-  // PIN State
+  // PIN State (4 digits)
   const [pinDigits, setPinDigits] = useState<string[]>(['', '', '', '']);
   const pinInputsRef = useRef<(HTMLInputElement | null)[]>([]);
 
@@ -141,24 +155,84 @@ export const AuthenticationSpace: React.FC<AuthenticationSpaceProps> = ({
   };
 
   // Google Authentication Handler
-  const handleGoogleAuth = () => {
-    triggerSuccessSequence('Google OAuth 2.0');
+  const handleGoogleAuth = async () => {
+    setErrorMessage(null);
+    setIsVerifying(true);
+
+    try {
+      const googleUser = await signInWithGoogle();
+      if (!googleUser || !googleUser.email) {
+        setIsVerifying(false);
+        setErrorMessage('No se pudo verificar la cuenta de Google. Intente nuevamente.');
+        return;
+      }
+
+      const signedEmail = googleUser.email.trim().toLowerCase();
+
+      if (isCoach) {
+        if (signedEmail !== ADMIN_EMAIL.toLowerCase()) {
+          setIsVerifying(false);
+          setErrorMessage(
+            `Acceso denegado: La cuenta Google seleccionada (${signedEmail}) no corresponde al administrador autorizado (${ADMIN_EMAIL}). Solo el titular oficial puede ingresar.`
+          );
+          return;
+        }
+        setIsVerifying(false);
+        triggerSuccessSequence(`Verificación de Google (${ADMIN_EMAIL})`);
+      } else {
+        if (
+          signedEmail !== user.email.trim().toLowerCase() &&
+          signedEmail !== ADMIN_EMAIL.toLowerCase()
+        ) {
+          setIsVerifying(false);
+          setErrorMessage(
+            `Acceso denegado: La cuenta Google (${signedEmail}) no coincide con el participante registrado (${user.email}).`
+          );
+          return;
+        }
+        setIsVerifying(false);
+        triggerSuccessSequence(`Google OAuth 2.0 (${signedEmail})`);
+      }
+    } catch (err: unknown) {
+      setIsVerifying(false);
+      const firebaseErr = err as { code?: string; message?: string };
+      if (firebaseErr?.code === 'auth/popup-closed-by-user') {
+        setErrorMessage(
+          isCoach
+            ? 'La ventana de Google fue cerrada. Puede reintentar o usar su Código de Seguridad en la pestaña "Código Maestro".'
+            : 'La ventana de verificación de Google fue cerrada antes de completarse.'
+        );
+      } else if (firebaseErr?.code === 'auth/unauthorized-domain') {
+        setErrorMessage(
+          isCoach
+            ? 'Aviso de Seguridad: El dominio de vista previa no está en los Dominios Autorizados de Firebase. Puede ingresar de inmediato con su Código de Seguridad en la pestaña "Código Maestro".'
+            : 'El dominio actual no está en los Dominios Autorizados de Firebase. Use su código de verificación.'
+        );
+      } else {
+        setErrorMessage(
+          isCoach
+            ? 'La verificación de Google no se completó. Puede autorizar su acceso con su Código de Seguridad confidencial en la pestaña "Código Maestro".'
+            : 'No se completó la verificación con Google. Intente de nuevo o use el código de verificación.'
+        );
+      }
+    }
   };
 
   // OTP Handlers
   const handleOtpChange = (index: number, value: string) => {
     const cleanValue = value.replace(/[^0-9]/g, '');
+    const maxDigits = isCoach ? 4 : 6;
     const newDigits = [...otpDigits];
 
     if (cleanValue.length > 1) {
       // Pasted full code
-      const pastedDigits = cleanValue.slice(0, 6).split('');
-      for (let i = 0; i < 6; i++) {
+      const pastedDigits = cleanValue.slice(0, maxDigits).split('');
+      for (let i = 0; i < maxDigits; i++) {
         newDigits[i] = pastedDigits[i] || '';
       }
       setOtpDigits(newDigits);
-      if (pastedDigits.length >= 6) {
-        otpInputsRef.current[5]?.focus();
+      if (pastedDigits.length >= maxDigits) {
+        otpInputsRef.current[maxDigits - 1]?.focus();
       }
       return;
     }
@@ -166,7 +240,7 @@ export const AuthenticationSpace: React.FC<AuthenticationSpaceProps> = ({
     newDigits[index] = cleanValue;
     setOtpDigits(newDigits);
 
-    if (cleanValue && index < 5) {
+    if (cleanValue && index < maxDigits - 1) {
       otpInputsRef.current[index + 1]?.focus();
     }
   };
@@ -178,30 +252,56 @@ export const AuthenticationSpace: React.FC<AuthenticationSpaceProps> = ({
   };
 
   const handleVerifyOtp = () => {
+    setErrorMessage(null);
     const enteredCode = otpDigits.join('');
-    if (enteredCode.length < 6) {
-      setErrorMessage('Por favor ingresa los 6 dígitos del código de verificación.');
-      return;
-    }
-    // Accept demo code or any 6-digit number in testing environment
-    if (enteredCode === generatedOtp || enteredCode.length === 6) {
-      triggerSuccessSequence('Código de Verificación OTP');
+
+    if (isCoach) {
+      if (!isCoachAuthorizedEmail) {
+        setErrorMessage(
+          `Acceso denegado: Únicamente el correo ${ADMIN_EMAIL} está autorizado para ingresar al panel administrador.`
+        );
+        return;
+      }
+      if (enteredCode !== ADMIN_SECURITY_CODE) {
+        setErrorMessage(
+          'Código de seguridad incorrecto. Verifique sus credenciales autorizadas.'
+        );
+        return;
+      }
+      triggerSuccessSequence('Código de Seguridad Administrador');
     } else {
-      setErrorMessage('Código de verificación inválido. Intenta nuevamente o usa el código de prueba.');
+      if (enteredCode.length < 6) {
+        setErrorMessage('Por favor ingresa los 6 dígitos del código de verificación.');
+        return;
+      }
+      if (enteredCode === generatedOtp || enteredCode.length === 6) {
+        triggerSuccessSequence('Código de Verificación OTP');
+      } else {
+        setErrorMessage(
+          'Código de verificación inválido. Intenta nuevamente o usa el código de prueba.'
+        );
+      }
     }
   };
 
   const handleResendOtp = () => {
-    const newCode = Math.floor(100000 + Math.random() * 900000).toString();
-    setGeneratedOtp(newCode);
+    if (isCoach) {
+      setOtpDigits(['', '', '', '']);
+    } else {
+      const newCode = Math.floor(100000 + Math.random() * 900000).toString();
+      setGeneratedOtp(newCode);
+      setOtpDigits(['', '', '', '', '', '']);
+    }
     setTimerSeconds(60);
     setCanResend(false);
-    setOtpDigits(['', '', '', '', '', '']);
     setErrorMessage(null);
     otpInputsRef.current[0]?.focus();
   };
 
   const handleFillDemoOtp = () => {
+    if (isCoach) {
+      return; // Never reveal or autofill admin security code
+    }
     setOtpDigits(generatedOtp.split(''));
     setErrorMessage(null);
   };
@@ -209,6 +309,15 @@ export const AuthenticationSpace: React.FC<AuthenticationSpaceProps> = ({
   // Face Recognition Scan Handler
   const handleStartFaceScan = () => {
     if (isScanningFace || isVerifying || isSuccess) return;
+    setErrorMessage(null);
+
+    if (isCoach && !isCoachAuthorizedEmail) {
+      setErrorMessage(
+        `Acceso denegado: Únicamente el correo ${ADMIN_EMAIL} está autorizado para ingresar al panel administrador.`
+      );
+      return;
+    }
+
     setIsScanningFace(true);
     setFaceScanProgress(15);
     setFaceScanStatus('Escaneando geometría facial y patrones somáticos...');
@@ -219,11 +328,17 @@ export const AuthenticationSpace: React.FC<AuthenticationSpaceProps> = ({
       if (progress >= 100) {
         clearInterval(interval);
         setFaceScanProgress(100);
-        setFaceScanStatus('Coincidencia biométrica confirmada (99.8%)');
-        setTimeout(() => {
+        if (isCoach) {
+          setFaceScanStatus('Biometría confirmada • Ingrese código de seguridad');
           setIsScanningFace(false);
-          triggerSuccessSequence('Reconocimiento Facial Biométrico');
-        }, 500);
+          setAdminFaceScanned(true);
+        } else {
+          setFaceScanStatus('Coincidencia biométrica confirmada (99.8%)');
+          setTimeout(() => {
+            setIsScanningFace(false);
+            triggerSuccessSequence('Reconocimiento Facial Biométrico');
+          }, 500);
+        }
       } else {
         setFaceScanProgress(progress);
         if (progress === 40) {
@@ -232,7 +347,24 @@ export const AuthenticationSpace: React.FC<AuthenticationSpaceProps> = ({
           setFaceScanStatus('Verificando firma ontológica encriptada...');
         }
       }
-    }, 450);
+    }, 400);
+  };
+
+  const handleConfirmFaceWithCode = () => {
+    setErrorMessage(null);
+    if (!isCoachAuthorizedEmail) {
+      setErrorMessage(
+        `Acceso denegado: Únicamente el correo ${ADMIN_EMAIL} está autorizado para ingresar al panel administrador.`
+      );
+      return;
+    }
+    if (adminFaceCode.trim() !== ADMIN_SECURITY_CODE) {
+      setErrorMessage(
+        'Código de seguridad incorrecto. Verifique sus credenciales autorizadas.'
+      );
+      return;
+    }
+    triggerSuccessSequence('Face ID Biométrico + Código de Seguridad');
   };
 
   // PIN Handlers
@@ -255,13 +387,64 @@ export const AuthenticationSpace: React.FC<AuthenticationSpaceProps> = ({
   };
 
   const handleVerifyPin = () => {
+    setErrorMessage(null);
     const code = pinDigits.join('');
     if (code.length < 4) {
-      setErrorMessage('Ingresa tu PIN de 4 dígitos.');
+      setErrorMessage('Ingresa el código de 4 dígitos.');
       return;
     }
-    triggerSuccessSequence('PIN de Seguridad');
+
+    if (isCoach) {
+      if (!isCoachAuthorizedEmail) {
+        setErrorMessage(
+          `Acceso denegado: Únicamente el correo ${ADMIN_EMAIL} está autorizado para ingresar al panel administrador.`
+        );
+        return;
+      }
+      if (code !== ADMIN_SECURITY_CODE) {
+        setErrorMessage(
+          'Código de seguridad incorrecto. Verifique sus credenciales autorizadas.'
+        );
+        return;
+      }
+      triggerSuccessSequence('PIN Maestro de Seguridad Administrador');
+    } else {
+      triggerSuccessSequence('PIN de Seguridad');
+    }
   };
+
+  // FATAL GUARD: If user has role coach but email is NOT ADMIN_EMAIL, strictly block!
+  if (isCoach && !isCoachAuthorizedEmail) {
+    return (
+      <div className="fixed inset-0 z-50 bg-black/60 dark:bg-black/80 backdrop-blur-md flex items-center justify-center p-4 sm:p-6 overflow-y-auto animate-in fade-in duration-200">
+        <div className="w-full max-w-lg bg-white dark:bg-[#141416] text-black dark:text-neutral-100 rounded-3xl border border-red-200 dark:border-red-900/60 shadow-2xl p-6 sm:p-8 text-center space-y-5">
+          <div className="w-16 h-16 mx-auto rounded-3xl bg-red-100 dark:bg-red-950/50 border border-red-200 dark:border-red-800 flex items-center justify-center text-red-600 dark:text-red-400 shadow-sm">
+            <ShieldAlert className="w-8 h-8 stroke-[2]" />
+          </div>
+
+          <div className="space-y-2">
+            <h3 className="text-lg font-bold text-red-700 dark:text-red-400">
+              Acceso Denegado al Panel Administrador
+            </h3>
+            <p className="text-xs text-gray-600 dark:text-neutral-400 leading-relaxed max-w-sm mx-auto">
+              Únicamente el correo <strong className="text-black dark:text-white font-mono">{ADMIN_EMAIL}</strong> está autorizado para ingresar a la consola de administración. El correo ({user.email}) no cuenta con permisos de administrador.
+            </p>
+          </div>
+
+          <div className="pt-2">
+            <button
+              type="button"
+              onClick={onBack}
+              className="w-full py-3 rounded-2xl bg-black dark:bg-white text-white dark:text-black text-xs font-semibold hover:opacity-90 transition-all cursor-pointer shadow-xs flex items-center justify-center gap-2"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              <span>Regresar a la Selección de Perfiles</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="fixed inset-0 z-50 bg-black/60 dark:bg-black/80 backdrop-blur-md flex items-center justify-center p-4 sm:p-6 overflow-y-auto animate-in fade-in duration-200">
@@ -308,15 +491,19 @@ export const AuthenticationSpace: React.FC<AuthenticationSpaceProps> = ({
                   {user.name}
                 </h3>
                 <span className="px-2 py-0.5 rounded-md text-[10px] uppercase font-bold tracking-wider bg-black/5 dark:bg-white/10 text-gray-700 dark:text-neutral-300">
-                  {user.role === 'coach' ? 'Coach Consultor' : 'Cliente Directivo'}
+                  {user.role === 'coach' ? 'Master Coach Administrador' : 'Cliente Directivo'}
                 </span>
               </div>
-              <p className="text-xs text-gray-500 dark:text-neutral-400 font-light truncate mt-0.5">
+              <p className="text-xs text-gray-500 dark:text-neutral-400 font-light truncate mt-0.5 font-mono">
                 {user.email}
               </p>
               <div className="flex items-center gap-2 mt-1 text-[11px] text-emerald-600 dark:text-emerald-400 font-medium">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                <span>Perfil verificado en plataforma</span>
+                <span>
+                  {isCoach
+                    ? `Autorizado exclusivamente para ${ADMIN_EMAIL}`
+                    : 'Perfil verificado en plataforma'}
+                </span>
               </div>
             </div>
           </div>
@@ -377,7 +564,9 @@ export const AuthenticationSpace: React.FC<AuthenticationSpaceProps> = ({
                 id="auth-tab-otp"
               >
                 <KeyRound className="w-5 h-5 stroke-[1.75]" />
-                <span className="text-xs font-semibold tracking-tight">Código OTP</span>
+                <span className="text-xs font-semibold tracking-tight">
+                  {isCoach ? 'Código Maestro' : 'Código OTP'}
+                </span>
               </button>
 
               {/* Option 3: Facial Recognition */}
@@ -413,7 +602,9 @@ export const AuthenticationSpace: React.FC<AuthenticationSpaceProps> = ({
                 id="auth-tab-pin"
               >
                 <Fingerprint className="w-5 h-5 stroke-[1.75]" />
-                <span className="text-xs font-semibold tracking-tight">PIN / Passkey</span>
+                <span className="text-xs font-semibold tracking-tight">
+                  {isCoach ? 'PIN Maestro' : 'PIN / Passkey'}
+                </span>
               </button>
             </div>
           </div>
@@ -433,13 +624,15 @@ export const AuthenticationSpace: React.FC<AuthenticationSpaceProps> = ({
 
           {/* Error Banner */}
           {errorMessage && (
-            <div className="p-4 rounded-2xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 flex items-center gap-2.5 text-red-800 dark:text-red-300 text-xs mb-6">
+            <div className="p-4 rounded-2xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 flex items-center gap-2.5 text-red-800 dark:text-red-300 text-xs mb-6 animate-fade-in">
               <AlertCircle className="w-4 h-4 text-red-600 dark:text-red-400 shrink-0" />
               <span>{errorMessage}</span>
             </div>
           )}
 
-          {/* METHOD 1: GOOGLE AUTH */}
+          {/* ========================================================================= */}
+          {/* METHOD 1: GOOGLE AUTH                                                     */}
+          {/* ========================================================================= */}
           {activeMethod === 'google' && (
             <div className="p-6 rounded-3xl bg-[#FAFAFA] dark:bg-[#18181B] border border-gray-100 dark:border-neutral-800 flex flex-col items-center text-center space-y-4">
               <div className="w-14 h-14 rounded-2xl bg-white dark:bg-[#222226] border border-gray-200/80 dark:border-neutral-700 flex items-center justify-center shadow-xs">
@@ -469,7 +662,9 @@ export const AuthenticationSpace: React.FC<AuthenticationSpaceProps> = ({
                 </h4>
                 <p className="text-xs text-gray-500 dark:text-neutral-400 font-light max-w-sm mt-1">
                   Acceso certificado mediante protocolo OAuth 2.0 vinculado a{' '}
-                  <strong className="font-semibold text-black dark:text-white">{user.email}</strong>.
+                  <strong className="font-semibold text-black dark:text-white font-mono">
+                    {user.email}
+                  </strong>.
                 </p>
               </div>
 
@@ -478,14 +673,31 @@ export const AuthenticationSpace: React.FC<AuthenticationSpaceProps> = ({
                 <div className="flex items-center gap-2 text-left">
                   <div className="w-2 h-2 rounded-full bg-emerald-500" />
                   <div>
-                    <span className="block font-medium text-black dark:text-white">Token Activo</span>
-                    <span className="text-[10px] text-gray-400 dark:text-neutral-500">Google Cloud Identity</span>
+                    <span className="block font-medium text-black dark:text-white">
+                      {isCoach ? 'Admin Oficial Autorizado' : 'Token Activo'}
+                    </span>
+                    <span className="text-[10px] text-gray-400 dark:text-neutral-500">
+                      {ADMIN_EMAIL}
+                    </span>
                   </div>
                 </div>
                 <span className="text-[11px] font-mono text-gray-500 dark:text-neutral-400">
                   {user.email.split('@')[0]}
                 </span>
               </div>
+
+              {/* When Coach, state Google verification exclusivity */}
+              {isCoach && (
+                <div className="w-full max-w-sm p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-left space-y-2">
+                  <div className="flex items-center gap-2 text-emerald-800 dark:text-emerald-300 font-semibold text-xs">
+                    <ShieldCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                    <span>Verificación de Perfil de Administrador</span>
+                  </div>
+                  <p className="text-[11px] text-emerald-900 dark:text-emerald-300 font-light leading-relaxed">
+                    Acceso directo protegido. Se validará que la sesión de Google corresponda estrictamente a <strong className="font-mono font-bold">{ADMIN_EMAIL}</strong>. Si no dispone de acceso a Google, puede usar su código de seguridad en la pestaña &quot;Código Maestro&quot;.
+                  </p>
+                </div>
+              )}
 
               <LiquidGlassButton
                 onClick={handleGoogleAuth}
@@ -516,12 +728,14 @@ export const AuthenticationSpace: React.FC<AuthenticationSpaceProps> = ({
                   </div>
                 }
               >
-                Verificar & Entrar con Google
+                {isCoach ? 'Verificar Perfil Google de Administrador' : 'Verificar & Entrar con Google'}
               </LiquidGlassButton>
             </div>
           )}
 
-          {/* METHOD 2: OTP VERIFICATION CODE */}
+          {/* ========================================================================= */}
+          {/* METHOD 2: OTP / SECURITY CODE                                             */}
+          {/* ========================================================================= */}
           {activeMethod === 'otp' && (
             <div className="p-6 rounded-3xl bg-[#FAFAFA] dark:bg-[#18181B] border border-gray-100 dark:border-neutral-800 flex flex-col items-center text-center space-y-5">
               <div className="w-12 h-12 rounded-2xl bg-black/5 dark:bg-white/10 flex items-center justify-center text-black dark:text-white">
@@ -530,14 +744,18 @@ export const AuthenticationSpace: React.FC<AuthenticationSpaceProps> = ({
 
               <div>
                 <h4 className="text-base font-semibold text-black dark:text-white">
-                  Ingresa tu Código de Verificación
+                  {isCoach
+                    ? 'Código de Seguridad Maestro'
+                    : 'Ingresa tu Código de Verificación'}
                 </h4>
                 <p className="text-xs text-gray-500 dark:text-neutral-400 font-light max-w-sm mt-1">
-                  Enviado a tu correo <strong className="font-semibold text-black dark:text-white">{user.email}</strong> y canal seguro.
+                  {isCoach
+                    ? `Autorización exclusiva para ${ADMIN_EMAIL}. Ingrese su código de seguridad confidencial:`
+                    : `Enviado a tu correo ${user.email} y canal seguro.`}
                 </p>
               </div>
 
-              {/* 6-Digit OTP Inputs */}
+              {/* Digit OTP Inputs: 4 digits for coach, 6 digits for participants */}
               <div className="flex items-center justify-center gap-2 sm:gap-3 my-2">
                 {otpDigits.map((digit, idx) => (
                   <input
@@ -545,7 +763,7 @@ export const AuthenticationSpace: React.FC<AuthenticationSpaceProps> = ({
                     ref={(el) => {
                       otpInputsRef.current[idx] = el;
                     }}
-                    type="text"
+                    type={isCoach ? 'password' : 'text'}
                     inputMode="numeric"
                     maxLength={1}
                     value={digit}
@@ -557,40 +775,50 @@ export const AuthenticationSpace: React.FC<AuthenticationSpaceProps> = ({
                 ))}
               </div>
 
-              {/* Test code auto-fill helper card for easy evaluation */}
-              <div className="w-full max-w-sm p-3 rounded-2xl bg-black/5 dark:bg-white/5 border border-dashed border-gray-300 dark:border-neutral-700 flex items-center justify-between text-xs">
-                <div className="flex items-center gap-2 text-left">
-                  <Sparkles className="w-4 h-4 text-amber-500 shrink-0" />
-                  <div>
-                    <span className="font-medium text-black dark:text-white">Código de prueba:</span>
-                    <span className="ml-1 font-mono font-bold text-black dark:text-white">{generatedOtp}</span>
+              {/* Code helper card for non-coach clients only */}
+              {!isCoach && (
+                <div className="w-full max-w-sm p-3 rounded-2xl bg-black/5 dark:bg-white/5 border border-dashed border-gray-300 dark:border-neutral-700 flex items-center justify-between text-xs">
+                  <div className="flex items-center gap-2 text-left">
+                    <Sparkles className="w-4 h-4 text-amber-500 shrink-0" />
+                    <div>
+                      <span className="font-medium text-black dark:text-white">
+                        Código de prueba:
+                      </span>
+                      <span className="ml-1 font-mono font-bold text-black dark:text-white">
+                        {generatedOtp}
+                      </span>
+                    </div>
                   </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={handleFillDemoOtp}
-                  className="px-2.5 py-1 rounded-lg bg-black dark:bg-white text-white dark:text-black text-[11px] font-semibold hover:opacity-90 transition-all cursor-pointer flex items-center gap-1"
-                >
-                  <Copy className="w-3 h-3" />
-                  <span>Pegar</span>
-                </button>
-              </div>
-
-              {/* Timer & Resend */}
-              <div className="text-xs text-gray-500 dark:text-neutral-400 font-light flex items-center gap-2">
-                {canResend ? (
                   <button
                     type="button"
-                    onClick={handleResendOtp}
-                    className="text-black dark:text-white font-medium hover:underline inline-flex items-center gap-1 cursor-pointer"
+                    onClick={handleFillDemoOtp}
+                    className="px-2.5 py-1 rounded-lg bg-black dark:bg-white text-white dark:text-black text-[11px] font-semibold hover:opacity-90 transition-all cursor-pointer flex items-center gap-1"
                   >
-                    <RefreshCw className="w-3 h-3" />
-                    Reenviar nuevo código
+                    <Copy className="w-3 h-3" />
+                    <span>Pegar</span>
                   </button>
-                ) : (
-                  <span>Reenviar código en <strong>{timerSeconds}s</strong></span>
-                )}
-              </div>
+                </div>
+              )}
+
+              {/* Timer & Resend */}
+              {!isCoach && (
+                <div className="text-xs text-gray-500 dark:text-neutral-400 font-light flex items-center gap-2">
+                  {canResend ? (
+                    <button
+                      type="button"
+                      onClick={handleResendOtp}
+                      className="text-black dark:text-white font-medium hover:underline inline-flex items-center gap-1 cursor-pointer"
+                    >
+                      <RefreshCw className="w-3 h-3" />
+                      Reenviar código
+                    </button>
+                  ) : (
+                    <span>
+                      Reenviar código en <strong>{timerSeconds}s</strong>
+                    </span>
+                  )}
+                </div>
+              )}
 
               <LiquidGlassButton
                 onClick={handleVerifyOtp}
@@ -599,12 +827,14 @@ export const AuthenticationSpace: React.FC<AuthenticationSpaceProps> = ({
                 className="w-full max-w-sm"
                 id="btn-verify-otp"
               >
-                Validar Código e Ingresar
+                {isCoach ? 'Validar Código e Ingresar' : 'Validar Código e Ingresar'}
               </LiquidGlassButton>
             </div>
           )}
 
-          {/* METHOD 3: FACIAL RECOGNITION (FACE ID) */}
+          {/* ========================================================================= */}
+          {/* METHOD 3: FACIAL RECOGNITION (FACE ID)                                    */}
+          {/* ========================================================================= */}
           {activeMethod === 'face' && (
             <div className="p-6 rounded-3xl bg-[#FAFAFA] dark:bg-[#18181B] border border-gray-100 dark:border-neutral-800 flex flex-col items-center text-center space-y-4">
               <div className="w-full flex items-center justify-between">
@@ -702,32 +932,67 @@ export const AuthenticationSpace: React.FC<AuthenticationSpaceProps> = ({
                 </p>
               )}
 
-              {/* Action Button */}
-              <div className="w-full max-w-sm flex gap-2">
-                <button
-                  type="button"
-                  onClick={cameraActive ? stopCamera : startCamera}
-                  className="p-3 rounded-2xl bg-gray-100 dark:bg-[#242428] text-black dark:text-white hover:bg-gray-200 dark:hover:bg-[#2E2E34] transition-colors cursor-pointer"
-                  title={cameraActive ? 'Desactivar cámara' : 'Activar cámara'}
-                >
-                  {cameraActive ? <CameraOff className="w-4 h-4" /> : <Camera className="w-4 h-4" />}
-                </button>
+              {/* If Coach and Face is verified, enforce confirmation with Security Code */}
+              {isCoach && adminFaceScanned ? (
+                <div className="w-full max-w-sm p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-left space-y-2.5 animate-fade-in">
+                  <div className="flex items-center gap-2 text-emerald-800 dark:text-emerald-300 font-semibold text-xs">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                    <span>Biometría Validada • Ingrese Código Confidencial</span>
+                  </div>
+                  <p className="text-[11px] text-emerald-900 dark:text-emerald-200 font-light">
+                    Confirme su código de seguridad de administrador para autorizar a {ADMIN_EMAIL}:
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="password"
+                      inputMode="numeric"
+                      maxLength={4}
+                      value={adminFaceCode}
+                      onChange={(e) => setAdminFaceCode(e.target.value.replace(/[^0-9]/g, ''))}
+                      placeholder="••••"
+                      className="w-full py-2 px-3 text-center tracking-widest text-base font-mono font-bold rounded-xl bg-white dark:bg-[#222226] border border-emerald-300 dark:border-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    />
+                  </div>
+                  <LiquidGlassButton
+                    onClick={handleConfirmFaceWithCode}
+                    isLoading={isVerifying || isSuccess}
+                    size="lg"
+                    className="w-full mt-2"
+                    id="btn-confirm-face-code"
+                  >
+                    Autorizar Ingreso con Código de Seguridad
+                  </LiquidGlassButton>
+                </div>
+              ) : (
+                /* Action Button */
+                <div className="w-full max-w-sm flex gap-2">
+                  <button
+                    type="button"
+                    onClick={cameraActive ? stopCamera : startCamera}
+                    className="p-3 rounded-2xl bg-gray-100 dark:bg-[#242428] text-black dark:text-white hover:bg-gray-200 dark:hover:bg-[#2E2E34] transition-colors cursor-pointer"
+                    title={cameraActive ? 'Desactivar cámara' : 'Activar cámara'}
+                  >
+                    {cameraActive ? <CameraOff className="w-4 h-4" /> : <Camera className="w-4 h-4" />}
+                  </button>
 
-                <LiquidGlassButton
-                  onClick={handleStartFaceScan}
-                  isLoading={isScanningFace || isVerifying || isSuccess}
-                  size="lg"
-                  className="flex-1"
-                  id="btn-scan-face"
-                  icon={<ScanFace className="w-4 h-4 mr-1" />}
-                >
-                  {isScanningFace ? 'Escaneando...' : 'Escanear Rostro & Autenticar'}
-                </LiquidGlassButton>
-              </div>
+                  <LiquidGlassButton
+                    onClick={handleStartFaceScan}
+                    isLoading={isScanningFace || isVerifying || isSuccess}
+                    size="lg"
+                    className="flex-1"
+                    id="btn-scan-face"
+                    icon={<ScanFace className="w-4 h-4 mr-1" />}
+                  >
+                    {isScanningFace ? 'Escaneando...' : 'Escanear Rostro & Autenticar'}
+                  </LiquidGlassButton>
+                </div>
+              )}
             </div>
           )}
 
-          {/* METHOD 4: PIN DE SEGURIDAD */}
+          {/* ========================================================================= */}
+          {/* METHOD 4: PIN DE SEGURIDAD                                                */}
+          {/* ========================================================================= */}
           {activeMethod === 'pin' && (
             <div className="p-6 rounded-3xl bg-[#FAFAFA] dark:bg-[#18181B] border border-gray-100 dark:border-neutral-800 flex flex-col items-center text-center space-y-5">
               <div className="w-12 h-12 rounded-2xl bg-black/5 dark:bg-white/10 flex items-center justify-center text-black dark:text-white">
@@ -736,10 +1001,14 @@ export const AuthenticationSpace: React.FC<AuthenticationSpaceProps> = ({
 
               <div>
                 <h4 className="text-base font-semibold text-black dark:text-white">
-                  PIN Ontológico de Acceso
+                  {isCoach
+                    ? 'Código de Seguridad Maestro'
+                    : 'PIN Ontológico de Acceso'}
                 </h4>
                 <p className="text-xs text-gray-500 dark:text-neutral-400 font-light max-w-sm mt-1">
-                  Ingresa tu clave de 4 dígitos para autorizar el ingreso al portal.
+                  {isCoach
+                    ? `Ingresa tu código de seguridad confidencial para autorizar el acceso exclusivo de ${ADMIN_EMAIL} al panel de administración.`
+                    : 'Ingresa tu clave de 4 dígitos para autorizar el ingreso al portal.'}
                 </p>
               </div>
 
@@ -763,16 +1032,23 @@ export const AuthenticationSpace: React.FC<AuthenticationSpaceProps> = ({
                 ))}
               </div>
 
-              <div className="w-full max-w-sm p-3 rounded-2xl bg-black/5 dark:bg-white/5 border border-dashed border-gray-300 dark:border-neutral-700 flex items-center justify-between text-xs">
-                <span className="font-medium text-black dark:text-white">PIN por defecto de prueba: <strong>1234</strong></span>
-                <button
-                  type="button"
-                  onClick={() => setPinDigits(['1', '2', '3', '4'])}
-                  className="px-2.5 py-1 rounded-lg bg-black dark:bg-white text-white dark:text-black text-[11px] font-semibold hover:opacity-90 cursor-pointer"
-                >
-                  Rellenar
-                </button>
-              </div>
+              {!isCoach && (
+                <div className="w-full max-w-sm p-3 rounded-2xl bg-black/5 dark:bg-white/5 border border-dashed border-gray-300 dark:border-neutral-700 flex items-center justify-between text-xs">
+                  <span className="font-medium text-black dark:text-white">
+                    PIN por defecto de prueba: <strong>1234</strong>
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setPinDigits('1234'.split(''));
+                      setErrorMessage(null);
+                    }}
+                    className="px-2.5 py-1 rounded-lg bg-black dark:bg-white text-white dark:text-black text-[11px] font-semibold hover:opacity-90 cursor-pointer"
+                  >
+                    Rellenar
+                  </button>
+                </div>
+              )}
 
               <LiquidGlassButton
                 onClick={handleVerifyPin}
@@ -781,7 +1057,7 @@ export const AuthenticationSpace: React.FC<AuthenticationSpaceProps> = ({
                 className="w-full max-w-sm"
                 id="btn-verify-pin"
               >
-                Acceder con PIN
+                {isCoach ? 'Acceder con Código Maestro' : 'Acceder con PIN'}
               </LiquidGlassButton>
             </div>
           )}

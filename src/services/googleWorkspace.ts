@@ -7,12 +7,98 @@ import {
   DriveExportedFile,
   GoogleCalendarEventItem,
   WorkspaceDocumentCategory,
+  GeminiGeneratedWorkspaceDoc,
 } from '../types';
 import { OntologicalStore } from './store';
+import { OAUTH_CLIENT_ID } from './firebase';
 
 const CONFIG_STORAGE_KEY = 'ontological_google_workspace_config';
 const EXPORTED_FILES_KEY = 'ontological_drive_exported_files';
 const PRIMARY_ACCOUNT_EMAIL = 'rengifobastoco@gmail.com';
+
+// Official Google Drive folder linked for the app's Cerebro (Ontological Knowledge Base & Documents)
+export const OFFICIAL_CEREBRO_DRIVE_FOLDER_ID = '15laHG-2cFXvLiVoLp6GxJBWIBdXLB6bz';
+export const OFFICIAL_CEREBRO_DRIVE_FOLDER_URL =
+  'https://drive.google.com/drive/folders/15laHG-2cFXvLiVoLp6GxJBWIBdXLB6bz?usp=drive_link';
+
+// Core documents linked within the official Google Drive folder for Cerebro RBC
+export const OFFICIAL_CEREBRO_DRIVE_DOCUMENTS: DriveExportedFile[] = [
+  {
+    id: 'brain_doc_drive_folder',
+    name: '📁 Carpeta Oficial Google Drive: Cerebro RBC & Documentos de Consultoría',
+    mimeType: 'application/vnd.google-apps.folder',
+    webViewLink: OFFICIAL_CEREBRO_DRIVE_FOLDER_URL,
+    uploadedAt: new Date().toISOString(),
+    sizeFormatted: 'Carpeta Drive Oficial',
+    category: 'folder',
+    isBrainDocument: true,
+    description:
+      'Carpeta central en Google Drive vinculada al Cerebro de la App (ID: 15laHG-2cFXvLiVoLp6GxJBWIBdXLB6bz) con todos los documentos metodológicos, plantillas, matrices y bitácoras ontológicas de RBC.',
+    tags: ['Cerebro RBC', 'Google Drive', 'Carpeta Oficial', 'Base de Conocimiento', 'Drive Sync'],
+    contentSnippet:
+      'Carpeta centralizada de Google Drive con acceso directo a la documentación ontológica, contratos marco, matrices de quiebre y bitácoras somáticas sincronizadas con el Cerebro de la App.',
+  },
+  {
+    id: 'brain_doc_drive_contrato',
+    name: '📄 Contrato Marco de Consultoría Ontológica & Confidencialidad (Drive Sync)',
+    mimeType: 'application/vnd.google-apps.document',
+    webViewLink: OFFICIAL_CEREBRO_DRIVE_FOLDER_URL,
+    uploadedAt: new Date(Date.now() - 3600000 * 24).toISOString(),
+    sizeFormatted: 'Google Doc (Drive)',
+    category: 'doc',
+    isBrainDocument: true,
+    description:
+      'Documento legal y ontológico con cláusulas de confidencialidad, código deontológico ICF y acuerdos de acompañamiento directivo 1 a 1.',
+    tags: ['Cerebro RBC', 'Contratos', 'Drive Sync', 'Confidencialidad', 'Docs'],
+    contentSnippet:
+      'Acuerdo de prestación de servicios ontológicos bajo el código ético ICF, asegurando la confidencialidad de las sesiones y quiebres declarados.',
+  },
+  {
+    id: 'brain_doc_drive_matriz',
+    name: '📊 Matriz Directiva de Quiebres & Bitácora de Coachees (Drive Sync)',
+    mimeType: 'application/vnd.google-apps.spreadsheet',
+    webViewLink: OFFICIAL_CEREBRO_DRIVE_FOLDER_URL,
+    uploadedAt: new Date(Date.now() - 3600000 * 18).toISOString(),
+    sizeFormatted: 'Google Sheet (Drive)',
+    category: 'sheet',
+    isBrainDocument: true,
+    description:
+      'Hoja de cálculo maestra en Drive para el monitoreo de objetivos de coachees, estados de quiebre, avances somáticos y semáforo de sesiones.',
+    tags: ['Cerebro RBC', 'CRM', 'Drive Sync', 'Métricas', 'Sheets'],
+    contentSnippet:
+      'Matriz de control gerencial con registros de clientes ancla, fecha de inicio, quiebre ontológico primario, compromisos de acción y semáforo de progreso.',
+  },
+  {
+    id: 'brain_doc_drive_cuestionario',
+    name: '📝 Cuestionario de Quiebres, Creencias & Somática (Drive Sync)',
+    mimeType: 'application/vnd.google-apps.form',
+    webViewLink: OFFICIAL_CEREBRO_DRIVE_FOLDER_URL,
+    uploadedAt: new Date(Date.now() - 3600000 * 36).toISOString(),
+    sizeFormatted: 'Google Form (Drive)',
+    category: 'form',
+    isBrainDocument: true,
+    description:
+      'Instrumento estructurado de intake en Google Drive para evaluar nivel de autoexigencia, límites directivos y registro de sensaciones corporales.',
+    tags: ['Cerebro RBC', 'Cuestionarios', 'Drive Sync', 'Somática', 'Forms'],
+    contentSnippet:
+      'Formulario de diagnóstico para identificar afirmaciones vs juicios basales, mandatos introyectados y mapeo de zonas de tensión corporal previas a la sesión.',
+  },
+  {
+    id: 'brain_doc_drive_talleres',
+    name: '🖥️ Presentación: Los 5 Talleres y Masterclasses RBC (Drive Sync)',
+    mimeType: 'application/vnd.google-apps.presentation',
+    webViewLink: OFFICIAL_CEREBRO_DRIVE_FOLDER_URL,
+    uploadedAt: new Date(Date.now() - 3600000 * 48).toISOString(),
+    sizeFormatted: 'Google Slides (Drive)',
+    category: 'slide',
+    isBrainDocument: true,
+    description:
+      'Láminas maestras en Google Drive sobre el observador ontológico (OSAR), reconstrucción lingüística de juicios y conversaciones difíciles para líderes.',
+    tags: ['Cerebro RBC', 'Talleres', 'Drive Sync', 'Slides', 'Masterclasses'],
+    contentSnippet:
+      'Estructura visual de diapositivas para acompañar los conversatorios grupales transmitidos vía Google Meet con ejercicios de coherencia cuerpo-emoción-lenguaje.',
+  },
+];
 
 export const DEFAULT_WORKSPACE_CONFIG: GoogleWorkspaceConfig = {
   accountEmail: PRIMARY_ACCOUNT_EMAIL,
@@ -22,8 +108,9 @@ export const DEFAULT_WORKSPACE_CONFIG: GoogleWorkspaceConfig = {
   lastConnectedAt: new Date().toISOString(),
   drive: {
     enabled: true,
-    rootFolderId: 'drive_root_rengifobasto',
-    rootFolderName: 'Rengifo Basto Consultoría Ontológica',
+    rootFolderId: OFFICIAL_CEREBRO_DRIVE_FOLDER_ID,
+    rootFolderName: 'Rengifo Basto Consultoría Ontológica (Cerebro RBC)',
+    rootFolderUrl: OFFICIAL_CEREBRO_DRIVE_FOLDER_URL,
     reportsFolderId: 'drive_reports_rengifobasto',
     sheetsFolderId: 'drive_sheets_rengifobasto',
     formsFolderId: 'drive_forms_rengifobasto',
@@ -64,6 +151,13 @@ export class GoogleWorkspaceService {
           ...parsed,
           isConnected: true, // Always active and non-blocking
           accountEmail: parsed.accountEmail || PRIMARY_ACCOUNT_EMAIL,
+          drive: {
+            ...DEFAULT_WORKSPACE_CONFIG.drive,
+            ...(parsed.drive || {}),
+            rootFolderId: OFFICIAL_CEREBRO_DRIVE_FOLDER_ID,
+            rootFolderUrl: OFFICIAL_CEREBRO_DRIVE_FOLDER_URL,
+            rootFolderName: 'Rengifo Basto Consultoría Ontológica (Cerebro RBC)',
+          },
         };
       }
     } catch {
@@ -78,7 +172,12 @@ export class GoogleWorkspaceService {
     const updated: GoogleWorkspaceConfig = {
       ...current,
       ...config,
-      drive: { ...current.drive, ...(config.drive || {}) },
+      drive: {
+        ...current.drive,
+        ...(config.drive || {}),
+        rootFolderId: OFFICIAL_CEREBRO_DRIVE_FOLDER_ID,
+        rootFolderUrl: OFFICIAL_CEREBRO_DRIVE_FOLDER_URL,
+      },
       sheets: { ...current.sheets, ...(config.sheets || {}) },
       forms: { ...current.forms, ...(config.forms || {}) },
       calendar: { ...current.calendar, ...(config.calendar || {}) },
@@ -105,7 +204,20 @@ export class GoogleWorkspaceService {
     try {
       const stored = localStorage.getItem(EXPORTED_FILES_KEY);
       if (stored) {
-        return JSON.parse(stored);
+        let parsed: DriveExportedFile[] = JSON.parse(stored);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          // Verify if official Drive folder document is already registered
+          const hasOfficialFolder = parsed.some(
+            (f) =>
+              f.id === 'brain_doc_drive_folder' ||
+              (f.webViewLink && f.webViewLink.includes(OFFICIAL_CEREBRO_DRIVE_FOLDER_ID))
+          );
+          if (!hasOfficialFolder) {
+            parsed = [...OFFICIAL_CEREBRO_DRIVE_DOCUMENTS, ...parsed];
+            this.saveExportedFiles(parsed);
+          }
+          return parsed;
+        }
       }
     } catch {
       // ignore
@@ -113,6 +225,7 @@ export class GoogleWorkspaceService {
 
     // Default pre-seeded documents establishing the Cerebro Operativo & Base de Conocimiento
     const initialFiles: DriveExportedFile[] = [
+      ...OFFICIAL_CEREBRO_DRIVE_DOCUMENTS,
       {
         id: 'brain_doc_01',
         name: '🧠 Cerebro Ontológico: Marco Teórico OSAR & Axiomas RBC',
@@ -181,23 +294,10 @@ export class GoogleWorkspaceService {
         tags: ['Talleres', 'Slides', 'Límites', 'Meet'],
       },
       {
-        id: 'brain_doc_06',
-        name: '📁 Carpeta Raíz: Rengifo Basto Consultoría Ontológica en Google Drive',
-        mimeType: 'application/vnd.google-apps.folder',
-        webViewLink: 'https://drive.google.com/drive/u/0/my-drive',
-        uploadedAt: new Date(Date.now() - 3600000 * 24 * 10).toISOString(),
-        sizeFormatted: 'Carpeta Drive',
-        category: 'folder',
-        isBrainDocument: true,
-        description:
-          'Repositorio madre en la nube de Google Workspace para rengifobastoco@gmail.com con subcarpetas para cada coachee y programa.',
-        tags: ['Google Drive', 'Almacenamiento', 'Carpeta Raíz'],
-      },
-      {
         id: 'drive_doc_01',
         name: '📑 Informe Ontológico - Carlos Eduardo Mendoza (Sesión 4).pdf',
         mimeType: 'application/pdf',
-        webViewLink: 'https://drive.google.com/drive/u/0/my-drive',
+        webViewLink: OFFICIAL_CEREBRO_DRIVE_FOLDER_URL,
         uploadedAt: new Date(Date.now() - 3600000 * 24 * 2).toISOString(),
         sizeFormatted: '482 KB',
         category: 'pdf_report',
@@ -407,6 +507,66 @@ export class GoogleWorkspaceService {
     this.saveExportedFiles(updated);
   }
 
+  // Import a Gemini AI generated Workspace document directly into the app's catalog & Brain
+  public static importGeminiGeneratedDocument(
+    geminiDoc: GeminiGeneratedWorkspaceDoc,
+    clientUid?: string,
+    clientName?: string
+  ): DriveExportedFile {
+    const exportedDoc: DriveExportedFile = {
+      id: geminiDoc.id || `gemini_doc_${Date.now()}`,
+      name: geminiDoc.title,
+      mimeType: geminiDoc.mimeType,
+      webViewLink: geminiDoc.openUrl || geminiDoc.googleWorkspaceUrl || 'https://docs.google.com',
+      uploadedAt: geminiDoc.generatedAt || new Date().toISOString(),
+      sizeFormatted:
+        geminiDoc.category === 'sheet'
+          ? 'Google Sheet (Matriz)'
+          : geminiDoc.category === 'form'
+          ? 'Google Form (Indagación)'
+          : geminiDoc.category === 'slide'
+          ? 'Google Slide (Inducción)'
+          : 'Google Doc (Marco)',
+      category: geminiDoc.category,
+      description: geminiDoc.description,
+      tags: geminiDoc.tags && geminiDoc.tags.length > 0 ? geminiDoc.tags : ['Cerebro RBC', 'Gemini AI', 'Workspace'],
+      clientId: clientUid,
+      clientName: clientName,
+      isBrainDocument: true,
+      contentSnippet: geminiDoc.contentSnippet || geminiDoc.description,
+    };
+
+    this.logExportedFile(exportedDoc);
+    return exportedDoc;
+  }
+
+  // Import a whole suite of Gemini generated Workspace documents
+  public static importGeminiGeneratedSuite(
+    suiteDocs: GeminiGeneratedWorkspaceDoc[],
+    clientUid?: string,
+    clientName?: string
+  ): DriveExportedFile[] {
+    return suiteDocs.map((doc) => this.importGeminiGeneratedDocument(doc, clientUid, clientName));
+  }
+
+  // Download document content as a local file (.md, .gs, .txt, .json)
+  public static downloadDocumentAsFile(title: string, content: string, extension: string = 'md'): void {
+    try {
+      const cleanFileName = `${title.replace(/[^a-zA-Z0-9_-]/g, '_')}.${extension}`;
+      const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = cleanFileName;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('Error downloading document file:', err);
+    }
+  }
+
   /**
    * OAuth Connect via Google Identity Services Token Client
    */
@@ -429,7 +589,10 @@ export class GoogleWorkspaceService {
       if (win.google && win.google.accounts && win.google.accounts.oauth2) {
         try {
           const client = win.google.accounts.oauth2.initTokenClient({
-            client_id: clientId || '267935346905-gen-lang-client.apps.googleusercontent.com',
+            client_id:
+              clientId ||
+              OAUTH_CLIENT_ID ||
+              '267935346905-0cn01s3uav1nvk54t63pi493a6ff9mnc.apps.googleusercontent.com',
             scope: scopes,
             hint: PRIMARY_ACCOUNT_EMAIL,
             callback: (response: any) => {

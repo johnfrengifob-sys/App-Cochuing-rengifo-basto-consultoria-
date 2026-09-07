@@ -6,9 +6,18 @@ import {
   DriveExportedFile,
   GoogleCalendarEventItem,
   WorkspaceDocumentCategory,
+  GeminiGeneratedWorkspaceDoc,
+  GeminiWorkspaceSuiteResult,
 } from '../types';
-import { GoogleWorkspaceService } from '../services/googleWorkspace';
+import {
+  GoogleWorkspaceService,
+  OFFICIAL_CEREBRO_DRIVE_FOLDER_ID,
+  OFFICIAL_CEREBRO_DRIVE_FOLDER_URL,
+} from '../services/googleWorkspace';
+import { GeminiService } from '../services/geminiService';
 import { OntologicalStore } from '../services/store';
+import { GeminiWorkspaceGenerator } from './GeminiWorkspaceGenerator';
+import { safeCopyToClipboard } from '../utils/clipboard';
 import {
   Folder,
   FileSpreadsheet,
@@ -37,6 +46,11 @@ import {
   Clock,
   Layers,
   ArrowRight,
+  Download,
+  Code,
+  Table,
+  FileCode,
+  Zap,
 } from 'lucide-react';
 
 interface GoogleWorkspaceHubProps {
@@ -57,7 +71,7 @@ export const GoogleWorkspaceHub: React.FC<GoogleWorkspaceHubProps> = ({
     GoogleWorkspaceService.getExportedFiles()
   );
   const [calendarEvents, setCalendarEvents] = useState<GoogleCalendarEventItem[]>([]);
-  const [activeTab, setActiveTab] = useState<'brain' | 'drive' | 'sheets' | 'forms' | 'calendar'>('brain');
+  const [activeTab, setActiveTab] = useState<'ia_generator' | 'brain' | 'drive' | 'sheets' | 'forms' | 'calendar'>('ia_generator');
 
   // Loading & notification states
   const [isConnecting, setIsConnecting] = useState(false);
@@ -65,8 +79,26 @@ export const GoogleWorkspaceHub: React.FC<GoogleWorkspaceHubProps> = ({
   const [isCreatingDrive, setIsCreatingDrive] = useState(false);
   const [isCreatingForm, setIsCreatingForm] = useState(false);
   const [isSchedulingEvent, setIsSchedulingEvent] = useState(false);
+  const [isGeneratingWithGemini, setIsGeneratingWithGemini] = useState(false);
+  const [isGeneratingSuite, setIsGeneratingSuite] = useState(false);
   const [actionNotice, setActionNotice] = useState<string | null>(null);
   const [copiedUrl, setCopiedUrl] = useState<string | null>(null);
+
+  // Gemini Workspace Generator State
+  const [geminiCustomType, setGeminiCustomType] = useState<WorkspaceDocumentCategory | 'contract' | 'apps_script'>('doc');
+  const [geminiCustomTitle, setGeminiCustomTitle] = useState('');
+  const [geminiCustomTopic, setGeminiCustomTopic] = useState('Contrato Marco de Consultoría Ontológica y Confidencialidad');
+  const [geminiCustomClientUid, setGeminiCustomClientUid] = useState<string>(clients[0]?.uid || '');
+  const [geminiCustomContext, setGeminiCustomContext] = useState('');
+  const [lastGeneratedDoc, setLastGeneratedDoc] = useState<GeminiGeneratedWorkspaceDoc | null>(null);
+  const [generatedSuite, setGeneratedSuite] = useState<GeminiWorkspaceSuiteResult | null>(null);
+  const [viewingDocumentModal, setViewingDocumentModal] = useState<GeminiGeneratedWorkspaceDoc | null>(null);
+  const [confirmModal, setConfirmModal] = useState<{
+    title: string;
+    description: string;
+    confirmLabel: string;
+    onConfirm: () => void;
+  } | null>(null);
 
   // Search & Filter state
   const [searchQuery, setSearchQuery] = useState('');
@@ -118,16 +150,16 @@ export const GoogleWorkspaceHub: React.FC<GoogleWorkspaceHubProps> = ({
     setTimeout(() => setActionNotice(null), 4500);
   };
 
-  const copyToClipboard = (text: string, label: string) => {
-    navigator.clipboard.writeText(text);
+  const copyToClipboard = async (text: string, label: string) => {
+    await safeCopyToClipboard(text);
     setCopiedUrl(text);
     showNotice(`¡Enlace copiado al portapapeles: ${label}!`);
     setTimeout(() => setCopiedUrl(null), 2500);
   };
 
-  const copyKnowledgeSnippet = (doc: DriveExportedFile) => {
+  const copyKnowledgeSnippet = async (doc: DriveExportedFile) => {
     const textToCopy = `[DOCUMENTO CEREBRO ONTOLÓGICO: ${doc.name}]\nCategoría: ${doc.category}\nEnlace: ${doc.webViewLink}\nDescripción: ${doc.description || ''}\nContenido / Axiomas: ${doc.contentSnippet || ''}\nEtiquetas: ${(doc.tags || []).join(', ')}`;
-    navigator.clipboard.writeText(textToCopy);
+    await safeCopyToClipboard(textToCopy);
     showNotice(`¡Axiomas de "${doc.name}" copiados para nutrir al Copiloto Gemini o coachee!`);
   };
 
@@ -363,6 +395,89 @@ export const GoogleWorkspaceHub: React.FC<GoogleWorkspaceHubProps> = ({
     showNotice(`¡Ficha de "${editingDoc.name}" actualizada con éxito!`);
   };
 
+  // Handler: Generate Custom Workspace Document with Gemini
+  const handleGenerateGeminiCustomDoc = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (isGeneratingWithGemini) return;
+
+    setIsGeneratingWithGemini(true);
+    const targetClient = clients.find((c) => c.uid === geminiCustomClientUid);
+
+    try {
+      const generated = await GeminiService.generateWorkspaceDocument({
+        documentType: geminiCustomType,
+        title: geminiCustomTitle.trim() || undefined,
+        topic: geminiCustomTopic.trim() || undefined,
+        clientName: targetClient?.name,
+        clientEmail: targetClient?.email,
+        additionalContext: geminiCustomContext.trim() || undefined,
+      });
+
+      setLastGeneratedDoc(generated);
+      setViewingDocumentModal(generated);
+      showNotice(`¡"${generated.title}" generado exitosamente con Gemini 3.8 Flash!`);
+    } catch (err: any) {
+      showNotice(`Error al generar con Gemini: ${err.message || 'Intente nuevamente'}`);
+    } finally {
+      setIsGeneratingWithGemini(false);
+    }
+  };
+
+  // Handler: Generate Full Master Integration Suite with Gemini
+  const handleGenerateGeminiSuite = async () => {
+    if (isGeneratingSuite) return;
+
+    setIsGeneratingSuite(true);
+    const targetClient = clients.find((c) => c.uid === geminiCustomClientUid) || clients[0];
+
+    try {
+      const suite = await GeminiService.generateWorkspaceSuite({
+        clientName: targetClient?.name,
+        clientEmail: targetClient?.email,
+        focus: geminiCustomTopic.trim() || 'Integración Total de Ecosistema',
+      });
+
+      setGeneratedSuite(suite);
+      showNotice(`¡Suite de 5 documentos generada exitosamente con Gemini 3.8 Flash!`);
+    } catch (err: any) {
+      showNotice(`Error al generar suite con Gemini: ${err.message || 'Intente nuevamente'}`);
+    } finally {
+      setIsGeneratingSuite(false);
+    }
+  };
+
+  // Handler: Save a Gemini Doc into Cerebro & Drive with confirmation
+  const handleSaveGeminiDocToCatalog = (doc: GeminiGeneratedWorkspaceDoc) => {
+    setConfirmModal({
+      title: 'Registrar Documento en Cerebro RBC & Drive',
+      description: `¿Confirmas que deseas registrar "${doc.title}" en la base de conocimiento ontológico y catálogo de Google Workspace de la aplicación?`,
+      confirmLabel: 'Confirmar y Guardar',
+      onConfirm: () => {
+        const targetClient = clients.find((c) => c.uid === geminiCustomClientUid);
+        GoogleWorkspaceService.importGeminiGeneratedDocument(doc, targetClient?.uid, targetClient?.name);
+        setExportedFiles(GoogleWorkspaceService.getExportedFiles());
+        setConfirmModal(null);
+        showNotice(`¡"${doc.title}" registrado en el Cerebro de la App y Drive!`);
+      },
+    });
+  };
+
+  // Handler: Save entire Suite into Cerebro & Drive with confirmation
+  const handleSaveEntireSuiteToCatalog = (suite: GeminiWorkspaceSuiteResult) => {
+    setConfirmModal({
+      title: 'Registrar Suite Completa en Cerebro RBC',
+      description: `¿Confirmas que deseas registrar los 5 documentos de la Suite de Integración en el Cerebro de la aplicación y Google Drive?`,
+      confirmLabel: 'Registrar los 5 Documentos',
+      onConfirm: () => {
+        const targetClient = clients.find((c) => c.uid === geminiCustomClientUid);
+        GoogleWorkspaceService.importGeminiGeneratedSuite(suite.documents, targetClient?.uid, targetClient?.name);
+        setExportedFiles(GoogleWorkspaceService.getExportedFiles());
+        setConfirmModal(null);
+        showNotice(`¡Los 5 documentos de la suite han sido registrados exitosamente en el Cerebro RBC!`);
+      },
+    });
+  };
+
   // Filtered lists
   const brainDocuments = useMemo(() => {
     return exportedFiles.filter((f) => f.isBrainDocument || f.category === 'knowledge_base');
@@ -494,8 +609,17 @@ export const GoogleWorkspaceHub: React.FC<GoogleWorkspaceHubProps> = ({
             </p>
           </div>
 
-          {/* Primary Action Buttons: Generar + Vincular */}
+          {/* Primary Action Buttons: Generar con IA + Generar Nuevo + Vincular */}
           <div className="flex flex-wrap items-center gap-3">
+            <button
+              type="button"
+              onClick={() => setActiveTab('ia_generator')}
+              className="px-4.5 py-2.5 rounded-2xl bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:from-purple-700 hover:to-indigo-700 text-xs font-bold transition-all flex items-center gap-2 cursor-pointer shadow-md"
+            >
+              <Sparkles className="w-4 h-4 text-amber-300 animate-pulse" />
+              <span>Generar con IA Gemini</span>
+            </button>
+
             <button
               type="button"
               onClick={() => setShowGenerateModal(true)}
@@ -515,14 +639,14 @@ export const GoogleWorkspaceHub: React.FC<GoogleWorkspaceHubProps> = ({
             </button>
 
             <a
-              href="https://drive.google.com/drive/u/0/my-drive"
+              href={OFFICIAL_CEREBRO_DRIVE_FOLDER_URL}
               target="_blank"
               rel="noopener noreferrer"
               className="px-3.5 py-2.5 rounded-2xl border border-gray-200 dark:border-neutral-800 hover:bg-gray-50 dark:hover:bg-neutral-800 text-gray-600 dark:text-neutral-300 text-xs font-semibold transition-colors flex items-center gap-1.5"
-              title="Abrir Google Drive en nueva pestaña"
+              title="Abrir Carpeta Oficial de Google Drive en nueva pestaña"
             >
               <HardDrive className="w-3.5 h-3.5 text-sky-500" />
-              <span>Abrir Drive</span>
+              <span>Abrir Drive RBC</span>
               <ExternalLink className="w-3 h-3 text-gray-400" />
             </a>
           </div>
@@ -584,6 +708,19 @@ export const GoogleWorkspaceHub: React.FC<GoogleWorkspaceHubProps> = ({
 
       {/* Navigation Tabs for Services */}
       <div className="flex items-center gap-2 border-b border-gray-200/80 dark:border-neutral-800 pb-1 overflow-x-auto">
+        <button
+          type="button"
+          onClick={() => setActiveTab('ia_generator')}
+          className={`px-4 py-2.5 rounded-2xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
+            activeTab === 'ia_generator'
+              ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-sm ring-1 ring-purple-500/30'
+              : 'text-purple-600 dark:text-purple-400 hover:text-black dark:hover:text-white hover:bg-purple-50 dark:hover:bg-purple-950/30'
+          }`}
+        >
+          <Sparkles className="w-4 h-4 text-amber-400" />
+          <span>✨ Generador IA Workspace</span>
+        </button>
+
         <button
           type="button"
           onClick={() => setActiveTab('brain')}
@@ -651,6 +788,25 @@ export const GoogleWorkspaceHub: React.FC<GoogleWorkspaceHubProps> = ({
       </div>
 
       {/* ========================================================================= */}
+      {/* TAB IA: GENERADOR DE DOCUMENTOS GOOGLE WORKSPACE CON GEMINI 3.8           */}
+      {/* ========================================================================= */}
+      {activeTab === 'ia_generator' && (
+        <GeminiWorkspaceGenerator
+          clients={clients}
+          onDocumentSaved={(saved) => {
+            setExportedFiles(GoogleWorkspaceService.getExportedFiles());
+            showNotice(`¡"${saved.name}" registrado en el Cerebro de la App y Drive!`);
+          }}
+          onSuiteSaved={(savedList) => {
+            setExportedFiles(GoogleWorkspaceService.getExportedFiles());
+            showNotice(`¡Los ${savedList.length} documentos de la suite han sido registrados en el Cerebro RBC!`);
+          }}
+          onShowNotice={(msg) => showNotice(msg)}
+          onNavigateTab={(tab) => setActiveTab(tab)}
+        />
+      )}
+
+      {/* ========================================================================= */}
       {/* TAB 0: CEREBRO DE LA APP (BASE DE CONOCIMIENTO ONTOLÓGICO)                 */}
       {/* ========================================================================= */}
       {activeTab === 'brain' && (
@@ -716,6 +872,82 @@ export const GoogleWorkspaceHub: React.FC<GoogleWorkspaceHubProps> = ({
                   Limpiar filtro
                 </button>
               )}
+            </div>
+          </div>
+
+          {/* Official Google Drive Folder Linked with Cerebro Banner */}
+          <div className="rounded-3xl p-5 sm:p-6 bg-gradient-to-r from-blue-50/70 via-sky-50/50 to-purple-50/60 dark:from-blue-950/20 dark:via-sky-950/20 dark:to-purple-950/20 border border-blue-200/70 dark:border-blue-800/40 shadow-sm">
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+              <div className="flex items-start gap-3.5">
+                <div className="w-11 h-11 rounded-2xl bg-blue-600 text-white flex items-center justify-center shrink-0 shadow-md">
+                  <Folder className="w-5 h-5" />
+                </div>
+                <div className="space-y-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 dark:bg-blue-900/60 text-blue-800 dark:text-blue-200 border border-blue-200 dark:border-blue-700/60 uppercase tracking-wider">
+                      Google Drive Oficial
+                    </span>
+                    <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">
+                      <CheckCircle2 className="w-3.5 h-3.5" />
+                      <span>Vinculada al Cerebro RBC</span>
+                    </span>
+                  </div>
+                  <h4 className="text-base sm:text-lg font-bold text-black dark:text-white">
+                    Carpeta de Documentos de Consultoría & Cerebro Ontológico
+                  </h4>
+                  <p className="text-xs text-gray-600 dark:text-neutral-300 font-light max-w-2xl leading-relaxed">
+                    Repositorio central en Google Drive (<span className="font-mono font-medium text-[11px] text-blue-700 dark:text-blue-300">ID: {OFFICIAL_CEREBRO_DRIVE_FOLDER_ID}</span>) con los contratos de consultoría, matrices de seguimiento en Sheets, bitácoras y cuestionarios somáticos conectados a la inteligencia del sistema.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2 shrink-0">
+                <a
+                  href={OFFICIAL_CEREBRO_DRIVE_FOLDER_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-4 py-2 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 cursor-pointer"
+                >
+                  <Folder className="w-3.5 h-3.5" />
+                  <span>Abrir en Google Drive</span>
+                  <ExternalLink className="w-3 h-3 opacity-80" />
+                </a>
+
+                <button
+                  type="button"
+                  onClick={() => copyToClipboard(OFFICIAL_CEREBRO_DRIVE_FOLDER_URL, 'Carpeta Oficial Google Drive')}
+                  className="px-3.5 py-2 rounded-2xl border border-gray-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 hover:bg-gray-50 dark:hover:bg-neutral-800 text-black dark:text-white text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
+                >
+                  {copiedUrl === OFFICIAL_CEREBRO_DRIVE_FOLDER_URL ? (
+                    <>
+                      <Check className="w-3.5 h-3.5 text-emerald-500" />
+                      <span className="text-emerald-600 dark:text-emerald-400">¡Copiado!</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-3.5 h-3.5 text-gray-500" />
+                      <span>Copiar Enlace</span>
+                    </>
+                  )}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setLinkUrl(OFFICIAL_CEREBRO_DRIVE_FOLDER_URL);
+                    setLinkTitle('Nuevo Documento de Carpeta Drive RBC');
+                    setLinkCategory('doc');
+                    setLinkTags('Cerebro RBC, Drive Sync');
+                    setLinkIsBrain(true);
+                    setShowLinkModal(true);
+                  }}
+                  className="px-3.5 py-2 rounded-2xl border border-blue-200 dark:border-blue-900/60 bg-blue-50/60 dark:bg-blue-950/40 hover:bg-blue-100 dark:hover:bg-blue-900/50 text-blue-800 dark:text-blue-300 text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
+                  title="Vincular un documento específico de esta carpeta al Cerebro"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Vincular Archivo de esta Carpeta</span>
+                </button>
+              </div>
             </div>
           </div>
 
@@ -886,12 +1118,13 @@ export const GoogleWorkspaceHub: React.FC<GoogleWorkspaceHubProps> = ({
                 </button>
 
                 <a
-                  href="https://drive.google.com/drive/u/0/my-drive"
+                  href={OFFICIAL_CEREBRO_DRIVE_FOLDER_URL}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="px-4 py-2 rounded-2xl border border-gray-200 dark:border-neutral-700 hover:bg-gray-50 dark:hover:bg-neutral-800 text-black dark:text-white text-xs font-semibold transition-colors flex items-center gap-1.5"
+                  title="Abrir Carpeta Oficial de Consultoría RBC en Google Drive"
                 >
-                  <span>Abrir Google Drive</span>
+                  <span>Abrir Carpeta Oficial Drive</span>
                   <ExternalLink className="w-3.5 h-3.5 text-gray-400" />
                 </a>
               </div>

@@ -20,6 +20,7 @@ import {
 import { OntologicalStore } from '../services/store';
 import { PricingPackage } from '../types';
 import { PaymentValidationManager } from './PaymentValidationManager';
+import { safeCopyToClipboard } from '../utils/clipboard';
 
 export const PricingAndValuesBuilder: React.FC = () => {
   const [packages, setPackages] = useState<PricingPackage[]>(() =>
@@ -129,7 +130,7 @@ ${
 - *Tarjeta / PSE:* https://checkout.wompi.co/l/raiz-y-balance-next-level
     `.trim();
 
-    navigator.clipboard.writeText(text);
+    await safeCopyToClipboard(text);
     setCopiedQuote(true);
     setTimeout(() => setCopiedQuote(false), 2500);
   };

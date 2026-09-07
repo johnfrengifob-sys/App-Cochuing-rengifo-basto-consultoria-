@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { CronogramaEvent, User } from '../types';
 import { OntologicalStore, COMPANY_INFO } from '../services/store';
+import { safeCopyToClipboard } from '../utils/clipboard';
 import { signInWithGoogle, auth } from '../services/firebase';
 import coachAvatarImg from '../assets/images/regenerated_image_1788287101599.jpg';
 import { LiquidGlassButton } from './LiquidGlassButton';
@@ -136,7 +137,7 @@ export const EventRegistrationLanding: React.FC<EventRegistrationLandingProps> =
   // Master Google Workspace profile reference
   const PRIMARY_GOOGLE_ACCOUNT = {
     displayName: 'John Fredy Rengifo Basto',
-    email: 'johnfrengifob@gmail.com',
+    email: 'rengifobastoco@gmail.com',
     phone: COMPANY_INFO.phone || '+57 311 341 5220',
     photoURL: coachAvatarImg,
     uid: 'coach-1',
@@ -210,7 +211,7 @@ export const EventRegistrationLanding: React.FC<EventRegistrationLandingProps> =
         displayName: cleanName || 'Participante Google',
         email: cleanEmail,
         phone: phone.trim() || COMPANY_INFO.phone || '+57 311 341 5220',
-        photoURL: cleanEmail === 'johnfrengifob@gmail.com' ? coachAvatarImg : null,
+        photoURL: cleanEmail === 'rengifobastoco@gmail.com' ? coachAvatarImg : null,
         uid: `google-${Date.now()}`,
       });
       setIsAuthenticatingGoogle(false);
@@ -323,15 +324,15 @@ export const EventRegistrationLanding: React.FC<EventRegistrationLandingProps> =
     return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&details=${details}&location=${location}`;
   };
 
-  const handleCopyMeet = () => {
+  const handleCopyMeet = async () => {
     const link = event.meetUrl || 'https://meet.google.com/rbc-conversatorio-vivo';
-    navigator.clipboard.writeText(link);
+    await safeCopyToClipboard(link);
     setCopiedMeet(true);
     setTimeout(() => setCopiedMeet(false), 2500);
   };
 
-  const handleCopyShareableLink = () => {
-    navigator.clipboard.writeText(window.location.href);
+  const handleCopyShareableLink = async () => {
+    await safeCopyToClipboard(window.location.href);
     setCopiedLink(true);
     setTimeout(() => setCopiedLink(false), 2500);
   };

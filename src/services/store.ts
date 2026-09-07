@@ -48,7 +48,7 @@ export const COMPANY_INFO = {
     'https://www.google.com/maps/@5.0565989,-75.4837305,20.33z?entry=ttu&g_ep=EgoyMDI2MDkwMS4wIKXMDSoASAFQAw%3D%3D',
   phone: '3234642257',
   formattedPhone: '+57 323 464 2257',
-  email: 'johnfrengifob@gmail.com',
+  email: 'rengifobastoco@gmail.com',
   whatsappUrl: 'https://wa.me/573234642257',
   socialLinks: {
     facebook: 'https://www.facebook.com/profile.php?id=61592655869050',
@@ -56,6 +56,9 @@ export const COMPANY_INFO = {
     youtube: 'https://www.youtube.com/@Rengifobastoco',
   },
 };
+
+export const ADMIN_EMAIL = 'rengifobastoco@gmail.com';
+export const ADMIN_SECURITY_CODE = '4658';
 
 export const BRE_B_NU_CONFIG = {
   llave: '@ASL775',
@@ -606,7 +609,7 @@ const INITIAL_USERS: User[] = [
   {
     uid: 'coach-1',
     name: 'John Fredy Rengifo Basto',
-    email: 'johnfrengifob@gmail.com',
+    email: ADMIN_EMAIL,
     role: 'coach',
     title: 'Consultor Ontológico Senior & Master Coach',
     avatarUrl: coachAvatarImg,
@@ -907,11 +910,11 @@ export const INITIAL_SYSTEM_LINK_BINDINGS: SystemLinkBinding[] = [
   {
     id: 'link-drive-workbooks',
     functionKey: 'drive_workbooks',
-    functionTitle: 'Repositorio de Bitácoras & Recursos (Google Drive)',
+    functionTitle: '📁 Carpeta Oficial Google Drive: Cerebro RBC & Documentos',
     category: 'Google Workspace',
-    targetUrl: 'https://drive.google.com/drive/folders/1RBC_Materiales_Ontologicos_Consultoria',
+    targetUrl: 'https://drive.google.com/drive/folders/15laHG-2cFXvLiVoLp6GxJBWIBdXLB6bz?usp=drive_link',
     status: 'active',
-    notes: 'Carpeta en la nube con fichas de ejercicios, manuales PDF y grabaciones de talleres.',
+    notes: 'Carpeta en Google Drive vinculada al Cerebro de la App (ID: 15laHG-2cFXvLiVoLp6GxJBWIBdXLB6bz) con documentos ontológicos, contratos, bitácoras y matrices.',
     syncFrequency: 'Continuo',
     iconName: 'Folder',
   },
@@ -2918,19 +2921,30 @@ export class OntologicalStore {
       this.saveUsers(safeUsers);
     }
 
-    // Ensure coach profile is always accurately named and has the latest avatar, and ensure clients have default status & breakdown
+    // Ensure coach profile is always accurately named, has ADMIN_EMAIL, and has the latest avatar
     return safeUsers.map((u) => {
-      if (u.uid === 'coach-1' || u.role === 'coach') {
+      const isCoachAdmin =
+        (u.uid === 'coach-1' || u.role === 'coach') &&
+        (!u.email || u.email.trim().toLowerCase() === ADMIN_EMAIL.toLowerCase());
+
+      if (isCoachAdmin) {
         return {
           ...u,
+          uid: 'coach-1',
+          role: 'coach' as const,
+          email: ADMIN_EMAIL,
           name: 'John Fredy Rengifo Basto',
           avatarUrl: coachAvatarImg,
         };
       }
+
+      // If any non-admin account had role 'coach', demote to client to prevent privilege escalation
+      const role = u.role === 'coach' ? 'client' : (u.role || 'client');
       // Guarantee client defaults for status, totalInvested, primaryBreakdown and transformation journey
       const isActive = (u.status || 'active') === 'active';
       return {
         ...u,
+        role: role as 'client',
         status: u.status || 'active',
         transformationSpacesEnabled: u.transformationSpacesEnabled ?? isActive,
         hasWorkshopsAccess: u.hasWorkshopsAccess ?? true,
@@ -3137,24 +3151,32 @@ export class OntologicalStore {
     // 1. Direct match with existing users
     const directMatch = users.find((u) => u.email.trim().toLowerCase() === normalized);
     if (directMatch) {
+      // If a user has coach role, verify their email is strictly ADMIN_EMAIL
+      if (directMatch.role === 'coach' && directMatch.email.trim().toLowerCase() !== ADMIN_EMAIL) {
+        return null;
+      }
       return directMatch;
     }
 
-    // 2. Recognized Coach/Admin email variants
-    if (
-      normalized === 'johnfrengifob@gmail.com' ||
-      normalized === 'rengifobastoco@gmail.com' ||
-      normalized === 'coach@rbc.com' ||
-      normalized === 'admin@rbc.com' ||
-      normalized === 'admin@rengifobasto.com'
-    ) {
+    // 2. Strict check for Master Coach Admin email: only ADMIN_EMAIL (rengifobastoco@gmail.com)
+    if (normalized === ADMIN_EMAIL) {
       const coach = users.find((u) => u.role === 'coach');
       if (coach) {
-        return coach;
+        return { ...coach, email: ADMIN_EMAIL };
       }
     }
 
     return null;
+  }
+
+  static isAdminEmail(email?: string | null): boolean {
+    if (!email) return false;
+    return email.trim().toLowerCase() === ADMIN_EMAIL;
+  }
+
+  static verifyAdminSecurityCode(code?: string | null): boolean {
+    if (!code) return false;
+    return code.trim() === ADMIN_SECURITY_CODE;
   }
 
   static authenticateByEmail(email: string): {
@@ -3168,6 +3190,13 @@ export class OntologicalStore {
         success: false,
         error:
           'El correo electrónico no se encuentra registrado en el Directorio Maestro de Google Sheets ni en la base de datos de participantes.',
+      };
+    }
+    if (user.role === 'coach') {
+      return {
+        success: false,
+        error:
+          'El acceso de administrador requiere verificación oficial de Google o código confidencial de seguridad.',
       };
     }
     this.setCurrentUser(user.uid);
@@ -4951,7 +4980,28 @@ export class OntologicalStore {
       STORAGE_KEYS.SYSTEM_LINK_BINDINGS,
       INITIAL_SYSTEM_LINK_BINDINGS
     );
-    return Array.isArray(list) && list.length > 0 ? list : INITIAL_SYSTEM_LINK_BINDINGS;
+    const validList = Array.isArray(list) && list.length > 0 ? list : INITIAL_SYSTEM_LINK_BINDINGS;
+    // Auto-update drive_workbooks if it contains outdated placeholder link
+    let hasChanges = false;
+    const updatedList = validList.map((item) => {
+      if (
+        item.functionKey === 'drive_workbooks' &&
+        (!item.targetUrl || item.targetUrl.includes('1RBC_Materiales_Ontologicos_Consultoria'))
+      ) {
+        hasChanges = true;
+        return {
+          ...item,
+          functionTitle: '📁 Carpeta Oficial Google Drive: Cerebro RBC & Documentos',
+          targetUrl: 'https://drive.google.com/drive/folders/15laHG-2cFXvLiVoLp6GxJBWIBdXLB6bz?usp=drive_link',
+          notes: 'Carpeta en Google Drive vinculada al Cerebro de la App (ID: 15laHG-2cFXvLiVoLp6GxJBWIBdXLB6bz) con documentos ontológicos, contratos, bitácoras y matrices.',
+        };
+      }
+      return item;
+    });
+    if (hasChanges) {
+      this.saveSystemLinkBindings(updatedList);
+    }
+    return updatedList;
   }
 
   static saveSystemLinkBindings(bindings: SystemLinkBinding[]): void {
