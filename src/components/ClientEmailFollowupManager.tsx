@@ -35,6 +35,54 @@ interface EmailTemplate {
 
 const PRESET_TEMPLATES: EmailTemplate[] = [
   {
+    id: 'tpl-bienvenida-inmediata',
+    name: 'Bienvenida Inmediata al Inscribirse (Activación & Espacio Confidencial)',
+    category: 'bienvenida',
+    subject: '¡Bienvenido/a a tu proceso ontológico, {{name}}! | Rengifo Basto Consultoría',
+    body: `Estimado/a {{name}},
+
+¡Bienvenido/a a Rengifo Basto Consultoría Ontológica!
+
+Nos alegra profundamente acompañarte en este viaje de transformación directiva y coherencia ontológica. Inmediatamente tras tu inscripción, tu Espacio Confidencial ha sido habilitado:
+
+👉 Acceso a tu Portal: {{portalUrl}}
+
+En tu portal podrás:
+1. Completar tu diagnóstico ontológico inicial de entrada.
+2. Explorar el roadmap estructurado de tus sesiones.
+3. Registrar tus quiebres, acuerdos y bitácoras somáticas con absoluta privacidad bajo estándares ICF.
+
+Desde este momento iniciamos nuestro seguimiento semanal continuo para acompañar tu evolución paso a paso.
+
+Quedo a tu disposición para coordinar nuestra primera sesión de encuadre.
+
+Con aprecio y compromiso,
+John Fredy Rengifo Basto
+Consultor & Coach Ontológico Directivo | Cel: +57 323 464 2257`,
+  },
+  {
+    id: 'tpl-seguimiento-semanal-progreso',
+    name: 'Seguimiento Semanal Continuo de Progreso Ontológico',
+    category: 'seguimiento',
+    subject: 'Seguimiento Semanal de Progreso: Calibración de acuerdos con {{name}}',
+    body: `Hola {{name}},
+
+Espero que estés teniendo una excelente semana de liderazgo y presencia consciente.
+
+Como parte de nuestro seguimiento semanal continuo de tu evolución en "{{program}}":
+
+1. Estado actual: Te encuentras en el Nodo {{step}} de tu proceso.
+2. Bitácora de calibración: Te invito a tomarte 3 minutos para revisar tus autorregistros y registrar cualquier quiebre emergente en tu bitácora privada:
+👉 {{portalUrl}}
+3. Micro-práctica: No olvides practicar tu Pausa de Coherencia 3x3 antes de reuniones directivas de alta exigencia.
+
+Nos encontramos muy pronto en tu próxima sesión agendada.
+
+Un saludo cordial,
+John Fredy Rengifo Basto
+Rengifo Basto Consultoría Ontológica`,
+  },
+  {
     id: 'tpl-pausa-coherencia',
     name: 'Pausa de Coherencia 3x3 (Mapeo Somático y Quiebres)',
     category: 'coherencia',
@@ -61,63 +109,24 @@ John Fredy Rengifo Basto
 Rengifo Basto Consultoría Ontológica`,
   },
   {
-    id: 'tpl-bienvenida-nodo',
-    name: 'Apertura de Espacio Confidencial y Nuevo Nodo',
-    category: 'bienvenida',
-    subject: 'Tu Espacio Confidencial está habilitado: Nodo {{step}} | Rengifo Basto Consultoría',
+    id: 'tpl-corte-inactividad-30d',
+    name: 'Conclusión de Seguimiento por Inactividad (+30 días)',
+    category: 'inactividad',
+    subject: 'Pausa de seguimiento ontológico respetando tus tiempos, {{name}}',
     body: `Estimado/a {{name}},
 
-Te damos la bienvenida a una nueva etapa de tu acompañamiento ontológico en "{{program}}".
+Te escribo para informarte que, al haber transcurrido más de 30 días sin actividad en tu Espacio Confidencial, hemos pausado temporalmente los recordatorios y el seguimiento semanal programado en la plataforma.
 
-Tu espacio privado de trabajo e introspección ya se encuentra actualizado en el Nodo {{step}}. Allí podrás acceder a tus autorregistros guiados, lecturas y acuerdos de sesión:
+En nuestra práctica ontológica honramos tus ritmos de asimilación y comprendemos que las demandas operativas o personales a veces requieren pausas. 
+
+Tu historial, bitácoras y registros permanecen totalmente resguardados y cifrados. En el momento en que desees retomar tu proceso, tu seguimiento se reactivará automáticamente con tan solo ingresar nuevamente a tu portal:
 👉 {{portalUrl}}
 
-Recuerda que cada sesión es un espacio de absoluta confidencialidad bajo estándares ICF para examinar tus juicios maestros y construir declaraciones de soberanía.
-
-Nos vemos en nuestra próxima cita agendada.
+Si deseas conversar directamente conmigo o coordinar un reencuadre, siempre puedes escribirme a este correo o a mi WhatsApp (+57 323 464 2257).
 
 Un saludo afectuoso,
 John Fredy Rengifo Basto
 Consultor & Coach Ontológico Directivo`,
-  },
-  {
-    id: 'tpl-bitacora-pendiente',
-    name: 'Seguimiento de Bitácora & Cuestionario Reflexivo',
-    category: 'seguimiento',
-    subject: 'Tu Bitácora Reflexiva post-sesión está lista para ser completada',
-    body: `Hola {{name}},
-
-Tras nuestra última conversación, es el momento clave para asentar las distinciones ontológicas trabajadas.
-
-Te agradezco completar tu breve bitácora reflexiva (te tomará menos de 5 minutos):
-👉 {{portalUrl}}
-
-Tu reporte nos permite alimentar el Copiloto Gemini y afinar el foco de intervención para nuestra siguiente sesión de trabajo.
-
-Con aprecio,
-John Fredy Rengifo Basto
-Rengifo Basto Consultoría Ontológica`,
-  },
-  {
-    id: 'tpl-alerta-inactividad',
-    name: 'Alerta de Inactividad & Reconexión (+7 días)',
-    category: 'inactividad',
-    subject: '¿Cómo va tu energía y tus acuerdos ontológicos, {{name}}?',
-    body: `Estimado/a {{name}},
-
-He notado que han pasado varios días desde tu último autorregistro en la plataforma. 
-
-Sabemos que la vorágine operativa suele empujarnos a actuar en transparencia automática, postergando la pausa reflexiva. 
-
-Te escribo para invitarte a no soltar tu proceso:
-1. Revisa tu cuaderno de trabajo: {{portalUrl}}
-2. Si necesitas reprogramar o adelantar una conversación de 20 minutos de alineación, házmelo saber de inmediato.
-
-Estoy a tu entera disposición.
-
-Un saludo atento,
-John Fredy Rengifo Basto
-Rengifo Basto Consultoría Ontológica | Cel: +57 323 464 2257`,
   },
 ];
 

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { User } from '../types';
 import { LiquidGlassButton } from './LiquidGlassButton';
-import { ADMIN_EMAIL, ADMIN_SECURITY_CODE } from '../services/store';
+import { OntologicalStore, ADMIN_EMAIL, ADMIN_SECURITY_CODE } from '../services/store';
 import { signInWithGoogle } from '../services/firebase';
 import {
   ShieldCheck,
@@ -36,7 +36,7 @@ export const AuthenticationSpace: React.FC<AuthenticationSpaceProps> = ({
   onBack,
 }) => {
   const isCoach = user.role === 'coach';
-  const isCoachAuthorizedEmail = user.email.trim().toLowerCase() === ADMIN_EMAIL;
+  const isCoachAuthorizedEmail = OntologicalStore.isAdminEmail(user.email);
 
   const [activeMethod, setActiveMethod] = useState<AuthMethod>('google');
   const [isVerifying, setIsVerifying] = useState(false);
@@ -170,19 +170,19 @@ export const AuthenticationSpace: React.FC<AuthenticationSpaceProps> = ({
       const signedEmail = googleUser.email.trim().toLowerCase();
 
       if (isCoach) {
-        if (signedEmail !== ADMIN_EMAIL.toLowerCase()) {
+        if (!OntologicalStore.isAdminEmail(signedEmail)) {
           setIsVerifying(false);
           setErrorMessage(
-            `Acceso denegado: La cuenta Google seleccionada (${signedEmail}) no corresponde al administrador autorizado (${ADMIN_EMAIL}). Solo el titular oficial puede ingresar.`
+            `Acceso denegado: La cuenta Google seleccionada (${signedEmail}) no corresponde al administrador autorizado. Solo el titular oficial puede ingresar.`
           );
           return;
         }
         setIsVerifying(false);
-        triggerSuccessSequence(`Verificación de Google (${ADMIN_EMAIL})`);
+        triggerSuccessSequence(`Verificación de Google (${signedEmail})`);
       } else {
         if (
           signedEmail !== user.email.trim().toLowerCase() &&
-          signedEmail !== ADMIN_EMAIL.toLowerCase()
+          !OntologicalStore.isAdminEmail(signedEmail)
         ) {
           setIsVerifying(false);
           setErrorMessage(

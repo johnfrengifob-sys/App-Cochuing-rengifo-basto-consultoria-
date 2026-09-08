@@ -45,6 +45,57 @@ export interface User {
   authorizedForOneOnOne?: boolean; // Estado de Autorización 1 a 1 (aprobado por el facilitador)
   oneOnOnePackagePurchased?: boolean; // Paquete de 12 sesiones adquirido
   enrolledWorkshopIds?: string[]; // IDs de talleres en los que el usuario está activamente inscrito
+  // Seguimiento Semanal y Automatización de Ciclo de Vida
+  weeklyFollowupActive?: boolean; // Seguimiento semanal activo (se pausa si > 30 días inactivo)
+  weeklyFollowupWeek?: number; // Semana actual del ciclo de seguimiento (1, 2, 3...)
+  lastWeeklyFollowupAt?: string; // Fecha y hora del último seguimiento semanal despachado
+  nextWeeklyFollowupDueAt?: string; // Fecha y hora programada para el siguiente seguimiento semanal
+  trackingEndedReason?: string; // Razón de finalización (ej: 'Inactividad prolongada superior a 30 días en la página')
+  trackingEndedAt?: string; // Momento exacto en que se concluyó o pausó el seguimiento
+  welcomeMessageSentAt?: string; // Momento del despacho inmediato de bienvenida
+  inactivityDaysCount?: number; // Días calculados de inactividad respecto a lastActivityAt
+}
+
+export interface SecurityAuditResult {
+  id: string;
+  category: 'auth_rbac' | 'icf_confidentiality' | 'financial_integrity' | 'api_backend_secrets' | 'welcome_automation' | 'weekly_followup_30d';
+  categoryLabel: string;
+  testName: string;
+  description: string;
+  status: 'passed' | 'warning' | 'failed';
+  details: string;
+  remediation?: string;
+  timestamp: string;
+}
+
+export interface SecurityAuditSummary {
+  totalTests: number;
+  passedCount: number;
+  warningCount: number;
+  failedCount: number;
+  overallScore: number; // 0 - 100
+  evaluatedAt: string;
+  results: SecurityAuditResult[];
+}
+
+export interface ClientFollowupCycleStatus {
+  clientId: string;
+  clientName: string;
+  email: string;
+  phone?: string;
+  status: ClientStatus;
+  joinedAt: string;
+  lastActivityAt: string;
+  daysInactive: number;
+  welcomeMessageSent: boolean;
+  welcomeMessageSentAt?: string;
+  weeklyFollowupActive: boolean;
+  weeklyFollowupWeek: number;
+  lastWeeklyFollowupAt?: string;
+  nextWeeklyFollowupDueAt?: string;
+  isTerminatedDueTo30Days: boolean;
+  trackingEndedReason?: string;
+  trackingEndedAt?: string;
 }
 
 export type ProspectStatus =
@@ -527,11 +578,16 @@ export interface ClientEmailLog {
   clientId: string;
   clientName: string;
   clientEmail: string;
+  templateId?: string;
   templateType?: 'welcome' | 'meet_invitation' | 'post_session' | 'payment_unlocked' | 'reactivation' | 'custom' | string;
   templateName?: string;
+  category?: 'bienvenida' | 'seguimiento' | 'coherencia' | 'inactividad' | string;
   subject: string;
+  body?: string;
   content?: string;
   bodyPreview?: string;
+  channel?: 'email' | 'whatsapp' | 'in_app' | string;
+  nodeStep?: number;
   sentAt: string;
   status: 'sent' | 'draft';
 }
@@ -540,7 +596,13 @@ export interface AutomatedTriggerConfig {
   id: string;
   name: string;
   description: string;
-  event: 'form_submitted' | 'payment_validated' | 'session_scheduled' | 'inactivity_detected';
+  event:
+    | 'form_submitted'
+    | 'payment_validated'
+    | 'session_scheduled'
+    | 'inactivity_detected'
+    | 'client_registered'
+    | 'weekly_followup_due';
   enabled: boolean;
   actions: string[];
   lastTriggeredAt?: string;

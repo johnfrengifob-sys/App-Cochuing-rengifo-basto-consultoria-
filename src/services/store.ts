@@ -29,6 +29,9 @@ import {
   OntologicalExperience,
   UniversalExperienceBlock,
   ExperienceFormat,
+  SecurityAuditResult,
+  SecurityAuditSummary,
+  ClientFollowupCycleStatus,
 } from '../types';
 import promotionalEventBannerImg from '../assets/images/proximo_evento_banner_1788270380574.jpg';
 import coachAvatarImg from '../assets/images/regenerated_image_1788287101599.jpg';
@@ -750,6 +753,50 @@ const STORAGE_KEYS = {
 
 export const INITIAL_AUTOMATED_TRIGGERS: AutomatedTriggerConfig[] = [
   {
+    id: 'trigger-client-welcome-immediate',
+    name: 'Disparador: Bienvenida Inmediata al Inscribirse',
+    description: 'Inmediatamente se inscribe una persona nueva en un taller o programa, le llega un mensaje de bienvenida personalizado y se activa su seguimiento.',
+    event: 'client_registered',
+    enabled: true,
+    actions: [
+      'Generación de mensaje de bienvenida con accesos y encuadre ontológico',
+      'Despacho formal por canal oficial (Gmail / WhatsApp)',
+      'Inicialización del ciclo de acompañamiento y seguimiento semanal (Semana 1)',
+      'Apertura de Espacio Confidencial y bitácoras en Firestore',
+    ],
+    lastTriggeredAt: new Date(Date.now() - 1000 * 60 * 15).toISOString(),
+    executionsCount: 31,
+  },
+  {
+    id: 'trigger-weekly-progress-followup',
+    name: 'Disparador: Seguimiento Semanal Continuo de Progreso',
+    description: 'Realiza el seguimiento semanal al progreso del coachee (calibración de nodo, bitácoras y pausas de coherencia somática).',
+    event: 'weekly_followup_due',
+    enabled: true,
+    actions: [
+      'Auditoría y calibración de avances por nodo en el portal',
+      'Envío de reporte semanal de progreso y foco ontológico',
+      'Programación automática del siguiente hito en 7 días',
+    ],
+    lastTriggeredAt: new Date(Date.now() - 1000 * 60 * 60 * 12).toISOString(),
+    executionsCount: 48,
+  },
+  {
+    id: 'trigger-inactivity-30d-termination',
+    name: 'Disparador: Conclusión de Seguimiento por Inactividad (> 30 Días)',
+    description: 'Este seguimiento termina automáticamente cuando la persona dura más de 30 días inactiva en la página, pausando envíos para respetar sus tiempos.',
+    event: 'inactivity_detected',
+    enabled: true,
+    actions: [
+      'Monitoreo algorítmico de días transcurridos desde última actividad',
+      'Corte automático de seguimiento semanal al superar el umbral de 30 días',
+      'Transición de estado a inactivo y registro de auditoría en bitácora',
+      'Habilitación de reactivación instantánea al reingresar a la plataforma',
+    ],
+    lastTriggeredAt: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(),
+    executionsCount: 9,
+  },
+  {
     id: 'trigger-form-submitted',
     name: 'Disparador: Bitácora o Cuestionario Entregado',
     description: 'Ejecuta el Diagnóstico Ontológico con Gemini AI y despacha el payload en JSON al Webhook de Make.com.',
@@ -790,19 +837,6 @@ export const INITIAL_AUTOMATED_TRIGGERS: AutomatedTriggerConfig[] = [
     ],
     lastTriggeredAt: new Date(Date.now() - 1000 * 60 * 60 * 18).toISOString(),
     executionsCount: 22,
-  },
-  {
-    id: 'trigger-inactivity-detected',
-    name: 'Disparador: Alerta de Inactividad (+7 días)',
-    description: 'Detecta cuando un participante activo lleva más de 7 días sin enviar registros o bitácoras para activar seguimiento.',
-    event: 'inactivity_detected',
-    enabled: true,
-    actions: [
-      'Marcado de estado en revisión en el panel del coach',
-      'Preparación de mensaje de Pausa de Coherencia y Reactivación',
-    ],
-    lastTriggeredAt: new Date(Date.now() - 1000 * 60 * 60 * 72).toISOString(),
-    executionsCount: 5,
   },
 ];
 
@@ -2608,6 +2642,8 @@ export class OntologicalStore {
         programFee: '$1.500.000 COP',
       };
       this.saveUsers([...users, existingUser]);
+      // Disparar inmediatamente bienvenida y seguimiento semanal al inscribirse
+      this.initiateClientFollowupAutomation(existingUser, targetEvent.title);
     } else {
       let changed = false;
       const updatedUser = { ...existingUser };
@@ -2626,6 +2662,10 @@ export class OntologicalStore {
       if (changed) {
         existingUser = updatedUser;
         this.saveUsers(users.map((u) => (u.uid === existingUser!.uid ? existingUser! : u)));
+      }
+      // Si el usuario existente no tenía bienvenida despachada, despacharla
+      if (!existingUser.welcomeMessageSentAt) {
+        this.initiateClientFollowupAutomation(existingUser, targetEvent.title);
       }
     }
 
@@ -2988,12 +3028,48 @@ export class OntologicalStore {
 
       // If any non-admin account had role 'coach', demote to client to prevent privilege escalation
       const role = u.role === 'coach' ? 'client' : (u.role || 'client');
-      // Guarantee client defaults for status, totalInvested, primaryBreakdown and transformation journey
-      const isActive = (u.status || 'active') === 'active';
+      
+      // Compute page activity & 30-day inactivity termination rule
+      const nowMs = Date.now();
+      const lastActivityAt =
+        u.lastActivityAt ||
+        (u.joinedAt ? `${u.joinedAt}T12:00:00.000Z` : new Date().toISOString());
+      const lastActTime = new Date(lastActivityAt).getTime();
+      const daysInactive = Math.max(
+        0,
+        Math.floor((nowMs - (isNaN(lastActTime) ? nowMs : lastActTime)) / (1000 * 60 * 60 * 24))
+      );
+      
+      // User rule: tracking ceases automatically when inactive on page > 30 days
+      const isExceeded30Days = daysInactive > 30;
+      const status: ClientStatus = isExceeded30Days ? 'inactive' : (u.status || 'active');
+      const weeklyFollowupActive = isExceeded30Days
+        ? false
+        : (u.weeklyFollowupActive ?? (status === 'active'));
+      const trackingEndedReason = isExceeded30Days
+        ? (u.trackingEndedReason || 'Seguimiento finalizado automáticamente: Inactividad prolongada superior a 30 días en la página.')
+        : u.trackingEndedReason;
+      const trackingEndedAt = isExceeded30Days
+        ? (u.trackingEndedAt || new Date().toISOString())
+        : undefined;
+
+      const isActive = status === 'active';
       return {
         ...u,
         role: role as 'client',
-        status: u.status || 'active',
+        status,
+        lastActivityAt,
+        inactivityDaysCount: daysInactive,
+        weeklyFollowupActive,
+        weeklyFollowupWeek: u.weeklyFollowupWeek || 1,
+        lastWeeklyFollowupAt:
+          u.lastWeeklyFollowupAt ||
+          (u.joinedAt ? `${u.joinedAt}T12:00:00.000Z` : new Date().toISOString()),
+        nextWeeklyFollowupDueAt:
+          u.nextWeeklyFollowupDueAt ||
+          new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+        trackingEndedReason,
+        trackingEndedAt,
         transformationSpacesEnabled: u.transformationSpacesEnabled ?? isActive,
         hasWorkshopsAccess: u.hasWorkshopsAccess ?? true,
         hasSessionsAccess: u.hasSessionsAccess ?? true,
@@ -3001,7 +3077,8 @@ export class OntologicalStore {
         workshopMemories: u.workshopMemories || {},
         welcomeMessage:
           u.welcomeMessage ||
-          `Bienvenido(a) a tu Camino de Transformación. Este espacio sincroniza en tiempo real tu evolución en talleres y consultoría ontológica.`,
+          `Hola ${u.name}, ¡bienvenido/a a Rengifo Basto Consultoría Ontológica! Tu cuenta y acceso a tu Espacio Confidencial han sido activados. Iniciamos de inmediato tu seguimiento semanal de progreso ontológico.`,
+        welcomeMessageSentAt: u.welcomeMessageSentAt || u.lastWeeklyFollowupAt || lastActivityAt,
         totalInvested: u.totalInvested || '$1.500.000 COP',
         primaryBreakdown: u.primaryBreakdown || 'Quiebre de autoexigencia y presencia directiva',
       };
@@ -4995,9 +5072,18 @@ export class OntologicalStore {
       STORAGE_KEYS.AUTOMATED_TRIGGERS,
       INITIAL_AUTOMATED_TRIGGERS
     );
-    return Array.isArray(list) && list.length > 0
-      ? list
-      : INITIAL_AUTOMATED_TRIGGERS;
+    if (!Array.isArray(list) || list.length === 0) {
+      return INITIAL_AUTOMATED_TRIGGERS;
+    }
+    // Merge missing initial triggers if older version stored
+    const existingIds = new Set(list.map((t) => t.id));
+    const missing = INITIAL_AUTOMATED_TRIGGERS.filter((t) => !existingIds.has(t.id));
+    if (missing.length > 0) {
+      const merged = [...list, ...missing];
+      this.save(STORAGE_KEYS.AUTOMATED_TRIGGERS, merged);
+      return merged;
+    }
+    return list;
   }
 
   static saveAutomatedTriggers(triggers: AutomatedTriggerConfig[]): void {
@@ -5072,6 +5158,369 @@ export class OntologicalStore {
       success: true,
       message: `Activador "${trigger.name}" ejecutado correctamente. Acciones ejecutadas: ${trigger.actions.length}`,
       timestamp,
+    };
+  }
+
+  // =========================================================================
+  // --- AUTOMATIZACIÓN DE SEGUIMIENTO DE CLIENTES Y REGLA DE 30 DÍAS ---
+  // =========================================================================
+
+  /**
+   * Actualiza la actividad reciente del usuario en la página.
+   * Si el usuario estaba inactivo por haber superado 30 días, restaura su estatus
+   * a 'active' y reactiva su seguimiento semanal automáticamente.
+   */
+  static touchUserActivity(clientId: string): User | null {
+    const users = this.getUsers();
+    let updatedUser: User | null = null;
+    const nowIso = new Date().toISOString();
+
+    const updatedUsers = users.map((u) => {
+      if (u.uid === clientId) {
+        const wasTerminated = u.status === 'inactive' && Boolean(u.trackingEndedReason);
+        updatedUser = {
+          ...u,
+          lastActivityAt: nowIso,
+          inactivityDaysCount: 0,
+          status: wasTerminated ? 'active' : (u.status || 'active'),
+          weeklyFollowupActive: wasTerminated ? true : (u.weeklyFollowupActive ?? true),
+          trackingEndedReason: wasTerminated ? undefined : u.trackingEndedReason,
+          trackingEndedAt: wasTerminated ? undefined : u.trackingEndedAt,
+        };
+        return updatedUser;
+      }
+      return u;
+    });
+
+    if (updatedUser) {
+      this.saveUsers(updatedUsers);
+      FirestoreSyncService.syncUserProfile(updatedUser).catch(() => {});
+    }
+    return updatedUser;
+  }
+
+  /**
+   * Automatización Inmediata al Registrarse:
+   * 1. Despacha mensaje de bienvenida personalizado con accesos y encuadre ontológico.
+   * 2. Registra el log formal en la bitácora de correos/notificaciones.
+   * 3. Inicia el ciclo de seguimiento semanal del progreso del coachee (Semana 1).
+   * 4. Programa el siguiente seguimiento para 7 días en adelante.
+   */
+  static initiateClientFollowupAutomation(
+    user: User,
+    sourceOrigin?: string
+  ): { welcomeLog: ClientEmailLog; welcomeMessage: string } {
+    const cleanName = user.name || 'Participante';
+    const portalUrl = this.getPortalUrl() || DEFAULT_PORTAL_URL;
+    const programName = user.programName || 'Certeza, Fronteras & Dirección Personal';
+    const nowIso = new Date().toISOString();
+    const nextWeekDue = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+
+    const welcomeMessage = `Estimado/a ${cleanName},
+
+¡Te damos una cálida bienvenida a Rengifo Basto Consultoría Ontológica!
+
+Nos complace confirmar que tu registro en "${programName}" ha quedado formalmente completado y tu Espacio Confidencial de Trabajo se encuentra activo.
+
+🔑 Credenciales & Acceso a tu Plataforma:
+- Correo registrado: ${user.email}
+- Enlace directo a tu Espacio Confidencial: ${portalUrl}
+- Origen de registro: ${sourceOrigin || 'Inscripción Directa en Plataforma'}
+
+🌱 Tu Ciclo de Seguimiento Semanal:
+A partir de hoy, nuestro sistema ontológico dará seguimiento continuo semana a semana a tu progreso:
+- Calibración de tus Quiebres y Autorregistros en el Nodo 1.
+- Guías guiadas de Pausas de Coherencia Somática (3 tiempos diarios).
+- Acompañamiento personalizado directo con John Fredy Rengifo Basto.
+
+*Nota de acompañamiento:* Tu seguimiento semanal se mantendrá activo de forma ininterrumpida mientras continúes interactuando en la página. Si llegaras a acumular más de 30 días continuos sin actividad en tu portal, el seguimiento se pausará automáticamente para respetar tus tiempos personales, pudiendo reactivarlo al volver a ingresar.
+
+Estamos a tu entera disposición para iniciar este camino de soberanía y lucidez.
+
+Con aprecio y compromiso ético,
+John Fredy Rengifo Basto
+Consultor & Coach Ontológico Directivo
+Rengifo Basto Consultoría Ontológica | Cel: +57 323 464 2257`;
+
+    // Registrar log formal en la auditoría de correos
+    const welcomeLog = this.logClientEmail({
+      clientId: user.uid,
+      clientName: cleanName,
+      clientEmail: user.email,
+      templateId: 'tpl-bienvenida-inmediata',
+      templateName: 'Bienvenida Inmediata & Inicio de Seguimiento Semanal',
+      subject: `¡Bienvenido/a a tu Camino de Transformación Ontológica! | Rengifo Basto Consultoría`,
+      body: welcomeMessage,
+      category: 'bienvenida',
+      channel: 'gmail',
+      status: 'sent',
+      nodeStep: user.programProgress || 1,
+    });
+
+    // Actualizar el estado del usuario en el store
+    const users = this.getUsers();
+    const updatedUsers = users.map((u) => {
+      if (u.uid === user.uid || u.email.toLowerCase() === user.email.toLowerCase()) {
+        return {
+          ...u,
+          welcomeMessage,
+          welcomeMessageSentAt: nowIso,
+          lastActivityAt: nowIso,
+          inactivityDaysCount: 0,
+          weeklyFollowupActive: true,
+          weeklyFollowupWeek: 1,
+          lastWeeklyFollowupAt: nowIso,
+          nextWeeklyFollowupDueAt: nextWeekDue,
+          trackingEndedReason: undefined,
+          trackingEndedAt: undefined,
+          status: 'active' as const,
+        };
+      }
+      return u;
+    });
+
+    this.saveUsers(updatedUsers);
+
+    // Disparar evento para componentes en tiempo real
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(
+        new CustomEvent('rbc-client-welcome-sent', {
+          detail: { clientId: user.uid, welcomeLog },
+        })
+      );
+    }
+
+    return { welcomeLog, welcomeMessage };
+  }
+
+  /**
+   * Ejecuta un envío de seguimiento semanal para un cliente específico.
+   * Si el cliente tiene más de 30 días de inactividad, finaliza el seguimiento
+   * y bloquea el despacho como lo establece la regla de negocio.
+   */
+  static executeWeeklyProgressFollowup(clientId: string): {
+    success: boolean;
+    log?: ClientEmailLog;
+    reason?: string;
+    isTerminatedDueTo30Days?: boolean;
+  } {
+    const users = this.getUsers();
+    const user = users.find((u) => u.uid === clientId);
+
+    if (!user) {
+      return { success: false, reason: 'Cliente no encontrado' };
+    }
+
+    const nowMs = Date.now();
+    const lastActivity = user.lastActivityAt || (user.joinedAt ? `${user.joinedAt}T12:00:00.000Z` : new Date().toISOString());
+    const lastActMs = new Date(lastActivity).getTime();
+    const daysInactive = Math.max(
+      0,
+      Math.floor((nowMs - (isNaN(lastActMs) ? nowMs : lastActMs)) / (1000 * 60 * 60 * 24))
+    );
+
+    // REGLA CRÍTICA: Más de 30 días inactivo en la página -> Finalizar seguimiento
+    if (daysInactive > 30) {
+      const updatedUser: User = {
+        ...user,
+        status: 'inactive',
+        weeklyFollowupActive: false,
+        inactivityDaysCount: daysInactive,
+        trackingEndedReason: `Seguimiento concluido automáticamente: ${daysInactive} días continuos sin actividad en la página (> 30 días).`,
+        trackingEndedAt: new Date().toISOString(),
+      };
+
+      const mappedUsers = users.map((u) => (u.uid === clientId ? updatedUser : u));
+      this.saveUsers(mappedUsers);
+
+      // Registrar auditoría de inactividad en el historial del coachee
+      const auditLog = this.logClientEmail({
+        clientId: user.uid,
+        clientName: user.name,
+        clientEmail: user.email,
+        templateId: 'tpl-alerta-inactividad-30d',
+        templateName: 'Conclusión de Seguimiento Semanal por Inactividad (>30 días)',
+        subject: `Notificación de Cierre de Seguimiento por Inactividad (+30 días) | Rengifo Basto`,
+        body: `Estimado/a ${user.name},\n\nHan transcurrido ${daysInactive} días desde tu última actividad registrada en tu Espacio Confidencial. De acuerdo con nuestra política de respeto al ritmo personal, hemos pausado tu seguimiento semanal programado.\n\nPodrás reactivar tu acompañamiento en cualquier momento con solo volver a ingresar a tu portal: ${this.getPortalUrl() || DEFAULT_PORTAL_URL}\n\nUn saludo atento,\nJohn Fredy Rengifo Basto`,
+        category: 'inactividad',
+        channel: 'gmail',
+        status: 'sent',
+        nodeStep: user.programProgress || 1,
+      });
+
+      return {
+        success: false,
+        reason: `Seguimiento finalizado: el participante acumula ${daysInactive} días de inactividad en la página (> 30 días requeridos para corte automático).`,
+        isTerminatedDueTo30Days: true,
+        log: auditLog,
+      };
+    }
+
+    // Cliente activo: Generar y registrar el seguimiento semanal de progreso
+    const currentWeek = user.weeklyFollowupWeek || 1;
+    const nextWeek = currentWeek + 1;
+    const nodeProgress = user.programProgress || 1;
+    const nowIso = new Date().toISOString();
+    const nextDueIso = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+    const portalUrl = this.getPortalUrl() || DEFAULT_PORTAL_URL;
+
+    const followupBody = `Hola ${user.name},
+
+Te escribimos para realizar tu Seguimiento Semanal (Semana ${currentWeek}) en tu proceso de consultoría ontológica.
+
+📊 Calibración de tu Progreso:
+- Nodo de Trabajo Actual: Nodo ${nodeProgress} de 6
+- Días desde tu última interacción: ${daysInactive} día(s) (Estado: Activo)
+- Programa: ${user.programName || 'Certeza, Fronteras & Dirección Personal'}
+
+🎯 Foco Ontológico de esta Semana:
+1. Revisa tus autorregistros y bitácora post-sesión en tu portal:
+👉 ${portalUrl}
+2. Sostén tus Pausas de Coherencia Somática (3 tomas de 90 segundos al día: 9am, 2pm, 6pm).
+3. Si has identificado quiebres emergentes no dichos en tus acuerdos de equipo o personales, déjalos consignados en tu bitácora confidencial.
+
+Tu próximo hito de seguimiento semanal se encuentra programado para dentro de 7 días.
+
+Seguimos en sintonía con tu transformación,
+John Fredy Rengifo Basto
+Rengifo Basto Consultoría Ontológica`;
+
+    const log = this.logClientEmail({
+      clientId: user.uid,
+      clientName: user.name,
+      clientEmail: user.email,
+      templateId: `tpl-seguimiento-semana-${currentWeek}`,
+      templateName: `Seguimiento Semanal de Progreso (Semana ${currentWeek})`,
+      subject: `Seguimiento Semanal (Semana ${currentWeek}): Calibración de Avance y Pausas de Coherencia | Rengifo Basto`,
+      body: followupBody,
+      category: 'seguimiento',
+      channel: 'gmail',
+      status: 'sent',
+      nodeStep: nodeProgress,
+    });
+
+    const updatedUsers = users.map((u) => {
+      if (u.uid === clientId) {
+        return {
+          ...u,
+          weeklyFollowupWeek: nextWeek,
+          lastWeeklyFollowupAt: nowIso,
+          nextWeeklyFollowupDueAt: nextDueIso,
+          weeklyFollowupActive: true,
+          status: 'active' as const,
+        };
+      }
+      return u;
+    });
+
+    this.saveUsers(updatedUsers);
+
+    return {
+      success: true,
+      log,
+      isTerminatedDueTo30Days: false,
+    };
+  }
+
+  /**
+   * Barrido Integral de Seguimiento y Regla de Inactividad de 30 Días:
+   * Evalúa a todos los clientes registrados en la plataforma:
+   * - Si lleva > 30 días sin actividad en la página, concluye el seguimiento.
+   * - Si está activo y le corresponde seguimiento semanal, lo procesa.
+   */
+  static runClientProgressFollowupSweep(): {
+    totalEvaluated: number;
+    activeFollowups: number;
+    terminatedDueTo30Days: number;
+    weeklyFollowupsDispatched: number;
+    clientStatuses: ClientFollowupCycleStatus[];
+  } {
+    const users = this.getUsers().filter((u) => u.role === 'client');
+    let terminatedDueTo30Days = 0;
+    let weeklyFollowupsDispatched = 0;
+    let activeFollowups = 0;
+
+    users.forEach((client) => {
+      const daysInactive = client.inactivityDaysCount ?? 0;
+
+      if (daysInactive > 30) {
+        // Enforce 30-day cutoff
+        if (client.weeklyFollowupActive || client.status !== 'inactive') {
+          this.executeWeeklyProgressFollowup(client.uid);
+        }
+        terminatedDueTo30Days++;
+      } else {
+        activeFollowups++;
+        // Check if weekly follow-up is due (>= 7 days since last follow-up)
+        const lastFollowupTime = client.lastWeeklyFollowupAt
+          ? new Date(client.lastWeeklyFollowupAt).getTime()
+          : 0;
+        const daysSinceLastFollowup = lastFollowupTime
+          ? Math.floor((Date.now() - lastFollowupTime) / (1000 * 60 * 60 * 24))
+          : 999;
+
+        if (daysSinceLastFollowup >= 7 && client.weeklyFollowupActive) {
+          const res = this.executeWeeklyProgressFollowup(client.uid);
+          if (res.success) {
+            weeklyFollowupsDispatched++;
+          }
+        }
+      }
+    });
+
+    const clientStatuses = this.getClientFollowupStatuses();
+    return {
+      totalEvaluated: users.length,
+      activeFollowups,
+      terminatedDueTo30Days,
+      weeklyFollowupsDispatched,
+      clientStatuses,
+    };
+  }
+
+  /**
+   * Obtiene el estado consolidado de ciclo de vida de seguimiento de cada cliente.
+   */
+  static getClientFollowupStatuses(): ClientFollowupCycleStatus[] {
+    const clients = this.getUsers().filter((u) => u.role === 'client');
+    const allEmailLogs = this.getClientEmailLogs();
+
+    return clients.map((c) => {
+      const clientLogs = allEmailLogs.filter((l) => l.clientId === c.uid);
+      const welcomeLog = clientLogs.find((l) => l.category === 'bienvenida');
+      const daysInactive = c.inactivityDaysCount ?? 0;
+      const isTerminatedDueTo30Days = daysInactive > 30;
+
+      return {
+        clientId: c.uid,
+        clientName: c.name,
+        email: c.email,
+        phone: c.phone,
+        status: c.status || 'active',
+        joinedAt: c.joinedAt || '2026-09-01',
+        lastActivityAt: c.lastActivityAt || new Date().toISOString(),
+        daysInactive,
+        welcomeMessageSent: Boolean(welcomeLog || c.welcomeMessageSentAt),
+        welcomeMessageSentAt: c.welcomeMessageSentAt || welcomeLog?.sentAt,
+        weeklyFollowupActive: isTerminatedDueTo30Days ? false : Boolean(c.weeklyFollowupActive),
+        weeklyFollowupWeek: c.weeklyFollowupWeek || 1,
+        lastWeeklyFollowupAt: c.lastWeeklyFollowupAt,
+        nextWeeklyFollowupDueAt: c.nextWeeklyFollowupDueAt,
+        isTerminatedDueTo30Days,
+        trackingEndedReason: c.trackingEndedReason,
+        trackingEndedAt: c.trackingEndedAt,
+      };
+    });
+  }
+
+  static getBreBNuConfig() {
+    return {
+      phoneKey: '3234642257',
+      bank: 'Nu Colombia (Cuenta de Ahorros)',
+      accountHolder: 'John Fredy Rengifo Basto',
+      accountNumber: 'Cuenta Nu / Bre-B Móvil',
+      qrCodeUrl: '/nu_bre_b_qr.png',
+      instructions: 'Transfiere mediante Bre-B o llave telefónica 3234642257 a nombre de John Fredy Rengifo Basto en Nu Colombia.',
     };
   }
 

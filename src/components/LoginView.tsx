@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { User } from '../types';
-import { PromotionalEventBanner } from './PromotionalEventBanner';
 import { ThemeToggle } from './ThemeToggle';
 import { AuthenticationSpace } from './AuthenticationSpace';
 import { BrandLogo } from './BrandLogo';
@@ -8,10 +7,10 @@ import { OntologicalStore, COMPANY_INFO, ADMIN_EMAIL, ADMIN_SECURITY_CODE } from
 import { signInWithGoogle } from '../services/firebase';
 import { FirestoreSyncService } from '../services/firestoreSync';
 import { SocialLinksBar } from './SocialLinksBar';
+import { PromotionalEventBanner } from './PromotionalEventBanner';
 import {
   Sparkles,
   ShieldCheck,
-  ScanFace,
   KeyRound,
   Fingerprint,
   MapPin,
@@ -20,16 +19,12 @@ import {
   MessageSquare,
   ArrowRight,
   Lock,
-  UserCheck,
   AlertCircle,
   CheckCircle2,
-  User as UserIcon,
-  ChevronRight,
-  HelpCircle,
-  Video,
   ExternalLink,
   Eye,
   EyeOff,
+  X,
 } from 'lucide-react';
 
 interface LoginViewProps {
@@ -43,21 +38,32 @@ export const LoginView: React.FC<LoginViewProps> = ({
   onLogin,
   availableUsers,
   onNavigateToRegister,
-  onOpenVideoConferences,
 }) => {
-  // Tabs: 'participant' (by email verified in Google Sheets) or 'admin' (Master Coach)
+  // Navigation mode: 'participant' or 'admin'
   const [activeTab, setActiveTab] = useState<'participant' | 'admin'>('participant');
 
-  // Participant email authentication state
+  // Participant mode: 'login' (Ingreso estándar) vs 'register' (Crear cuenta nueva)
+  const [participantMode, setParticipantMode] = useState<'login' | 'register'>('login');
+
+  // Email input and verification state
   const [emailInput, setEmailInput] = useState('');
   const [isVerifying, setIsVerifying] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
-  const [verifiedClient, setVerifiedClient] = useState<User | null>(null);
+
+  // Independent Registration Form State
+  const [regName, setRegName] = useState('');
+  const [regEmail, setRegEmail] = useState('');
+  const [regPhone, setRegPhone] = useState('');
+  const [regInterest, setRegInterest] = useState('Certeza, Fronteras & Dirección Personal');
+  const [regSaveForFuture, setRegSaveForFuture] = useState(true);
+  const [isRegistering, setIsRegistering] = useState(false);
+  const [registrationSuccess, setRegistrationSuccess] = useState<string | null>(null);
+  const [createdAccountUser, setCreatedAccountUser] = useState<User | null>(null);
 
   // Authenticating user target for MFA modal
   const [authenticatingUser, setAuthenticatingUser] = useState<User | null>(null);
 
-  // Coach/Admin user
+  // Master Coach / Admin user
   const coachUser = availableUsers.find((u) => u.role === 'coach') || {
     uid: 'coach-1',
     name: 'John Fredy Rengifo Basto',
@@ -68,26 +74,30 @@ export const LoginView: React.FC<LoginViewProps> = ({
     joinedAt: '2023-01-10',
   };
 
-  // Sample client emails already in the Google Sheets database for easy preview testing
+  // Sample client emails for testing
   const registeredClients = availableUsers.filter((u) => u.role === 'client');
 
-  // Direct Admin Security Code state (Confidential - code is hidden)
+  // Direct Admin Security Code state
   const [adminQuickCode, setAdminQuickCode] = useState('');
   const [showAdminCode, setShowAdminCode] = useState(false);
   const [adminQuickError, setAdminQuickError] = useState<string | null>(null);
 
-  // Handle participant email verification against Google Sheets / Database
+  // Google Fallback Modal State (when popup closes or is blocked by iframe)
+  const [showGoogleFallbackModal, setShowGoogleFallbackModal] = useState(false);
+  const [fallbackGoogleEmail, setFallbackGoogleEmail] = useState('');
+
+  // Handle participant email verification
   const handleVerifyEmail = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     setAuthError(null);
 
     const trimmed = emailInput.trim().toLowerCase();
     if (!trimmed) {
-      setAuthError('Por favor ingresa tu correo electrónico para verificar tu acceso.');
+      setAuthError('Por favor ingresa tu correo electrónico para continuar.');
       return;
     }
 
-    // If user enters admin email in the participant tab, seamlessly route to Admin Tab
+    // If user enters the admin email, route seamlessly to admin tab
     if (OntologicalStore.isAdminEmail(trimmed)) {
       setActiveTab('admin');
       setAdminQuickError(null);
@@ -107,17 +117,13 @@ export const LoginView: React.FC<LoginViewProps> = ({
 
       if (!foundUser) {
         setIsVerifying(false);
-        setVerifiedClient(null);
         setAuthError(
-          `El correo "${trimmed}" no se encuentra en la base de datos de participantes registrados. Verifica que sea el correo con el que te registraste en el conversatorio o solicita tu inscripción.`
+          `El correo "${trimmed}" no se encuentra en el sistema. Puedes registrarte en 1 minuto a continuación.`
         );
         return;
       }
 
-      // If user is a client, strictly grant them access ONLY to their own profile
       setIsVerifying(false);
-      setVerifiedClient(foundUser);
-      // Launch MFA / Biometric verification for this specific participant
       setAuthenticatingUser(foundUser);
     } catch {
       setIsVerifying(false);
@@ -125,7 +131,89 @@ export const LoginView: React.FC<LoginViewProps> = ({
     }
   };
 
-  // Real Firebase Google Sign-In with resilient fallback for iframe environments
+  // Unified Google User Authentication Processor
+  const processSuccessfulGoogleUser = async (
+    emailRaw: string,
+    displayName?: string | null,
+    photoURL?: string | null,
+    uid?: string,
+    phoneNumber?: string | null
+  ) => {
+    const email = emailRaw.trim().toLowerCase();
+    setIsVerifying(false);
+    setShowGoogleFallbackModal(false);
+    setAuthError(null);
+
+    // 1. If Admin / Master Coach:
+    if (OntologicalStore.isAdminEmail(email)) {
+      onLogin(coachUser);
+      return;
+    }
+
+    // 2. If attempting to access Admin tab with a non-admin Google account:
+    if (activeTab === 'admin') {
+      setAuthError(
+        `La cuenta Google ("${email}") no corresponde al administrador autorizado. Solo el titular oficial puede ingresar al panel de dirección.`
+      );
+      return;
+    }
+
+    // 3. For any client or participant:
+    // A. Check existing locally or in Firestore
+    let existing = OntologicalStore.getUserByEmail(email);
+    if (!existing) {
+      existing = await FirestoreSyncService.findUserInFirestoreByEmail(email);
+      if (existing) {
+        OntologicalStore.mergeUsersFromFirestore([existing]);
+      }
+    }
+    if (existing && existing.role === 'client') {
+      onLogin(existing);
+      return;
+    }
+
+    // B. Check event registrations
+    const registrations = OntologicalStore.getEventRegistrations();
+    const reg = registrations.find((r) => r.email.toLowerCase() === email);
+    if (reg) {
+      const registeredClient = OntologicalStore.getUsers().find((u) => u.email.toLowerCase() === email);
+      if (registeredClient && registeredClient.role === 'client') {
+        onLogin(registeredClient);
+        return;
+      }
+    }
+
+    // C. New participant authenticated with Google: auto-register and enter
+    const upcomingEvent = OntologicalStore.getUpcomingEvent();
+    const regResult = OntologicalStore.registerForEvent({
+      eventId: upcomingEvent.id,
+      name: displayName || email.split('@')[0],
+      email: email,
+      phone: phoneNumber || '',
+      googleAuthConnected: true,
+      avatarUrl: photoURL || undefined,
+      userUid: uid,
+    });
+
+    // Confirm ticket and attendance access
+    OntologicalStore.confirmEventAttendance(regResult.registration.ticketCode);
+
+    // Persist new user and registration permanently to Firestore
+    await FirestoreSyncService.syncUserProfile(regResult.user).catch((e) => {
+      console.warn('Google sign-in user firestore sync notice:', e);
+    });
+    await FirestoreSyncService.syncEventRegistration(regResult.registration).catch((e) => {
+      console.warn('Google sign-in reg firestore sync notice:', e);
+    });
+
+    // Broadcast store update events
+    window.dispatchEvent(new CustomEvent('rbc-users-updated'));
+    window.dispatchEvent(new CustomEvent('rbc-event-registrations-updated'));
+
+    onLogin(regResult.user);
+  };
+
+  // Real Firebase Google Sign-In with auto-registration and auto-login
   const handleGoogleSignIn = async () => {
     setAuthError(null);
     setIsVerifying(true);
@@ -133,116 +221,107 @@ export const LoginView: React.FC<LoginViewProps> = ({
     try {
       const googleUser = await signInWithGoogle();
       if (googleUser && googleUser.email) {
-        const email = googleUser.email.trim().toLowerCase();
-
-        // 1. If in Admin Tab:
-        if (activeTab === 'admin') {
-          if (OntologicalStore.isAdminEmail(email)) {
-            setIsVerifying(false);
-            onLogin(coachUser);
-            return;
-          }
-          setIsVerifying(false);
-          setAuthError(
-            `Acceso denegado: La cuenta Google seleccionada ("${email}") no corresponde al administrador autorizado. Solo el titular oficial puede ingresar al panel de dirección.`
-          );
-          return;
-        }
-
-        // 2. If in Client / Coachee Tab:
-        // Any person with a personal Google account can register or enter their workspace!
-
-        // A. Check if existing client locally or in Firestore
-        let existing = OntologicalStore.getUserByEmail(email);
-        if (!existing) {
-          existing = await FirestoreSyncService.findUserInFirestoreByEmail(email);
-          if (existing) {
-            OntologicalStore.mergeUsersFromFirestore([existing]);
-          }
-        }
-        if (existing && existing.role === 'client') {
-          setIsVerifying(false);
-          onLogin(existing);
-          return;
-        }
-
-        // B. Check event registrations
-        const registrations = OntologicalStore.getEventRegistrations();
-        const reg = registrations.find((r) => r.email.toLowerCase() === email);
-        if (reg) {
-          const registeredClient = OntologicalStore.getUsers().find((u) => u.email.toLowerCase() === email);
-          if (registeredClient && registeredClient.role === 'client') {
-            setIsVerifying(false);
-            onLogin(registeredClient);
-            return;
-          }
-        }
-
-        // C. New participant authenticated with Google: auto-register and grant immediate workstation access
-        const upcomingEvent = OntologicalStore.getUpcomingEvent();
-        const regResult = OntologicalStore.registerForEvent({
-          eventId: upcomingEvent.id,
-          name: googleUser.displayName || email.split('@')[0],
-          email: email,
-          phone: googleUser.phoneNumber || '',
-          googleAuthConnected: true,
-          avatarUrl: googleUser.photoURL || undefined,
-          userUid: googleUser.uid,
-        });
-
-        // Confirm ticket and attendance access
-        OntologicalStore.confirmEventAttendance(regResult.registration.ticketCode);
-
-        setIsVerifying(false);
-        onLogin(regResult.user);
-        return;
-      }
-    } catch (popupErr: unknown) {
-      const firebaseErr = popupErr as { code?: string };
-      setIsVerifying(false);
-      if (activeTab === 'admin') {
-        if (firebaseErr?.code === 'auth/popup-closed-by-user') {
-          setAuthError('La ventana de verificación de Google fue cerrada. Puede reintentar o ingresar con su Código de Seguridad.');
-        } else if (firebaseErr?.code === 'auth/unauthorized-domain') {
-          setAuthError('El dominio actual de vista previa no está en los Dominios Autorizados de Firebase. Puede ingresar abajo con su Código de Seguridad confidencial.');
-        } else {
-          setAuthError('No se pudo verificar la cuenta de Google. Puede ingresar abajo con su Código de Seguridad confidencial.');
-        }
-        return;
-      }
-      if (firebaseErr?.code === 'auth/unauthorized-domain') {
-        setAuthError(
-          'Aviso de Seguridad Firebase: El dominio de vista previa aún no está registrado en los "Dominios Autorizados" de Firebase Console (Authentication > Settings > Authorized Domains). Puedes ingresar escribiendo tu correo registrado abajo.'
+        await processSuccessfulGoogleUser(
+          googleUser.email,
+          googleUser.displayName,
+          googleUser.photoURL,
+          googleUser.uid,
+          googleUser.phoneNumber
         );
         return;
       }
-      console.warn('Google Sign-In popup notice:', popupErr);
-    }
-
-    if (activeTab === 'admin') {
       setIsVerifying(false);
-      setAuthError('Acceso exclusivo para el administrador. Verifique con su cuenta de Google autorizada o ingrese su Código de Seguridad.');
+      setShowGoogleFallbackModal(true);
+    } catch (popupErr: unknown) {
+      console.warn('Google sign-in notice (popup closed or iframe restriction):', popupErr);
+      setIsVerifying(false);
+      // Immediately open the helpful Google Fallback Assistant modal so user is not stuck
+      setShowGoogleFallbackModal(true);
+    }
+  };
+
+  // Handle Independent Client Registration
+  const handleDirectRegister = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAuthError(null);
+    setRegistrationSuccess(null);
+
+    const cleanName = regName.trim();
+    const cleanEmail = regEmail.trim().toLowerCase();
+    const cleanPhone = regPhone.trim();
+
+    if (!cleanName || !cleanEmail) {
+      setAuthError('Por favor ingresa tu nombre completo y tu correo electrónico.');
       return;
     }
 
-    // Fallback for clients if popup was closed or cancelled without credentials
-    const emailToSearch = emailInput.trim();
-    if (!emailToSearch) {
-      setIsVerifying(false);
-      setAuthError(
-        'Por favor escribe tu correo electrónico registrado para verificar tu acceso al espacio privado.'
-      );
+    if (OntologicalStore.isAdminEmail(cleanEmail)) {
+      setAuthError('El correo ingresado corresponde al administrador. Ingrese en la pestaña de Administración.');
       return;
     }
-    const foundUser = OntologicalStore.getUserByEmail(emailToSearch);
-    setIsVerifying(false);
-    if (foundUser && foundUser.role === 'client') {
-      setVerifiedClient(foundUser);
-      setAuthenticatingUser(foundUser);
-    } else {
-      setAuthError(
-        `El correo ingresado (${emailToSearch}) no tiene un cupo asignado en el sistema. Por favor inscríbete en el conversatorio.`
+
+    setIsRegistering(true);
+
+    try {
+      // 1. Check if user already exists
+      let existingUser = OntologicalStore.getUserByEmail(cleanEmail);
+      if (!existingUser) {
+        existingUser = await FirestoreSyncService.findUserInFirestoreByEmail(cleanEmail);
+      }
+
+      if (existingUser) {
+        setIsRegistering(false);
+        setRegistrationSuccess(
+          `¡El correo "${cleanEmail}" ya se encuentra registrado y activo! Puedes ingresar de inmediato.`
+        );
+        setCreatedAccountUser(existingUser);
+        return;
+      }
+
+      // 2. Register user in store & event
+      const upcomingEvent = OntologicalStore.getUpcomingEvent();
+      const regResult = OntologicalStore.registerForEvent({
+        eventId: upcomingEvent.id,
+        name: cleanName,
+        email: cleanEmail,
+        phone: cleanPhone,
+        googleAuthConnected: cleanEmail.endsWith('@gmail.com'),
+      });
+
+      // Update program interest if custom
+      if (regInterest && regInterest !== 'Certeza, Fronteras & Dirección Personal') {
+        regResult.user.programName = regInterest;
+        const currentUsers = OntologicalStore.getUsers();
+        const updatedUsers = currentUsers.map((u) => (u.uid === regResult.user.uid ? regResult.user : u));
+        OntologicalStore.saveUsers(updatedUsers);
+      }
+
+      // Confirm attendance & ticket
+      OntologicalStore.confirmEventAttendance(regResult.registration.ticketCode);
+
+      // 3. Persist permanently to Firestore for future logins
+      if (regSaveForFuture) {
+        await FirestoreSyncService.syncUserProfile(regResult.user).catch((err) => {
+          console.warn('Direct user firestore sync notice:', err);
+        });
+        await FirestoreSyncService.syncEventRegistration(regResult.registration).catch((err) => {
+          console.warn('Direct reg firestore sync notice:', err);
+        });
+      }
+
+      // 4. Dispatch store update events
+      window.dispatchEvent(new CustomEvent('rbc-users-updated'));
+      window.dispatchEvent(new CustomEvent('rbc-event-registrations-updated'));
+
+      setIsRegistering(false);
+      setRegistrationSuccess(
+        `¡Cuenta creada y guardada exitosamente! Tu registro con "${cleanEmail}" ha quedado guardado para futuros accesos.`
       );
+      setCreatedAccountUser(regResult.user);
+    } catch (err) {
+      console.error('Registration error:', err);
+      setIsRegistering(false);
+      setAuthError('Ocurrió un error al guardar tu registro. Por favor intenta de nuevo.');
     }
   };
 
@@ -252,9 +331,9 @@ export const LoginView: React.FC<LoginViewProps> = ({
   };
 
   return (
-    <div className="min-h-screen bg-transparent text-black dark:text-neutral-100 flex flex-col justify-between items-center px-4 sm:px-6 py-8 sm:py-12 selection:bg-black selection:text-white dark:selection:bg-white dark:selection:text-black space-y-10 transition-colors duration-200">
-      {/* Subtle top branding mark & theme toggle */}
-      <div className="w-full max-w-5xl flex justify-between items-center text-xs font-light text-gray-700 dark:text-neutral-300 tracking-wider uppercase bg-white/45 dark:bg-black/35 backdrop-blur-md px-4 py-2.5 rounded-2xl border border-white/60 dark:border-white/10 shadow-xs">
+    <div className="min-h-screen bg-transparent text-black dark:text-neutral-100 flex flex-col justify-between items-center px-4 sm:px-6 py-6 sm:py-10 selection:bg-black selection:text-white dark:selection:bg-white dark:selection:text-black space-y-8 transition-colors duration-200">
+      {/* Top branding mark & theme toggle */}
+      <div className="w-full max-w-4xl flex justify-between items-center text-xs font-light text-gray-700 dark:text-neutral-300 tracking-wider uppercase bg-white/45 dark:bg-black/35 backdrop-blur-md px-4 py-2.5 rounded-2xl border border-white/60 dark:border-white/10 shadow-xs">
         <span className="flex items-center gap-2">
           <span className="w-2 h-2 rounded-full bg-black dark:bg-white inline-block" />
           Consultoría Ontológica
@@ -267,498 +346,579 @@ export const LoginView: React.FC<LoginViewProps> = ({
       </div>
 
       {/* Hero Header */}
-      <div className="w-full max-w-5xl mx-auto text-center flex flex-col items-center pt-2">
-        <div className="w-full flex items-center justify-center mb-3 sm:mb-4 transition-all">
+      <div className="w-full max-w-xl mx-auto text-center flex flex-col items-center">
+        <div className="w-full flex items-center justify-center mb-2 sm:mb-3">
           <BrandLogo layout="hero" className="hover:opacity-95 transition-opacity" />
         </div>
-
-        <p className="text-sm sm:text-base font-normal tracking-wide text-gray-700 dark:text-neutral-200 max-w-lg mx-auto leading-relaxed mb-4">
+        <p className="text-xs sm:text-sm font-normal text-gray-600 dark:text-neutral-300 max-w-md mx-auto leading-relaxed">
           Acompañamiento ontológico profesional & Espacio Privado Confidencial
         </p>
       </div>
 
-      {/* Advertising Banner for the Next Event in the Schedule */}
-      <div className="w-full max-w-5xl mx-auto">
-        <PromotionalEventBanner onRegisterInterest={() => onNavigateToRegister?.()} />
+      {/* ------------------------------------------------------------------- */}
+      {/* TALLER ONTOLÓGICO EN CURSO (PromotionalEventBanner)                 */}
+      {/* ------------------------------------------------------------------- */}
+      <div className="w-full max-w-4xl mx-auto space-y-3">
+        <div className="flex items-center justify-between px-2">
+          <div className="flex items-center gap-2">
+            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
+            <h2 className="text-xs sm:text-sm font-bold uppercase tracking-widest text-black dark:text-white">
+              Taller Ontológico en Curso • Acceso Abierto
+            </h2>
+          </div>
+          <span className="text-[11px] sm:text-xs font-semibold text-emerald-700 dark:text-emerald-400 bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/20">
+            Sábado 28 de Marzo • 9:00 AM
+          </span>
+        </div>
+
+        <PromotionalEventBanner
+          variant="landing"
+          onRegisterInterest={() => {
+            setActiveTab('participant');
+            setParticipantMode('register');
+            const targetEl = document.getElementById('login-card-container');
+            if (targetEl) {
+              targetEl.scrollIntoView({ behavior: 'smooth' });
+            }
+          }}
+        />
       </div>
 
-      {/* Main Authentication Card - Translucent glass container */}
-      <div className="w-full max-w-5xl mx-auto flex flex-col items-center">
-        <div className="w-full bg-white/75 dark:bg-[#18181B]/75 backdrop-blur-2xl rounded-3xl p-6 sm:p-8 lg:p-10 border border-white/80 dark:border-white/10 shadow-2xl text-left transition-colors">
-          {/* Segmented Tab Switcher */}
-          <div className="flex items-center p-1 bg-black/5 dark:bg-white/5 backdrop-blur-md rounded-2xl mb-8 max-w-md border border-black/5 dark:border-white/10">
-            <button
-              type="button"
-              onClick={() => {
-                setActiveTab('participant');
-                setAuthError(null);
-              }}
-              className={`flex-1 py-2.5 px-3 rounded-xl text-xs font-medium transition-all flex items-center justify-center gap-2 cursor-pointer ${
-                activeTab === 'participant'
-                  ? 'bg-white/95 dark:bg-[#27272A]/95 text-black dark:text-white shadow-xs font-semibold backdrop-blur-xs'
-                  : 'text-gray-600 dark:text-neutral-400 hover:text-black dark:hover:text-white'
-              }`}
-            >
-              <UserIcon className="w-4 h-4" />
-              <span>Acceso de Participante</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => {
-                setActiveTab('admin');
-                setAuthError(null);
-              }}
-              className={`flex-1 py-2.5 px-3 rounded-xl text-xs font-medium transition-all flex items-center justify-center gap-2 cursor-pointer ${
-                activeTab === 'admin'
-                  ? 'bg-white/95 dark:bg-[#27272A]/95 text-black dark:text-white shadow-xs font-semibold backdrop-blur-xs'
-                  : 'text-gray-600 dark:text-neutral-400 hover:text-black dark:hover:text-white'
-              }`}
-            >
-              <Lock className="w-3.5 h-3.5" />
-              <span>Administración RBC</span>
-            </button>
-          </div>
-
-          {/* ========================================================================= */}
-          {/* TAB 1: PARTICIPANT ACCESS (STRICT PRIVACY BY VERIFIED EMAIL)              */}
-          {/* ========================================================================= */}
+      {/* Main Authentication Card - Matched Width (max-w-4xl) & Transparent Glass Container */}
+      <div id="login-card-container" className="w-full max-w-4xl mx-auto">
+        <div className="w-full rounded-3xl p-6 sm:p-8 md:p-10 border border-white/40 dark:border-white/10 shadow-2xl bg-white/40 dark:bg-[#0D0D0E]/60 backdrop-blur-2xl transition-all">
           {activeTab === 'participant' ? (
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start animate-fade-in">
-              {/* Left Column: Input Form & Verification */}
-              <div className="lg:col-span-7 space-y-5">
-                <div>
-                  <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-[11px] font-medium text-emerald-700 dark:text-emerald-400 mb-2">
-                    <ShieldCheck className="w-3.5 h-3.5" />
-                    <span>Aislamiento de Perfil & Privacidad ICF</span>
-                  </div>
-                  <h3 className="text-lg font-semibold text-black dark:text-white tracking-tight">
-                    Ingresa con tu Correo Registrado
-                  </h3>
-                  <p className="text-xs text-gray-500 dark:text-neutral-400 font-light mt-1 leading-relaxed">
-                    Tu acceso valida tu identidad contra el Directorio de Google Sheets. Cada participante accede de forma individual y privada a su propio espacio.
-                  </p>
-                </div>
-
-                {/* Primary Google One-Click SSO & Registration */}
-                <div className="p-4 rounded-2xl bg-white dark:bg-[#1C1C20] border border-emerald-500/30 dark:border-emerald-500/30 shadow-xs space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[11px] font-semibold uppercase tracking-wider text-emerald-700 dark:text-emerald-400 flex items-center gap-1.5">
-                      <Sparkles className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-                      Acceso & Registro con Cuenta Personal Google
-                    </span>
-                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-300 font-medium">
-                      Recomendado
-                    </span>
-                  </div>
-                  <p className="text-xs text-gray-600 dark:text-neutral-300 leading-relaxed font-light">
-                    Ingresa directamente con tu cuenta personal de Google (@gmail.com). Tu perfil individual, cupo al conversatorio y estación de trabajo ontológica se activarán al instante.
-                  </p>
-                  <button
-                    type="button"
-                    onClick={handleGoogleSignIn}
-                    disabled={isVerifying}
-                    id="btn-google-sign-in"
-                    className="w-full py-3.5 px-4 rounded-2xl bg-black dark:bg-white text-white dark:text-black hover:opacity-90 active:scale-[0.99] transition-all flex items-center justify-center gap-3 cursor-pointer shadow-xs disabled:opacity-50 font-semibold text-xs sm:text-sm"
-                  >
-                    <div className="w-5 h-5 flex items-center justify-center shrink-0 bg-white rounded-full p-0.5">
-                      <svg className="w-4 h-4 shrink-0 block overflow-visible" viewBox="0 0 24 24" aria-hidden="true">
-                        <path
-                          fill="#4285F4"
-                          d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                        />
-                        <path
-                          fill="#34A853"
-                          d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                        />
-                        <path
-                          fill="#FBBC05"
-                          d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
-                        />
-                        <path
-                          fill="#EA4335"
-                          d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
-                        />
-                      </svg>
-                    </div>
-                    <span>Continuar con mi Cuenta Personal de Google</span>
-                  </button>
-                </div>
-
-                <div className="flex items-center gap-2 text-[10px] text-gray-400 dark:text-neutral-500 justify-center">
-                  <span className="h-px bg-gray-200 dark:bg-neutral-800 flex-1" />
-                  <span>O busca tu cupo por correo electrónico</span>
-                  <span className="h-px bg-gray-200 dark:bg-neutral-800 flex-1" />
-                </div>
-
-                {/* Form Input */}
-                <form onSubmit={handleVerifyEmail} className="space-y-4 pt-1">
-                  <div>
-                    <label className="block text-[11px] font-semibold uppercase tracking-wider text-black dark:text-white mb-1.5">
-                      Correo Electrónico (Registrado en Google Sheets)
-                    </label>
-                    <div className="relative">
-                      <input
-                        type="email"
-                        required
-                        value={emailInput}
-                        onChange={(e) => {
-                          setEmailInput(e.target.value);
-                          if (authError) setAuthError(null);
-                        }}
-                        placeholder="ejemplo: tu-correo@gmail.com"
-                        className="w-full pl-10 pr-4 py-3 rounded-2xl bg-white dark:bg-[#202024] border border-gray-200 dark:border-neutral-700 text-xs sm:text-sm text-black dark:text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white transition-all"
-                      />
-                      <Mail className="w-4 h-4 text-gray-400 dark:text-neutral-500 absolute left-3.5 top-3.5" />
+            participantMode === 'login' ? (
+              /* ------------------------------------------------------------------- */
+              /* MODE 1: STANDARD CLIENT LOGIN (GOOGLE FIRST OR REGISTERED EMAIL)   */
+              /* ------------------------------------------------------------------- */
+              <div className="space-y-6 animate-fade-in">
+                <div className="grid grid-cols-1 md:grid-cols-12 gap-6 md:gap-8 items-center">
+                  {/* Left Column: Welcome & Google Fast Sign-In */}
+                  <div className="md:col-span-6 flex flex-col justify-between space-y-4">
+                    <div>
+                      <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-xs font-semibold text-emerald-700 dark:text-emerald-400 mb-3">
+                        <Sparkles className="w-3.5 h-3.5" />
+                        <span>Espacio de Consultoría & Bitácoras</span>
+                      </div>
+                      <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-black dark:text-white">
+                        Iniciar Sesión
+                      </h2>
+                      <p className="text-xs sm:text-sm text-gray-600 dark:text-neutral-300 mt-1.5 font-light leading-relaxed">
+                        Accede con un clic a tus sesiones ontológicas, bitácoras de aprendizaje y compromisos activos.
+                      </p>
                     </div>
 
-                    {registeredClients.length > 0 && (
-                      <div className="mt-2.5 flex flex-wrap items-center gap-1.5 text-[11px]">
-                        <span className="text-gray-400 dark:text-neutral-500">Cliente de prueba:</span>
-                        {registeredClients.map((client) => (
+                    {/* Primary Google Sign-In Button */}
+                    <div className="space-y-2.5 pt-1">
+                      <button
+                        type="button"
+                        onClick={handleGoogleSignIn}
+                        disabled={isVerifying}
+                        id="btn-google-sign-in"
+                        className="w-full py-3.5 px-5 rounded-2xl border border-gray-300/80 dark:border-neutral-700 bg-white/90 dark:bg-[#1C1C20]/90 hover:bg-white dark:hover:bg-[#25252A] text-black dark:text-white font-semibold text-sm transition-all flex items-center justify-center gap-3 shadow-md hover:shadow-lg active:scale-[0.99] cursor-pointer disabled:opacity-50"
+                      >
+                        <div className="w-5 h-5 flex items-center justify-center shrink-0">
+                          <svg className="w-4 h-4" viewBox="0 0 24 24" aria-hidden="true">
+                            <path
+                              fill="#4285F4"
+                              d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                            />
+                            <path
+                              fill="#34A853"
+                              d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                            />
+                            <path
+                              fill="#FBBC05"
+                              d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
+                            />
+                            <path
+                              fill="#EA4335"
+                              d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
+                            />
+                          </svg>
+                        </div>
+                        <span>Continuar con Google (1 Clic)</span>
+                      </button>
+
+                      {/* Subtitle helper link if popup closes */}
+                      <div className="text-center">
+                        <button
+                          type="button"
+                          onClick={() => setShowGoogleFallbackModal(true)}
+                          className="text-xs text-gray-500 dark:text-neutral-400 hover:text-black dark:hover:text-white underline cursor-pointer"
+                        >
+                          ¿Se cerró la ventana emergente de Google? Pulsa aquí
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Value Pill */}
+                    <div className="p-3.5 rounded-2xl bg-white/30 dark:bg-white/5 border border-white/40 dark:border-white/5 text-xs text-gray-600 dark:text-neutral-400 space-y-1.5">
+                      <div className="flex items-center gap-2">
+                        <ShieldCheck className="w-4 h-4 text-emerald-500 shrink-0" />
+                        <span>Autenticación directa y segura sin contraseñas</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <CheckCircle2 className="w-4 h-4 text-blue-500 shrink-0" />
+                        <span>Bitácora personalizada sincronizada en tiempo real</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Right Column: Email Form Card */}
+                  <div className="md:col-span-6 p-5 sm:p-6 rounded-2xl bg-white/50 dark:bg-[#18181B]/50 border border-white/60 dark:border-white/10 shadow-sm space-y-4">
+                    <div>
+                      <h3 className="text-sm font-bold text-black dark:text-white">
+                        O ingresa con tu correo registrado
+                      </h3>
+                      <p className="text-xs text-gray-500 dark:text-neutral-400 font-light mt-0.5">
+                        Escribe el correo electrónico con el que te inscribiste
+                      </p>
+                    </div>
+
+                    {/* Email Form */}
+                    <form onSubmit={handleVerifyEmail} className="space-y-3">
+                      <div className="relative">
+                        <input
+                          type="email"
+                          required
+                          value={emailInput}
+                          onChange={(e) => {
+                            setEmailInput(e.target.value);
+                            if (authError) setAuthError(null);
+                          }}
+                          placeholder="ejemplo: tu-correo@gmail.com"
+                          className="w-full pl-10 pr-4 py-3 rounded-xl bg-white/90 dark:bg-[#202024] border border-gray-200 dark:border-neutral-700 text-sm text-black dark:text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white transition-all"
+                        />
+                        <Mail className="w-4 h-4 text-gray-400 absolute left-3.5 top-3.5" />
+                      </div>
+
+                      {authError && (
+                        <div className="p-3 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 text-xs text-rose-700 dark:text-rose-300 space-y-1.5 animate-fade-in">
+                          <div className="flex items-start gap-2">
+                            <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
+                            <p className="font-light">{authError}</p>
+                          </div>
                           <button
-                            key={client.uid}
                             type="button"
                             onClick={() => {
-                              setEmailInput(client.email);
+                              setRegEmail(emailInput.trim());
+                              setParticipantMode('register');
                               setAuthError(null);
                             }}
-                            className="px-2.5 py-1 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 border border-emerald-300/50 dark:border-emerald-700/50 font-medium transition-all cursor-pointer flex items-center gap-1"
-                            title="Haz clic para autocompletar este cliente y probar el flujo completo"
+                            className="text-xs font-semibold underline text-rose-800 dark:text-rose-200 hover:opacity-80 block pl-6 cursor-pointer"
                           >
-                            <UserCheck className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
-                            <span>{client.email} ({client.name})</span>
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Error Banner */}
-                  {authError && (
-                    <div className="p-3.5 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 text-xs text-rose-800 dark:text-rose-300 space-y-2 animate-fade-in">
-                      <div className="flex items-start gap-2">
-                        <AlertCircle className="w-4 h-4 text-rose-600 dark:text-rose-400 shrink-0 mt-0.5" />
-                        <div className="space-y-1">
-                          <span className="font-semibold block">Acceso Restringido</span>
-                          <p className="font-light leading-relaxed">{authError}</p>
-                        </div>
-                      </div>
-
-                      {onNavigateToRegister && (
-                        <div className="pt-2 border-t border-rose-200/60 dark:border-rose-900/40 flex items-center justify-between">
-                          <span className="text-[11px] text-rose-700 dark:text-rose-300">
-                            ¿No tienes cupo aún?
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() => onNavigateToRegister(emailInput.trim())}
-                            className="px-3 py-1 rounded-xl bg-rose-600 text-white text-[11px] font-medium hover:bg-rose-700 transition-colors flex items-center gap-1 cursor-pointer"
-                          >
-                            <Sparkles className="w-3 h-3" />
-                            <span>Inscribirme en el Taller</span>
+                            ¿Deseas registrar este correo ahora mismo?
                           </button>
                         </div>
                       )}
-                    </div>
-                  )}
 
-                  {/* Primary Enter Button */}
-                  <button
-                    type="submit"
-                    disabled={isVerifying}
-                    className="w-full py-3.5 px-4 rounded-2xl bg-black dark:bg-white text-white dark:text-black text-xs sm:text-sm font-semibold hover:opacity-90 active:scale-[0.99] transition-all cursor-pointer flex items-center justify-center gap-2 shadow-xs disabled:opacity-50"
-                    id="btn-verify-participant-email"
-                  >
-                    {isVerifying ? (
-                      <>
-                        <span className="animate-spin rounded-full h-4 w-4 border-2 border-white dark:border-black border-t-transparent" />
-                        <span>Verificando en Google Sheets...</span>
-                      </>
-                    ) : (
-                      <>
-                        <UserCheck className="w-4 h-4" />
-                        <span>Ingresar a mi Espacio Personal</span>
-                        <ArrowRight className="w-4 h-4 ml-1" />
-                      </>
+                      <button
+                        type="submit"
+                        disabled={isVerifying}
+                        className="w-full py-3 px-4 rounded-xl bg-black dark:bg-white text-white dark:text-black font-semibold text-sm hover:opacity-90 active:scale-[0.99] transition-all flex items-center justify-center gap-2 cursor-pointer shadow-xs disabled:opacity-50"
+                      >
+                        {isVerifying ? (
+                          <>
+                            <span className="animate-spin rounded-full h-4 w-4 border-2 border-white dark:border-black border-t-transparent" />
+                            <span>Verificando acceso...</span>
+                          </>
+                        ) : (
+                          <>
+                            <span>Continuar con correo</span>
+                            <ArrowRight className="w-4 h-4" />
+                          </>
+                        )}
+                      </button>
+                    </form>
+
+                    {/* Quick client hint for testing */}
+                    {registeredClients.length > 0 && (
+                      <div className="pt-1 text-center text-[11px] text-gray-400 dark:text-neutral-500">
+                        <span>Cliente de prueba: </span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setEmailInput(registeredClients[0].email);
+                            setAuthError(null);
+                          }}
+                          className="underline text-emerald-600 dark:text-emerald-400 hover:opacity-80 cursor-pointer"
+                        >
+                          {registeredClients[0].email}
+                        </button>
+                      </div>
                     )}
-                  </button>
-                </form>
 
-                {/* Verified Client Info Card preview before MFA */}
-                {verifiedClient && (
-                  <div className="p-3.5 rounded-2xl bg-white dark:bg-[#202024] border border-emerald-500/30 flex items-center justify-between animate-fade-in">
-                    <div className="flex items-center gap-3">
-                      <img
-                        src={verifiedClient.avatarUrl}
-                        alt={verifiedClient.name}
-                        referrerPolicy="no-referrer"
-                        className="w-10 h-10 rounded-full object-cover ring-2 ring-emerald-500/40"
-                      />
+                    {/* Switch to Register Mode */}
+                    <div className="pt-3 border-t border-gray-200/60 dark:border-neutral-800 text-center text-xs text-gray-500 dark:text-neutral-400 font-light">
+                      ¿No tienes una cuenta aún?{' '}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setParticipantMode('register');
+                          setAuthError(null);
+                        }}
+                        className="font-semibold text-black dark:text-white underline hover:opacity-80 cursor-pointer"
+                      >
+                        Regístrate aquí gratis
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Bottom Bar inside Card */}
+                <div className="pt-4 border-t border-white/20 dark:border-white/5 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-gray-500 dark:text-neutral-400 font-light">
+                  <span>RBC Consultoría Ontológica • Portal de Acceso</span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setActiveTab('admin');
+                      setAuthError(null);
+                    }}
+                    className="hover:text-black dark:hover:text-white transition-colors cursor-pointer inline-flex items-center gap-1.5"
+                  >
+                    <Lock className="w-3.5 h-3.5 text-neutral-400" />
+                    <span>Acceso administrativo RBC</span>
+                  </button>
+                </div>
+              </div>
+            ) : (
+              /* ------------------------------------------------------------------- */
+              /* MODE 2: CLIENT REGISTRATION FORM (NO INVITATION LINK NEEDED)        */
+              /* ------------------------------------------------------------------- */
+              <div className="space-y-6 animate-fade-in">
+                {registrationSuccess && createdAccountUser ? (
+                  <div className="p-8 rounded-2xl bg-emerald-50/80 dark:bg-emerald-950/40 border border-emerald-500/30 text-center space-y-4 max-w-lg mx-auto">
+                    <CheckCircle2 className="w-10 h-10 text-emerald-600 dark:text-emerald-400 mx-auto" />
+                    <div>
+                      <h3 className="text-base font-bold text-emerald-900 dark:text-emerald-200">
+                        ¡Registro Guardado con Éxito!
+                      </h3>
+                      <p className="text-xs sm:text-sm text-emerald-800/80 dark:text-emerald-300/80 font-light mt-1">
+                        {registrationSuccess}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => onLogin(createdAccountUser)}
+                      className="w-full py-3 px-5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold transition-all shadow-md cursor-pointer"
+                    >
+                      Ingresar a mi Espacio Ahora
+                    </button>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-12 gap-6 md:gap-8 items-start">
+                    {/* Left Column: Register Overview & Google 1-Click */}
+                    <div className="md:col-span-5 space-y-4">
                       <div>
-                        <div className="text-xs font-semibold text-black dark:text-white">
-                          {verifiedClient.name}
+                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-xs font-semibold text-blue-700 dark:text-blue-400 mb-3">
+                          <Sparkles className="w-3.5 h-3.5" />
+                          <span>Registro Libre y Gratuito</span>
                         </div>
-                        <div className="text-[11px] text-gray-500 dark:text-neutral-400">
-                          {verifiedClient.email}
+                        <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-black dark:text-white">
+                          Crear Cuenta Nueva
+                        </h2>
+                        <p className="text-xs sm:text-sm text-gray-600 dark:text-neutral-300 mt-1.5 font-light leading-relaxed">
+                          Regístrate en segundos para tener tu bitácora personal y acceder a los talleres ontológicos.
+                        </p>
+                      </div>
+
+                      {/* Quick Register with Google */}
+                      <div className="space-y-2 pt-2">
+                        <button
+                          type="button"
+                          onClick={handleGoogleSignIn}
+                          disabled={isVerifying}
+                          className="w-full py-3.5 px-4 rounded-2xl border border-gray-300/80 dark:border-neutral-700 bg-white/90 dark:bg-[#1C1C20]/90 hover:bg-white dark:hover:bg-[#25252A] text-black dark:text-white font-semibold text-xs sm:text-sm transition-all flex items-center justify-center gap-2.5 shadow-md cursor-pointer"
+                        >
+                          <svg className="w-4 h-4" viewBox="0 0 24 24" aria-hidden="true">
+                            <path
+                              fill="#4285F4"
+                              d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                            />
+                            <path
+                              fill="#34A853"
+                              d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                            />
+                            <path
+                              fill="#FBBC05"
+                              d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
+                            />
+                            <path
+                              fill="#EA4335"
+                              d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
+                            />
+                          </svg>
+                          <span>Registrarme con Google (1 Clic)</span>
+                        </button>
+
+                        <div className="text-center">
+                          <button
+                            type="button"
+                            onClick={() => setShowGoogleFallbackModal(true)}
+                            className="text-xs text-gray-500 dark:text-neutral-400 hover:text-black dark:hover:text-white underline cursor-pointer"
+                          >
+                            ¿Se cerró la ventana emergente de Google? Pulsa aquí
+                          </button>
                         </div>
                       </div>
+
+                      {/* Switch back to Login Mode */}
+                      <div className="pt-2 text-xs text-gray-500 dark:text-neutral-400 font-light">
+                        ¿Ya tienes una cuenta registrada?{' '}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setParticipantMode('login');
+                            setAuthError(null);
+                          }}
+                          className="font-semibold text-black dark:text-white underline hover:opacity-80 cursor-pointer"
+                        >
+                          Inicia sesión aquí
+                        </button>
+                      </div>
                     </div>
-                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 font-medium">
-                      Autorizado
-                    </span>
+
+                    {/* Right Column: Manual Form */}
+                    <div className="md:col-span-7 p-5 sm:p-6 rounded-2xl bg-white/50 dark:bg-[#18181B]/50 border border-white/60 dark:border-white/10 shadow-sm space-y-3.5">
+                      <h3 className="text-sm font-bold text-black dark:text-white">
+                        O completa tus datos de registro
+                      </h3>
+
+                      <form onSubmit={handleDirectRegister} className="space-y-3">
+                        <div>
+                          <label className="block text-xs font-medium text-gray-700 dark:text-neutral-300 mb-1">
+                            Nombre Completo
+                          </label>
+                          <input
+                            type="text"
+                            required
+                            value={regName}
+                            onChange={(e) => setRegName(e.target.value)}
+                            placeholder="Tu nombre y apellido"
+                            className="w-full px-3.5 py-2.5 rounded-xl bg-white/90 dark:bg-[#202024] border border-gray-200 dark:border-neutral-700 text-sm text-black dark:text-white focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white transition-all"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-xs font-medium text-gray-700 dark:text-neutral-300 mb-1">
+                            Correo Electrónico
+                          </label>
+                          <input
+                            type="email"
+                            required
+                            value={regEmail}
+                            onChange={(e) => setRegEmail(e.target.value)}
+                            placeholder="tu-correo@ejemplo.com"
+                            className="w-full px-3.5 py-2.5 rounded-xl bg-white/90 dark:bg-[#202024] border border-gray-200 dark:border-neutral-700 text-sm text-black dark:text-white focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white transition-all"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-xs font-medium text-gray-700 dark:text-neutral-300 mb-1">
+                            WhatsApp / Teléfono
+                          </label>
+                          <input
+                            type="tel"
+                            value={regPhone}
+                            onChange={(e) => setRegPhone(e.target.value)}
+                            placeholder="+57 300 123 4567"
+                            className="w-full px-3.5 py-2.5 rounded-xl bg-white/90 dark:bg-[#202024] border border-gray-200 dark:border-neutral-700 text-sm text-black dark:text-white focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white transition-all"
+                          />
+                        </div>
+
+                        <div className="flex items-center gap-2 pt-1 text-xs text-gray-600 dark:text-neutral-400">
+                          <input
+                            type="checkbox"
+                            id="chk-save-future"
+                            checked={regSaveForFuture}
+                            onChange={(e) => setRegSaveForFuture(e.target.checked)}
+                            className="w-4 h-4 rounded border-gray-300 text-black focus:ring-black dark:focus:ring-white cursor-pointer"
+                          />
+                          <label htmlFor="chk-save-future" className="cursor-pointer">
+                            Guardar mi registro para futuros accesos
+                          </label>
+                        </div>
+
+                        {authError && (
+                          <div className="p-3 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 text-xs text-rose-700 dark:text-rose-300 flex items-start gap-2">
+                            <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
+                            <span>{authError}</span>
+                          </div>
+                        )}
+
+                        <button
+                          type="submit"
+                          disabled={isRegistering}
+                          className="w-full py-3 px-4 rounded-xl bg-black dark:bg-white text-white dark:text-black font-semibold text-sm hover:opacity-90 active:scale-[0.99] transition-all flex items-center justify-center gap-2 cursor-pointer shadow-xs disabled:opacity-50"
+                        >
+                          {isRegistering ? (
+                            <>
+                              <span className="animate-spin rounded-full h-4 w-4 border-2 border-white dark:border-black border-t-transparent" />
+                              <span>Creando cuenta...</span>
+                            </>
+                          ) : (
+                            <>
+                              <span>Crear Cuenta y Entrar</span>
+                              <ArrowRight className="w-4 h-4" />
+                            </>
+                          )}
+                        </button>
+                      </form>
+                    </div>
                   </div>
                 )}
               </div>
-
-              {/* Right Column: Confidentiality & Platform Benefits */}
-              <div className="lg:col-span-5 space-y-4">
-                {/* Confidentiality & Platform Benefits */}
-                <div className="p-5 rounded-2xl bg-white/60 dark:bg-[#202024]/60 backdrop-blur-xl border border-white/65 dark:border-white/10 shadow-sm space-y-3">
-                  <div className="font-semibold text-black dark:text-white flex items-center gap-2 text-xs">
-                    <ShieldCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                    <span>Espacio Privado & Beneficios del Participante</span>
-                  </div>
-                  <p className="text-[11px] text-gray-500 dark:text-neutral-400 font-light leading-relaxed">
-                    Plataforma personal y confidencial certificada para el desarrollo ontológico:
-                  </p>
-                  <ul className="text-[11px] font-light list-disc list-inside space-y-2 text-gray-600 dark:text-neutral-300">
-                    <li>Cuadernos de trabajo interactivos y bitácoras reflexivas.</li>
-                    <li>Acceso directo a salas de Google Meet para sesiones quincenales.</li>
-                    <li>Registro personal de quiebres ontológicos y compromisos de acción.</li>
-                    <li>Acompañamiento profesional bajo estándares éticos de la ICF.</li>
-                  </ul>
-                </div>
-
-                <div className="p-4 sm:p-5 rounded-2xl bg-emerald-50/40 dark:bg-emerald-950/30 backdrop-blur-md border border-emerald-500/20 text-xs text-gray-700 dark:text-neutral-300 space-y-2">
-                  <div className="font-semibold text-emerald-900 dark:text-emerald-300 flex items-center gap-1.5">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                    <span>¿Cómo activar tu acceso?</span>
-                  </div>
-                  <p className="text-[11px] font-light leading-relaxed text-gray-600 dark:text-neutral-400">
-                    Tu cuenta queda vinculada automáticamente al registrarte en los conversatorios o talleres quincenales. Solo ingresa el correo electrónico con el que te inscribiste.
-                  </p>
-                </div>
-              </div>
-            </div>
+            )
           ) : (
-            /* ========================================================================= */
-            /* TAB 2: ADMINISTRATOR ACCESS (MASTER COACH JOHN FREDY RENGIFO BASTO)      */
-            /* ========================================================================= */
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start animate-fade-in">
-              {/* Left Column: Coach Identity & Authentication */}
-              <div className="lg:col-span-7 space-y-5">
-                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-[11px] font-medium text-amber-700 dark:text-amber-400">
-                  <Lock className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
-                  <span>Control General & Gestión de Clientes</span>
-                </div>
-
-                <div>
-                  <h3 className="text-lg font-semibold text-black dark:text-white tracking-tight">
-                    Acceso Exclusivo Administrador
-                  </h3>
-                  <p className="text-xs text-gray-500 dark:text-neutral-400 font-light mt-1 leading-relaxed">
-                    Solo el Consultor Master Coach tiene acceso al directorio de participantes, sincronización con Google Sheets, quiebres ontológicos y panel de supervisión.
-                  </p>
-                </div>
-
-                {/* Coach identity card */}
-                <div className="p-4 rounded-2xl bg-white/70 dark:bg-[#202024]/70 backdrop-blur-xl border border-white/75 dark:border-white/10 flex items-center gap-3.5 shadow-sm">
-                  <img
-                    src={coachUser.avatarUrl}
-                    alt={coachUser.name}
-                    referrerPolicy="no-referrer"
-                    className="w-14 h-14 rounded-2xl object-cover ring-2 ring-black/10 dark:ring-white/10"
-                  />
-                  <div className="flex-1 min-w-0">
-                    <div className="text-xs sm:text-sm font-semibold text-black dark:text-white truncate">
-                      {coachUser.name}
+            /* ------------------------------------------------------------------- */
+            /* MODE 3: ADMINISTRATOR / MASTER COACH ACCESS                         */
+            /* ------------------------------------------------------------------- */
+            <div className="space-y-6 animate-fade-in">
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-6 md:gap-8 items-center">
+                {/* Left Column: Admin Identity & Google Verification */}
+                <div className="md:col-span-6 space-y-4">
+                  <div>
+                    <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-xs font-semibold text-amber-700 dark:text-amber-400 mb-3">
+                      <Lock className="w-3.5 h-3.5" />
+                      <span>Dirección & Administración RBC</span>
                     </div>
-                    <div className="text-[11px] text-gray-500 dark:text-neutral-400 truncate">
-                      {coachUser.title}
-                    </div>
-                    <div className="text-[10px] font-mono text-gray-400 dark:text-neutral-500 truncate mt-0.5">
-                      {coachUser.email}
-                    </div>
-                  </div>
-                  <span className="px-2.5 py-1 rounded-xl bg-black dark:bg-white text-white dark:text-black text-[10px] font-semibold tracking-wider uppercase">
-                    Admin
-                  </span>
-                </div>
-
-                {/* Method 1: Google Account Profile Verification (Primary) */}
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between text-[11px] font-bold uppercase tracking-wider text-gray-600 dark:text-neutral-400">
-                    <span className="flex items-center gap-1.5">
-                      <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
-                      <span>Verificación de Perfil Google</span>
-                    </span>
-                    <span className="text-[10px] font-mono text-emerald-600 dark:text-emerald-400 font-semibold">
-                      Recomendado
-                    </span>
+                    <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-black dark:text-white">
+                      Acceso Administrador
+                    </h2>
+                    <p className="text-xs sm:text-sm text-gray-600 dark:text-neutral-300 mt-1 font-light">
+                      Exclusivo Master Coach John Fredy Rengifo Basto ({ADMIN_EMAIL})
+                    </p>
                   </div>
 
-                  <button
-                    type="button"
-                    onClick={handleGoogleSignIn}
-                    disabled={isVerifying}
-                    className="w-full py-3.5 px-4 rounded-2xl bg-white dark:bg-[#202024] hover:bg-gray-50 dark:hover:bg-[#27272C] border border-gray-200/90 dark:border-neutral-700 text-black dark:text-white text-xs sm:text-sm font-semibold transition-all cursor-pointer flex items-center justify-center gap-3 shadow-xs hover:shadow-sm active:scale-[0.99] disabled:opacity-50"
-                    id="btn-admin-google-login"
-                  >
-                    <div className="w-4 h-4 flex items-center justify-center shrink-0">
-                      <svg className="w-4 h-4" viewBox="0 0 24 24" aria-hidden="true">
-                        <path
-                          fill="#4285F4"
-                          d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                        />
-                        <path
-                          fill="#34A853"
-                          d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                        />
-                        <path
-                          fill="#FBBC05"
-                          d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
-                        />
-                        <path
-                          fill="#EA4335"
-                          d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
-                        />
-                      </svg>
-                    </div>
-                    <span>Verificar con Google ({ADMIN_EMAIL})</span>
-                    <ArrowRight className="w-3.5 h-3.5 text-gray-400 ml-auto" />
-                  </button>
-                </div>
-
-                {/* Divider */}
-                <div className="relative flex items-center justify-center my-1">
-                  <div className="border-t border-gray-200 dark:border-neutral-800 w-full" />
-                  <span className="bg-[#F6F6F9] dark:bg-[#18181B] px-3 text-[10px] uppercase font-bold tracking-widest text-gray-600 dark:text-neutral-400 shrink-0">
-                    O por Código de Seguridad
-                  </span>
-                </div>
-
-                {/* Method 2: Confidential Security Code (Code is completely hidden) */}
-                <form
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    setAdminQuickError(null);
-                    if (adminQuickCode.trim() !== ADMIN_SECURITY_CODE) {
-                      setAdminQuickError(
-                        `Código de seguridad incorrecto. Verifique sus credenciales autorizadas.`
-                      );
-                      return;
-                    }
-                    onLogin(coachUser);
-                  }}
-                  className="p-4 rounded-2xl bg-white/60 dark:bg-[#202024]/60 border border-gray-200/80 dark:border-neutral-800 space-y-3 shadow-2xs"
-                >
-                  <div className="flex items-center justify-between">
-                    <label
-                      htmlFor="input-admin-security-code"
-                      className="text-[11px] font-bold uppercase tracking-wider text-gray-700 dark:text-neutral-300 flex items-center gap-1.5"
-                    >
-                      <Lock className="w-3.5 h-3.5 text-neutral-500" />
-                      <span>Código de Seguridad Maestro</span>
-                    </label>
-                    <span className="text-[10px] text-gray-600 dark:text-neutral-400 font-light">
-                      Confidencial
-                    </span>
-                  </div>
-
-                  <div className="relative">
-                    <input
-                      type={showAdminCode ? 'text' : 'password'}
-                      inputMode="numeric"
-                      maxLength={8}
-                      value={adminQuickCode}
-                      onChange={(e) => {
-                        setAdminQuickCode(e.target.value.replace(/[^0-9]/g, ''));
-                        if (adminQuickError) setAdminQuickError(null);
-                      }}
-                      placeholder="••••"
-                      className="w-full py-2.5 pl-4 pr-11 text-center tracking-widest text-lg font-mono font-bold rounded-xl bg-gray-50 dark:bg-[#18181B] border border-gray-200 dark:border-neutral-700 text-black dark:text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white"
-                      id="input-admin-security-code"
-                      autoComplete="off"
-                    />
+                  {/* Admin Google verification button */}
+                  <div className="space-y-2.5">
                     <button
                       type="button"
-                      onClick={() => setShowAdminCode(!showAdminCode)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-600 hover:text-black dark:text-neutral-400 dark:hover:text-white transition-colors cursor-pointer p-1"
-                      title={showAdminCode ? 'Ocultar código' : 'Ver código escrito'}
-                      aria-label="Alternar visibilidad del código"
+                      onClick={handleGoogleSignIn}
+                      disabled={isVerifying}
+                      id="btn-admin-google-login"
+                      className="w-full py-3.5 px-4 rounded-2xl border border-gray-300/80 dark:border-neutral-700 bg-white/90 dark:bg-[#1C1C20]/90 hover:bg-white dark:hover:bg-[#25252A] text-black dark:text-white font-semibold text-xs sm:text-sm transition-all flex items-center justify-center gap-3 shadow-md cursor-pointer disabled:opacity-50"
                     >
-                      {showAdminCode ? (
-                        <EyeOff className="w-4 h-4" />
-                      ) : (
-                        <Eye className="w-4 h-4" />
-                      )}
+                      <div className="w-4 h-4 flex items-center justify-center shrink-0">
+                        <svg className="w-4 h-4" viewBox="0 0 24 24" aria-hidden="true">
+                          <path
+                            fill="#4285F4"
+                            d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                          />
+                          <path
+                            fill="#34A853"
+                            d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                          />
+                          <path
+                            fill="#FBBC05"
+                            d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
+                          />
+                          <path
+                            fill="#EA4335"
+                            d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
+                          />
+                        </svg>
+                      </div>
+                      <span>Verificar con Google ({ADMIN_EMAIL})</span>
+                    </button>
+
+                    {/* Biometric / Face ID */}
+                    <button
+                      type="button"
+                      onClick={handleAdminLogin}
+                      className="w-full py-2.5 px-4 rounded-xl bg-white/50 dark:bg-[#202024]/50 border border-gray-200 dark:border-neutral-800 text-xs text-gray-600 dark:text-neutral-400 hover:text-black dark:hover:text-white hover:bg-gray-50 dark:hover:bg-[#25252A] transition-all cursor-pointer flex items-center justify-center gap-2"
+                      id="btn-admin-login"
+                    >
+                      <Fingerprint className="w-4 h-4 text-emerald-500" />
+                      <span>Autenticación Biométrica (Face ID / PIN)</span>
                     </button>
                   </div>
 
-                  {adminQuickError && (
-                    <div className="p-2.5 rounded-xl bg-red-100 dark:bg-red-950/50 border border-red-200 dark:border-red-900/60 text-[11px] text-red-800 dark:text-red-300 flex items-start gap-1.5 animate-fade-in">
-                      <AlertCircle className="w-3.5 h-3.5 text-red-600 shrink-0 mt-0.5" />
-                      <span>{adminQuickError}</span>
-                    </div>
-                  )}
-
-                  <button
-                    type="submit"
-                    className="w-full py-3 px-4 rounded-xl bg-black dark:bg-white text-white dark:text-black text-xs font-semibold hover:opacity-90 active:scale-[0.99] transition-all cursor-pointer flex items-center justify-center gap-2 shadow-xs"
-                    id="btn-admin-code-submit"
-                  >
-                    <KeyRound className="w-3.5 h-3.5" />
-                    <span>Ingresar con Código de Seguridad</span>
-                  </button>
-                </form>
-
-                {/* Secondary Option: Multi-factor Biometric Authentication modal */}
-                <div className="pt-1">
-                  <button
-                    type="button"
-                    onClick={handleAdminLogin}
-                    className="w-full py-3 px-4 rounded-2xl bg-white/50 dark:bg-[#202024]/50 border border-gray-200/80 dark:border-neutral-800 text-xs text-gray-700 dark:text-neutral-300 font-medium hover:bg-gray-50 dark:hover:bg-[#25252A] transition-all cursor-pointer flex items-center justify-center gap-2 shadow-2xs"
-                    id="btn-admin-login"
-                  >
-                    <Fingerprint className="w-4 h-4 text-emerald-500" />
-                    <span>Autenticación Biométrica (Face ID / PIN)</span>
-                    <ArrowRight className="w-3.5 h-3.5 ml-1 text-gray-400" />
-                  </button>
-                </div>
-              </div>
-
-              {/* Right Column: Administrative Powers & Capacities */}
-              <div className="lg:col-span-5 space-y-4">
-                <div className="p-4 sm:p-5 rounded-2xl bg-white/60 dark:bg-[#202024]/60 backdrop-blur-xl border border-white/65 dark:border-white/10 shadow-sm space-y-2.5 text-xs text-gray-600 dark:text-neutral-300">
-                  <div className="font-semibold text-black dark:text-white flex items-center gap-1.5">
-                    <ShieldCheck className="w-4 h-4 text-emerald-500" />
-                    <span>Facultades de la Consola RBC:</span>
+                  {/* Switch back to participant */}
+                  <div className="pt-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setActiveTab('participant');
+                        setAuthError(null);
+                      }}
+                      className="text-xs text-gray-500 hover:text-black dark:hover:text-white transition-colors cursor-pointer inline-flex items-center gap-1.5"
+                    >
+                      <ArrowRight className="w-3.5 h-3.5 rotate-180" />
+                      <span>Volver al acceso general</span>
+                    </button>
                   </div>
-                  <ul className="text-[11px] font-light list-disc list-inside space-y-1.5 text-gray-500 dark:text-neutral-400">
-                    <li>Directorio Maestro de Clientes & CRM de Conversatorios</li>
-                    <li>Sincronización bidireccional con Google Sheets</li>
-                    <li>Supervisión pedagógica y planes de trabajo personalizados</li>
-                    <li>Configuración de webhooks en Make / Google Workspace</li>
-                    <li>Google Workspace Hub (Sheets, Drive, Meet, Calendar)</li>
-                    <li>Copiloto Ontológico Gemini 3.7</li>
-                  </ul>
                 </div>
 
-                <div className="p-3.5 rounded-2xl bg-emerald-50/50 dark:bg-emerald-950/20 backdrop-blur-md border border-emerald-200/60 dark:border-emerald-800/40 text-[11px] text-emerald-800 dark:text-emerald-300">
-                  <strong>Consola Segura:</strong> Acceso exclusivo para el Master Coach y dirección pedagógica.
+                {/* Right Column: Security Code */}
+                <div className="md:col-span-6 p-5 sm:p-6 rounded-2xl bg-white/50 dark:bg-[#18181B]/50 border border-white/60 dark:border-white/10 shadow-sm space-y-4">
+                  <div>
+                    <h3 className="text-sm font-bold text-black dark:text-white">
+                      Código de Seguridad Maestro
+                    </h3>
+                    <p className="text-xs text-gray-500 dark:text-neutral-400 font-light mt-0.5">
+                      Ingresa el código PIN numérico de administración
+                    </p>
+                  </div>
+
+                  <form
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      setAdminQuickError(null);
+                      if (adminQuickCode.trim() !== ADMIN_SECURITY_CODE) {
+                        setAdminQuickError('Código de seguridad maestro incorrecto.');
+                        return;
+                      }
+                      onLogin(coachUser);
+                    }}
+                    className="space-y-3"
+                  >
+                    <div className="relative">
+                      <input
+                        type={showAdminCode ? 'text' : 'password'}
+                        inputMode="numeric"
+                        maxLength={8}
+                        value={adminQuickCode}
+                        onChange={(e) => {
+                          setAdminQuickCode(e.target.value.replace(/[^0-9]/g, ''));
+                          if (adminQuickError) setAdminQuickError(null);
+                        }}
+                        placeholder="••••"
+                        className="w-full py-2.5 pl-4 pr-11 text-center tracking-widest text-lg font-mono font-bold rounded-xl bg-white/90 dark:bg-[#202024] border border-gray-200 dark:border-neutral-700 text-black dark:text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white"
+                        id="input-admin-security-code"
+                        autoComplete="off"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowAdminCode(!showAdminCode)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-black dark:text-neutral-400 dark:hover:text-white transition-colors cursor-pointer p-1"
+                      >
+                        {showAdminCode ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+
+                    {adminQuickError && (
+                      <div className="p-2.5 rounded-xl bg-red-100 dark:bg-red-950/50 border border-red-200 dark:border-red-900/60 text-[11px] text-red-800 dark:text-red-300 flex items-start gap-1.5">
+                        <AlertCircle className="w-3.5 h-3.5 text-red-600 shrink-0 mt-0.5" />
+                        <span>{adminQuickError}</span>
+                      </div>
+                    )}
+
+                    <button
+                      type="submit"
+                      className="w-full py-3 px-4 rounded-xl bg-black dark:bg-white text-white dark:text-black text-xs font-semibold hover:opacity-90 active:scale-[0.99] transition-all cursor-pointer flex items-center justify-center gap-2 shadow-xs"
+                      id="btn-admin-code-submit"
+                    >
+                      <KeyRound className="w-3.5 h-3.5" />
+                      <span>Ingresar con Código de Seguridad</span>
+                    </button>
+                  </form>
                 </div>
               </div>
             </div>
           )}
-
-          <div className="mt-8 pt-5 border-t border-gray-100 dark:border-neutral-800 flex flex-wrap items-center justify-between gap-3 text-[11px] text-gray-400 dark:text-neutral-500 font-light">
-            <span className="flex items-center gap-1">
-              <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
-              Seguridad Encriptada Google Cloud & Protocolo OAuth 2.0
-            </span>
-            <span>Versión 2.5 • ICF Accredited</span>
-          </div>
         </div>
       </div>
 
@@ -774,14 +934,154 @@ export const LoginView: React.FC<LoginViewProps> = ({
         />
       )}
 
-      {/* Bottom Information & Footer */}
-      <footer className="w-full max-w-5xl flex flex-col items-center gap-6 pt-6 pb-2 border-t border-gray-100 dark:border-neutral-800 text-center">
-        {/* Dedicated Contact Information Block */}
-        <div className="w-full bg-white/60 dark:bg-neutral-900/60 backdrop-blur-xl border border-white/60 dark:border-white/10 rounded-2xl p-4 sm:p-5 shadow-sm">
-          <div className="text-[11px] font-semibold uppercase tracking-wider text-gray-500 dark:text-neutral-400 mb-3">
-            Información de Contacto & Sede
-          </div>
+      {/* Google Sign-in Assistant Modal (Solves popup close / browser cookie restrictions) */}
+      {showGoogleFallbackModal && (
+        <div className="fixed inset-0 z-50 bg-black/60 dark:bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in">
+          <div className="w-full max-w-md bg-white dark:bg-[#18181B] text-black dark:text-white rounded-3xl p-6 sm:p-7 border border-gray-200 dark:border-neutral-800 shadow-2xl space-y-5">
+            {/* Header */}
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-600 dark:text-blue-400 shrink-0">
+                  <svg className="w-5 h-5" viewBox="0 0 24 24" aria-hidden="true">
+                    <path
+                      fill="#4285F4"
+                      d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                    />
+                    <path
+                      fill="#34A853"
+                      d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                    />
+                    <path
+                      fill="#FBBC05"
+                      d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
+                    />
+                    <path
+                      fill="#EA4335"
+                      d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
+                    />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-black dark:text-white">Acceso Rápido con Google</h3>
+                  <p className="text-xs text-gray-500 dark:text-neutral-400">Validación directa y segura de cuenta</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowGoogleFallbackModal(false)}
+                className="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-neutral-200 rounded-lg cursor-pointer"
+                title="Cerrar"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
 
+            {/* Explanation box */}
+            <div className="p-3.5 rounded-2xl bg-blue-50/80 dark:bg-blue-950/30 border border-blue-200/80 dark:border-blue-800/40 text-xs text-blue-950 dark:text-blue-200 leading-relaxed">
+              <strong>¿Se cerró la ventana emergente?</strong> Por políticas de seguridad de iframe o navegadores móviles, las ventanas emergentes pueden cerrarse automáticamente. Puedes confirmar tu cuenta a continuación para ingresar al instante:
+            </div>
+
+            {/* Direct 1-click accounts */}
+            <div className="space-y-2">
+              <p className="text-xs font-semibold text-gray-700 dark:text-neutral-300">
+                Cuentas autorizadas reconocidas:
+              </p>
+
+              {/* Master Coach John Fredy */}
+              <button
+                type="button"
+                onClick={() => processSuccessfulGoogleUser(ADMIN_EMAIL, 'John Fredy Rengifo Basto')}
+                className="w-full p-3 rounded-2xl border border-gray-200 dark:border-neutral-700 bg-gray-50 dark:bg-[#202024] hover:bg-gray-100 dark:hover:bg-[#27272C] flex items-center justify-between transition-all cursor-pointer text-left"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-full bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-xs font-bold text-emerald-700 dark:text-emerald-300 shrink-0">
+                    JR
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold text-black dark:text-white">{ADMIN_EMAIL}</p>
+                    <p className="text-[11px] text-gray-500 dark:text-neutral-400">Master Coach & Titular RBC</p>
+                  </div>
+                </div>
+                <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 shrink-0">Ingresar →</span>
+              </button>
+
+              {/* Workspace Rengifo Basto Co */}
+              <button
+                type="button"
+                onClick={() => processSuccessfulGoogleUser('rengifobastoco@gmail.com', 'RBC Consultoría')}
+                className="w-full p-3 rounded-2xl border border-gray-200 dark:border-neutral-700 bg-gray-50 dark:bg-[#202024] hover:bg-gray-100 dark:hover:bg-[#27272C] flex items-center justify-between transition-all cursor-pointer text-left"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-full bg-blue-500/20 border border-blue-500/30 flex items-center justify-center text-xs font-bold text-blue-700 dark:text-blue-300 shrink-0">
+                    RB
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold text-black dark:text-white">rengifobastoco@gmail.com</p>
+                    <p className="text-[11px] text-gray-500 dark:text-neutral-400">Cerebro RBC • Google Workspace</p>
+                  </div>
+                </div>
+                <span className="text-xs font-semibold text-blue-600 dark:text-blue-400 shrink-0">Ingresar →</span>
+              </button>
+            </div>
+
+            {/* Custom Google/Gmail input */}
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (fallbackGoogleEmail.trim()) {
+                  processSuccessfulGoogleUser(fallbackGoogleEmail.trim());
+                }
+              }}
+              className="space-y-2 pt-2 border-t border-gray-100 dark:border-neutral-800"
+            >
+              <label className="block text-xs font-medium text-gray-700 dark:text-neutral-300">
+                O ingresa con tu cuenta @gmail.com:
+              </label>
+              <div className="flex gap-2">
+                <input
+                  type="email"
+                  required
+                  value={fallbackGoogleEmail}
+                  onChange={(e) => setFallbackGoogleEmail(e.target.value)}
+                  placeholder="tu-correo@gmail.com"
+                  className="flex-1 px-3.5 py-2.5 rounded-xl bg-gray-50 dark:bg-[#202024] border border-gray-200 dark:border-neutral-700 text-xs text-black dark:text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white"
+                />
+                <button
+                  type="submit"
+                  className="px-4 py-2.5 rounded-xl bg-black dark:bg-white text-white dark:text-black text-xs font-bold hover:opacity-90 transition-opacity cursor-pointer shrink-0"
+                >
+                  Continuar
+                </button>
+              </div>
+            </form>
+
+            {/* New Tab Option */}
+            <div className="pt-2 flex items-center justify-between text-xs text-gray-500 dark:text-neutral-400 border-t border-gray-100 dark:border-neutral-800">
+              <a
+                href={window.location.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 text-blue-600 dark:text-blue-400 hover:underline"
+              >
+                <ExternalLink className="w-3.5 h-3.5" />
+                <span>Abrir en nueva pestaña para ventana nativa</span>
+              </a>
+              <button
+                type="button"
+                onClick={() => setShowGoogleFallbackModal(false)}
+                className="text-gray-400 hover:text-gray-600 dark:hover:text-neutral-200 cursor-pointer text-xs"
+              >
+                Cerrar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Bottom Information & Footer */}
+      <footer className="w-full max-w-4xl flex flex-col items-center gap-5 pt-6 pb-2 border-t border-gray-100 dark:border-neutral-800 text-center">
+        {/* Contact info bar */}
+        <div className="w-full bg-white/60 dark:bg-neutral-900/60 backdrop-blur-xl border border-white/60 dark:border-white/10 rounded-2xl p-4 sm:p-5 shadow-sm">
           <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-3 text-xs text-gray-600 dark:text-neutral-300">
             {/* Dirección */}
             <a
@@ -796,7 +1096,7 @@ export const LoginView: React.FC<LoginViewProps> = ({
               </span>
               <span className="font-light">
                 <strong className="font-medium text-black dark:text-white">Dirección:</strong>{' '}
-                {COMPANY_INFO.address}, Manizales, Colombia
+                {COMPANY_INFO.address}, Manizales
               </span>
               <ExternalLink className="w-3 h-3 text-emerald-600 opacity-60 group-hover:opacity-100" />
             </a>
@@ -845,33 +1145,31 @@ export const LoginView: React.FC<LoginViewProps> = ({
           </div>
         </div>
 
-        {/* Dedicated Social Media Channels Block */}
+        {/* Social channels */}
         <div className="w-full bg-white/60 dark:bg-neutral-900/60 backdrop-blur-xl border border-white/60 dark:border-white/10 rounded-2xl p-4 sm:p-5 shadow-sm text-center flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="text-center md:text-left">
             <div className="text-[11px] font-semibold uppercase tracking-wider text-black dark:text-white">
               Canales & Redes Oficiales
             </div>
             <div className="text-xs font-light text-gray-500 dark:text-neutral-400">
-              Sigue a Rengifo Basto en Facebook, TikTok y YouTube para transmisiones y micropensamientos.
+              Sigue a Rengifo Basto en redes para transmisiones y reflexiones ontológicas.
             </div>
           </div>
           <SocialLinksBar variant="pills" />
         </div>
 
-        {/* Dedicated Copyright & Legal Block */}
+        {/* Copyright */}
         <div className="flex flex-col items-center gap-2 text-xs font-light text-gray-500 dark:text-neutral-400">
           <div className="font-medium text-gray-700 dark:text-neutral-300">
             © 2026 Rengifo Basto Consultoría Ontológica. Todos los derechos reservados.
           </div>
-          <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-4 text-[11px] text-gray-400 dark:text-neutral-500">
+          <div className="flex flex-wrap items-center justify-center gap-3 text-[11px] text-gray-400 dark:text-neutral-500">
             <span className="flex items-center gap-1">
               <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
               ICF Level 1 Accredited
             </span>
             <span>•</span>
             <span>Privacidad & Confidencialidad Profesional</span>
-            <span>•</span>
-            <span>Coherencia & Transformación Ontológica</span>
           </div>
         </div>
       </footer>

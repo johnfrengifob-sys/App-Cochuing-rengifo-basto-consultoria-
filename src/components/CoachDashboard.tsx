@@ -22,6 +22,7 @@ import { ClientTrafficStatusBadge } from './ClientTrafficStatusBadge';
 import { ClientDirectoryTable } from './ClientDirectoryTable';
 import { ExecutiveMetricsBar } from './ExecutiveMetricsBar';
 import { FirebaseFirestoreMonitor } from './FirebaseFirestoreMonitor';
+import { SecurityAuditModal } from './SecurityAuditModal';
 import type { AcademicAdminSubTab } from './admin/AdminAcademicManager';
 
 // Lazy load secondary dashboard modules to keep the primary view fast and prevent initial load freeze
@@ -181,6 +182,7 @@ export const CoachDashboard: React.FC<CoachDashboardProps> = ({
 
   // New session modal state
   const [showNewSessionModal, setShowNewSessionModal] = useState(false);
+  const [showSecurityAuditModal, setShowSecurityAuditModal] = useState(false);
   const [newSessionDate, setNewSessionDate] = useState('');
   const [newSessionFocus, setNewSessionFocus] = useState('');
   const [newSessionNumber, setNewSessionNumber] = useState<number>(
@@ -420,6 +422,20 @@ export const CoachDashboard: React.FC<CoachDashboardProps> = ({
             <p className="text-xs sm:text-sm text-gray-500 dark:text-neutral-400 font-light leading-relaxed">
               Supervisión estratégica de clientes, gestión de embudo ontológico, validación financiera y facilitación directiva.
             </p>
+            <div className="pt-1 flex items-center justify-center gap-2.5">
+              <button
+                id="open-security-audit-btn"
+                type="button"
+                onClick={() => setShowSecurityAuditModal(true)}
+                className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 text-xs font-semibold transition-all cursor-pointer shadow-2xs group"
+              >
+                <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 group-hover:scale-110 transition-transform" />
+                <span>Auditoría de Seguridad & Seguimiento (Regla 30 Días)</span>
+                <span className="text-[10px] px-1.5 py-0.2 rounded-full font-mono font-bold bg-emerald-600 text-white dark:bg-emerald-400 dark:text-black">
+                  100% OK
+                </span>
+              </button>
+            </div>
           </div>
 
           {/* Funciones de la Consola: Botones delgados, lineales y con altura compacta */}
@@ -1094,6 +1110,13 @@ export const CoachDashboard: React.FC<CoachDashboardProps> = ({
           </div>
         </div>
       )}
+
+      {/* Modal de Auditoría de Seguridad y Monitoreo de Automatizaciones (Regla de 30 Días e Inscripción) */}
+      <SecurityAuditModal
+        isOpen={showSecurityAuditModal}
+        onClose={() => setShowSecurityAuditModal(false)}
+        onRefreshClients={handleRefreshClientsList}
+      />
     </div>
   );
 };
