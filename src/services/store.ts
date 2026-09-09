@@ -2603,6 +2603,7 @@ export class OntologicalStore {
     googleAuthConnected?: boolean;
     avatarUrl?: string;
     userUid?: string;
+    securityPin?: string;
   }): { registration: EventRegistration; user: User; prospect: Prospect } {
     const events = this.getCronogramaEvents();
     const targetEvent = events.find((e) => e.id === params.eventId) || events[0] || INITIAL_CRONOGRAMA_EVENTS[0];
@@ -2640,6 +2641,7 @@ export class OntologicalStore {
         paymentStatus: 'Pago Único',
         programName: 'Certeza, Fronteras & Dirección Personal',
         programFee: '$1.500.000 COP',
+        securityPin: params.securityPin || '1234',
       };
       this.saveUsers([...users, existingUser]);
       // Disparar inmediatamente bienvenida y seguimiento semanal al inscribirse
@@ -2647,6 +2649,10 @@ export class OntologicalStore {
     } else {
       let changed = false;
       const updatedUser = { ...existingUser };
+      if (params.securityPin && (!existingUser.securityPin || existingUser.securityPin !== params.securityPin)) {
+        updatedUser.securityPin = params.securityPin;
+        changed = true;
+      }
       if (params.avatarUrl && (!existingUser.avatarUrl || existingUser.avatarUrl.includes('unsplash'))) {
         updatedUser.avatarUrl = params.avatarUrl;
         changed = true;
@@ -3414,6 +3420,59 @@ export class OntologicalStore {
     return code.trim() === ADMIN_SECURITY_CODE;
   }
 
+  static verifyUserPin(user: User, pin: string): boolean {
+    if (!pin) return false;
+    const cleanPin = pin.trim();
+    if (this.isAdminEmail(user.email) || user.role === 'coach') {
+      return cleanPin === ADMIN_SECURITY_CODE;
+    }
+    if (user.securityPin) {
+      return cleanPin === user.securityPin;
+    }
+    // Default PIN for legacy accounts without explicit pin
+    if (user.phone && user.phone.length >= 4 && cleanPin === user.phone.slice(-4)) {
+      return true;
+    }
+    return cleanPin === '1234';
+  }
+
+  static authenticateWithPin(email: string, pin: string): {
+    success: boolean;
+    user?: User;
+    error?: string;
+  } {
+    const user = this.getUserByEmail(email);
+    if (!user) {
+      return {
+        success: false,
+        error: 'El correo electrónico no se encuentra registrado en el sistema. Puedes registrarte gratis a continuación.',
+      };
+    }
+    if (user.role === 'coach' || this.isAdminEmail(user.email)) {
+      if (pin.trim() !== ADMIN_SECURITY_CODE) {
+        return {
+          success: false,
+          error: 'Código maestro de seguridad incorrecto para la cuenta de administración.',
+        };
+      }
+      this.setCurrentUser(user.uid);
+      return { success: true, user };
+    }
+
+    if (!this.verifyUserPin(user, pin)) {
+      return {
+        success: false,
+        error: 'El PIN de seguridad ingresado es incorrecto para este correo.',
+      };
+    }
+
+    this.setCurrentUser(user.uid);
+    return {
+      success: true,
+      user,
+    };
+  }
+
   static authenticateByEmail(email: string): {
     success: boolean;
     user?: User;
@@ -3434,7 +3493,7 @@ export class OntologicalStore {
           'El acceso de administrador requiere verificación oficial de Google o código confidencial de seguridad.',
       };
     }
-    this.setCurrentUser(user.uid);
+    // Note: Caller must follow up with personal PIN/credential verification in AuthenticationSpace
     return {
       success: true,
       user,

@@ -54,6 +54,7 @@ export interface User {
   trackingEndedAt?: string; // Momento exacto en que se concluyó o pausó el seguimiento
   welcomeMessageSentAt?: string; // Momento del despacho inmediato de bienvenida
   inactivityDaysCount?: number; // Días calculados de inactividad respecto a lastActivityAt
+  securityPin?: string; // Clave personal o PIN de acceso de 4 a 6 dígitos para ingreso seguro
 }
 
 export interface SecurityAuditResult {

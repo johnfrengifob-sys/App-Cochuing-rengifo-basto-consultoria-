@@ -47,6 +47,8 @@ export const LoginView: React.FC<LoginViewProps> = ({
 
   // Email input and verification state
   const [emailInput, setEmailInput] = useState('');
+  const [pinInput, setPinInput] = useState('');
+  const [showPin, setShowPin] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
 
@@ -54,6 +56,8 @@ export const LoginView: React.FC<LoginViewProps> = ({
   const [regName, setRegName] = useState('');
   const [regEmail, setRegEmail] = useState('');
   const [regPhone, setRegPhone] = useState('');
+  const [regPin, setRegPin] = useState('');
+  const [showRegPin, setShowRegPin] = useState(false);
   const [regInterest, setRegInterest] = useState('Certeza, Fronteras & Dirección Personal');
   const [regSaveForFuture, setRegSaveForFuture] = useState(true);
   const [isRegistering, setIsRegistering] = useState(false);
@@ -74,19 +78,12 @@ export const LoginView: React.FC<LoginViewProps> = ({
     joinedAt: '2023-01-10',
   };
 
-  // Sample client emails for testing
-  const registeredClients = availableUsers.filter((u) => u.role === 'client');
-
   // Direct Admin Security Code state
   const [adminQuickCode, setAdminQuickCode] = useState('');
   const [showAdminCode, setShowAdminCode] = useState(false);
   const [adminQuickError, setAdminQuickError] = useState<string | null>(null);
 
-  // Google Fallback Modal State (when popup closes or is blocked by iframe)
-  const [showGoogleFallbackModal, setShowGoogleFallbackModal] = useState(false);
-  const [fallbackGoogleEmail, setFallbackGoogleEmail] = useState('');
-
-  // Handle participant email verification
+  // Handle participant email and optional PIN verification
   const handleVerifyEmail = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     setAuthError(null);
@@ -118,11 +115,24 @@ export const LoginView: React.FC<LoginViewProps> = ({
       if (!foundUser) {
         setIsVerifying(false);
         setAuthError(
-          `El correo "${trimmed}" no se encuentra en el sistema. Puedes registrarte en 1 minuto a continuación.`
+          `El correo "${trimmed}" no se encuentra registrado. Puedes crear tu cuenta gratis a continuación.`
         );
         return;
       }
 
+      // If user provided their personal PIN directly in the form
+      if (pinInput.trim()) {
+        const pinAuth = OntologicalStore.authenticateWithPin(trimmed, pinInput.trim());
+        setIsVerifying(false);
+        if (!pinAuth.success || !pinAuth.user) {
+          setAuthError(pinAuth.error || 'PIN de seguridad incorrecto.');
+          return;
+        }
+        onLogin(pinAuth.user);
+        return;
+      }
+
+      // If no PIN provided, open the verification modal (Google, OTP, PIN)
       setIsVerifying(false);
       setAuthenticatingUser(foundUser);
     } catch {
@@ -141,7 +151,6 @@ export const LoginView: React.FC<LoginViewProps> = ({
   ) => {
     const email = emailRaw.trim().toLowerCase();
     setIsVerifying(false);
-    setShowGoogleFallbackModal(false);
     setAuthError(null);
 
     // 1. If Admin / Master Coach:
@@ -231,12 +240,11 @@ export const LoginView: React.FC<LoginViewProps> = ({
         return;
       }
       setIsVerifying(false);
-      setShowGoogleFallbackModal(true);
+      setAuthError('La ventana de Google se cerró antes de completar el acceso.');
     } catch (popupErr: unknown) {
-      console.warn('Google sign-in notice (popup closed or iframe restriction):', popupErr);
+      console.warn('Google sign-in notice:', popupErr);
       setIsVerifying(false);
-      // Immediately open the helpful Google Fallback Assistant modal so user is not stuck
-      setShowGoogleFallbackModal(true);
+      setAuthError('No se pudo abrir la ventana de Google (puede estar bloqueada por el navegador). Autoriza las ventanas emergentes o ingresa con tu correo y PIN registrado.');
     }
   };
 
@@ -249,6 +257,7 @@ export const LoginView: React.FC<LoginViewProps> = ({
     const cleanName = regName.trim();
     const cleanEmail = regEmail.trim().toLowerCase();
     const cleanPhone = regPhone.trim();
+    const cleanPin = regPin.trim();
 
     if (!cleanName || !cleanEmail) {
       setAuthError('Por favor ingresa tu nombre completo y tu correo electrónico.');
@@ -272,19 +281,20 @@ export const LoginView: React.FC<LoginViewProps> = ({
       if (existingUser) {
         setIsRegistering(false);
         setRegistrationSuccess(
-          `¡El correo "${cleanEmail}" ya se encuentra registrado y activo! Puedes ingresar de inmediato.`
+          `¡El correo "${cleanEmail}" ya se encuentra registrado y activo! Puedes ingresar con tu PIN de inmediato.`
         );
         setCreatedAccountUser(existingUser);
         return;
       }
 
-      // 2. Register user in store & event
+      // 2. Register user in store & event with personal security PIN
       const upcomingEvent = OntologicalStore.getUpcomingEvent();
       const regResult = OntologicalStore.registerForEvent({
         eventId: upcomingEvent.id,
         name: cleanName,
         email: cleanEmail,
         phone: cleanPhone,
+        securityPin: cleanPin || '1234',
         googleAuthConnected: cleanEmail.endsWith('@gmail.com'),
       });
 
@@ -315,7 +325,7 @@ export const LoginView: React.FC<LoginViewProps> = ({
 
       setIsRegistering(false);
       setRegistrationSuccess(
-        `¡Cuenta creada y guardada exitosamente! Tu registro con "${cleanEmail}" ha quedado guardado para futuros accesos.`
+        `¡Cuenta creada exitosamente! Tu registro con "${cleanEmail}" y tu PIN han quedado guardados de forma segura.`
       );
       setCreatedAccountUser(regResult.user);
     } catch (err) {
@@ -440,24 +450,13 @@ export const LoginView: React.FC<LoginViewProps> = ({
                         </div>
                         <span>Continuar con Google (1 Clic)</span>
                       </button>
-
-                      {/* Subtitle helper link if popup closes */}
-                      <div className="text-center">
-                        <button
-                          type="button"
-                          onClick={() => setShowGoogleFallbackModal(true)}
-                          className="text-xs text-gray-500 dark:text-neutral-400 hover:text-black dark:hover:text-white underline cursor-pointer"
-                        >
-                          ¿Se cerró la ventana emergente de Google? Pulsa aquí
-                        </button>
-                      </div>
                     </div>
 
                     {/* Value Pill */}
                     <div className="p-3.5 rounded-2xl bg-white/30 dark:bg-white/5 border border-white/40 dark:border-white/5 text-xs text-gray-600 dark:text-neutral-400 space-y-1.5">
                       <div className="flex items-center gap-2">
                         <ShieldCheck className="w-4 h-4 text-emerald-500 shrink-0" />
-                        <span>Autenticación directa y segura sin contraseñas</span>
+                        <span>Autenticación directa y confidencial</span>
                       </div>
                       <div className="flex items-center gap-2">
                         <CheckCircle2 className="w-4 h-4 text-blue-500 shrink-0" />
@@ -473,11 +472,11 @@ export const LoginView: React.FC<LoginViewProps> = ({
                         O ingresa con tu correo registrado
                       </h3>
                       <p className="text-xs text-gray-500 dark:text-neutral-400 font-light mt-0.5">
-                        Escribe el correo electrónico con el que te inscribiste
+                        Escribe tu correo y tu PIN personal de acceso
                       </p>
                     </div>
 
-                    {/* Email Form */}
+                    {/* Email & PIN Form */}
                     <form onSubmit={handleVerifyEmail} className="space-y-3">
                       <div className="relative">
                         <input
@@ -488,10 +487,32 @@ export const LoginView: React.FC<LoginViewProps> = ({
                             setEmailInput(e.target.value);
                             if (authError) setAuthError(null);
                           }}
-                          placeholder="ejemplo: tu-correo@gmail.com"
+                          placeholder="tu-correo@ejemplo.com"
                           className="w-full pl-10 pr-4 py-3 rounded-xl bg-white/90 dark:bg-[#202024] border border-gray-200 dark:border-neutral-700 text-sm text-black dark:text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white transition-all"
                         />
                         <Mail className="w-4 h-4 text-gray-400 absolute left-3.5 top-3.5" />
+                      </div>
+
+                      <div className="relative">
+                        <input
+                          type={showPin ? 'text' : 'password'}
+                          value={pinInput}
+                          onChange={(e) => {
+                            setPinInput(e.target.value);
+                            if (authError) setAuthError(null);
+                          }}
+                          placeholder="PIN de seguridad (4 dígitos)"
+                          maxLength={6}
+                          className="w-full pl-10 pr-10 py-3 rounded-xl bg-white/90 dark:bg-[#202024] border border-gray-200 dark:border-neutral-700 text-sm text-black dark:text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white transition-all"
+                        />
+                        <Lock className="w-4 h-4 text-gray-400 absolute left-3.5 top-3.5" />
+                        <button
+                          type="button"
+                          onClick={() => setShowPin(!showPin)}
+                          className="absolute right-3.5 top-3.5 text-gray-400 hover:text-black dark:hover:text-white transition-colors cursor-pointer"
+                        >
+                          {showPin ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        </button>
                       </div>
 
                       {authError && (
@@ -522,33 +543,16 @@ export const LoginView: React.FC<LoginViewProps> = ({
                         {isVerifying ? (
                           <>
                             <span className="animate-spin rounded-full h-4 w-4 border-2 border-white dark:border-black border-t-transparent" />
-                            <span>Verificando acceso...</span>
+                            <span>Verificando credenciales...</span>
                           </>
                         ) : (
                           <>
-                            <span>Continuar con correo</span>
+                            <span>Ingresar a mi cuenta</span>
                             <ArrowRight className="w-4 h-4" />
                           </>
                         )}
                       </button>
                     </form>
-
-                    {/* Quick client hint for testing */}
-                    {registeredClients.length > 0 && (
-                      <div className="pt-1 text-center text-[11px] text-gray-400 dark:text-neutral-500">
-                        <span>Cliente de prueba: </span>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setEmailInput(registeredClients[0].email);
-                            setAuthError(null);
-                          }}
-                          className="underline text-emerald-600 dark:text-emerald-400 hover:opacity-80 cursor-pointer"
-                        >
-                          {registeredClients[0].email}
-                        </button>
-                      </div>
-                    )}
 
                     {/* Switch to Register Mode */}
                     <div className="pt-3 border-t border-gray-200/60 dark:border-neutral-800 text-center text-xs text-gray-500 dark:text-neutral-400 font-light">
@@ -652,16 +656,6 @@ export const LoginView: React.FC<LoginViewProps> = ({
                           </svg>
                           <span>Registrarme con Google (1 Clic)</span>
                         </button>
-
-                        <div className="text-center">
-                          <button
-                            type="button"
-                            onClick={() => setShowGoogleFallbackModal(true)}
-                            className="text-xs text-gray-500 dark:text-neutral-400 hover:text-black dark:hover:text-white underline cursor-pointer"
-                          >
-                            ¿Se cerró la ventana emergente de Google? Pulsa aquí
-                          </button>
-                        </div>
                       </div>
 
                       {/* Switch back to Login Mode */}
@@ -728,6 +722,29 @@ export const LoginView: React.FC<LoginViewProps> = ({
                           />
                         </div>
 
+                        <div>
+                          <label className="block text-xs font-medium text-gray-700 dark:text-neutral-300 mb-1">
+                            Crea tu PIN de Seguridad (4 dígitos)
+                          </label>
+                          <div className="relative">
+                            <input
+                              type={showRegPin ? 'text' : 'password'}
+                              value={regPin}
+                              onChange={(e) => setRegPin(e.target.value)}
+                              placeholder="Ej: 1234 (para tus futuros ingresos)"
+                              maxLength={6}
+                              className="w-full pl-3.5 pr-10 py-2.5 rounded-xl bg-white/90 dark:bg-[#202024] border border-gray-200 dark:border-neutral-700 text-sm text-black dark:text-white focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white transition-all"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => setShowRegPin(!showRegPin)}
+                              className="absolute right-3 top-2.5 text-gray-400 hover:text-black dark:hover:text-white transition-colors cursor-pointer"
+                            >
+                              {showRegPin ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                            </button>
+                          </div>
+                        </div>
+
                         <div className="flex items-center gap-2 pt-1 text-xs text-gray-600 dark:text-neutral-400">
                           <input
                             type="checkbox"
@@ -788,7 +805,7 @@ export const LoginView: React.FC<LoginViewProps> = ({
                       Acceso Administrador
                     </h2>
                     <p className="text-xs sm:text-sm text-gray-600 dark:text-neutral-300 mt-1 font-light">
-                      Exclusivo Master Coach John Fredy Rengifo Basto ({ADMIN_EMAIL})
+                      Exclusivo Master Coach John Fredy Rengifo Basto • Cuenta Oficial RBC
                     </p>
                   </div>
 
@@ -821,7 +838,7 @@ export const LoginView: React.FC<LoginViewProps> = ({
                           />
                         </svg>
                       </div>
-                      <span>Verificar con Google ({ADMIN_EMAIL})</span>
+                      <span>Verificar con Google Oficial</span>
                     </button>
 
                     {/* Biometric / Face ID */}
@@ -932,150 +949,6 @@ export const LoginView: React.FC<LoginViewProps> = ({
           }}
           onBack={() => setAuthenticatingUser(null)}
         />
-      )}
-
-      {/* Google Sign-in Assistant Modal (Solves popup close / browser cookie restrictions) */}
-      {showGoogleFallbackModal && (
-        <div className="fixed inset-0 z-50 bg-black/60 dark:bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in">
-          <div className="w-full max-w-md bg-white dark:bg-[#18181B] text-black dark:text-white rounded-3xl p-6 sm:p-7 border border-gray-200 dark:border-neutral-800 shadow-2xl space-y-5">
-            {/* Header */}
-            <div className="flex items-start justify-between gap-3">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-600 dark:text-blue-400 shrink-0">
-                  <svg className="w-5 h-5" viewBox="0 0 24 24" aria-hidden="true">
-                    <path
-                      fill="#4285F4"
-                      d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                    />
-                    <path
-                      fill="#34A853"
-                      d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                    />
-                    <path
-                      fill="#FBBC05"
-                      d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
-                    />
-                    <path
-                      fill="#EA4335"
-                      d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
-                    />
-                  </svg>
-                </div>
-                <div>
-                  <h3 className="text-base font-bold text-black dark:text-white">Acceso Rápido con Google</h3>
-                  <p className="text-xs text-gray-500 dark:text-neutral-400">Validación directa y segura de cuenta</p>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setShowGoogleFallbackModal(false)}
-                className="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-neutral-200 rounded-lg cursor-pointer"
-                title="Cerrar"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            {/* Explanation box */}
-            <div className="p-3.5 rounded-2xl bg-blue-50/80 dark:bg-blue-950/30 border border-blue-200/80 dark:border-blue-800/40 text-xs text-blue-950 dark:text-blue-200 leading-relaxed">
-              <strong>¿Se cerró la ventana emergente?</strong> Por políticas de seguridad de iframe o navegadores móviles, las ventanas emergentes pueden cerrarse automáticamente. Puedes confirmar tu cuenta a continuación para ingresar al instante:
-            </div>
-
-            {/* Direct 1-click accounts */}
-            <div className="space-y-2">
-              <p className="text-xs font-semibold text-gray-700 dark:text-neutral-300">
-                Cuentas autorizadas reconocidas:
-              </p>
-
-              {/* Master Coach John Fredy */}
-              <button
-                type="button"
-                onClick={() => processSuccessfulGoogleUser(ADMIN_EMAIL, 'John Fredy Rengifo Basto')}
-                className="w-full p-3 rounded-2xl border border-gray-200 dark:border-neutral-700 bg-gray-50 dark:bg-[#202024] hover:bg-gray-100 dark:hover:bg-[#27272C] flex items-center justify-between transition-all cursor-pointer text-left"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-xs font-bold text-emerald-700 dark:text-emerald-300 shrink-0">
-                    JR
-                  </div>
-                  <div>
-                    <p className="text-xs font-bold text-black dark:text-white">{ADMIN_EMAIL}</p>
-                    <p className="text-[11px] text-gray-500 dark:text-neutral-400">Master Coach & Titular RBC</p>
-                  </div>
-                </div>
-                <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 shrink-0">Ingresar →</span>
-              </button>
-
-              {/* Workspace Rengifo Basto Co */}
-              <button
-                type="button"
-                onClick={() => processSuccessfulGoogleUser('rengifobastoco@gmail.com', 'RBC Consultoría')}
-                className="w-full p-3 rounded-2xl border border-gray-200 dark:border-neutral-700 bg-gray-50 dark:bg-[#202024] hover:bg-gray-100 dark:hover:bg-[#27272C] flex items-center justify-between transition-all cursor-pointer text-left"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-blue-500/20 border border-blue-500/30 flex items-center justify-center text-xs font-bold text-blue-700 dark:text-blue-300 shrink-0">
-                    RB
-                  </div>
-                  <div>
-                    <p className="text-xs font-bold text-black dark:text-white">rengifobastoco@gmail.com</p>
-                    <p className="text-[11px] text-gray-500 dark:text-neutral-400">Cerebro RBC • Google Workspace</p>
-                  </div>
-                </div>
-                <span className="text-xs font-semibold text-blue-600 dark:text-blue-400 shrink-0">Ingresar →</span>
-              </button>
-            </div>
-
-            {/* Custom Google/Gmail input */}
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                if (fallbackGoogleEmail.trim()) {
-                  processSuccessfulGoogleUser(fallbackGoogleEmail.trim());
-                }
-              }}
-              className="space-y-2 pt-2 border-t border-gray-100 dark:border-neutral-800"
-            >
-              <label className="block text-xs font-medium text-gray-700 dark:text-neutral-300">
-                O ingresa con tu cuenta @gmail.com:
-              </label>
-              <div className="flex gap-2">
-                <input
-                  type="email"
-                  required
-                  value={fallbackGoogleEmail}
-                  onChange={(e) => setFallbackGoogleEmail(e.target.value)}
-                  placeholder="tu-correo@gmail.com"
-                  className="flex-1 px-3.5 py-2.5 rounded-xl bg-gray-50 dark:bg-[#202024] border border-gray-200 dark:border-neutral-700 text-xs text-black dark:text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white"
-                />
-                <button
-                  type="submit"
-                  className="px-4 py-2.5 rounded-xl bg-black dark:bg-white text-white dark:text-black text-xs font-bold hover:opacity-90 transition-opacity cursor-pointer shrink-0"
-                >
-                  Continuar
-                </button>
-              </div>
-            </form>
-
-            {/* New Tab Option */}
-            <div className="pt-2 flex items-center justify-between text-xs text-gray-500 dark:text-neutral-400 border-t border-gray-100 dark:border-neutral-800">
-              <a
-                href={window.location.href}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 text-blue-600 dark:text-blue-400 hover:underline"
-              >
-                <ExternalLink className="w-3.5 h-3.5" />
-                <span>Abrir en nueva pestaña para ventana nativa</span>
-              </a>
-              <button
-                type="button"
-                onClick={() => setShowGoogleFallbackModal(false)}
-                className="text-gray-400 hover:text-gray-600 dark:hover:text-neutral-200 cursor-pointer text-xs"
-              >
-                Cerrar
-              </button>
-            </div>
-          </div>
-        </div>
       )}
 
       {/* Bottom Information & Footer */}

@@ -274,11 +274,11 @@ export const AuthenticationSpace: React.FC<AuthenticationSpaceProps> = ({
         setErrorMessage('Por favor ingresa los 6 dígitos del código de verificación.');
         return;
       }
-      if (enteredCode === generatedOtp || enteredCode.length === 6) {
+      if (enteredCode === generatedOtp) {
         triggerSuccessSequence('Código de Verificación OTP');
       } else {
         setErrorMessage(
-          'Código de verificación inválido. Intenta nuevamente o usa el código de prueba.'
+          'Código de verificación incorrecto. Por favor ingresa el código enviado a tu correo.'
         );
       }
     }
@@ -298,14 +298,6 @@ export const AuthenticationSpace: React.FC<AuthenticationSpaceProps> = ({
     otpInputsRef.current[0]?.focus();
   };
 
-  const handleFillDemoOtp = () => {
-    if (isCoach) {
-      return; // Never reveal or autofill admin security code
-    }
-    setOtpDigits(generatedOtp.split(''));
-    setErrorMessage(null);
-  };
-
   // Face Recognition Scan Handler
   const handleStartFaceScan = () => {
     if (isScanningFace || isVerifying || isSuccess) return;
@@ -313,7 +305,7 @@ export const AuthenticationSpace: React.FC<AuthenticationSpaceProps> = ({
 
     if (isCoach && !isCoachAuthorizedEmail) {
       setErrorMessage(
-        `Acceso denegado: Únicamente el correo ${ADMIN_EMAIL} está autorizado para ingresar al panel administrador.`
+        `Acceso denegado: Únicamente el correo del administrador está autorizado para ingresar al panel.`
       );
       return;
     }
@@ -329,22 +321,18 @@ export const AuthenticationSpace: React.FC<AuthenticationSpaceProps> = ({
         clearInterval(interval);
         setFaceScanProgress(100);
         if (isCoach) {
-          setFaceScanStatus('Biometría confirmada • Ingrese código de seguridad');
-          setIsScanningFace(false);
-          setAdminFaceScanned(true);
+          setFaceScanStatus('Biometría confirmada • Ingrese código confidencial');
         } else {
-          setFaceScanStatus('Coincidencia biométrica confirmada (99.8%)');
-          setTimeout(() => {
-            setIsScanningFace(false);
-            triggerSuccessSequence('Reconocimiento Facial Biométrico');
-          }, 500);
+          setFaceScanStatus('Sensor validado • Confirme con su PIN personal');
         }
+        setIsScanningFace(false);
+        setAdminFaceScanned(true);
       } else {
         setFaceScanProgress(progress);
         if (progress === 40) {
           setFaceScanStatus('Analizando coherencia de mirada y vivacidad...');
         } else if (progress === 65) {
-          setFaceScanStatus('Verificando firma ontológica encriptada...');
+          setFaceScanStatus('Verificando firma de seguridad encriptada...');
         }
       }
     }, 400);
@@ -352,19 +340,27 @@ export const AuthenticationSpace: React.FC<AuthenticationSpaceProps> = ({
 
   const handleConfirmFaceWithCode = () => {
     setErrorMessage(null);
-    if (!isCoachAuthorizedEmail) {
-      setErrorMessage(
-        `Acceso denegado: Únicamente el correo ${ADMIN_EMAIL} está autorizado para ingresar al panel administrador.`
-      );
-      return;
+    if (isCoach) {
+      if (!isCoachAuthorizedEmail) {
+        setErrorMessage(
+          `Acceso denegado: Únicamente la cuenta autorizada de administración puede ingresar.`
+        );
+        return;
+      }
+      if (adminFaceCode.trim() !== ADMIN_SECURITY_CODE) {
+        setErrorMessage(
+          'Código de seguridad incorrecto. Verifique sus credenciales autorizadas.'
+        );
+        return;
+      }
+      triggerSuccessSequence('Face ID Biométrico + Código de Seguridad');
+    } else {
+      if (!OntologicalStore.verifyUserPin(user, adminFaceCode)) {
+        setErrorMessage('PIN de seguridad personal incorrecto.');
+        return;
+      }
+      triggerSuccessSequence('Validación Facial + PIN Personal');
     }
-    if (adminFaceCode.trim() !== ADMIN_SECURITY_CODE) {
-      setErrorMessage(
-        'Código de seguridad incorrecto. Verifique sus credenciales autorizadas.'
-      );
-      return;
-    }
-    triggerSuccessSequence('Face ID Biométrico + Código de Seguridad');
   };
 
   // PIN Handlers
@@ -390,14 +386,14 @@ export const AuthenticationSpace: React.FC<AuthenticationSpaceProps> = ({
     setErrorMessage(null);
     const code = pinDigits.join('');
     if (code.length < 4) {
-      setErrorMessage('Ingresa el código de 4 dígitos.');
+      setErrorMessage('Ingresa los 4 dígitos de tu PIN.');
       return;
     }
 
     if (isCoach) {
       if (!isCoachAuthorizedEmail) {
         setErrorMessage(
-          `Acceso denegado: Únicamente el correo ${ADMIN_EMAIL} está autorizado para ingresar al panel administrador.`
+          `Acceso denegado: Únicamente el correo del administrador está autorizado para ingresar al panel administrador.`
         );
         return;
       }
@@ -409,7 +405,11 @@ export const AuthenticationSpace: React.FC<AuthenticationSpaceProps> = ({
       }
       triggerSuccessSequence('PIN Maestro de Seguridad Administrador');
     } else {
-      triggerSuccessSequence('PIN de Seguridad');
+      if (!OntologicalStore.verifyUserPin(user, code)) {
+        setErrorMessage('PIN de seguridad incorrecto para este participante.');
+        return;
+      }
+      triggerSuccessSequence('PIN de Seguridad Personal');
     }
   };
 
@@ -674,15 +674,15 @@ export const AuthenticationSpace: React.FC<AuthenticationSpaceProps> = ({
                   <div className="w-2 h-2 rounded-full bg-emerald-500" />
                   <div>
                     <span className="block font-medium text-black dark:text-white">
-                      {isCoach ? 'Admin Oficial Autorizado' : 'Token Activo'}
+                      {isCoach ? 'Admin Oficial Autorizado' : 'Cuenta Registrada'}
                     </span>
                     <span className="text-[10px] text-gray-400 dark:text-neutral-500">
-                      {ADMIN_EMAIL}
+                      {user.email}
                     </span>
                   </div>
                 </div>
                 <span className="text-[11px] font-mono text-gray-500 dark:text-neutral-400">
-                  {user.email.split('@')[0]}
+                  {user.name}
                 </span>
               </div>
 
@@ -774,31 +774,6 @@ export const AuthenticationSpace: React.FC<AuthenticationSpaceProps> = ({
                   />
                 ))}
               </div>
-
-              {/* Code helper card for non-coach clients only */}
-              {!isCoach && (
-                <div className="w-full max-w-sm p-3 rounded-2xl bg-black/5 dark:bg-white/5 border border-dashed border-gray-300 dark:border-neutral-700 flex items-center justify-between text-xs">
-                  <div className="flex items-center gap-2 text-left">
-                    <Sparkles className="w-4 h-4 text-amber-500 shrink-0" />
-                    <div>
-                      <span className="font-medium text-black dark:text-white">
-                        Código de prueba:
-                      </span>
-                      <span className="ml-1 font-mono font-bold text-black dark:text-white">
-                        {generatedOtp}
-                      </span>
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={handleFillDemoOtp}
-                    className="px-2.5 py-1 rounded-lg bg-black dark:bg-white text-white dark:text-black text-[11px] font-semibold hover:opacity-90 transition-all cursor-pointer flex items-center gap-1"
-                  >
-                    <Copy className="w-3 h-3" />
-                    <span>Pegar</span>
-                  </button>
-                </div>
-              )}
 
               {/* Timer & Resend */}
               {!isCoach && (
@@ -1031,24 +1006,6 @@ export const AuthenticationSpace: React.FC<AuthenticationSpaceProps> = ({
                   />
                 ))}
               </div>
-
-              {!isCoach && (
-                <div className="w-full max-w-sm p-3 rounded-2xl bg-black/5 dark:bg-white/5 border border-dashed border-gray-300 dark:border-neutral-700 flex items-center justify-between text-xs">
-                  <span className="font-medium text-black dark:text-white">
-                    PIN por defecto de prueba: <strong>1234</strong>
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setPinDigits('1234'.split(''));
-                      setErrorMessage(null);
-                    }}
-                    className="px-2.5 py-1 rounded-lg bg-black dark:bg-white text-white dark:text-black text-[11px] font-semibold hover:opacity-90 cursor-pointer"
-                  >
-                    Rellenar
-                  </button>
-                </div>
-              )}
 
               <LiquidGlassButton
                 onClick={handleVerifyPin}
