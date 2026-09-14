@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { User } from '../types';
 import { LiquidGlassButton } from './LiquidGlassButton';
 import { OntologicalStore, ADMIN_EMAIL, ADMIN_SECURITY_CODE } from '../services/store';
+import { getEmailAvatarUrl } from '../utils/avatar';
 import { signInWithGoogle } from '../services/firebase';
 import {
   ShieldCheck,
@@ -475,9 +476,18 @@ export const AuthenticationSpace: React.FC<AuthenticationSpaceProps> = ({
           <div className="flex items-center gap-4 p-4 rounded-2xl bg-[#F8F9FA] dark:bg-[#1C1C20] border border-gray-100 dark:border-neutral-800 mb-6">
             <div className="relative">
               <img
-                src={user.avatarUrl}
+                src={
+                  user.role === 'coach'
+                    ? user.avatarUrl
+                    : getEmailAvatarUrl(user.email, user.name, user.avatarUrl)
+                }
                 alt={user.name}
                 referrerPolicy="no-referrer"
+                onError={(e) => {
+                  (e.currentTarget as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(
+                    user.name
+                  )}&background=111827&color=ffffff&size=256&bold=true`;
+                }}
                 className="w-14 h-14 rounded-2xl object-cover ring-2 ring-black/5 dark:ring-white/10 shadow-xs"
               />
               <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-black dark:bg-white text-white dark:text-black flex items-center justify-center text-[10px] font-bold shadow-xs">
@@ -728,7 +738,7 @@ export const AuthenticationSpace: React.FC<AuthenticationSpaceProps> = ({
                   </div>
                 }
               >
-                {isCoach ? 'Verificar Perfil Google de Administrador' : 'Verificar & Entrar con Google'}
+                {isCoach ? 'Verificar con Google de Administrador' : 'Iniciar sesión con Google'}
               </LiquidGlassButton>
             </div>
           )}
@@ -840,9 +850,18 @@ export const AuthenticationSpace: React.FC<AuthenticationSpaceProps> = ({
                   <div className="relative z-10 flex flex-col items-center justify-center p-6 text-center">
                     <div className="relative mb-3">
                       <img
-                        src={user.avatarUrl}
+                        src={
+                          user.role === 'coach'
+                            ? user.avatarUrl
+                            : getEmailAvatarUrl(user.email, user.name, user.avatarUrl)
+                        }
                         alt={user.name}
                         referrerPolicy="no-referrer"
+                        onError={(e) => {
+                          (e.currentTarget as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(
+                            user.name
+                          )}&background=111827&color=ffffff&size=256&bold=true`;
+                        }}
                         className="w-24 h-24 rounded-full object-cover ring-4 ring-white/20 shadow-lg"
                       />
                       <div className="absolute inset-0 rounded-full border-2 border-emerald-400/80 animate-ping opacity-30" />

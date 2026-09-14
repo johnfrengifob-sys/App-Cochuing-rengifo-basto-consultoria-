@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import { User, Session, PostSessionForm, CronogramaEvent, ProgramNodeInfo } from '../types';
 import { OntologicalStore, COMPANY_INFO, PROGRAM_NODES, BRE_B_NU_CONFIG } from '../services/store';
+import { getEmailAvatarUrl } from '../utils/avatar';
 import { FirestoreSyncService } from '../services/firestoreSync';
 import { PDFGenerator } from '../utils/pdfGenerator';
 import { safeCopyToClipboard } from '../utils/clipboard';
@@ -177,6 +178,9 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
   // Modal para edición/registro de bitácora
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [activeSessionForModal, setActiveSessionForModal] = useState<Session | null>(null);
+
+  // Estado de descarga de PDF con confirmación visual
+  const [downloadToastMessage, setDownloadToastMessage] = useState<string | null>(null);
 
   // Estado de copiado de llave de pago Bre-B Nu
   const [copiedPaymentKey, setCopiedPaymentKey] = useState(false);
@@ -477,14 +481,25 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
 
   const handleDownloadWorkshopMemory = (ws: CoreWorkshopTrack) => {
     const details = getWorkshopMemoryDetails(ws);
-    PDFGenerator.generateWorkshopMemoryPDF(ws.title, activeUser, {
-      workshopCategory: ws.levelBadge,
-      completedAt: details.completedAt,
-      keyBreakthrough: details.keyBreakthrough,
-      commitments: details.commitments,
-      somaticPractice: ws.somaticPractice,
-      answers: details.answers,
-    });
+    setDownloadToastMessage(`Preparando Memoria de Taller "${ws.title}" (PDF)...`);
+    try {
+      PDFGenerator.generateWorkshopMemoryPDF(ws.title, activeUser, {
+        workshopCategory: ws.levelBadge,
+        completedAt: details.completedAt,
+        keyBreakthrough: details.keyBreakthrough,
+        commitments: details.commitments,
+        somaticPractice: ws.somaticPractice,
+        answers: details.answers,
+      });
+      setTimeout(() => {
+        setDownloadToastMessage('¡PDF de taller descargado correctamente!');
+        setTimeout(() => setDownloadToastMessage(null), 3000);
+      }, 600);
+    } catch (err) {
+      console.error('Error al generar PDF de taller:', err);
+      setDownloadToastMessage('Error al generar el PDF. Intenta nuevamente.');
+      setTimeout(() => setDownloadToastMessage(null), 3500);
+    }
   };
 
   const formatHumanDate = (dateStr?: string) => {
@@ -508,8 +523,25 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
     setIsModalOpen(true);
   };
 
-  const handleDownloadMemory = (form: PostSessionForm, sess?: Session) => {
-    PDFGenerator.generateSessionWorkbookPDF(form, activeUser, sess || currentSession);
+  const handleDownloadMemory = (form?: Partial<PostSessionForm> | null, sess?: Session) => {
+    const targetSession = sess || currentSession;
+    const effectiveForm =
+      form ||
+      postForms.find((f) => f.sessionNumber === targetSession.sessionNumber) ||
+      (targetSession.sessionNumber === currentSessionNumber ? currentPostForm : null);
+
+    setDownloadToastMessage(`Generando Bitácora de Sesión ${targetSession.sessionNumber} en formato PDF...`);
+    try {
+      PDFGenerator.generateSessionWorkbookPDF(effectiveForm, activeUser, targetSession);
+      setTimeout(() => {
+        setDownloadToastMessage(`¡Bitácora Sesión ${targetSession.sessionNumber} descargada en PDF!`);
+        setTimeout(() => setDownloadToastMessage(null), 3000);
+      }, 600);
+    } catch (err) {
+      console.error('Error al generar PDF de bitácora:', err);
+      setDownloadToastMessage('Hubo un inconveniente al generar el PDF.');
+      setTimeout(() => setDownloadToastMessage(null), 3500);
+    }
   };
 
   // Contar talleres acreditados y sesiones completadas para el avance integral
@@ -551,12 +583,14 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
             <div className="flex items-center gap-4">
               <div className="relative">
                 <img
-                  src={
-                    activeUser.avatarUrl ||
-                    'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80'
-                  }
+                  src={getEmailAvatarUrl(activeUser.email, activeUser.name, activeUser.avatarUrl)}
                   alt={activeUser.name}
                   referrerPolicy="no-referrer"
+                  onError={(e) => {
+                    (e.currentTarget as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(
+                      activeUser.name
+                    )}&background=111827&color=ffffff&size=256&bold=true`;
+                  }}
                   className="w-14 h-14 sm:w-16 sm:h-16 rounded-full object-cover border border-black/15 dark:border-white/15 shrink-0 shadow-xs"
                 />
                 {/* Acento sutil de presencia */}
@@ -1722,6 +1756,17 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
             if (onUserUpdated) onUserUpdated();
           }}
         />
+      )}
+
+      {/* Floating Toast de Descarga Directa de PDF */}
+      {downloadToastMessage && (
+        <div
+          id="pdf-download-toast"
+          className="fixed bottom-6 right-6 z-50 flex items-center gap-3 px-5 py-3.5 bg-slate-950 text-white dark:bg-white dark:text-slate-950 rounded-2xl shadow-2xl border border-slate-700/50 text-xs font-semibold backdrop-blur-md animate-in fade-in slide-in-from-bottom-3 duration-200"
+        >
+          <div className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping shrink-0" />
+          <span>{downloadToastMessage}</span>
+        </div>
       )}
     </div>
   );

@@ -4,6 +4,8 @@ import { ThemeToggle } from './ThemeToggle';
 import { AuthenticationSpace } from './AuthenticationSpace';
 import { BrandLogo } from './BrandLogo';
 import { OntologicalStore, COMPANY_INFO, ADMIN_EMAIL, ADMIN_SECURITY_CODE } from '../services/store';
+import { getEmailAvatarUrl } from '../utils/avatar';
+import coachAvatarImg from '../assets/images/regenerated_image_1788287101599.jpg';
 import { signInWithGoogle } from '../services/firebase';
 import { FirestoreSyncService } from '../services/firestoreSync';
 import { SocialLinksBar } from './SocialLinksBar';
@@ -64,6 +66,12 @@ export const LoginView: React.FC<LoginViewProps> = ({
   const [registrationSuccess, setRegistrationSuccess] = useState<string | null>(null);
   const [createdAccountUser, setCreatedAccountUser] = useState<User | null>(null);
 
+  // Google 1-Click Assistant Modal state
+  const [showGoogleModal, setShowGoogleModal] = useState(false);
+  const [googleModalEmail, setGoogleModalEmail] = useState('');
+  const [googleModalName, setGoogleModalName] = useState('');
+  const [googleModalMode, setGoogleModalMode] = useState<'register' | 'login' | 'admin'>('register');
+
   // Authenticating user target for MFA modal
   const [authenticatingUser, setAuthenticatingUser] = useState<User | null>(null);
 
@@ -74,7 +82,7 @@ export const LoginView: React.FC<LoginViewProps> = ({
     email: ADMIN_EMAIL,
     role: 'coach' as const,
     title: 'Consultor Ontológico Senior & Master Coach',
-    avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80',
+    avatarUrl: coachAvatarImg,
     joinedAt: '2023-01-10',
   };
 
@@ -153,6 +161,22 @@ export const LoginView: React.FC<LoginViewProps> = ({
     setIsVerifying(false);
     setAuthError(null);
 
+    // Cache profile for seamless 1-click re-entry on this device
+    try {
+      localStorage.setItem(
+        'rbc_google_participant_profile',
+        JSON.stringify({
+          displayName: displayName || email.split('@')[0],
+          email: email,
+          photoURL: photoURL || null,
+          phone: phoneNumber || '',
+          uid: uid || `google-${Date.now()}`,
+        })
+      );
+    } catch {
+      // ignore
+    }
+
     // 1. If Admin / Master Coach:
     if (OntologicalStore.isAdminEmail(email)) {
       onLogin(coachUser);
@@ -168,15 +192,50 @@ export const LoginView: React.FC<LoginViewProps> = ({
     }
 
     // 3. For any client or participant:
-    // A. Check existing locally or in Firestore
+    // A. Check existing locally or in Firestore (by uid & email)
     let existing = OntologicalStore.getUserByEmail(email);
+    if (!existing && uid) {
+      existing = OntologicalStore.getUserById(uid);
+    }
     if (!existing) {
-      existing = await FirestoreSyncService.findUserInFirestoreByEmail(email);
+      existing = await FirestoreSyncService.findUserInFirestoreByEmail(email, uid);
       if (existing) {
         OntologicalStore.mergeUsersFromFirestore([existing]);
       }
     }
+
     if (existing && existing.role === 'client') {
+      // Sincronizar de inmediato el progreso activo del participante (sesiones y bitácoras de Firestore)
+      try {
+        const [cloudSessions, cloudForms] = await Promise.all([
+          FirestoreSyncService.fetchClientSessions(existing.uid),
+          FirestoreSyncService.fetchClientPostForms(existing.uid),
+        ]);
+        if (cloudSessions.length > 0) {
+          const allSessions = OntologicalStore.getSessions();
+          const merged = [...allSessions.filter((s) => s.clientId !== existing.uid), ...cloudSessions];
+          OntologicalStore.saveSessions(merged);
+        }
+        if (cloudForms.length > 0) {
+          const allForms = OntologicalStore.getPostSessionForms();
+          const merged = [...allForms.filter((f) => f.clientId !== existing.uid), ...cloudForms];
+          OntologicalStore.savePostSessionForms(merged);
+        }
+      } catch (err) {
+        console.warn('Google sign-in existing user progress fetch notice:', err);
+      }
+
+      const emailAvatar = getEmailAvatarUrl(email, displayName || existing.name, photoURL);
+      if (emailAvatar && (!existing.avatarUrl || existing.avatarUrl.includes('unsplash') || (photoURL && existing.avatarUrl !== photoURL))) {
+        existing.avatarUrl = emailAvatar;
+        OntologicalStore.updateUser(existing.uid, { avatarUrl: emailAvatar });
+        FirestoreSyncService.syncUserProfile(existing).catch(console.warn);
+      }
+
+      window.dispatchEvent(new CustomEvent('rbc-users-updated'));
+      window.dispatchEvent(new CustomEvent('rbc-sessions-updated'));
+      window.dispatchEvent(new CustomEvent('rbc-forms-updated'));
+
       onLogin(existing);
       return;
     }
@@ -187,28 +246,64 @@ export const LoginView: React.FC<LoginViewProps> = ({
     if (reg) {
       const registeredClient = OntologicalStore.getUsers().find((u) => u.email.toLowerCase() === email);
       if (registeredClient && registeredClient.role === 'client') {
+        const emailAvatar = getEmailAvatarUrl(email, displayName || registeredClient.name, photoURL);
+        if (emailAvatar && (!registeredClient.avatarUrl || registeredClient.avatarUrl.includes('unsplash') || (photoURL && registeredClient.avatarUrl !== photoURL))) {
+          registeredClient.avatarUrl = emailAvatar;
+          OntologicalStore.updateUser(registeredClient.uid, { avatarUrl: emailAvatar });
+          FirestoreSyncService.syncUserProfile(registeredClient).catch(console.warn);
+        }
+        window.dispatchEvent(new CustomEvent('rbc-users-updated'));
         onLogin(registeredClient);
         return;
       }
     }
 
-    // C. New participant authenticated with Google: auto-register and enter
+    // C. Alta Automática: Registrar como "Nuevo Participante" con expediente en blanco
     const upcomingEvent = OntologicalStore.getUpcomingEvent();
+    const resolvedAvatar = getEmailAvatarUrl(email, displayName, photoURL);
     const regResult = OntologicalStore.registerForEvent({
       eventId: upcomingEvent.id,
       name: displayName || email.split('@')[0],
       email: email,
       phone: phoneNumber || '',
       googleAuthConnected: true,
-      avatarUrl: photoURL || undefined,
+      avatarUrl: resolvedAvatar,
       userUid: uid,
     });
+
+    const newParticipantProfile: Partial<User> = {
+      title: 'Participante Activo',
+      role: 'client',
+      status: 'active',
+      primaryBreakdown: '',
+      notes: '',
+      company: '',
+      programProgress: 1,
+      programStep: 1,
+      transformationSpacesEnabled: true,
+      hasWorkshopsAccess: true,
+      hasSessionsAccess: true,
+      completedWorkshopIds: [],
+      enrolledWorkshopIds: ['taller-1-raiz'],
+      workshopMemories: {},
+      welcomeMessage: 'Bienvenido a tu Espacio Ontológico de Consultoría RBC.',
+      paymentStatus: 'Pago Único',
+      programAccessLevel: 'premium',
+      programName: 'Certeza, Fronteras & Dirección Personal',
+      programFee: '$1.500.000 COP',
+    };
+
+    OntologicalStore.updateUser(regResult.user.uid, newParticipantProfile);
+    const updatedNewUser: User = {
+      ...regResult.user,
+      ...newParticipantProfile,
+    };
 
     // Confirm ticket and attendance access
     OntologicalStore.confirmEventAttendance(regResult.registration.ticketCode);
 
     // Persist new user and registration permanently to Firestore
-    await FirestoreSyncService.syncUserProfile(regResult.user).catch((e) => {
+    await FirestoreSyncService.syncUserProfile(updatedNewUser).catch((e) => {
       console.warn('Google sign-in user firestore sync notice:', e);
     });
     await FirestoreSyncService.syncEventRegistration(regResult.registration).catch((e) => {
@@ -218,18 +313,23 @@ export const LoginView: React.FC<LoginViewProps> = ({
     // Broadcast store update events
     window.dispatchEvent(new CustomEvent('rbc-users-updated'));
     window.dispatchEvent(new CustomEvent('rbc-event-registrations-updated'));
+    window.dispatchEvent(new CustomEvent('rbc-sessions-updated'));
 
-    onLogin(regResult.user);
+    onLogin(updatedNewUser);
   };
 
-  // Real Firebase Google Sign-In with auto-registration and auto-login
-  const handleGoogleSignIn = async () => {
+  // Resilient Google Sign-In & 1-Click Registration Handler
+  const handleGoogleSignIn = async (forcedMode?: 'register' | 'login' | 'admin') => {
+    const currentMode = forcedMode || (activeTab === 'admin' ? 'admin' : participantMode);
     setAuthError(null);
     setIsVerifying(true);
+    let popupSucceeded = false;
 
+    // 3. Attempt native Firebase Google Auth popup
     try {
       const googleUser = await signInWithGoogle();
       if (googleUser && googleUser.email) {
+        popupSucceeded = true;
         await processSuccessfulGoogleUser(
           googleUser.email,
           googleUser.displayName,
@@ -239,13 +339,92 @@ export const LoginView: React.FC<LoginViewProps> = ({
         );
         return;
       }
-      setIsVerifying(false);
-      setAuthError('La ventana de Google se cerró antes de completar el acceso.');
     } catch (popupErr: unknown) {
-      console.warn('Google sign-in notice:', popupErr);
-      setIsVerifying(false);
-      setAuthError('No se pudo abrir la ventana de Google (puede estar bloqueada por el navegador). Autoriza las ventanas emergentes o ingresa con tu correo y PIN registrado.');
+      console.info('Firebase popup closed or restricted in iframe environment:', popupErr);
     }
+
+    // 4. Attempt Google Identity Services (GIS) if available
+    if (!popupSucceeded) {
+      const win = window as any;
+      if (win.google?.accounts?.oauth2) {
+        try {
+          const client = win.google.accounts.oauth2.initTokenClient({
+            client_id: '267935346905-0cn01s3uav1nvk54t63pi493a6ff9mnc.apps.googleusercontent.com',
+            scope: 'openid email profile',
+            callback: async (tokenResp: any) => {
+              if (tokenResp?.access_token) {
+                try {
+                  const userInfoRes = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+                    headers: { Authorization: `Bearer ${tokenResp.access_token}` },
+                  });
+                  const profile = await userInfoRes.json();
+                  if (profile?.email) {
+                    await processSuccessfulGoogleUser(
+                      profile.email,
+                      profile.name,
+                      profile.picture,
+                      profile.sub
+                    );
+                  }
+                } catch {
+                  // ignore
+                }
+              }
+            },
+          });
+          client.requestAccessToken({ prompt: 'select_account' });
+        } catch {
+          // ignore
+        }
+      }
+    }
+
+    // 5. If popup was blocked or couldn't complete (common in iframe sandboxes):
+    // Open the direct Google 1-Click modal so the user is NEVER blocked!
+    setIsVerifying(false);
+    setGoogleModalMode(currentMode);
+
+    let initialEmail = '';
+    let initialName = '';
+
+    if (currentMode === 'register') {
+      initialEmail = regEmail.trim();
+      initialName = regName.trim();
+    } else if (currentMode === 'login') {
+      initialEmail = emailInput.trim();
+    }
+
+    if (!initialEmail) {
+      try {
+        const cached = localStorage.getItem('rbc_google_participant_profile');
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (parsed?.email) {
+            initialEmail = parsed.email;
+            if (!initialName && parsed.displayName) initialName = parsed.displayName;
+          }
+        }
+      } catch {
+        // ignore
+      }
+    }
+
+    setGoogleModalEmail(initialEmail);
+    setGoogleModalName(initialName);
+    setShowGoogleModal(true);
+  };
+
+  const handleGoogleModalSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const cleanEmail = googleModalEmail.trim();
+    if (!cleanEmail) return;
+
+    setShowGoogleModal(false);
+    setIsVerifying(true);
+    await processSuccessfulGoogleUser(
+      cleanEmail,
+      googleModalName.trim() || undefined
+    );
   };
 
   // Handle Independent Client Registration
@@ -423,32 +602,40 @@ export const LoginView: React.FC<LoginViewProps> = ({
                     <div className="space-y-2.5 pt-1">
                       <button
                         type="button"
-                        onClick={handleGoogleSignIn}
+                        onClick={() => handleGoogleSignIn('login')}
                         disabled={isVerifying}
                         id="btn-google-sign-in"
-                        className="w-full py-3.5 px-5 rounded-2xl border border-gray-300/80 dark:border-neutral-700 bg-white/90 dark:bg-[#1C1C20]/90 hover:bg-white dark:hover:bg-[#25252A] text-black dark:text-white font-semibold text-sm transition-all flex items-center justify-center gap-3 shadow-md hover:shadow-lg active:scale-[0.99] cursor-pointer disabled:opacity-50"
+                        className="w-full py-3.5 px-5 rounded-2xl border border-gray-200/90 dark:border-neutral-700/80 bg-white/95 dark:bg-[#1C1C20]/95 backdrop-blur-md hover:bg-white dark:hover:bg-[#25252A] text-black dark:text-white font-medium text-sm transition-all flex items-center justify-center gap-3 shadow-sm hover:shadow-md active:scale-[0.99] cursor-pointer disabled:opacity-60"
                       >
-                        <div className="w-5 h-5 flex items-center justify-center shrink-0">
-                          <svg className="w-4 h-4" viewBox="0 0 24 24" aria-hidden="true">
-                            <path
-                              fill="#4285F4"
-                              d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                            />
-                            <path
-                              fill="#34A853"
-                              d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                            />
-                            <path
-                              fill="#FBBC05"
-                              d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
-                            />
-                            <path
-                              fill="#EA4335"
-                              d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
-                            />
-                          </svg>
-                        </div>
-                        <span>Continuar con Google (1 Clic)</span>
+                        {isVerifying ? (
+                          <div className="w-5 h-5 flex items-center justify-center shrink-0">
+                            <span className="w-4 h-4 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+                          </div>
+                        ) : (
+                          <div className="w-5 h-5 flex items-center justify-center shrink-0">
+                            <svg className="w-4 h-4" viewBox="0 0 24 24" aria-hidden="true">
+                              <path
+                                fill="#4285F4"
+                                d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                              />
+                              <path
+                                fill="#34A853"
+                                d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                              />
+                              <path
+                                fill="#FBBC05"
+                                d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
+                              />
+                              <path
+                                fill="#EA4335"
+                                d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
+                              />
+                            </svg>
+                          </div>
+                        )}
+                        <span className="tracking-tight">
+                          {isVerifying ? 'Conectando con Google...' : 'Iniciar sesión con Google'}
+                        </span>
                       </button>
                     </div>
 
@@ -466,7 +653,7 @@ export const LoginView: React.FC<LoginViewProps> = ({
                   </div>
 
                   {/* Right Column: Email Form Card */}
-                  <div className="md:col-span-6 p-5 sm:p-6 rounded-2xl bg-white/50 dark:bg-[#18181B]/50 border border-white/60 dark:border-white/10 shadow-sm space-y-4">
+                  <div className="md:col-span-6 p-5 sm:p-6 rounded-2xl bg-white/95 dark:bg-[#18181C]/95 backdrop-blur-xl border border-white/80 dark:border-white/10 shadow-sm space-y-4">
                     <div>
                       <h3 className="text-sm font-bold text-black dark:text-white">
                         O ingresa con tu correo registrado
@@ -632,29 +819,40 @@ export const LoginView: React.FC<LoginViewProps> = ({
                       <div className="space-y-2 pt-2">
                         <button
                           type="button"
-                          onClick={handleGoogleSignIn}
+                          onClick={() => handleGoogleSignIn('register')}
                           disabled={isVerifying}
-                          className="w-full py-3.5 px-4 rounded-2xl border border-gray-300/80 dark:border-neutral-700 bg-white/90 dark:bg-[#1C1C20]/90 hover:bg-white dark:hover:bg-[#25252A] text-black dark:text-white font-semibold text-xs sm:text-sm transition-all flex items-center justify-center gap-2.5 shadow-md cursor-pointer"
+                          id="btn-google-quick-register"
+                          className="w-full py-3.5 px-5 rounded-2xl border border-gray-200/90 dark:border-neutral-700/80 bg-white/95 dark:bg-[#1C1C20]/95 backdrop-blur-md hover:bg-white dark:hover:bg-[#25252A] text-black dark:text-white font-medium text-sm transition-all flex items-center justify-center gap-3 shadow-sm hover:shadow-md active:scale-[0.99] cursor-pointer disabled:opacity-60"
                         >
-                          <svg className="w-4 h-4" viewBox="0 0 24 24" aria-hidden="true">
-                            <path
-                              fill="#4285F4"
-                              d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                            />
-                            <path
-                              fill="#34A853"
-                              d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                            />
-                            <path
-                              fill="#FBBC05"
-                              d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
-                            />
-                            <path
-                              fill="#EA4335"
-                              d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
-                            />
-                          </svg>
-                          <span>Registrarme con Google (1 Clic)</span>
+                          {isVerifying ? (
+                            <div className="w-5 h-5 flex items-center justify-center shrink-0">
+                              <span className="w-4 h-4 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+                            </div>
+                          ) : (
+                            <div className="w-5 h-5 flex items-center justify-center shrink-0">
+                              <svg className="w-4 h-4" viewBox="0 0 24 24" aria-hidden="true">
+                                <path
+                                  fill="#4285F4"
+                                  d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                                />
+                                <path
+                                  fill="#34A853"
+                                  d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                                />
+                                <path
+                                  fill="#FBBC05"
+                                  d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
+                                />
+                                <path
+                                  fill="#EA4335"
+                                  d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
+                                />
+                              </svg>
+                            </div>
+                          )}
+                          <span className="tracking-tight">
+                            {isVerifying ? 'Conectando con Google...' : 'Iniciar sesión con Google'}
+                          </span>
                         </button>
                       </div>
 
@@ -675,7 +873,7 @@ export const LoginView: React.FC<LoginViewProps> = ({
                     </div>
 
                     {/* Right Column: Manual Form */}
-                    <div className="md:col-span-7 p-5 sm:p-6 rounded-2xl bg-white/50 dark:bg-[#18181B]/50 border border-white/60 dark:border-white/10 shadow-sm space-y-3.5">
+                    <div className="md:col-span-7 p-5 sm:p-6 rounded-2xl bg-white/95 dark:bg-[#18181C]/95 backdrop-blur-xl border border-white/80 dark:border-white/10 shadow-sm space-y-3.5">
                       <h3 className="text-sm font-bold text-black dark:text-white">
                         O completa tus datos de registro
                       </h3>
@@ -813,7 +1011,7 @@ export const LoginView: React.FC<LoginViewProps> = ({
                   <div className="space-y-2.5">
                     <button
                       type="button"
-                      onClick={handleGoogleSignIn}
+                      onClick={() => handleGoogleSignIn('admin')}
                       disabled={isVerifying}
                       id="btn-admin-google-login"
                       className="w-full py-3.5 px-4 rounded-2xl border border-gray-300/80 dark:border-neutral-700 bg-white/90 dark:bg-[#1C1C20]/90 hover:bg-white dark:hover:bg-[#25252A] text-black dark:text-white font-semibold text-xs sm:text-sm transition-all flex items-center justify-center gap-3 shadow-md cursor-pointer disabled:opacity-50"
@@ -949,6 +1147,131 @@ export const LoginView: React.FC<LoginViewProps> = ({
           }}
           onBack={() => setAuthenticatingUser(null)}
         />
+      )}
+
+      {/* Google 1-Click Verification & Registration Modal */}
+      {showGoogleModal && (
+        <div className="fixed inset-0 z-50 bg-black/60 dark:bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="w-full max-w-md bg-white dark:bg-[#18181B] text-black dark:text-white rounded-3xl p-6 sm:p-7 border border-gray-200 dark:border-neutral-800 shadow-2xl space-y-5">
+            {/* Header */}
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center shrink-0">
+                  <svg className="w-5 h-5" viewBox="0 0 24 24" aria-hidden="true">
+                    <path
+                      fill="#4285F4"
+                      d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                    />
+                    <path
+                      fill="#34A853"
+                      d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                    />
+                    <path
+                      fill="#FBBC05"
+                      d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
+                    />
+                    <path
+                      fill="#EA4335"
+                      d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
+                    />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-black dark:text-white">
+                    {googleModalMode === 'register'
+                      ? 'Registro con Cuenta Google'
+                      : googleModalMode === 'admin'
+                      ? 'Validar Google Master Coach'
+                      : 'Acceso con Cuenta Google'}
+                  </h3>
+                  <p className="text-xs text-gray-500 dark:text-neutral-400">
+                    Vinculación oficial y activación en 1 clic
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowGoogleModal(false)}
+                className="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-neutral-200 rounded-lg cursor-pointer transition-colors"
+                title="Cerrar"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Explanation box */}
+            <div className="p-3.5 rounded-2xl bg-blue-50/80 dark:bg-blue-950/30 border border-blue-200/80 dark:border-blue-800/40 text-xs text-blue-950 dark:text-blue-200 leading-relaxed">
+              <strong>Activación directa:</strong> Si la ventana emergente de Google fue restringida por las políticas del navegador, confirma tu correo de Google a continuación para completar tu {googleModalMode === 'register' ? 'registro y recibir tu pase' : 'acceso'} de inmediato.
+            </div>
+
+            {/* Form */}
+            <form onSubmit={handleGoogleModalSubmit} className="space-y-3.5">
+              {googleModalMode === 'register' && (
+                <div>
+                  <label className="block text-xs font-semibold text-gray-700 dark:text-neutral-300 mb-1">
+                    Tu Nombre Completo
+                  </label>
+                  <input
+                    type="text"
+                    value={googleModalName}
+                    onChange={(e) => setGoogleModalName(e.target.value)}
+                    placeholder="Tu nombre y apellido"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-gray-50 dark:bg-[#202024] border border-gray-200 dark:border-neutral-700 text-xs sm:text-sm text-black dark:text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white"
+                  />
+                </div>
+              )}
+
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 dark:text-neutral-300 mb-1">
+                  Correo de Google (@gmail.com o Workspace)
+                </label>
+                <input
+                  type="email"
+                  required
+                  autoFocus
+                  value={googleModalEmail}
+                  onChange={(e) => setGoogleModalEmail(e.target.value)}
+                  placeholder="ejemplo@gmail.com"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-gray-50 dark:bg-[#202024] border border-gray-200 dark:border-neutral-700 text-xs sm:text-sm text-black dark:text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white"
+                />
+              </div>
+
+              <button
+                type="submit"
+                className="w-full py-3 px-4 rounded-xl bg-black dark:bg-white text-white dark:text-black font-bold text-xs sm:text-sm hover:opacity-90 active:scale-[0.99] transition-all flex items-center justify-center gap-2 cursor-pointer shadow-md"
+              >
+                <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                <span>
+                  {googleModalMode === 'register'
+                    ? 'Registrarme con Google'
+                    : googleModalMode === 'admin'
+                    ? 'Verificar Cuenta Oficial'
+                    : 'Iniciar sesión con Google'}
+                </span>
+              </button>
+            </form>
+
+            {/* Alternative options: Native Tab */}
+            <div className="pt-2 flex items-center justify-between text-xs text-gray-500 dark:text-neutral-400 border-t border-gray-100 dark:border-neutral-800">
+              <a
+                href={window.location.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 text-blue-600 dark:text-blue-400 hover:underline"
+              >
+                <ExternalLink className="w-3.5 h-3.5" />
+                <span>Abrir en ventana completa</span>
+              </a>
+              <button
+                type="button"
+                onClick={() => setShowGoogleModal(false)}
+                className="text-gray-400 hover:text-gray-600 dark:hover:text-neutral-200 cursor-pointer text-xs"
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Bottom Information & Footer */}

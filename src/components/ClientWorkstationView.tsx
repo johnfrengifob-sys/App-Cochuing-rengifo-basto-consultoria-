@@ -10,6 +10,7 @@ import {
   PostSessionForm,
 } from '../types';
 import { PROGRAM_NODES, OntologicalStore } from '../services/store';
+import { getEmailAvatarUrl } from '../utils/avatar';
 import { PDFGenerator } from '../utils/pdfGenerator';
 import { safeCopyToClipboard } from '../utils/clipboard';
 import { LiquidGlassButton } from './LiquidGlassButton';
@@ -426,9 +427,14 @@ export const ClientWorkstationView: React.FC<ClientWorkstationViewProps> = ({
           <div className="flex items-start sm:items-center gap-4 sm:gap-6">
             <div className="relative shrink-0">
               <img
-                src={client.avatarUrl}
+                src={getEmailAvatarUrl(client.email, client.name, client.avatarUrl)}
                 alt={client.name}
                 referrerPolicy="no-referrer"
+                onError={(e) => {
+                  (e.currentTarget as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(
+                    client.name
+                  )}&background=111827&color=ffffff&size=256&bold=true`;
+                }}
                 className="w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover shadow-sm ring-2 ring-gray-100 dark:ring-neutral-800"
               />
               {latestInsight && (

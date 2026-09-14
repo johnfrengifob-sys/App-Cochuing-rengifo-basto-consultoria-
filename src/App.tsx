@@ -6,6 +6,7 @@
 import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { User } from './types';
 import { OntologicalStore, ADMIN_EMAIL, ADMIN_SECURITY_CODE } from './services/store';
+import { getEmailAvatarUrl } from './utils/avatar';
 import { ThemeManager } from './services/theme';
 import { FirestoreSyncService } from './services/firestoreSync';
 import { auth } from './services/firebase';
@@ -131,35 +132,96 @@ export default function App() {
 
         // 2. If Existing Participant / Client (local or remote)
         let existing = OntologicalStore.getUserByEmail(email);
+        if (!existing && firebaseUser.uid) {
+          existing = OntologicalStore.getUserById(firebaseUser.uid);
+        }
         if (!existing) {
-          existing = await FirestoreSyncService.findUserInFirestoreByEmail(email);
+          existing = await FirestoreSyncService.findUserInFirestoreByEmail(email, firebaseUser.uid);
           if (existing) {
             OntologicalStore.mergeUsersFromFirestore([existing]);
           }
         }
 
         if (existing && existing.role === 'client') {
+          // Cargar progreso remoto (sesiones y bitácoras) desde Firestore
+          try {
+            const [cloudSessions, cloudForms] = await Promise.all([
+              FirestoreSyncService.fetchClientSessions(existing.uid),
+              FirestoreSyncService.fetchClientPostForms(existing.uid),
+            ]);
+            if (cloudSessions.length > 0) {
+              const allSessions = OntologicalStore.getSessions();
+              const merged = [...allSessions.filter((s) => s.clientId !== existing.uid), ...cloudSessions];
+              OntologicalStore.saveSessions(merged);
+            }
+            if (cloudForms.length > 0) {
+              const allForms = OntologicalStore.getPostSessionForms();
+              const merged = [...allForms.filter((f) => f.clientId !== existing.uid), ...cloudForms];
+              OntologicalStore.savePostSessionForms(merged);
+            }
+          } catch (e) {
+            console.warn('App auth state load remote progress notice:', e);
+          }
+
+          const emailAvatar = getEmailAvatarUrl(email, firebaseUser.displayName || existing.name, firebaseUser.photoURL);
+          if (emailAvatar && (!existing.avatarUrl || existing.avatarUrl.includes('unsplash') || (firebaseUser.photoURL && existing.avatarUrl !== firebaseUser.photoURL))) {
+            existing.avatarUrl = emailAvatar;
+            OntologicalStore.updateUser(existing.uid, { avatarUrl: emailAvatar });
+            FirestoreSyncService.syncUserProfile(existing).catch(console.warn);
+          }
           OntologicalStore.setCurrentUser(existing.uid);
           setCurrentUser(existing);
           setAllUsers(OntologicalStore.getUsers());
           return;
         }
 
-        // 3. New Registration with Personal Google Account
+        // 3. Alta Automática: Registrar como "Nuevo Participante" con expediente en blanco
         const upcomingEvent = OntologicalStore.getUpcomingEvent();
+        const resolvedAvatar = getEmailAvatarUrl(email, firebaseUser.displayName, firebaseUser.photoURL);
         const regResult = OntologicalStore.registerForEvent({
           eventId: upcomingEvent.id,
           name: firebaseUser.displayName || email.split('@')[0],
           email: email,
           phone: firebaseUser.phoneNumber || '',
           googleAuthConnected: true,
-          avatarUrl: firebaseUser.photoURL || undefined,
+          avatarUrl: resolvedAvatar,
           userUid: firebaseUser.uid,
         });
 
+        const newParticipantProfile: Partial<User> = {
+          title: 'Participante Activo',
+          role: 'client',
+          status: 'active',
+          primaryBreakdown: '',
+          notes: '',
+          company: '',
+          programProgress: 1,
+          programStep: 1,
+          transformationSpacesEnabled: true,
+          hasWorkshopsAccess: true,
+          hasSessionsAccess: true,
+          completedWorkshopIds: [],
+          enrolledWorkshopIds: ['taller-1-raiz'],
+          workshopMemories: {},
+          welcomeMessage: 'Bienvenido a tu Espacio Ontológico de Consultoría RBC.',
+          paymentStatus: 'Pago Único',
+          programAccessLevel: 'premium',
+          programName: 'Certeza, Fronteras & Dirección Personal',
+          programFee: '$1.500.000 COP',
+        };
+
+        OntologicalStore.updateUser(regResult.user.uid, newParticipantProfile);
+        const updatedNewUser: User = {
+          ...regResult.user,
+          ...newParticipantProfile,
+        };
+
         OntologicalStore.confirmEventAttendance(regResult.registration.ticketCode);
-        OntologicalStore.setCurrentUser(regResult.user.uid);
-        setCurrentUser(regResult.user);
+        await FirestoreSyncService.syncUserProfile(updatedNewUser).catch(console.warn);
+        await FirestoreSyncService.syncEventRegistration(regResult.registration).catch(console.warn);
+
+        OntologicalStore.setCurrentUser(updatedNewUser.uid);
+        setCurrentUser(updatedNewUser);
         setAllUsers(OntologicalStore.getUsers());
       }
     });

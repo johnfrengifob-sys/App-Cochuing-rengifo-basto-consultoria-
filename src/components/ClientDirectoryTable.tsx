@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { User, ClientStatus, Session, AIInsight, FormSubmission } from '../types';
 import { OntologicalStore } from '../services/store';
+import { getEmailAvatarUrl } from '../utils/avatar';
 import { ClientTrafficStatusBadge } from './ClientTrafficStatusBadge';
 import { PulseBadge } from './PulseBadge';
 import {
@@ -613,9 +614,14 @@ export const ClientDirectoryTable: React.FC<ClientDirectoryTableProps> = ({
                       <td className="py-4 px-5">
                         <div className="flex items-center gap-3">
                           <img
-                            src={client.avatarUrl}
+                            src={getEmailAvatarUrl(client.email, client.name, client.avatarUrl)}
                             alt={client.name}
                             referrerPolicy="no-referrer"
+                            onError={(e) => {
+                              (e.currentTarget as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(
+                                client.name
+                              )}&background=111827&color=ffffff&size=256&bold=true`;
+                            }}
                             className="w-10 h-10 rounded-full object-cover shadow-2xs ring-1 ring-gray-200 dark:ring-neutral-700 shrink-0"
                           />
                           <div className="min-w-0">
@@ -848,9 +854,14 @@ export const ClientDirectoryTable: React.FC<ClientDirectoryTableProps> = ({
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex items-center gap-3">
                       <img
-                        src={client.avatarUrl}
+                        src={getEmailAvatarUrl(client.email, client.name, client.avatarUrl)}
                         alt={client.name}
                         referrerPolicy="no-referrer"
+                        onError={(e) => {
+                          (e.currentTarget as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(
+                            client.name
+                          )}&background=111827&color=ffffff&size=256&bold=true`;
+                        }}
                         className="w-11 h-11 rounded-full object-cover ring-1 ring-gray-200 dark:ring-neutral-700 shadow-2xs shrink-0"
                       />
                       <div className="min-w-0">

@@ -22,6 +22,7 @@ import {
 import { ThemeToggle } from './ThemeToggle';
 import { BrandLogo } from './BrandLogo';
 import { OntologicalStore } from '../services/store';
+import { getEmailAvatarUrl } from '../utils/avatar';
 import { SocialLinksBar } from './SocialLinksBar';
 
 interface HeaderProps {
@@ -333,9 +334,14 @@ export const Header: React.FC<HeaderProps> = ({
                           >
                             <div className="relative shrink-0">
                               <img
-                                src={client.avatarUrl}
+                                src={getEmailAvatarUrl(client.email, client.name, client.avatarUrl)}
                                 alt={client.name}
                                 referrerPolicy="no-referrer"
+                                onError={(e) => {
+                                  (e.currentTarget as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(
+                                    client.name
+                                  )}&background=111827&color=ffffff&size=256&bold=true`;
+                                }}
                                 className="w-8 h-8 rounded-full object-cover ring-1 ring-black/10 dark:ring-white/10"
                               />
                               <span
@@ -384,9 +390,18 @@ export const Header: React.FC<HeaderProps> = ({
             >
               <div className="relative">
                 <img
-                  src={currentUser.avatarUrl}
+                  src={
+                    currentUser.role === 'coach'
+                      ? currentUser.avatarUrl
+                      : getEmailAvatarUrl(currentUser.email, currentUser.name, currentUser.avatarUrl)
+                  }
                   alt={currentUser.name}
                   referrerPolicy="no-referrer"
+                  onError={(e) => {
+                    (e.currentTarget as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(
+                      currentUser.name
+                    )}&background=111827&color=ffffff&size=256&bold=true`;
+                  }}
                   className="w-9 h-9 sm:w-10 sm:h-10 rounded-full object-cover shadow-xs ring-2 ring-gray-100 dark:ring-neutral-700 group-hover:ring-black dark:group-hover:ring-white transition-all"
                 />
                 <span
@@ -431,9 +446,18 @@ export const Header: React.FC<HeaderProps> = ({
                 <div className="p-4 bg-gray-50/70 dark:bg-[#1E1E22]/60 border-b border-gray-100 dark:border-neutral-800/80">
                   <div className="flex items-center gap-3">
                     <img
-                      src={currentUser.avatarUrl}
+                      src={
+                        currentUser.role === 'coach'
+                          ? currentUser.avatarUrl
+                          : getEmailAvatarUrl(currentUser.email, currentUser.name, currentUser.avatarUrl)
+                      }
                       alt={currentUser.name}
                       referrerPolicy="no-referrer"
+                      onError={(e) => {
+                        (e.currentTarget as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(
+                          currentUser.name
+                        )}&background=111827&color=ffffff&size=256&bold=true`;
+                      }}
                       className="w-11 h-11 rounded-full object-cover ring-2 ring-white dark:ring-neutral-700 shadow-2xs"
                     />
                     <div className="overflow-hidden flex-1">

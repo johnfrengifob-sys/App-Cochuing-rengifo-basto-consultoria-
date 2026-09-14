@@ -3,8 +3,11 @@ import {
   doc,
   setDoc,
   deleteDoc,
+  getDoc,
   getDocs,
   onSnapshot,
+  query,
+  where,
 } from 'firebase/firestore';
 import { db, auth, handleFirestoreError, OperationType, testFirestoreConnection } from './firebase';
 import {
@@ -434,13 +437,17 @@ export class FirestoreSyncService {
           name: user.name,
           email: user.email,
           role: user.role,
+          title: user.title || 'Participante Activo',
           avatarUrl: user.avatarUrl || '',
           phone: user.phone || '',
           status: user.status || 'active',
           programProgress: user.programProgress || 1,
           programStep: user.programStep || 1,
           company: user.company || '',
+          notes: user.notes || '',
           primaryBreakdown: user.primaryBreakdown || '',
+          paymentStatus: user.paymentStatus || 'Pago Único',
+          joinedAt: user.joinedAt || new Date().toISOString().split('T')[0],
           transformationSpacesEnabled: user.transformationSpacesEnabled ?? true,
           welcomeMessage: user.welcomeMessage || '',
           completedWorkshopIds: user.completedWorkshopIds || [],
@@ -780,57 +787,119 @@ export class FirestoreSyncService {
     }
   }
 
-  // Look up a user in Firestore by email
-  static async findUserInFirestoreByEmail(email: string): Promise<User | null> {
-    if (!email || !email.trim()) return null;
-    const cleanEmail = email.trim().toLowerCase();
-
-    // 1. Try finding in users collection
+  // Fetch a user document from Firestore directly by UID (bypasses collection listing)
+  static async fetchUserByUid(uid: string): Promise<User | null> {
+    if (!uid) return null;
     try {
-      const usersSnap = await getDocs(collection(db, 'users'));
-      for (const d of usersSnap.docs) {
-        const u = d.data() as User;
-        if (u && u.email && u.email.trim().toLowerCase() === cleanEmail) {
-          return u;
-        }
+      const snap = await getDoc(doc(db, 'users', uid));
+      if (snap.exists()) {
+        return snap.data() as User;
       }
     } catch (e) {
-      console.warn('findUserInFirestoreByEmail in users notice:', e);
+      console.warn('fetchUserByUid notice:', e);
+    }
+    return null;
+  }
+
+  // Fetch all sessions for a specific client from Firestore
+  static async fetchClientSessions(clientId: string): Promise<Session[]> {
+    if (!clientId) return [];
+    try {
+      const q = query(collection(db, 'sessions'), where('clientId', '==', clientId));
+      const snap = await getDocs(q);
+      const results: Session[] = [];
+      snap.forEach((d) => {
+        results.push(d.data() as Session);
+      });
+      return results;
+    } catch (e) {
+      console.warn('fetchClientSessions notice:', e);
+      return [];
+    }
+  }
+
+  // Fetch all post-session forms for a specific client from Firestore
+  static async fetchClientPostForms(clientId: string): Promise<PostSessionForm[]> {
+    if (!clientId) return [];
+    try {
+      const q = query(collection(db, 'postSessionForms'), where('clientId', '==', clientId));
+      const snap = await getDocs(q);
+      const results: PostSessionForm[] = [];
+      snap.forEach((d) => {
+        results.push(d.data() as PostSessionForm);
+      });
+      return results;
+    } catch (e) {
+      console.warn('fetchClientPostForms notice:', e);
+      return [];
+    }
+  }
+
+  // Look up a user in Firestore by email or uid
+  static async findUserInFirestoreByEmail(email: string, uid?: string): Promise<User | null> {
+    if (!email && !uid) return null;
+    const cleanEmail = (email || '').trim().toLowerCase();
+
+    // 1. If UID provided, fetch directly via owner permission (fastest & compliant)
+    if (uid) {
+      const byUid = await this.fetchUserByUid(uid);
+      if (byUid) return byUid;
     }
 
-    // 2. Try finding in eventRegistrations collection
-    try {
-      const regSnap = await getDocs(collection(db, 'eventRegistrations'));
-      for (const d of regSnap.docs) {
-        const reg = d.data() as EventRegistration;
-        if (reg && reg.email && reg.email.trim().toLowerCase() === cleanEmail) {
-          const synthesizedUser: User = {
-            uid: reg.userUid || `client-${Date.now()}`,
-            name: reg.name || cleanEmail.split('@')[0],
-            email: cleanEmail,
-            phone: reg.phone || '',
-            role: 'client',
-            title: 'Asistente Seminario Ontológico',
-            avatarUrl: `https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80`,
-            joinedAt: reg.registeredAt
-              ? reg.registeredAt.split('T')[0]
-              : new Date().toISOString().split('T')[0],
-            programProgress: 1,
-            programStep: 1,
-            paymentStatus: 'Pago Único',
-            programName: 'Certeza, Fronteras & Dirección Personal',
-            programFee: '$1.500.000 COP',
-            status: 'active',
-            transformationSpacesEnabled: true,
-            hasWorkshopsAccess: true,
-            hasSessionsAccess: true,
-            programAccessLevel: 'premium',
-          };
-          return synthesizedUser;
+    // 2. Try finding in users collection
+    if (cleanEmail) {
+      try {
+        const usersSnap = await getDocs(collection(db, 'users'));
+        for (const d of usersSnap.docs) {
+          const u = d.data() as User;
+          if (u && u.email && u.email.trim().toLowerCase() === cleanEmail) {
+            return u;
+          }
         }
+      } catch (e) {
+        console.warn('findUserInFirestoreByEmail in users notice:', e);
       }
-    } catch (e) {
-      console.warn('findUserInFirestoreByEmail in eventRegistrations notice:', e);
+    }
+
+    // 3. Try finding in eventRegistrations collection
+    if (cleanEmail) {
+      try {
+        const regSnap = await getDocs(collection(db, 'eventRegistrations'));
+        for (const d of regSnap.docs) {
+          const reg = d.data() as EventRegistration;
+          if (reg && reg.email && reg.email.trim().toLowerCase() === cleanEmail) {
+            const synthesizedUser: User = {
+              uid: reg.userUid || uid || `client-${Date.now()}`,
+              name: reg.name || cleanEmail.split('@')[0],
+              email: cleanEmail,
+              phone: reg.phone || '',
+              role: 'client',
+              title: 'Participante Activo',
+              avatarUrl: `https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80`,
+              joinedAt: reg.registeredAt
+                ? reg.registeredAt.split('T')[0]
+                : new Date().toISOString().split('T')[0],
+              programProgress: 1,
+              programStep: 1,
+              paymentStatus: 'Pago Único',
+              programName: 'Certeza, Fronteras & Dirección Personal',
+              programFee: '$1.500.000 COP',
+              status: 'active',
+              transformationSpacesEnabled: true,
+              hasWorkshopsAccess: true,
+              hasSessionsAccess: true,
+              completedWorkshopIds: [],
+              enrolledWorkshopIds: ['taller-1-raiz'],
+              workshopMemories: {},
+              welcomeMessage: 'Bienvenido a tu Espacio Ontológico de Consultoría RBC.',
+              programAccessLevel: 'premium',
+            };
+            return synthesizedUser;
+          }
+        }
+      } catch (e) {
+        console.warn('findUserInFirestoreByEmail in eventRegistrations notice:', e);
+      }
     }
 
     return null;

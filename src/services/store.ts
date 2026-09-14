@@ -41,6 +41,9 @@ import {
   MASTER_PROGRAM_RAIZ_BALANCE,
 } from '../data/raizBalanceWorkshops';
 import { INITIAL_EXPERIENCES, DEFAULT_UNIVERSAL_BLOCK_TEMPLATES } from '../data/initialExperiences';
+import { getEmailAvatarUrl } from '../utils/avatar';
+
+export { getEmailAvatarUrl };
 
 export const COMPANY_INFO = {
   fullName: 'Rengifo Basto Consultoría Ontológica',
@@ -2595,6 +2598,10 @@ export class OntologicalStore {
     return newRegistration;
   }
 
+  static getAvatarForEmail(email?: string | null, name?: string | null, preferredPhotoUrl?: string | null): string {
+    return getEmailAvatarUrl(email, name, preferredPhotoUrl);
+  }
+
   static registerForEvent(params: {
     eventId: string;
     name: string;
@@ -2632,12 +2639,19 @@ export class OntologicalStore {
         email: params.email.trim().toLowerCase(),
         phone: params.phone.trim(),
         role: 'client',
-        title: 'Asistente Seminario Ontológico',
-        avatarUrl:
-          params.avatarUrl ||
-          `https://images.unsplash.com/photo-${1530000000000 + Math.floor(Math.random() * 99999999)}?auto=format&fit=crop&w=400&q=80`,
+        title: 'Participante Activo',
+        status: 'active',
+        avatarUrl: getEmailAvatarUrl(params.email, params.name, params.avatarUrl),
         joinedAt: new Date().toISOString().split('T')[0],
         programProgress: 1,
+        programStep: 1,
+        transformationSpacesEnabled: true,
+        hasWorkshopsAccess: true,
+        hasSessionsAccess: true,
+        completedWorkshopIds: [],
+        enrolledWorkshopIds: ['taller-1-raiz'],
+        workshopMemories: {},
+        welcomeMessage: 'Bienvenido a tu Espacio Ontológico de Consultoría RBC.',
         paymentStatus: 'Pago Único',
         programName: 'Certeza, Fronteras & Dirección Personal',
         programFee: '$1.500.000 COP',
@@ -2653,8 +2667,9 @@ export class OntologicalStore {
         updatedUser.securityPin = params.securityPin;
         changed = true;
       }
-      if (params.avatarUrl && (!existingUser.avatarUrl || existingUser.avatarUrl.includes('unsplash'))) {
-        updatedUser.avatarUrl = params.avatarUrl;
+      const resolvedAvatar = getEmailAvatarUrl(params.email, params.name || existingUser.name, params.avatarUrl);
+      if (resolvedAvatar && (!existingUser.avatarUrl || existingUser.avatarUrl.includes('unsplash') || (params.avatarUrl && existingUser.avatarUrl !== params.avatarUrl))) {
+        updatedUser.avatarUrl = resolvedAvatar;
         changed = true;
       }
       if (params.name && params.name.trim() && (!existingUser.name || existingUser.name.startsWith('Usuario') || existingUser.name === 'Carlos Mendoza')) {
@@ -2993,7 +3008,7 @@ export class OntologicalStore {
             phone: reg.phone || '',
             role: 'client',
             title: 'Asistente Seminario Ontológico',
-            avatarUrl: `https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80`,
+            avatarUrl: getEmailAvatarUrl(normalizedEmail, reg.name),
             joinedAt: reg.registeredAt ? reg.registeredAt.split('T')[0] : new Date().toISOString().split('T')[0],
             programProgress: 1,
             programStep: 1,
@@ -3060,9 +3075,12 @@ export class OntologicalStore {
         : undefined;
 
       const isActive = status === 'active';
+      const cleanAvatar = getEmailAvatarUrl(u.email, u.name, u.avatarUrl);
+
       return {
         ...u,
         role: role as 'client',
+        avatarUrl: cleanAvatar,
         status,
         lastActivityAt,
         inactivityDaysCount: daysInactive,
@@ -3571,7 +3589,7 @@ export class OntologicalStore {
       phone: prospect.whatsapp,
       role: 'client',
       title: 'Cliente Programa Certeza',
-      avatarUrl: `https://images.unsplash.com/photo-${1530000000000 + Math.floor(Math.random() * 99999999)}?auto=format&fit=crop&w=400&q=80`,
+      avatarUrl: getEmailAvatarUrl(prospect.email, prospect.name),
       joinedAt: new Date().toISOString().split('T')[0],
       programProgress: 1, // Start on Session 1 (Nivel I)
       paymentStatus: paymentStatus,
@@ -3611,7 +3629,6 @@ export class OntologicalStore {
   }): User {
     const users = this.getUsers();
     const newClientId = 'client-' + Date.now();
-    const avatarNumber = 1530000000000 + Math.floor(Math.random() * 99999999);
     const newClient: User = {
       uid: newClientId,
       name: data.name.trim(),
@@ -3620,7 +3637,7 @@ export class OntologicalStore {
       company: data.company?.trim() || '',
       title: data.title?.trim() || 'Cliente Programa de Coaching',
       role: 'client',
-      avatarUrl: `https://images.unsplash.com/photo-${avatarNumber}?auto=format&fit=crop&w=400&q=80`,
+      avatarUrl: getEmailAvatarUrl(data.email, data.name),
       joinedAt: new Date().toISOString().split('T')[0],
       programProgress: 1,
       programStep: 1,
