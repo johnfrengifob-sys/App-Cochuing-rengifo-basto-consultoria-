@@ -21,6 +21,7 @@ import {
   OntologicalExperience,
   PostSessionForm,
 } from '../types';
+import { ServerDbSyncService } from './serverDbSync';
 
 export class FirestoreSyncService {
   private static isInitialized = false;
@@ -93,6 +94,13 @@ export class FirestoreSyncService {
       );
     } catch (error) {
       console.warn('Firestore syncEventRegistration notice:', error);
+    }
+
+    // Mirror to persistent server database for absolute resilience
+    try {
+      ServerDbSyncService.saveRegistration(registration).catch(() => {});
+    } catch {
+      // ignore
     }
   }
 
@@ -464,6 +472,13 @@ export class FirestoreSyncService {
       );
     } catch (error) {
       console.warn('Firestore syncUserProfile notice:', error);
+    }
+
+    // Mirror to persistent server database for absolute resilience
+    try {
+      ServerDbSyncService.saveUser(user).catch(() => {});
+    } catch {
+      // ignore
     }
   }
 
@@ -899,6 +914,18 @@ export class FirestoreSyncService {
         }
       } catch (e) {
         console.warn('findUserInFirestoreByEmail in eventRegistrations notice:', e);
+      }
+    }
+
+    // 4. Try finding in persistent server database (ensures legadobarber2026 and all clients are resolved even if Firestore is offline)
+    if (cleanEmail) {
+      try {
+        const serverUser = await ServerDbSyncService.findUserByEmail(cleanEmail);
+        if (serverUser) {
+          return serverUser;
+        }
+      } catch (e) {
+        console.warn('findUserInFirestoreByEmail in server DB notice:', e);
       }
     }
 

@@ -36,6 +36,7 @@ import {
 import promotionalEventBannerImg from '../assets/images/proximo_evento_banner_1788270380574.jpg';
 import coachAvatarImg from '../assets/images/regenerated_image_1788287101599.jpg';
 import { FirestoreSyncService } from './firestoreSync';
+import { ServerDbSyncService } from './serverDbSync';
 import {
   INITIAL_CRONOGRAMA_EVENTS as RAIZ_BALANCE_WORKSHOPS,
   MASTER_PROGRAM_RAIZ_BALANCE,
@@ -631,6 +632,31 @@ const INITIAL_USERS: User[] = [
     avatarUrl: coachAvatarImg,
     joinedAt: '2023-01-10',
   },
+  {
+    uid: 'client-legadobarber2026',
+    name: 'legadobarber2026',
+    email: 'legadobarber2026@gmail.com',
+    phone: '+57 323 464 2257',
+    role: 'client',
+    title: 'Participante Activo • Membresía Verificada',
+    status: 'active',
+    programProgress: 1,
+    programStep: 1,
+    programName: 'Certeza, Fronteras & Dirección Personal',
+    paymentStatus: 'Pago Único',
+    programFee: '$1.500.000 COP',
+    hasWorkshopsAccess: true,
+    hasSessionsAccess: true,
+    transformationSpacesEnabled: true,
+    enrolledWorkshopIds: ['taller-1-raiz', 'taller-2-tallo'],
+    completedWorkshopIds: [],
+    securityPin: '1234',
+    primaryBreakdown: 'Alineación de objetivos y soberanía directiva',
+    joinedAt: '2026-03-15',
+    avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80',
+    welcomeMessage: 'Bienvenido legadobarber2026 a tu Espacio Ontológico de Consultoría RBC.',
+    programAccessLevel: 'premium',
+  },
 ];
 
 const INITIAL_SESSIONS: Session[] = [];
@@ -717,7 +743,24 @@ const INITIAL_PROGRAMS: OntologicalProgram[] = [
   },
 ];
 
-const INITIAL_EVENT_REGISTRATIONS: EventRegistration[] = [];
+const INITIAL_EVENT_REGISTRATIONS: EventRegistration[] = [
+  {
+    id: 'reg-legadobarber2026',
+    ticketCode: 'RBC-LEGADO-2026',
+    eventId: 'taller-1-raiz',
+    eventTitle: 'Taller 1: Raíz y Fundamento Ontológico',
+    eventDate: '2026-03-28T09:00:00.000Z',
+    name: 'legadobarber2026',
+    email: 'legadobarber2026@gmail.com',
+    phone: '+57 323 464 2257',
+    attendedEvent: true,
+    registeredAt: '2026-03-15T10:00:00.000Z',
+    userUid: 'client-legadobarber2026',
+    icfTermsAccepted: true,
+    privacyTermsAccepted: true,
+    status: 'aprobado',
+  },
+];
 
 const INITIAL_PAYMENT_REQUESTS: PaymentRequest[] = [];
 
@@ -2511,7 +2554,15 @@ export class OntologicalStore {
       STORAGE_KEYS.EVENT_REGISTRATIONS,
       INITIAL_EVENT_REGISTRATIONS
     );
-    return Array.isArray(list) ? list : INITIAL_EVENT_REGISTRATIONS;
+    let safeRegs = Array.isArray(list) ? list : [...INITIAL_EVENT_REGISTRATIONS];
+    const legadoExists = safeRegs.some(
+      (r) => r.email && r.email.trim().toLowerCase() === 'legadobarber2026@gmail.com'
+    );
+    if (!legadoExists && INITIAL_EVENT_REGISTRATIONS.length > 0) {
+      safeRegs = [...INITIAL_EVENT_REGISTRATIONS, ...safeRegs];
+      this.save(STORAGE_KEYS.EVENT_REGISTRATIONS, safeRegs);
+    }
+    return safeRegs;
   }
 
   static saveEventRegistrations(registrations: EventRegistration[]): void {
@@ -2962,8 +3013,8 @@ export class OntologicalStore {
 
   static getUsers(): User[] {
     const isPurged = this.isDatabasePurgedClean();
-    const rawUsers = this.load<User[]>(STORAGE_KEYS.USERS, [INITIAL_USERS[0]]);
-    let safeUsers = Array.isArray(rawUsers) ? rawUsers : [INITIAL_USERS[0]];
+    const rawUsers = this.load<User[]>(STORAGE_KEYS.USERS, INITIAL_USERS);
+    let safeUsers = Array.isArray(rawUsers) ? rawUsers : [...INITIAL_USERS];
 
     // Auto-clean Carolina Montoya and any legacy dummy users
     const EXCLUDED_EMAILS = [
@@ -3031,6 +3082,20 @@ export class OntologicalStore {
         }
       });
       if (addedFromRegs) {
+        this.save(STORAGE_KEYS.USERS, safeUsers);
+      }
+    }
+
+    // Ensure verified client legadobarber2026 is always present in users directory
+    const legadoExists = safeUsers.some(
+      (u) => u.email && u.email.trim().toLowerCase() === 'legadobarber2026@gmail.com'
+    );
+    if (!legadoExists) {
+      const legadoTemplate = INITIAL_USERS.find(
+        (u) => u.email && u.email.trim().toLowerCase() === 'legadobarber2026@gmail.com'
+      );
+      if (legadoTemplate) {
+        safeUsers.push(legadoTemplate);
         this.save(STORAGE_KEYS.USERS, safeUsers);
       }
     }
@@ -3199,6 +3264,35 @@ export class OntologicalStore {
       this.getUsers();
     }
     return result;
+  }
+
+  static async syncWithServerDatabase(): Promise<void> {
+    try {
+      const currentUsers = this.getUsers();
+      const currentRegs = this.getEventRegistrations();
+      const currentSessions = this.getSessions();
+      const currentForms = this.getForms();
+      const currentPostSession = this.getPostSessionForms();
+
+      const serverState = await ServerDbSyncService.syncWithServer({
+        users: currentUsers,
+        eventRegistrations: currentRegs,
+        sessions: currentSessions,
+        forms: currentForms,
+        postSessionForms: currentPostSession,
+      });
+
+      if (serverState) {
+        if (Array.isArray(serverState.users) && serverState.users.length > 0) {
+          this.mergeUsersFromFirestore(serverState.users);
+        }
+        if (Array.isArray(serverState.eventRegistrations) && serverState.eventRegistrations.length > 0) {
+          this.mergeEventRegistrationsFromFirestore(serverState.eventRegistrations);
+        }
+      }
+    } catch (e) {
+      console.warn('[OntologicalStore] syncWithServerDatabase notice:', e);
+    }
   }
 
   static updateClientStatus(clientId: string, status: 'active' | 'waiting' | 'inactive'): User | null {

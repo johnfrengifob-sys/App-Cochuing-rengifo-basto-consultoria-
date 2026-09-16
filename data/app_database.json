@@ -1,0 +1,61 @@
+{
+  "users": [
+    {
+      "uid": "coach-1",
+      "name": "John Fredy Rengifo Basto",
+      "email": "rengifobastoco@gmail.com",
+      "role": "coach",
+      "title": "Consultor Ontológico Senior & Master Coach",
+      "avatarUrl": "https://lh3.googleusercontent.com/a/ACg8ocLw_rKevQ1f9hW4E_5oZkC_4aZ0g0_f1=s288-c-no",
+      "joinedAt": "2023-01-10",
+      "status": "active"
+    },
+    {
+      "uid": "client-legadobarber2026",
+      "name": "legadobarber2026",
+      "email": "legadobarber2026@gmail.com",
+      "phone": "+57 323 464 2257",
+      "role": "client",
+      "title": "Participante Activo • Membresía Verificada",
+      "status": "active",
+      "programProgress": 1,
+      "programStep": 1,
+      "programName": "Certeza, Fronteras & Dirección Personal",
+      "paymentStatus": "Pago Único",
+      "programFee": "$1.500.000 COP",
+      "hasWorkshopsAccess": true,
+      "hasSessionsAccess": true,
+      "transformationSpacesEnabled": true,
+      "enrolledWorkshopIds": ["taller-1-raiz", "taller-2-tallo"],
+      "completedWorkshopIds": [],
+      "securityPin": "1234",
+      "primaryBreakdown": "Alineación de objetivos y soberanía directiva",
+      "joinedAt": "2026-03-15",
+      "avatarUrl": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80",
+      "welcomeMessage": "Bienvenido legadobarber2026 a tu Espacio Ontológico de Consultoría RBC.",
+      "programAccessLevel": "premium"
+    }
+  ],
+  "eventRegistrations": [
+    {
+      "id": "reg-legadobarber2026",
+      "ticketCode": "RBC-LEGADO-2026",
+      "eventId": "ev-raiz-2026",
+      "name": "legadobarber2026",
+      "email": "legadobarber2026@gmail.com",
+      "phone": "+57 323 464 2257",
+      "attended": true,
+      "registeredAt": "2026-03-15T10:00:00.000Z",
+      "userUid": "client-legadobarber2026",
+      "status": "confirmed",
+      "securityPin": "1234"
+    }
+  ],
+  "sessions": [],
+  "forms": [],
+  "postSessionForms": [],
+  "aiInsights": [],
+  "prospects": [],
+  "paymentRequests": [],
+  "lastUpdated": "2026-03-16T12:00:00.000Z"
+}

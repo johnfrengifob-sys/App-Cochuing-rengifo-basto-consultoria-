@@ -1,5 +1,6 @@
 import express from 'express';
 import path from 'path';
+import fs from 'fs';
 import { createServer as createViteServer } from 'vite';
 import { GoogleGenAI } from '@google/genai';
 import dotenv from 'dotenv';
@@ -139,6 +140,417 @@ async function startServer() {
       organization: 'Rengifo Basto Consultoría Ontológica',
       provider: 'Google Cloud & AI Studio',
     });
+  });
+
+  // ==========================================
+  // PERSISTENT SERVER DATABASE ENGINE (JSON & HYBRID SYNC)
+  // Ensures all users (including legadobarber2026@gmail.com)
+  // are persisted on disk and synced across all devices & sessions
+  // ==========================================
+  const DB_FILE = path.join(process.cwd(), 'data', 'app_database.json');
+
+  interface AppDatabase {
+    users: any[];
+    eventRegistrations: any[];
+    sessions: any[];
+    forms: any[];
+    postSessionForms: any[];
+    aiInsights: any[];
+    prospects: any[];
+    paymentRequests: any[];
+    lastUpdated: string;
+  }
+
+  const SEED_USERS = [
+    {
+      uid: 'coach-1',
+      name: 'John Fredy Rengifo Basto',
+      email: 'rengifobastoco@gmail.com',
+      role: 'coach',
+      title: 'Consultor Ontológico Senior & Master Coach',
+      avatarUrl: 'https://lh3.googleusercontent.com/a/ACg8ocLw_rKevQ1f9hW4E_5oZkC_4aZ0g0_f1=s288-c-no',
+      joinedAt: '2023-01-10',
+      status: 'active',
+    },
+    {
+      uid: 'client-legadobarber2026',
+      name: 'legadobarber2026',
+      email: 'legadobarber2026@gmail.com',
+      phone: '+57 323 464 2257',
+      role: 'client',
+      title: 'Participante Activo • Membresía Verificada',
+      status: 'active',
+      programProgress: 1,
+      programStep: 1,
+      programName: 'Certeza, Fronteras & Dirección Personal',
+      paymentStatus: 'Pago Único',
+      programFee: '$1.500.000 COP',
+      hasWorkshopsAccess: true,
+      hasSessionsAccess: true,
+      transformationSpacesEnabled: true,
+      enrolledWorkshopIds: ['taller-1-raiz', 'taller-2-tallo'],
+      completedWorkshopIds: [],
+      securityPin: '1234',
+      primaryBreakdown: 'Alineación de objetivos y soberanía directiva',
+      joinedAt: '2026-03-15',
+      avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80',
+      welcomeMessage: 'Bienvenido legadobarber2026 a tu Espacio Ontológico de Consultoría RBC.',
+      programAccessLevel: 'premium',
+    },
+  ];
+
+  const SEED_EVENT_REGISTRATIONS = [
+    {
+      id: 'reg-legadobarber2026',
+      ticketCode: 'RBC-LEGADO-2026',
+      eventId: 'ev-raiz-2026',
+      name: 'legadobarber2026',
+      email: 'legadobarber2026@gmail.com',
+      phone: '+57 323 464 2257',
+      attended: true,
+      registeredAt: '2026-03-15T10:00:00.000Z',
+      userUid: 'client-legadobarber2026',
+      status: 'confirmed',
+      securityPin: '1234',
+    },
+  ];
+
+  function readServerDatabase(): AppDatabase {
+    try {
+      const dir = path.dirname(DB_FILE);
+      if (!fs.existsSync(dir)) {
+        fs.mkdirSync(dir, { recursive: true });
+      }
+      if (fs.existsSync(DB_FILE)) {
+        const raw = fs.readFileSync(DB_FILE, 'utf-8');
+        const data = JSON.parse(raw);
+        let modified = false;
+
+        if (!Array.isArray(data.users)) {
+          data.users = [...SEED_USERS];
+          modified = true;
+        } else {
+          SEED_USERS.forEach((seedUser) => {
+            const exists = data.users.some(
+              (u: any) => u.email && u.email.trim().toLowerCase() === seedUser.email.trim().toLowerCase()
+            );
+            if (!exists) {
+              data.users.push(seedUser);
+              modified = true;
+            }
+          });
+        }
+
+        if (!Array.isArray(data.eventRegistrations)) {
+          data.eventRegistrations = [...SEED_EVENT_REGISTRATIONS];
+          modified = true;
+        } else {
+          SEED_EVENT_REGISTRATIONS.forEach((seedReg) => {
+            const exists = data.eventRegistrations.some(
+              (r: any) => r.email && r.email.trim().toLowerCase() === seedReg.email.trim().toLowerCase()
+            );
+            if (!exists) {
+              data.eventRegistrations.push(seedReg);
+              modified = true;
+            }
+          });
+        }
+
+        if (!Array.isArray(data.sessions)) data.sessions = [];
+        if (!Array.isArray(data.forms)) data.forms = [];
+        if (!Array.isArray(data.postSessionForms)) data.postSessionForms = [];
+        if (!Array.isArray(data.aiInsights)) data.aiInsights = [];
+        if (!Array.isArray(data.prospects)) data.prospects = [];
+        if (!Array.isArray(data.paymentRequests)) data.paymentRequests = [];
+
+        if (modified) {
+          writeServerDatabase(data);
+        }
+        return data;
+      }
+    } catch (err) {
+      console.error('[Server DB] Error reading DB file, creating defaults:', err);
+    }
+
+    const initial: AppDatabase = {
+      users: [...SEED_USERS],
+      eventRegistrations: [...SEED_EVENT_REGISTRATIONS],
+      sessions: [],
+      forms: [],
+      postSessionForms: [],
+      aiInsights: [],
+      prospects: [],
+      paymentRequests: [],
+      lastUpdated: new Date().toISOString(),
+    };
+    writeServerDatabase(initial);
+    return initial;
+  }
+
+  function writeServerDatabase(data: AppDatabase): boolean {
+    try {
+      const dir = path.dirname(DB_FILE);
+      if (!fs.existsSync(dir)) {
+        fs.mkdirSync(dir, { recursive: true });
+      }
+      data.lastUpdated = new Date().toISOString();
+      fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 2), 'utf-8');
+      return true;
+    } catch (err) {
+      console.error('[Server DB] Error writing DB file:', err);
+      return false;
+    }
+  }
+
+  // API: Database Health & Verification Check
+  app.get('/api/db/health', (req, res) => {
+    const data = readServerDatabase();
+    const legadoUser = data.users.find(
+      (u: any) => u.email && u.email.trim().toLowerCase() === 'legadobarber2026@gmail.com'
+    );
+    const coachUser = data.users.find(
+      (u: any) => u.email && u.email.trim().toLowerCase() === 'rengifobastoco@gmail.com'
+    );
+    const clientsCount = data.users.filter((u: any) => u.role === 'client').length;
+
+    res.json({
+      status: 'online',
+      message: 'Base de datos del servidor activa y funcionando adecuadamente',
+      databaseFile: 'data/app_database.json',
+      totalUsers: data.users.length,
+      totalClients: clientsCount,
+      totalEventRegistrations: data.eventRegistrations.length,
+      lastUpdated: data.lastUpdated,
+      legadoBarberStatus: legadoUser ? 'verificado_y_activo' : 'no_encontrado',
+      legadoBarberRecord: legadoUser || null,
+      coachStatus: coachUser ? 'activo' : 'no_encontrado',
+      storageEngine: 'hybrid_persistent_json_with_firestore_mirror',
+    });
+  });
+
+  // API: Full Database State (for client synchronization)
+  app.get('/api/db/state', (req, res) => {
+    const data = readServerDatabase();
+    res.json(data);
+  });
+
+  // API: Database Synchronization (bidirectional merge)
+  app.post('/api/db/sync', (req, res) => {
+    try {
+      const clientState = req.body || {};
+      const currentDb = readServerDatabase();
+      let changed = false;
+
+      // Merge Users
+      if (Array.isArray(clientState.users)) {
+        clientState.users.forEach((cUser: any) => {
+          if (!cUser || !cUser.email) return;
+          const cleanEmail = cUser.email.trim().toLowerCase();
+          const existingIdx = currentDb.users.findIndex(
+            (u: any) => (u.email && u.email.trim().toLowerCase() === cleanEmail) || u.uid === cUser.uid
+          );
+          if (existingIdx >= 0) {
+            currentDb.users[existingIdx] = { ...currentDb.users[existingIdx], ...cUser };
+            changed = true;
+          } else {
+            currentDb.users.push(cUser);
+            changed = true;
+          }
+        });
+      }
+
+      // Merge Event Registrations
+      if (Array.isArray(clientState.eventRegistrations)) {
+        clientState.eventRegistrations.forEach((cReg: any) => {
+          if (!cReg) return;
+          const cleanEmail = (cReg.email || '').trim().toLowerCase();
+          const existingIdx = currentDb.eventRegistrations.findIndex(
+            (r: any) => r.id === cReg.id || r.ticketCode === cReg.ticketCode || (cleanEmail && r.email && r.email.trim().toLowerCase() === cleanEmail)
+          );
+          if (existingIdx >= 0) {
+            currentDb.eventRegistrations[existingIdx] = { ...currentDb.eventRegistrations[existingIdx], ...cReg };
+            changed = true;
+          } else {
+            currentDb.eventRegistrations.push(cReg);
+            changed = true;
+          }
+        });
+      }
+
+      // Merge Sessions
+      if (Array.isArray(clientState.sessions)) {
+        clientState.sessions.forEach((s: any) => {
+          if (!s || !s.id) return;
+          const idx = currentDb.sessions.findIndex((existing: any) => existing.id === s.id);
+          if (idx >= 0) {
+            currentDb.sessions[idx] = { ...currentDb.sessions[idx], ...s };
+            changed = true;
+          } else {
+            currentDb.sessions.push(s);
+            changed = true;
+          }
+        });
+      }
+
+      // Merge Forms
+      if (Array.isArray(clientState.forms)) {
+        clientState.forms.forEach((f: any) => {
+          if (!f || !f.id) return;
+          const idx = currentDb.forms.findIndex((existing: any) => existing.id === f.id);
+          if (idx >= 0) {
+            currentDb.forms[idx] = { ...currentDb.forms[idx], ...f };
+            changed = true;
+          } else {
+            currentDb.forms.push(f);
+            changed = true;
+          }
+        });
+      }
+
+      // Always ensure SEED_USERS exist
+      SEED_USERS.forEach((seedUser) => {
+        const exists = currentDb.users.some(
+          (u: any) => u.email && u.email.trim().toLowerCase() === seedUser.email.trim().toLowerCase()
+        );
+        if (!exists) {
+          currentDb.users.push(seedUser);
+          changed = true;
+        }
+      });
+
+      if (changed) {
+        writeServerDatabase(currentDb);
+      }
+
+      res.json({
+        success: true,
+        message: 'Base de datos sincronizada exitosamente',
+        state: currentDb,
+      });
+    } catch (err: any) {
+      console.error('[Server DB Sync Error]:', err);
+      res.status(500).json({ error: err.message || 'Error al sincronizar base de datos' });
+    }
+  });
+
+  // API: Upsert a User
+  app.post('/api/db/users', (req, res) => {
+    try {
+      const user = req.body.user || req.body;
+      if (!user || !user.email) {
+        return res.status(400).json({ error: 'Se requiere email para guardar el usuario' });
+      }
+
+      const db = readServerDatabase();
+      const cleanEmail = user.email.trim().toLowerCase();
+      const existingIdx = db.users.findIndex(
+        (u: any) => (u.email && u.email.trim().toLowerCase() === cleanEmail) || u.uid === user.uid
+      );
+
+      let savedUser: any;
+      if (existingIdx >= 0) {
+        db.users[existingIdx] = { ...db.users[existingIdx], ...user };
+        savedUser = db.users[existingIdx];
+      } else {
+        savedUser = {
+          uid: user.uid || `client-${Date.now()}`,
+          name: user.name || user.email.split('@')[0],
+          email: cleanEmail,
+          role: user.role || 'client',
+          status: user.status || 'active',
+          joinedAt: user.joinedAt || new Date().toISOString().split('T')[0],
+          ...user,
+        };
+        db.users.push(savedUser);
+      }
+
+      writeServerDatabase(db);
+      res.json({ success: true, user: savedUser });
+    } catch (err: any) {
+      console.error('[Server DB Users Error]:', err);
+      res.status(500).json({ error: err.message || 'Error al guardar usuario en base de datos' });
+    }
+  });
+
+  // API: Get User by Email or UID
+  app.get('/api/db/users/:identifier', (req, res) => {
+    const { identifier } = req.params;
+    const db = readServerDatabase();
+    const cleanId = (identifier || '').trim().toLowerCase();
+
+    const user = db.users.find(
+      (u: any) => (u.email && u.email.trim().toLowerCase() === cleanId) || (u.uid && u.uid.toLowerCase() === cleanId)
+    );
+
+    if (user) {
+      return res.json({ found: true, user });
+    }
+    res.status(404).json({ found: false, error: 'Usuario no encontrado en la base de datos' });
+  });
+
+  // API: Upsert Event Registration
+  app.post('/api/db/registrations', (req, res) => {
+    try {
+      const registration = req.body.registration || req.body;
+      if (!registration || !registration.email) {
+        return res.status(400).json({ error: 'Se requiere email para el registro del evento' });
+      }
+
+      const db = readServerDatabase();
+      const cleanEmail = registration.email.trim().toLowerCase();
+      const existingIdx = db.eventRegistrations.findIndex(
+        (r: any) => r.id === registration.id || r.ticketCode === registration.ticketCode || (r.email && r.email.trim().toLowerCase() === cleanEmail)
+      );
+
+      let savedReg: any;
+      if (existingIdx >= 0) {
+        db.eventRegistrations[existingIdx] = { ...db.eventRegistrations[existingIdx], ...registration };
+        savedReg = db.eventRegistrations[existingIdx];
+      } else {
+        savedReg = {
+          id: registration.id || `reg-${Date.now()}`,
+          ticketCode: registration.ticketCode || `RBC-${Math.floor(100000 + Math.random() * 900000)}`,
+          name: registration.name || 'Participante',
+          email: cleanEmail,
+          phone: registration.phone || '',
+          attended: registration.attended ?? true,
+          registeredAt: registration.registeredAt || new Date().toISOString(),
+          status: registration.status || 'confirmed',
+          ...registration,
+        };
+        db.eventRegistrations.push(savedReg);
+      }
+
+      // Also ensure a corresponding client user exists
+      const userExists = db.users.some(
+        (u: any) => u.email && u.email.trim().toLowerCase() === cleanEmail
+      );
+      if (!userExists) {
+        db.users.push({
+          uid: savedReg.userUid || `client-${Date.now()}`,
+          name: savedReg.name,
+          email: cleanEmail,
+          phone: savedReg.phone,
+          role: 'client',
+          title: 'Participante Activo • Membresía Verificada',
+          status: 'active',
+          programProgress: 1,
+          programStep: 1,
+          programName: 'Certeza, Fronteras & Dirección Personal',
+          paymentStatus: 'Pago Único',
+          hasWorkshopsAccess: true,
+          hasSessionsAccess: true,
+          transformationSpacesEnabled: true,
+          joinedAt: new Date().toISOString().split('T')[0],
+        });
+      }
+
+      writeServerDatabase(db);
+      res.json({ success: true, registration: savedReg });
+    } catch (err: any) {
+      console.error('[Server DB Registrations Error]:', err);
+      res.status(500).json({ error: err.message || 'Error al guardar registro en base de datos' });
+    }
   });
 
   // ==========================================

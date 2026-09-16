@@ -160,12 +160,18 @@ export default function App() {
       refreshUsers();
     });
 
-    // Initial sync sweep from Firestore
+    // Initial sync sweep from Firestore and persistent server database
     FirestoreSyncService.syncAllFromFirestore()
       .then(({ usersCount, regsCount }) => {
         if (usersCount > 0 || regsCount > 0) {
           refreshUsers();
         }
+      })
+      .catch(() => {});
+
+    OntologicalStore.syncWithServerDatabase()
+      .then(() => {
+        refreshUsers();
       })
       .catch(() => {});
 
