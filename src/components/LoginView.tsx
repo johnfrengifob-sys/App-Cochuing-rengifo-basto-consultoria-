@@ -10,6 +10,7 @@ import { signInWithGoogle } from '../services/firebase';
 import { FirestoreSyncService } from '../services/firestoreSync';
 import { SocialLinksBar } from './SocialLinksBar';
 import { PromotionalEventBanner } from './PromotionalEventBanner';
+import type { AppliedCodeDetails } from './MultifunctionalAuthButton';
 import {
   Sparkles,
   ShieldCheck,
@@ -65,6 +66,20 @@ export const LoginView: React.FC<LoginViewProps> = ({
   const [isRegistering, setIsRegistering] = useState(false);
   const [registrationSuccess, setRegistrationSuccess] = useState<string | null>(null);
   const [createdAccountUser, setCreatedAccountUser] = useState<User | null>(null);
+
+  // Active Applied Code / Invitation / Workshop token
+  const [appliedCodeDetails, setAppliedCodeDetails] = useState<AppliedCodeDetails | null>(null);
+
+  const handleCodeApplied = (details: AppliedCodeDetails) => {
+    setAppliedCodeDetails(details);
+    if (details.participantEmail) {
+      setEmailInput(details.participantEmail);
+      setRegEmail(details.participantEmail);
+    }
+    if (details.groupName) {
+      setRegInterest(details.groupName);
+    }
+  };
 
   // Google 1-Click Assistant Modal state
   const [showGoogleModal, setShowGoogleModal] = useState(false);
@@ -225,6 +240,32 @@ export const LoginView: React.FC<LoginViewProps> = ({
         console.warn('Google sign-in existing user progress fetch notice:', err);
       }
 
+      // If an invitation code or workshop token was applied, auto-assign to the client's profile
+      let activeInviteCode = appliedCodeDetails?.code || null;
+      let activeWorkshopId = appliedCodeDetails?.workshopId || 'taller-1-raiz';
+      let activeTicketCode = appliedCodeDetails?.ticketCode || null;
+
+      try {
+        if (!activeInviteCode) activeInviteCode = sessionStorage.getItem('rbc_active_invitation_code');
+        if (!appliedCodeDetails?.workshopId) {
+          const sWid = sessionStorage.getItem('rbc_active_workshop_id');
+          if (sWid) activeWorkshopId = sWid;
+        }
+        if (!activeTicketCode) activeTicketCode = sessionStorage.getItem('rbc_active_ticket_code');
+      } catch {
+        // Ignore
+      }
+
+      if (activeWorkshopId && (!existing.enrolledWorkshopIds || !existing.enrolledWorkshopIds.includes(activeWorkshopId))) {
+        const updatedEnrolled = Array.from(new Set([...(existing.enrolledWorkshopIds || ['taller-1-raiz']), activeWorkshopId]));
+        existing.enrolledWorkshopIds = updatedEnrolled;
+        OntologicalStore.updateUser(existing.uid, { enrolledWorkshopIds: updatedEnrolled });
+        FirestoreSyncService.syncUserProfile(existing).catch(console.warn);
+      }
+      if (activeTicketCode) {
+        OntologicalStore.confirmEventAttendance(activeTicketCode);
+      }
+
       const emailAvatar = getEmailAvatarUrl(email, displayName || existing.name, photoURL);
       if (emailAvatar && (!existing.avatarUrl || existing.avatarUrl.includes('unsplash') || (photoURL && existing.avatarUrl !== photoURL))) {
         existing.avatarUrl = emailAvatar;
@@ -258,7 +299,27 @@ export const LoginView: React.FC<LoginViewProps> = ({
       }
     }
 
-    // C. Alta Automática: Registrar como "Nuevo Participante" con expediente en blanco
+    // C. Alta Automática: Registrar como "Participante Activo" con expediente en blanco
+    let activeInviteCode = appliedCodeDetails?.code || null;
+    let activeWorkshopId = appliedCodeDetails?.workshopId || 'taller-1-raiz';
+    let activeGroupName = appliedCodeDetails?.groupName || 'Certeza, Fronteras & Dirección Personal';
+    let activeTicketCode = appliedCodeDetails?.ticketCode || null;
+
+    try {
+      if (!activeInviteCode) activeInviteCode = sessionStorage.getItem('rbc_active_invitation_code');
+      if (!appliedCodeDetails?.workshopId) {
+        const sWid = sessionStorage.getItem('rbc_active_workshop_id');
+        if (sWid) activeWorkshopId = sWid;
+      }
+      if (!appliedCodeDetails?.groupName) {
+        const sGName = sessionStorage.getItem('rbc_active_group_name');
+        if (sGName) activeGroupName = sGName;
+      }
+      if (!activeTicketCode) activeTicketCode = sessionStorage.getItem('rbc_active_ticket_code');
+    } catch {
+      // Ignore
+    }
+
     const upcomingEvent = OntologicalStore.getUpcomingEvent();
     const resolvedAvatar = getEmailAvatarUrl(email, displayName, photoURL);
     const regResult = OntologicalStore.registerForEvent({
@@ -276,7 +337,7 @@ export const LoginView: React.FC<LoginViewProps> = ({
       role: 'client',
       status: 'active',
       primaryBreakdown: '',
-      notes: '',
+      notes: activeInviteCode ? `Auto-asignado con código/enlace: ${activeInviteCode}` : '',
       company: '',
       programProgress: 1,
       programStep: 1,
@@ -284,12 +345,12 @@ export const LoginView: React.FC<LoginViewProps> = ({
       hasWorkshopsAccess: true,
       hasSessionsAccess: true,
       completedWorkshopIds: [],
-      enrolledWorkshopIds: ['taller-1-raiz'],
+      enrolledWorkshopIds: Array.from(new Set(['taller-1-raiz', activeWorkshopId])),
       workshopMemories: {},
       welcomeMessage: 'Bienvenido a tu Espacio Ontológico de Consultoría RBC.',
       paymentStatus: 'Pago Único',
       programAccessLevel: 'premium',
-      programName: 'Certeza, Fronteras & Dirección Personal',
+      programName: activeGroupName,
       programFee: '$1.500.000 COP',
     };
 
@@ -300,7 +361,7 @@ export const LoginView: React.FC<LoginViewProps> = ({
     };
 
     // Confirm ticket and attendance access
-    OntologicalStore.confirmEventAttendance(regResult.registration.ticketCode);
+    OntologicalStore.confirmEventAttendance(activeTicketCode || regResult.registration.ticketCode);
 
     // Persist new user and registration permanently to Firestore
     await FirestoreSyncService.syncUserProfile(updatedNewUser).catch((e) => {
@@ -599,7 +660,7 @@ export const LoginView: React.FC<LoginViewProps> = ({
                     </div>
 
                     {/* Primary Google Sign-In Button */}
-                    <div className="space-y-2.5 pt-1">
+                    <div className="pt-1">
                       <button
                         type="button"
                         onClick={() => handleGoogleSignIn('login')}
@@ -633,7 +694,7 @@ export const LoginView: React.FC<LoginViewProps> = ({
                             </svg>
                           </div>
                         )}
-                        <span className="tracking-tight">
+                        <span className="tracking-tight font-medium">
                           {isVerifying ? 'Conectando con Google...' : 'Iniciar sesión con Google'}
                         </span>
                       </button>
@@ -816,7 +877,7 @@ export const LoginView: React.FC<LoginViewProps> = ({
                       </div>
 
                       {/* Quick Register with Google */}
-                      <div className="space-y-2 pt-2">
+                      <div className="pt-2">
                         <button
                           type="button"
                           onClick={() => handleGoogleSignIn('register')}
@@ -850,7 +911,7 @@ export const LoginView: React.FC<LoginViewProps> = ({
                               </svg>
                             </div>
                           )}
-                          <span className="tracking-tight">
+                          <span className="tracking-tight font-medium">
                             {isVerifying ? 'Conectando con Google...' : 'Iniciar sesión con Google'}
                           </span>
                         </button>

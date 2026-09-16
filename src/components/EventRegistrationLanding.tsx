@@ -1,7 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { CronogramaEvent, User } from '../types';
 import { OntologicalStore, COMPANY_INFO } from '../services/store';
+import { INITIAL_CRONOGRAMA_EVENTS } from '../data/raizBalanceWorkshops';
 import { safeCopyToClipboard } from '../utils/clipboard';
+import { getPublicPortalUrl } from '../utils/urlHelper';
 import { signInWithGoogle, auth } from '../services/firebase';
 import coachAvatarImg from '../assets/images/regenerated_image_1788287101599.jpg';
 import { LiquidGlassButton } from './LiquidGlassButton';
@@ -20,6 +22,7 @@ import {
   Check,
   Flame,
   ArrowRight,
+  ArrowLeft,
   UserCheck,
   FileText,
   AlertCircle,
@@ -41,16 +44,64 @@ interface EventRegistrationLandingProps {
   onEnterPlatform: (user?: User) => void;
   onNavigateToLogin?: () => void;
   initialEmail?: string;
+  isCoachPreview?: boolean;
+  onBackToAdmin?: () => void;
 }
 
 export const EventRegistrationLanding: React.FC<EventRegistrationLandingProps> = ({
   onEnterPlatform,
   onNavigateToLogin,
   initialEmail,
+  isCoachPreview,
+  onBackToAdmin,
 }) => {
-  const [event, setEvent] = useState<CronogramaEvent>(() =>
-    OntologicalStore.getUpcomingEvent()
-  );
+  const [event, setEvent] = useState<CronogramaEvent>(() => {
+    try {
+      const upcoming = OntologicalStore.getUpcomingEvent();
+      if (upcoming && upcoming.title) return upcoming;
+      const allEvents = OntologicalStore.getCronogramaEvents();
+      if (allEvents && allEvents[0]) return allEvents[0];
+    } catch (e) {
+      console.warn('Error loading upcoming event:', e);
+    }
+    return INITIAL_CRONOGRAMA_EVENTS[0];
+  });
+
+  // Guaranteed safe event object to avoid any property access errors
+  const safeEvent: CronogramaEvent = useMemo(() => {
+    if (event && event.title) return event;
+    return INITIAL_CRONOGRAMA_EVENTS[0] || {
+      id: 'taller-1-raiz',
+      title: 'Taller I: Raíz – Deconstrucción Somática & Sabiduría Emocional',
+      subtitle: 'Reconocer la raíz: Corporalidad, límites y descodificación de las emociones fundamentales.',
+      category: 'Primer Taller • En Vivo',
+      eventType: 'Taller / Programa Intensivo',
+      date: '2026-09-12T19:00:00.000-05:00',
+      displayDate: 'Sábado, 12 de Septiembre de 2026',
+      time: '7:00 PM - 8:30 PM (GMT-5)',
+      mode: 'Online (Google Meet)',
+      meetUrl: 'https://meet.google.com/rbc-conversatorio-ontologico',
+      description: 'Primer encuentro vivencial del programa maestro RAÍZ Y BALANCE: Evolución de las Emociones.',
+      imageUrl: 'https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=1000&auto=format&fit=crop&q=80',
+      coverImage: 'https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=1000&auto=format&fit=crop&q=80',
+      showOnHome: true,
+      capacityType: 'grupal',
+      capacity: 12,
+      totalSpots: 12,
+      spotsLeft: 12,
+      priceAmount: 180000,
+      price: '$180.000 COP',
+      currency: 'COP',
+      launchDate: '2026-09-05',
+      eventDate: '2026-09-12',
+      facilitator: 'John Fredy Rengifo Basto (Master Coach Ontológico)',
+      featured: true,
+      status: 'upcoming',
+      syllabus: [],
+      guidingQuestions: [],
+      supportMaterials: [],
+    };
+  }, [event]);
 
   // Form State
   const [name, setName] = useState(() => {
@@ -284,7 +335,7 @@ export const EventRegistrationLanding: React.FC<EventRegistrationLandingProps> =
     setIsSubmitting(true);
     setTimeout(() => {
       const result = OntologicalStore.registerForEvent({
-        eventId: event.id,
+        eventId: safeEvent.id,
         name: name.trim(),
         email: email.trim().toLowerCase(),
         phone: phone.trim(),
@@ -304,52 +355,83 @@ export const EventRegistrationLanding: React.FC<EventRegistrationLandingProps> =
 
   // Google Calendar URL Generator
   const generateGoogleCalendarUrl = () => {
-    const title = encodeURIComponent(`${event.title} - Rengifo Basto Ontología`);
+    const title = encodeURIComponent(`${safeEvent.title} - Rengifo Basto Ontología`);
     const details = encodeURIComponent(
-      `${event.subtitle}\n\nFacilitador: ${event.facilitator}\nEnlace Meet: ${event.meetUrl || 'https://meet.google.com/rbc-conversatorio-vivo'}\n\n*Recuerda que tus datos y participaciones están protegidos bajo estándares de estricta confidencialidad ICF y privacidad de Google Workspace & Gemini.*`
+      `${safeEvent.subtitle}\n\nFacilitador: ${safeEvent.facilitator}\nEnlace Meet: ${safeEvent.meetUrl || 'https://meet.google.com/rbc-conversatorio-ontologico'}\n\n*Recuerda que tus datos y participaciones están protegidos bajo estándares de estricta confidencialidad ICF y privacidad de Google Workspace & Gemini.*`
     );
-    const location = encodeURIComponent(event.meetUrl || 'Google Meet Online');
+    const location = encodeURIComponent(safeEvent.meetUrl || 'Google Meet Online');
     // Start date formatted for Google Calendar
     return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&details=${details}&location=${location}`;
   };
 
   const handleCopyMeet = async () => {
-    const link = event.meetUrl || 'https://meet.google.com/rbc-conversatorio-vivo';
+    const link = safeEvent.meetUrl || 'https://meet.google.com/rbc-conversatorio-ontologico';
     await safeCopyToClipboard(link);
     setCopiedMeet(true);
     setTimeout(() => setCopiedMeet(false), 2500);
   };
 
   const handleCopyShareableLink = async () => {
-    await safeCopyToClipboard(window.location.href);
+    const url = getPublicPortalUrl('registro');
+    await safeCopyToClipboard(url);
     setCopiedLink(true);
     setTimeout(() => setCopiedLink(false), 2500);
   };
 
   return (
     <div className="min-h-screen bg-transparent text-black dark:text-neutral-100 flex flex-col justify-between selection:bg-black selection:text-white dark:selection:bg-white dark:selection:text-black transition-colors duration-200">
+      {/* Top Banner when coach/admin is previewing the public portal */}
+      {isCoachPreview && onBackToAdmin && (
+        <div className="w-full bg-black text-white dark:bg-[#18181C] dark:text-white border-b border-neutral-800 px-4 py-2.5 flex items-center justify-between z-50 sticky top-0 shadow-md">
+          <div className="flex items-center gap-2 text-xs">
+            <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse shrink-0" />
+            <span className="font-semibold">Modo Administrador:</span>
+            <span className="text-neutral-300 hidden sm:inline">
+              Estás visualizando el Portal Público de Inscripción tal como lo reciben los participantes.
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={onBackToAdmin}
+            id="btn-return-to-admin-dashboard"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white text-black dark:bg-neutral-100 dark:text-neutral-900 text-xs font-bold hover:bg-neutral-200 transition-colors cursor-pointer shadow-xs shrink-0"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" />
+            <span>Volver al Panel Administrador</span>
+          </button>
+        </div>
+      )}
+
       {/* Top Header / Bar */}
       <header className="w-full border-b border-white/60 dark:border-white/10 bg-white/70 dark:bg-[#0D0D0E]/70 backdrop-blur-xl sticky top-0 z-30">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 h-18 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <BrandLogo
               size="sm"
-              onClick={onNavigateToLogin || (() => onEnterPlatform())}
+              onClick={onBackToAdmin || onNavigateToLogin || (() => onEnterPlatform())}
               className="transition-transform active:scale-95"
             />
           </div>
 
           <div className="flex items-center gap-3">
             <ThemeToggle variant="button" />
-            {onNavigateToLogin && (
+            {onBackToAdmin ? (
+              <button
+                onClick={onBackToAdmin}
+                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-black text-white dark:bg-white dark:text-black text-xs font-semibold hover:opacity-90 transition-all cursor-pointer"
+              >
+                <ArrowLeft className="w-3 h-3" />
+                <span>Volver al Panel</span>
+              </button>
+            ) : onNavigateToLogin ? (
               <button
                 onClick={onNavigateToLogin}
-                className="hidden sm:flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-gray-50 dark:bg-[#1E1E22] border border-gray-200 dark:border-neutral-700 text-xs text-gray-700 dark:text-neutral-300 hover:text-black dark:hover:text-white hover:border-gray-300 dark:hover:border-neutral-600 transition-all cursor-pointer font-medium"
+                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-gray-50 dark:bg-[#1E1E22] border border-gray-200 dark:border-neutral-700 text-xs text-gray-700 dark:text-neutral-300 hover:text-black dark:hover:text-white hover:border-gray-300 dark:hover:border-neutral-600 transition-all cursor-pointer font-medium"
               >
                 <span>Ya tengo cuenta</span>
                 <ArrowRight className="w-3 h-3" />
               </button>
-            )}
+            ) : null}
           </div>
         </div>
       </header>
@@ -378,19 +460,51 @@ export const EventRegistrationLanding: React.FC<EventRegistrationLandingProps> =
               <div className="lg:col-span-6 bg-white/70 dark:bg-[#18181B]/70 backdrop-blur-xl rounded-3xl border border-white/75 dark:border-white/10 shadow-sm overflow-hidden flex flex-col">
                 <div className="relative bg-black overflow-hidden group flex flex-col items-center justify-center border-b border-gray-100 dark:border-neutral-800">
                   <img
-                    src={event.imageUrl}
-                    alt={event.title}
+                    src={safeEvent.imageUrl}
+                    alt={safeEvent.title}
                     referrerPolicy="no-referrer"
                     className="w-full h-auto max-h-[280px] object-contain opacity-95 group-hover:scale-105 transition-transform duration-700 ease-out"
                   />
                   <div className="absolute top-4 left-4 right-4 z-10 flex items-center justify-between pointer-events-none">
                     <span className="pointer-events-auto px-3 py-1 rounded-full bg-black/70 backdrop-blur-md border border-white/20 text-[10px] font-medium text-white">
-                      {event.category}
+                      {safeEvent.category}
                     </span>
                     <span className="pointer-events-auto inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-white/90 backdrop-blur-md text-[10px] font-semibold text-black">
                       <Flame className="w-3 h-3 text-rose-500 fill-rose-500" />
-                      {event.spotsLeft} Cupos Disponibles
+                      <span>Solo {safeEvent.spotsLeft} Cupos</span>
                     </span>
+                  </div>
+                </div>
+
+                <div className="p-6 sm:p-7 space-y-6">
+                  {/* Event Title & Subtitle */}
+                  <div className="space-y-2">
+                    <h2 className="text-xl sm:text-2xl font-semibold tracking-tight text-black dark:text-white leading-snug">
+                      {safeEvent.title}
+                    </h2>
+                    <p className="text-xs sm:text-sm text-gray-600 dark:text-neutral-300 font-light leading-relaxed">
+                      {safeEvent.subtitle}
+                    </p>
+                  </div>
+
+                  {/* Metadata Chips */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-gray-600 dark:text-neutral-300 pt-2 border-t border-gray-100 dark:border-neutral-800">
+                    <div className="flex items-center gap-2.5">
+                      <Calendar className="w-4 h-4 text-emerald-600 shrink-0" />
+                      <span><strong>Fecha:</strong> {safeEvent.displayDate}</span>
+                    </div>
+                    <div className="flex items-center gap-2.5">
+                      <Clock className="w-4 h-4 text-emerald-600 shrink-0" />
+                      <span><strong>Hora:</strong> {safeEvent.time}</span>
+                    </div>
+                    <div className="flex items-center gap-2.5">
+                      <Video className="w-4 h-4 text-blue-600 shrink-0" />
+                      <span><strong>Plataforma:</strong> {safeEvent.mode}</span>
+                    </div>
+                    <div className="flex items-center gap-2.5">
+                      <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
+                      <span><strong>Facilitador:</strong> {safeEvent.facilitator}</span>
+                    </div>
                   </div>
                 </div>
 
@@ -425,7 +539,7 @@ export const EventRegistrationLanding: React.FC<EventRegistrationLandingProps> =
                   <div className="space-y-2.5 text-xs text-gray-600 dark:text-neutral-300">
                     <div className="flex items-center gap-2.5">
                       <Calendar className="w-4 h-4 text-black dark:text-white shrink-0" />
-                      <span><strong>Fecha:</strong> {event.displayDate} ({event.time})</span>
+                      <span><strong>Fecha:</strong> {safeEvent.displayDate} ({safeEvent.time})</span>
                     </div>
                     <div className="flex items-center gap-2.5">
                       <Video className="w-4 h-4 text-black dark:text-white shrink-0" />
@@ -433,7 +547,7 @@ export const EventRegistrationLanding: React.FC<EventRegistrationLandingProps> =
                     </div>
                     <div className="flex items-center gap-2.5">
                       <Award className="w-4 h-4 text-black dark:text-white shrink-0" />
-                      <span><strong>Facilitador:</strong> {event.facilitator} (Master Coach ICF)</span>
+                      <span><strong>Facilitador:</strong> {safeEvent.facilitator} (Master Coach ICF)</span>
                     </div>
                   </div>
                 </div>
@@ -712,7 +826,7 @@ export const EventRegistrationLanding: React.FC<EventRegistrationLandingProps> =
                 ¡Tu Cupo Está Confirmado!
               </h2>
               <p className="text-xs sm:text-sm font-light text-gray-500 dark:text-neutral-400 max-w-md mx-auto">
-                Hemos reservado tu lugar para el <strong>{event.title}</strong>. Guarda este pase digital en tu calendario.
+                Hemos reservado tu lugar para el <strong>{safeEvent.title}</strong>. Guarda este pase digital en tu calendario.
               </p>
             </div>
 
@@ -725,12 +839,12 @@ export const EventRegistrationLanding: React.FC<EventRegistrationLandingProps> =
                     Pase de Acceso Oficial
                   </div>
                   <h3 className="text-lg sm:text-xl font-semibold tracking-tight">
-                    {event.title}
+                    {safeEvent.title}
                   </h3>
                   <div className="text-xs text-gray-300 font-light flex items-center gap-2">
-                    <span>{event.displayDate}</span>
+                    <span>{safeEvent.displayDate}</span>
                     <span>•</span>
-                    <span>{event.time}</span>
+                    <span>{safeEvent.time}</span>
                   </div>
                 </div>
 

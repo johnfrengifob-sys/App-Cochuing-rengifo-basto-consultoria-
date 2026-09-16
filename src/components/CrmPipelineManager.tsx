@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { Prospect, ProspectStatus, PaymentStatus, User, EventRegistration } from '../types';
 import { OntologicalStore } from '../services/store';
 import { safeCopyToClipboard } from '../utils/clipboard';
+import { getPublicPortalUrl } from '../utils/urlHelper';
 import {
   Kanban,
   List,
@@ -115,7 +116,7 @@ export const CrmPipelineManager: React.FC<CrmPipelineManagerProps> = ({
       : 0;
 
   const handleCopyRegistrationLink = async () => {
-    const url = `${window.location.origin}/?view=registro`;
+    const url = getPublicPortalUrl('registro');
     await safeCopyToClipboard(url);
     setCopiedLinkFeedback(true);
     setTimeout(() => setCopiedLinkFeedback(false), 2500);

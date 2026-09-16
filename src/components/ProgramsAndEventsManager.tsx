@@ -48,6 +48,7 @@ import { EventGeneralConfigSection } from './admin/events/EventGeneralConfigSect
 import { EventContentSyllabusSection } from './admin/events/EventContentSyllabusSection';
 import { EventEvaluationWorkbookSection } from './admin/events/EventEvaluationWorkbookSection';
 import { AdminSessionsManager } from './admin/AdminSessionsManager';
+import { PublicPortalMultiActionButton } from './admin/PublicPortalMultiActionButton';
 import {
   downloadWorkshopNotebookPdf,
   generateWorkshopNotebookPdf,
@@ -418,20 +419,16 @@ export const ProgramsAndEventsManager: React.FC<ProgramsAndEventsManagerProps> =
           {/* Botones de acción directos */}
           <div className="flex flex-wrap items-center gap-2.5 shrink-0">
             {onOpenRegistrationPortal && (
-              <button
-                type="button"
-                onClick={onOpenRegistrationPortal}
-                className="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl border border-gray-200 dark:border-neutral-700 hover:bg-gray-50 dark:hover:bg-neutral-800 text-xs font-semibold text-black dark:text-white cursor-pointer transition-all"
-              >
-                <ExternalLink className="w-3.5 h-3.5" />
-                <span>Ver Portal Público</span>
-              </button>
+              <PublicPortalMultiActionButton
+                onOpenPortal={onOpenRegistrationPortal}
+                eventTitle={safeEvents[0]?.title}
+              />
             )}
 
             <button
               type="button"
               onClick={handleOpenCreateEvent}
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-black dark:bg-white text-white dark:text-black hover:bg-neutral-800 dark:hover:bg-neutral-200 text-xs font-bold shadow-md cursor-pointer transition-all"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-black dark:bg-white text-white dark:text-black hover:bg-neutral-800 dark:hover:bg-neutral-200 text-xs font-bold shadow-sm hover:shadow cursor-pointer transition-all"
             >
               <Plus className="w-4 h-4" />
               <span>+ Nuevo Evento o Taller</span>

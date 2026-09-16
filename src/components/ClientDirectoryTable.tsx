@@ -92,6 +92,7 @@ export const ClientDirectoryTable: React.FC<ClientDirectoryTableProps> = ({
 
   // Add client modal state
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [highlightedClientId, setHighlightedClientId] = useState<string | null>(null);
   const [newClientName, setNewClientName] = useState('');
   const [newClientEmail, setNewClientEmail] = useState('');
   const [newClientPhone, setNewClientPhone] = useState('');
@@ -323,13 +324,20 @@ export const ClientDirectoryTable: React.FC<ClientDirectoryTableProps> = ({
 
       await FirestoreSyncService.syncUserProfile(created);
 
+      // Reset any filter or search query so the new client is immediately visible
+      setSearchTerm('');
+      setStatusFilter('all');
+      setHighlightedClientId(created.uid);
+
       if (onAddClient) {
         onAddClient(created);
       }
       if (onRefreshClients) {
         onRefreshClients();
       }
-      onSelectClient(created.uid);
+      if (onQuickSelect) {
+        onQuickSelect(created.uid);
+      }
 
       setIsAddModalOpen(false);
       // Reset form fields
@@ -344,7 +352,7 @@ export const ClientDirectoryTable: React.FC<ClientDirectoryTableProps> = ({
       setNewClientBreakdown('Fronteras, auto-observación y claridad directiva');
 
       setActionToast({
-        message: `Cliente "${created.name}" registrado exitosamente con sesión inicial agendada.`,
+        message: `Cliente "${created.name}" registrado exitosamente en el registro de clientes.`,
         type: 'success',
       });
     } catch (error) {
@@ -601,13 +609,18 @@ export const ClientDirectoryTable: React.FC<ClientDirectoryTableProps> = ({
                   const progress = client.programProgress || 1;
                   const isEditingThisBreakdown = editingBreakdownId === client.uid;
                   const isEditingThisInvested = editingInvestedId === client.uid;
+                  const isNewlyCreated = highlightedClientId === client.uid;
 
                   return (
                     <tr
                       key={client.uid}
                       onClick={() => onSelectClient(client.uid)}
                       className={`hover:bg-gray-50/80 dark:hover:bg-neutral-800/40 transition-colors cursor-pointer group ${
-                        selectedClientId === client.uid ? 'bg-gray-50/90 dark:bg-neutral-800/50' : ''
+                        isNewlyCreated
+                          ? 'bg-emerald-500/10 dark:bg-emerald-500/15 ring-2 ring-emerald-500/40'
+                          : selectedClientId === client.uid
+                          ? 'bg-gray-50/90 dark:bg-neutral-800/50'
+                          : ''
                       }`}
                     >
                       {/* 1. Cliente: Avatar + Nombre + Cargo + Email */}
@@ -627,6 +640,11 @@ export const ClientDirectoryTable: React.FC<ClientDirectoryTableProps> = ({
                           <div className="min-w-0">
                             <div className="font-semibold text-black dark:text-white text-xs group-hover:underline flex items-center gap-1.5">
                               <span>{client.name}</span>
+                              {isNewlyCreated && (
+                                <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-500/40 animate-pulse">
+                                  ¡Nuevo!
+                                </span>
+                              )}
                             </div>
                             <div className="text-[11px] text-gray-500 dark:text-neutral-400 truncate">
                               {client.title || 'Cliente Programa'}

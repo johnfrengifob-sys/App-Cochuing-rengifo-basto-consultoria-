@@ -4,6 +4,7 @@ import { OntologicalStore } from '../services/store';
 import { LiquidGlassButton } from './LiquidGlassButton';
 import { downloadWorkshopNotebookPdf } from '../services/notebookPdfGenerator';
 import { safeCopyToClipboard } from '../utils/clipboard';
+import { getPublicPortalUrl } from '../utils/urlHelper';
 import {
   Calendar,
   Clock,
@@ -113,15 +114,16 @@ export const PromotionalEventBanner: React.FC<PromotionalEventBannerProps> = ({
   };
 
   const handleShare = async () => {
+    const portalUrl = getPublicPortalUrl('registro');
     if (navigator.share) {
       navigator.share({
         title: event.title,
         text: `Próximo taller ontológico: ${event.title} - ${event.subtitle}. Enlace a Meet: ${meetUrl}`,
-        url: window.location.href,
+        url: portalUrl,
       }).catch(() => {});
     } else {
       await safeCopyToClipboard(
-        `Próximo taller ontológico: ${event.title} - ${event.displayDate} a las ${event.time}. Sala Meet: ${meetUrl}`
+        `Próximo taller ontológico: ${event.title} - ${event.displayDate} a las ${event.time}. Sala Meet: ${meetUrl} • Registro: ${portalUrl}`
       );
       setShowShareNotice(true);
       setTimeout(() => setShowShareNotice(false), 2500);

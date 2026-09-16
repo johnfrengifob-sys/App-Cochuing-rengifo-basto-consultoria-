@@ -66,10 +66,18 @@ export default function App() {
   const [viewMode, setViewMode] = useState<'app' | 'register'>(() => {
     try {
       const urlParams = new URLSearchParams(window.location.search);
+      const path = (window.location.pathname || '').toLowerCase();
+      const hash = (window.location.hash || '').toLowerCase();
       if (
         urlParams.get('view') === 'registro' ||
         urlParams.get('view') === 'inscripcion' ||
-        urlParams.get('registro') === 'true'
+        urlParams.get('view') === 'portal' ||
+        urlParams.get('registro') === 'true' ||
+        path.includes('/registro') ||
+        path.includes('/inscripcion') ||
+        path.includes('/portal') ||
+        hash.includes('registro') ||
+        hash.includes('inscripcion')
       ) {
         return 'register';
       }
@@ -79,9 +87,57 @@ export default function App() {
     return 'app';
   });
 
+  const handleOpenRegistrationPortal = (prefillEmail?: string) => {
+    if (prefillEmail) setRegisterInitialEmail(prefillEmail);
+    setViewMode('register');
+    try {
+      const url = new URL(window.location.href);
+      url.searchParams.set('view', 'registro');
+      window.history.pushState({ view: 'register' }, '', url.toString());
+    } catch {}
+  };
+
+  const handleBackFromRegistrationPortal = () => {
+    setViewMode('app');
+    try {
+      const url = new URL(window.location.href);
+      url.searchParams.delete('view');
+      url.searchParams.delete('registro');
+      url.searchParams.delete('inscripcion');
+      url.searchParams.delete('portal');
+      const cleanPath = url.pathname === '/registro' || url.pathname === '/portal' ? '/' : url.pathname;
+      window.history.pushState({ view: 'app' }, '', cleanPath + (url.search ? url.search : ''));
+    } catch {}
+  };
+
   useEffect(() => {
     ThemeManager.init();
     FirestoreSyncService.init().catch(() => {});
+
+    // Listen to browser navigation back/forward for portal view
+    const handlePopState = () => {
+      try {
+        const urlParams = new URLSearchParams(window.location.search);
+        const path = (window.location.pathname || '').toLowerCase();
+        const hash = (window.location.hash || '').toLowerCase();
+        if (
+          urlParams.get('view') === 'registro' ||
+          urlParams.get('view') === 'inscripcion' ||
+          urlParams.get('view') === 'portal' ||
+          urlParams.get('registro') === 'true' ||
+          path.includes('/registro') ||
+          path.includes('/inscripcion') ||
+          path.includes('/portal') ||
+          hash.includes('registro') ||
+          hash.includes('inscripcion')
+        ) {
+          setViewMode('register');
+        } else {
+          setViewMode('app');
+        }
+      } catch {}
+    };
+    window.addEventListener('popstate', handlePopState);
 
     // Listen for custom broadcast events when store updates
     const handleStoreUsersUpdated = () => {
@@ -163,6 +219,23 @@ export default function App() {
             console.warn('App auth state load remote progress notice:', e);
           }
 
+          // Auto-assign any pending workshop token or invitation code from session
+          try {
+            const pendingWorkshopId = sessionStorage.getItem('rbc_active_workshop_id');
+            const pendingTicketCode = sessionStorage.getItem('rbc_active_ticket_code');
+            if (pendingWorkshopId && (!existing.enrolledWorkshopIds || !existing.enrolledWorkshopIds.includes(pendingWorkshopId))) {
+              const updatedWorkshops = Array.from(new Set([...(existing.enrolledWorkshopIds || ['taller-1-raiz']), pendingWorkshopId]));
+              existing.enrolledWorkshopIds = updatedWorkshops;
+              OntologicalStore.updateUser(existing.uid, { enrolledWorkshopIds: updatedWorkshops });
+              FirestoreSyncService.syncUserProfile(existing).catch(console.warn);
+            }
+            if (pendingTicketCode) {
+              OntologicalStore.confirmEventAttendance(pendingTicketCode);
+            }
+          } catch {
+            // Ignore
+          }
+
           const emailAvatar = getEmailAvatarUrl(email, firebaseUser.displayName || existing.name, firebaseUser.photoURL);
           if (emailAvatar && (!existing.avatarUrl || existing.avatarUrl.includes('unsplash') || (firebaseUser.photoURL && existing.avatarUrl !== firebaseUser.photoURL))) {
             existing.avatarUrl = emailAvatar;
@@ -175,7 +248,23 @@ export default function App() {
           return;
         }
 
-        // 3. Alta Automática: Registrar como "Nuevo Participante" con expediente en blanco
+        // 3. Alta Automática: Registrar como "Participante Activo" con expediente en blanco
+        let sessionInviteCode: string | null = null;
+        let sessionWorkshopId = 'taller-1-raiz';
+        let sessionGroupName = 'Certeza, Fronteras & Dirección Personal';
+        let sessionTicketCode: string | null = null;
+
+        try {
+          sessionInviteCode = sessionStorage.getItem('rbc_active_invitation_code');
+          const sWid = sessionStorage.getItem('rbc_active_workshop_id');
+          if (sWid) sessionWorkshopId = sWid;
+          const sGName = sessionStorage.getItem('rbc_active_group_name');
+          if (sGName) sessionGroupName = sGName;
+          sessionTicketCode = sessionStorage.getItem('rbc_active_ticket_code');
+        } catch {
+          // Ignore
+        }
+
         const upcomingEvent = OntologicalStore.getUpcomingEvent();
         const resolvedAvatar = getEmailAvatarUrl(email, firebaseUser.displayName, firebaseUser.photoURL);
         const regResult = OntologicalStore.registerForEvent({
@@ -193,7 +282,7 @@ export default function App() {
           role: 'client',
           status: 'active',
           primaryBreakdown: '',
-          notes: '',
+          notes: sessionInviteCode ? `Auto-asignado con código/enlace: ${sessionInviteCode}` : '',
           company: '',
           programProgress: 1,
           programStep: 1,
@@ -201,12 +290,12 @@ export default function App() {
           hasWorkshopsAccess: true,
           hasSessionsAccess: true,
           completedWorkshopIds: [],
-          enrolledWorkshopIds: ['taller-1-raiz'],
+          enrolledWorkshopIds: Array.from(new Set(['taller-1-raiz', sessionWorkshopId])),
           workshopMemories: {},
           welcomeMessage: 'Bienvenido a tu Espacio Ontológico de Consultoría RBC.',
           paymentStatus: 'Pago Único',
           programAccessLevel: 'premium',
-          programName: 'Certeza, Fronteras & Dirección Personal',
+          programName: sessionGroupName,
           programFee: '$1.500.000 COP',
         };
 
@@ -216,7 +305,7 @@ export default function App() {
           ...newParticipantProfile,
         };
 
-        OntologicalStore.confirmEventAttendance(regResult.registration.ticketCode);
+        OntologicalStore.confirmEventAttendance(sessionTicketCode || regResult.registration.ticketCode);
         await FirestoreSyncService.syncUserProfile(updatedNewUser).catch(console.warn);
         await FirestoreSyncService.syncEventRegistration(regResult.registration).catch(console.warn);
 
@@ -312,24 +401,23 @@ export default function App() {
         {viewMode === 'register' ? (
           <EventRegistrationLanding
             initialEmail={registerInitialEmail}
+            isCoachPreview={Boolean(currentUser && currentUser.role === 'coach')}
+            onBackToAdmin={handleBackFromRegistrationPortal}
             onEnterPlatform={(user) => {
               if (user) {
                 handleLogin(user);
               } else {
-                setViewMode('app');
+                handleBackFromRegistrationPortal();
               }
             }}
-            onNavigateToLogin={() => setViewMode('app')}
+            onNavigateToLogin={handleBackFromRegistrationPortal}
           />
         ) : !currentUser ? (
           <>
             <LoginView
               onLogin={handleLogin}
               availableUsers={allUsers}
-              onNavigateToRegister={(prefillEmail) => {
-                if (prefillEmail) setRegisterInitialEmail(prefillEmail);
-                setViewMode('register');
-              }}
+              onNavigateToRegister={handleOpenRegistrationPortal}
               onOpenVideoConferences={() => setIsVideoConferencesOpen(true)}
             />
             {isVideoConferencesOpen && (
@@ -373,7 +461,7 @@ export default function App() {
               isAuditMode={Boolean(auditCoach)}
               onReturnToAdmin={handleReturnToAdmin}
               onOpenSettings={isCoach ? () => setIsSettingsOpen(true) : undefined}
-              onOpenRegistrationPortal={isCoach ? () => setViewMode('register') : undefined}
+              onOpenRegistrationPortal={isCoach ? handleOpenRegistrationPortal : undefined}
               onOpenVideoConferences={() => setIsVideoConferencesOpen(true)}
               onNavigateHome={handleNavigateHome}
               onUserUpdated={refreshUsers}
@@ -386,7 +474,7 @@ export default function App() {
                   coach={currentUser}
                   clients={clients}
                   onRefreshClients={refreshUsers}
-                  onOpenRegistrationPortal={() => setViewMode('register')}
+                  onOpenRegistrationPortal={handleOpenRegistrationPortal}
                 />
               ) : (
                 <ClientDashboard

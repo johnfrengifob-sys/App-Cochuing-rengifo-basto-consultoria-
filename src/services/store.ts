@@ -2966,28 +2966,33 @@ export class OntologicalStore {
     let safeUsers = Array.isArray(rawUsers) ? rawUsers : [INITIAL_USERS[0]];
 
     // Auto-clean Carolina Montoya and any legacy dummy users
+    const EXCLUDED_EMAILS = [
+      'carolina.montoya@innovacion.co',
+      'andres.quintero@example.com',
+      'sofia.restrepo@example.com',
+    ];
+    const EXCLUDED_UIDS = [
+      'client-carolina',
+      'client-andres',
+      'client-1',
+      'client-2',
+      'client-3',
+      'client-4',
+      'client-5',
+      'client-6',
+    ];
+
     const hasExcludedUsers = safeUsers.some(
       (u) =>
-        u.uid === 'client-carolina' ||
-        u.email === 'carolina.montoya@innovacion.co' ||
-        u.uid === 'client-1' ||
-        u.uid === 'client-2' ||
-        u.uid === 'client-3' ||
-        u.uid === 'client-4' ||
-        u.uid === 'client-5' ||
-        u.uid === 'client-6' ||
-        u.uid === 'client-andres' ||
-        u.email === 'andres.quintero@example.com' ||
-        u.email === 'sofia.restrepo@example.com'
+        EXCLUDED_UIDS.includes(u.uid) ||
+        (u.email && EXCLUDED_EMAILS.includes(u.email.toLowerCase()))
     );
 
     if (hasExcludedUsers) {
       safeUsers = safeUsers.filter(
         (u) =>
-          u.uid !== 'client-carolina' &&
-          u.email !== 'carolina.montoya@innovacion.co' &&
-          u.uid !== 'client-andres' &&
-          !u.email.includes('example.com')
+          !EXCLUDED_UIDS.includes(u.uid) &&
+          (!u.email || !EXCLUDED_EMAILS.includes(u.email.toLowerCase()))
       );
       this.save(STORAGE_KEYS.USERS, safeUsers);
     }
@@ -3593,11 +3598,23 @@ export class OntologicalStore {
       joinedAt: new Date().toISOString().split('T')[0],
       programProgress: 1, // Start on Session 1 (Nivel I)
       paymentStatus: paymentStatus,
+      status: 'active',
+      lastActivityAt: new Date().toISOString(),
+      transformationSpacesEnabled: true,
+      hasWorkshopsAccess: true,
+      hasSessionsAccess: true,
       programName: 'Certeza, Fronteras & Dirección Personal',
       programFee: '$1.500.000 COP',
+      totalInvested: '$1.500.000 COP',
+      primaryBreakdown: 'Fronteras, auto-observación y claridad directiva',
     };
 
-    this.saveUsers([...users, newClient]);
+    // Prepend new client ahead of existing clients so it appears at top of client directory
+    const coachUser = users.find((u) => u.role === 'coach');
+    const otherUsers = users.filter((u) => u.role !== 'coach' && u.uid !== newClientId);
+    const updatedUsers = coachUser ? [coachUser, newClient, ...otherUsers] : [newClient, ...otherUsers];
+    this.saveUsers(updatedUsers);
+    FirestoreSyncService.syncUserProfile(newClient).catch(() => {});
 
     // Create first scheduled session
     const sessions = this.getSessions();
@@ -3639,17 +3656,26 @@ export class OntologicalStore {
       role: 'client',
       avatarUrl: getEmailAvatarUrl(data.email, data.name),
       joinedAt: new Date().toISOString().split('T')[0],
+      lastActivityAt: new Date().toISOString(),
       programProgress: 1,
       programStep: 1,
       paymentStatus: 'Completado',
       status: data.status || 'active',
+      transformationSpacesEnabled: true,
+      hasWorkshopsAccess: true,
+      hasSessionsAccess: true,
       primaryBreakdown: data.primaryBreakdown || 'Fronteras, auto-observación y claridad directiva',
       programName: data.programName || 'Certeza, Fronteras & Dirección Personal',
       programFee: data.programFee || '$1.500.000 COP',
       totalInvested: data.totalInvested || data.programFee || '$1.500.000 COP',
     };
 
-    this.saveUsers([...users, newClient]);
+    // Prepend new client ahead of existing clients so it immediately displays at top of client directory
+    const coachUser = users.find((u) => u.role === 'coach');
+    const otherUsers = users.filter((u) => u.role !== 'coach' && u.uid !== newClientId);
+    const updatedUsers = coachUser ? [coachUser, newClient, ...otherUsers] : [newClient, ...otherUsers];
+    this.saveUsers(updatedUsers);
+    FirestoreSyncService.syncUserProfile(newClient).catch(() => {});
 
     // Create first scheduled session
     const sessions = this.getSessions();

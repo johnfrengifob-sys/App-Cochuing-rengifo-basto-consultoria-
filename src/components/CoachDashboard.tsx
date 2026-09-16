@@ -211,17 +211,43 @@ export const CoachDashboard: React.FC<CoachDashboardProps> = ({
   };
 
   const handleRefreshClientsList = () => {
-    const refreshed = OntologicalStore.getUsers().filter((u) => u.role === 'client');
+    const refreshed = OntologicalStore.getUsers().filter((u) => u && u.role === 'client');
     setClients(refreshed);
     if (onRefreshClients) onRefreshClients();
   };
 
   // Sync clients when prop changes from parent (App.tsx)
   useEffect(() => {
-    if (Array.isArray(initialClients) && initialClients.length > 0) {
+    if (Array.isArray(initialClients)) {
       setClients(initialClients.filter((u) => u && u.role === 'client'));
     }
   }, [initialClients]);
+
+  // Real-time synchronization with all OntologicalStore and window events
+  useEffect(() => {
+    const handleStoreSync = () => {
+      const refreshedUsers = OntologicalStore.getUsers();
+      setClients(refreshedUsers.filter((u) => u && u.role === 'client'));
+      setCronogramaEvents(OntologicalStore.getCronogramaEvents());
+      setPrograms(OntologicalStore.getPrograms());
+      setEventRegistrations(OntologicalStore.getEventRegistrations());
+      setProspects(OntologicalStore.getProspects());
+    };
+
+    window.addEventListener('rbc-users-updated', handleStoreSync);
+    window.addEventListener('rbc-event-registrations-updated', handleStoreSync);
+    window.addEventListener('rbc-prospects-updated', handleStoreSync);
+    window.addEventListener('rbc-sessions-updated', handleStoreSync);
+    window.addEventListener('storage', handleStoreSync);
+
+    return () => {
+      window.removeEventListener('rbc-users-updated', handleStoreSync);
+      window.removeEventListener('rbc-event-registrations-updated', handleStoreSync);
+      window.removeEventListener('rbc-prospects-updated', handleStoreSync);
+      window.removeEventListener('rbc-sessions-updated', handleStoreSync);
+      window.removeEventListener('storage', handleStoreSync);
+    };
+  }, []);
 
   // Keep forms, insights, and sessions strictly synchronized with selectedClientId
   useEffect(() => {
