@@ -216,5 +216,17 @@ service cloud.firestore {
       );
       allow update, delete: if isAdmin() && isValidPayment(incoming());
     }
+
+    // WORKSPACE DOCUMENTS: Central Brain Document Sync
+    match /workspaceDocuments/{docId} {
+      allow read: if true;
+      allow create, update, delete: if true; // Allows offline and coach sync
+    }
+
+    // APP BRAIN: General Database Brain State
+    match /appBrain/{brainId} {
+      allow read: if true;
+      allow create, update, delete: if true;
+    }
   }
 }

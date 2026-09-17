@@ -20,6 +20,7 @@ import {
   CronogramaEvent,
   OntologicalExperience,
   PostSessionForm,
+  DriveExportedFile,
 } from '../types';
 import { ServerDbSyncService } from './serverDbSync';
 
@@ -1017,5 +1018,98 @@ export class FirestoreSyncService {
 
     return { syncedCount, errors };
   }
+
+  // Synchronize Workspace Document into Firestore (Cerebro General)
+  static async syncWorkspaceDocument(docData: DriveExportedFile): Promise<void> {
+    const collectionPath = 'workspaceDocuments';
+    try {
+      const docRef = doc(db, collectionPath, docData.id);
+      await setDoc(
+        docRef,
+        {
+          id: docData.id,
+          name: docData.name,
+          mimeType: docData.mimeType,
+          webViewLink: docData.webViewLink,
+          uploadedAt: docData.uploadedAt || new Date().toISOString(),
+          sizeFormatted: docData.sizeFormatted || '',
+          category: docData.category,
+          description: docData.description || '',
+          tags: docData.tags || [],
+          clientId: docData.clientId || null,
+          clientName: docData.clientName || null,
+          isBrainDocument: docData.isBrainDocument ?? true,
+          contentSnippet: docData.contentSnippet || '',
+          fullContent: docData.fullContent || '',
+          axiomaClave: docData.axiomaClave || '',
+          updatedAt: new Date().toISOString(),
+        },
+        { merge: true }
+      );
+    } catch (error) {
+      console.warn('Firestore syncWorkspaceDocument notice:', error);
+    }
+  }
+
+  // Delete Workspace Document from Firestore
+  static async deleteWorkspaceDocument(id: string): Promise<void> {
+    const collectionPath = 'workspaceDocuments';
+    try {
+      await deleteDoc(doc(db, collectionPath, id));
+    } catch (error) {
+      console.warn('Firestore deleteWorkspaceDocument notice:', error);
+    }
+  }
+
+  // Fetch all Workspace Documents from Firestore
+  static async fetchWorkspaceDocuments(): Promise<DriveExportedFile[]> {
+    const collectionPath = 'workspaceDocuments';
+    try {
+      const snap = await getDocs(collection(db, collectionPath));
+      if (snap.empty) return [];
+      return snap.docs.map((d) => d.data() as DriveExportedFile);
+    } catch (error) {
+      console.warn('Firestore fetchWorkspaceDocuments notice:', error);
+      return [];
+    }
+  }
+
+  // Real-time subscription to Workspace Documents in Firestore
+  static subscribeToWorkspaceDocuments(
+    onUpdate: (docs: DriveExportedFile[]) => void
+  ): () => void {
+    const collectionPath = 'workspaceDocuments';
+    try {
+      const unsubscribe = onSnapshot(
+        collection(db, collectionPath),
+        (snap) => {
+          const docs = snap.docs.map((d) => d.data() as DriveExportedFile);
+          onUpdate(docs);
+        },
+        (error) => {
+          console.warn('Firestore subscribeToWorkspaceDocuments notice:', error);
+        }
+      );
+      return unsubscribe;
+    } catch (error) {
+      console.warn('Firestore subscribe error:', error);
+      return () => {};
+    }
+  }
+
+  // Batch sync workspace documents to Firestore
+  static async syncAllWorkspaceDocuments(docs: DriveExportedFile[]): Promise<number> {
+    let count = 0;
+    for (const d of docs) {
+      try {
+        await this.syncWorkspaceDocument(d);
+        count++;
+      } catch {
+        // ignore single fail
+      }
+    }
+    return count;
+  }
 }
+
 

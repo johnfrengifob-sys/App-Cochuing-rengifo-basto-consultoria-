@@ -11,6 +11,7 @@ import {
 } from '../types';
 import { OntologicalStore } from './store';
 import { OAUTH_CLIENT_ID } from './firebase';
+import { FirestoreSyncService } from './firestoreSync';
 
 const CONFIG_STORAGE_KEY = 'ontological_google_workspace_config';
 const EXPORTED_FILES_KEY = 'ontological_drive_exported_files';
@@ -24,8 +25,8 @@ export const OFFICIAL_CEREBRO_DRIVE_FOLDER_URL =
 // Core documents linked within the official Google Drive folder for Cerebro RBC
 export const OFFICIAL_CEREBRO_DRIVE_DOCUMENTS: DriveExportedFile[] = [
   {
-    id: 'brain_doc_drive_folder',
-    name: '📁 Carpeta Oficial Google Drive: Cerebro RBC & Documentos de Consultoría',
+    id: 'rbc_doc_carpeta_oficial',
+    name: '📁 Carpeta Oficial Google Drive: Consultoría RBC & Cerebro Ontológico',
     mimeType: 'application/vnd.google-apps.folder',
     webViewLink: OFFICIAL_CEREBRO_DRIVE_FOLDER_URL,
     uploadedAt: new Date().toISOString(),
@@ -33,14 +34,24 @@ export const OFFICIAL_CEREBRO_DRIVE_DOCUMENTS: DriveExportedFile[] = [
     category: 'folder',
     isBrainDocument: true,
     description:
-      'Carpeta central en Google Drive vinculada al Cerebro de la App (ID: 15laHG-2cFXvLiVoLp6GxJBWIBdXLB6bz) con todos los documentos metodológicos, plantillas, matrices y bitácoras ontológicas de RBC.',
-    tags: ['Cerebro RBC', 'Google Drive', 'Carpeta Oficial', 'Base de Conocimiento', 'Drive Sync'],
+      'Repositorio central en Google Drive vinculado a la cuenta rengifobastoco@gmail.com (ID: 15laHG-2cFXvLiVoLp6GxJBWIBdXLB6bz) que almacena contratos, matrices, bitácoras y cuestionarios ontológicos sincronizados con Firebase Firestore.',
+    tags: ['Google Drive', 'Carpeta Oficial', 'Cerebro RBC', 'Drive Sync'],
+    axiomaClave:
+      'Acceso centralizado al repositorio maestro en Google Drive respaldado en Firebase Firestore.',
     contentSnippet:
       'Carpeta centralizada de Google Drive con acceso directo a la documentación ontológica, contratos marco, matrices de quiebre y bitácoras somáticas sincronizadas con el Cerebro de la App.',
+    fullContent: `# Repositorio Central en Google Drive
+
+- **ID Carpeta:** 15laHG-2cFXvLiVoLp6GxJBWIBdXLB6bz
+- **URL Oficial:** https://drive.google.com/drive/folders/15laHG-2cFXvLiVoLp6GxJBWIBdXLB6bz?usp=drive_link
+- **Cuenta Ancla:** rengifobastoco@gmail.com
+- **Consultora:** Rengifo Basto Consultoría Ontológica
+
+Todos los documentos creados o actualizados en esta plataforma se sincronizan con este repositorio en Google Drive y se respaldan en la base de datos central de Firebase Firestore.`,
   },
   {
-    id: 'brain_doc_drive_contrato',
-    name: '📄 Contrato Marco de Consultoría Ontológica & Confidencialidad (Drive Sync)',
+    id: 'rbc_doc_contrato_marco',
+    name: '📄 Contrato Marco de Consultoría Ontológica y Confidencialidad ICF',
     mimeType: 'application/vnd.google-apps.document',
     webViewLink: OFFICIAL_CEREBRO_DRIVE_FOLDER_URL,
     uploadedAt: new Date(Date.now() - 3600000 * 24).toISOString(),
@@ -48,29 +59,43 @@ export const OFFICIAL_CEREBRO_DRIVE_DOCUMENTS: DriveExportedFile[] = [
     category: 'doc',
     isBrainDocument: true,
     description:
-      'Documento legal y ontológico con cláusulas de confidencialidad, código deontológico ICF y acuerdos de acompañamiento directivo 1 a 1.',
-    tags: ['Cerebro RBC', 'Contratos', 'Drive Sync', 'Confidencialidad', 'Docs'],
+      'Instrumento legal y ético de consultoría entre John Fredy Rengifo Basto y el Coachee bajo el código de ética ICF.',
+    tags: ['Google Docs', 'Contrato Marco', 'Confidencialidad', 'Ética ICF'],
+    axiomaClave:
+      'Cláusulas de confidencialidad estricta, alcances ontológicos (no terapia clínica), deberes, cancelaciones y acuerdos de acción.',
     contentSnippet:
-      'Acuerdo de prestación de servicios ontológicos bajo el código ético ICF, asegurando la confidencialidad de las sesiones y quiebres declarados.',
+      'El proceso de Coaching Ontológico tiene como propósito facilitar el aprendizaje transformacional a través de los dominios lingüístico, emocional y corporal.',
+    fullContent: `# Contrato Marco de Consultoría y Coaching Ontológico
+
+**Entre:** John Fredy Rengifo Basto (en adelante "El Coach", titular de rengifobastoco@gmail.com)
+**Y:** Cliente Ejecutivo (en adelante "El Coachee", con correo coachee@empresa.com)
+
+---
+
+### Cláusula Primera: Objeto y Naturaleza del Servicio
+El proceso de Coaching Ontológico tiene como propósito facilitar el aprendizaje transformacional a través de los dominios lingüístico, emocional y corporal. No constituye asesoría psicológica, psicoterapia ni consultoría médica.
+
+### Cláusula Segunda: Secreto Profesional y Confidencialidad
+Toda información revelada en sesiones, formularios o grabaciones tiene carácter estrictamente confidencial y estará protegida bajo las directrices de la ICF y la legislación de protección de datos.
+
+### Cláusula Tercera: Compromiso y Acuerdos de Acción
+El coachee asume la responsabilidad de su propio proceso, comprometiéndose a asistir a las citas quincenales acordadas en Google Calendar y completar los autorregistros post-sesión.
+
+### Cláusula Cuarta: Duración e Inversión
+El programa consta de 6 sesiones quincenales de 60 minutos con soporte de plataforma continua.
+
+---
+*Firmado electrónicamente por las partes.*
+
+---
+### Instrucciones de Integración Workspace
+1. Descarga el archivo Markdown o Texto.
+2. Abre Google Docs y pega el contenido.
+3. Personaliza datos del cliente y exporta a PDF para firma digital.`,
   },
   {
-    id: 'brain_doc_drive_matriz',
-    name: '📊 Matriz Directiva de Quiebres & Bitácora de Coachees (Drive Sync)',
-    mimeType: 'application/vnd.google-apps.spreadsheet',
-    webViewLink: OFFICIAL_CEREBRO_DRIVE_FOLDER_URL,
-    uploadedAt: new Date(Date.now() - 3600000 * 18).toISOString(),
-    sizeFormatted: 'Google Sheet (Drive)',
-    category: 'sheet',
-    isBrainDocument: true,
-    description:
-      'Hoja de cálculo maestra en Drive para el monitoreo de objetivos de coachees, estados de quiebre, avances somáticos y semáforo de sesiones.',
-    tags: ['Cerebro RBC', 'CRM', 'Drive Sync', 'Métricas', 'Sheets'],
-    contentSnippet:
-      'Matriz de control gerencial con registros de clientes ancla, fecha de inicio, quiebre ontológico primario, compromisos de acción y semáforo de progreso.',
-  },
-  {
-    id: 'brain_doc_drive_cuestionario',
-    name: '📝 Cuestionario de Quiebres, Creencias & Somática (Drive Sync)',
+    id: 'rbc_doc_cuestionario_diagnostico',
+    name: '📝 Cuestionario de Diagnóstico Inicial y Somático (Google Forms)',
     mimeType: 'application/vnd.google-apps.form',
     webViewLink: OFFICIAL_CEREBRO_DRIVE_FOLDER_URL,
     uploadedAt: new Date(Date.now() - 3600000 * 36).toISOString(),
@@ -78,25 +103,108 @@ export const OFFICIAL_CEREBRO_DRIVE_DOCUMENTS: DriveExportedFile[] = [
     category: 'form',
     isBrainDocument: true,
     description:
-      'Instrumento estructurado de intake en Google Drive para evaluar nivel de autoexigencia, límites directivos y registro de sensaciones corporales.',
-    tags: ['Cerebro RBC', 'Cuestionarios', 'Drive Sync', 'Somática', 'Forms'],
+      'Formulario oficial de intake para evaluar el observador del participante antes de iniciar el ciclo quincenal.',
+    tags: ['Google Forms', 'Diagnóstico Somático', 'Intake', 'ICF'],
+    axiomaClave:
+      'Cuestionario de 5 dimensiones ontológicas: Lenguaje, Emoción, Corporalidad, Pedidos y Compromiso.',
     contentSnippet:
-      'Formulario de diagnóstico para identificar afirmaciones vs juicios basales, mandatos introyectados y mapeo de zonas de tensión corporal previas a la sesión.',
+      'Mapear el quiebre inicial, centro somático de contención y nivel de certeza antes de la primera sesión.',
+    fullContent: `# Cuestionario de Diagnóstico Ontológico
+
+**Propósito:** Mapear el quiebre inicial, centro somático de contención y nivel de certeza antes de la primera sesión.
+
+### Preguntas Clave:
+1. **Nombre y Apellidos:** Identificación del participante
+2. **Correo de contacto:** Cuenta ancla para seguimiento
+3. **¿Qué situación recurrente identificas hoy como un quiebre en tu vida o liderazgo?**
+4. **¿En qué parte de tu cuerpo somatizas la presión o la duda?** (Tensión cervical, diafragma, mandíbula, plexo solar)
+5. **Nivel de certeza actual (1 a 5):** Escala de autopercepción de dirección personal
+
+---
+### Instrucciones de Integración Workspace
+1. Descarga el archivo con las preguntas estructuradas.
+2. Abre Google Forms y pega cada bloque de pregunta con sus opciones.
+3. Vincula las respuestas con la hoja de Google Sheets.`,
   },
   {
-    id: 'brain_doc_drive_talleres',
-    name: '🖥️ Presentación: Los 5 Talleres y Masterclasses RBC (Drive Sync)',
-    mimeType: 'application/vnd.google-apps.presentation',
+    id: 'rbc_doc_matriz_directiva',
+    name: '📊 Matriz Directiva de Quiebres & Directorio de Clientes (Google Sheets)',
+    mimeType: 'application/vnd.google-apps.spreadsheet',
     webViewLink: OFFICIAL_CEREBRO_DRIVE_FOLDER_URL,
-    uploadedAt: new Date(Date.now() - 3600000 * 48).toISOString(),
-    sizeFormatted: 'Google Slides (Drive)',
-    category: 'slide',
+    uploadedAt: new Date(Date.now() - 3600000 * 18).toISOString(),
+    sizeFormatted: 'Google Sheet (Drive)',
+    category: 'sheet',
     isBrainDocument: true,
     description:
-      'Láminas maestras en Google Drive sobre el observador ontológico (OSAR), reconstrucción lingüística de juicios y conversaciones difíciles para líderes.',
-    tags: ['Cerebro RBC', 'Talleres', 'Drive Sync', 'Slides', 'Masterclasses'],
+      'Matriz Directiva de Quiebres & Directorio de Clientes en Google Sheets con registro de coachees, quiebres primordiales y semáforo de sesiones.',
+    tags: ['Google Sheets', 'CRM', 'Matriz Directiva', 'Quiebres'],
+    axiomaClave:
+      'Monitoreo directivo de quiebres declarados, semáforo de progreso y estado de sesiones.',
     contentSnippet:
-      'Estructura visual de diapositivas para acompañar los conversatorios grupales transmitidos vía Google Meet con ejercicios de coherencia cuerpo-emoción-lenguaje.',
+      '"ID Cliente","Nombre Completo","Correo Electrónico","Quiebre Ontológico","Estado","Progreso" - "c-8821","Cliente Ejecutivo","coachee@empresa.com","Fronteras en la toma de decisiones","🟢 ACTIVO","Sesión 2 de 6"',
+    fullContent: `# Matriz Directiva de Quiebres & Directorio de Clientes (Google Sheets)
+
+| ID Cliente | Nombre Completo | Correo Electrónico | Quiebre Ontológico | Estado | Progreso |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **c-8821** | Cliente Ejecutivo | coachee@empresa.com | Fronteras en la toma de decisiones | 🟢 ACTIVO | Sesión 2 de 6 |
+
+---
+
+### Estructura CSV para Google Sheets
+\`\`\`csv
+"ID Cliente","Nombre Completo","Correo Electrónico","Quiebre Ontológico","Estado","Progreso"
+"UID asignado en la plataforma","Nombre completo del coachee","Correo ancla de verificación","Quiebre primordial declarado","Semáforo de interacción","Nodo del camino"
+"c-8821","Cliente Ejecutivo","coachee@empresa.com","Fronteras en la toma de decisiones","🟢 ACTIVO","Sesión 2 de 6"
+\`\`\`
+
+---
+### Instrucciones de Sincronización
+1. La hoja se mantiene conectada y respaldada en Firebase Firestore.
+2. Los cambios en el CRM de coachees se exportan automáticamente a esta matriz en Google Drive.`,
+  },
+  {
+    id: 'rbc_doc_plan_maestro',
+    name: '📘 Plan Maestro de Transformación Ontológica y Quiebres (Google Docs)',
+    mimeType: 'application/vnd.google-apps.document',
+    webViewLink: OFFICIAL_CEREBRO_DRIVE_FOLDER_URL,
+    uploadedAt: new Date(Date.now() - 3600000 * 12).toISOString(),
+    sizeFormatted: 'Google Doc (Drive)',
+    category: 'doc',
+    isBrainDocument: true,
+    description:
+      'Cuaderno de trabajo colaborativo para el coachee con mapa de quiebres, juicios, declaraciones y anclajes somáticos.',
+    tags: ['Google Docs', 'Plan Ontológico', 'Coachee', 'Workbook'],
+    axiomaClave:
+      'Matriz de 6 etapas de transformación: Reconocimiento del observador, quiebre somático, rediseño de pedidos, declaraciones y consolidación.',
+    contentSnippet:
+      'Participante: Cliente Ejecutivo | Coach: John Fredy Rengifo Basto | Programa: Certeza, Fronteras & Dirección Personal.',
+    fullContent: `# Plan Maestro de Transformación Ontológica
+
+**Participante:** Cliente Ejecutivo  
+**Coach:** John Fredy Rengifo Basto  
+**Programa:** Certeza, Fronteras & Dirección Personal  
+
+---
+
+### Etapa 1: El Observador Actual
+- **Juicios Automáticos Recurrentes:** ¿Qué conversaciones privadas operan como mandatos?
+- **Territorio Somático:** ¿Dónde se aloja la contención física?
+
+### Etapa 2: La Declaración del Quiebre
+- **Declaración:** "Declaro que esto ya no funciona para mí y elijo..."
+- **Costo de la Inacción:** ¿Qué precio pagas al no resolver este quiebre?
+
+### Etapa 3: Diseño de Nuevas Conversaciones
+- **Pedidos Clave:** Identificación de contrapartes y condiciones de satisfacción.
+- **Límites y Ofertas:** Qué decir "No" con serenidad.
+
+### Etapa 4: Anclaje y Gobernanza Somática
+- Protocolo de respiración diafragmática y arraigo antes de conversaciones críticas.
+
+---
+### Instrucciones de Integración Workspace
+1. Descarga el Plan en formato Markdown o Texto.
+2. Cópialo a Google Docs y compártelo con permisos de edición para el coachee.`,
   },
 ];
 
@@ -199,121 +307,90 @@ export class GoogleWorkspaceService {
     }
   }
 
-  // Load exported Drive files & Brain documents
+  // Hard Reset: Clears all workspace state and re-initializes with the clean official documents synced with Google Drive & Firebase
+  public static async resetWorkspaceToCleanOfficialState(): Promise<DriveExportedFile[]> {
+    try {
+      localStorage.removeItem(EXPORTED_FILES_KEY);
+    } catch {
+      // ignore
+    }
+    const cleanFiles = [...OFFICIAL_CEREBRO_DRIVE_DOCUMENTS];
+    this.saveExportedFiles(cleanFiles);
+
+    // Synchronize to Firebase Firestore as the Central Brain
+    try {
+      await FirestoreSyncService.syncAllWorkspaceDocuments(cleanFiles);
+    } catch (e) {
+      console.warn('Firestore syncAllWorkspaceDocuments notice during reset:', e);
+    }
+
+    return cleanFiles;
+  }
+
+  // Load exported Drive files & Brain documents with strict deduplication
   public static getExportedFiles(): DriveExportedFile[] {
     try {
       const stored = localStorage.getItem(EXPORTED_FILES_KEY);
       if (stored) {
         let parsed: DriveExportedFile[] = JSON.parse(stored);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          // Verify if official Drive folder document is already registered
-          const hasOfficialFolder = parsed.some(
-            (f) =>
-              f.id === 'brain_doc_drive_folder' ||
-              (f.webViewLink && f.webViewLink.includes(OFFICIAL_CEREBRO_DRIVE_FOLDER_ID))
-          );
-          if (!hasOfficialFolder) {
-            parsed = [...OFFICIAL_CEREBRO_DRIVE_DOCUMENTS, ...parsed];
-            this.saveExportedFiles(parsed);
+          // Filter out old legacy dummy/synthetic IDs that were replaced
+          const obsoleteIds = new Set([
+            'brain_doc_01',
+            'brain_doc_02',
+            'brain_doc_03',
+            'brain_doc_04',
+            'brain_doc_05',
+            'brain_doc_drive_folder',
+            'brain_doc_drive_matriz',
+            'brain_doc_drive_contrato',
+            'brain_doc_drive_cuestionario',
+            'brain_doc_drive_talleres',
+            'drive_doc_01',
+          ]);
+
+          const uniqueMap = new Map<string, DriveExportedFile>();
+
+          // Always register the clean official documents first
+          for (const doc of OFFICIAL_CEREBRO_DRIVE_DOCUMENTS) {
+            uniqueMap.set(doc.id, doc);
           }
-          return parsed;
+
+          // Then add user-created or synced custom documents if not obsolete
+          for (const doc of parsed) {
+            if (!doc || !doc.id || obsoleteIds.has(doc.id)) continue;
+            
+            // Skip obsolete duplicate sheet_master entries
+            if (doc.id.startsWith('sheet_master_') && doc.name.includes('Directorio Maestro')) {
+              continue;
+            }
+
+            if (!uniqueMap.has(doc.id)) {
+              // Also prevent duplicate title collision with official docs
+              const alreadyHasDocWithTitle = Array.from(uniqueMap.values()).some(
+                (existing) =>
+                  existing.name.trim().toLowerCase() === doc.name.trim().toLowerCase()
+              );
+              if (!alreadyHasDocWithTitle) {
+                uniqueMap.set(doc.id, doc);
+              }
+            }
+          }
+
+          const sanitized = Array.from(uniqueMap.values());
+          this.saveExportedFiles(sanitized);
+          return sanitized;
         }
       }
     } catch {
-      // ignore
+      // ignore error and return fresh defaults
     }
 
-    // Default pre-seeded documents establishing the Cerebro Operativo & Base de Conocimiento
-    const initialFiles: DriveExportedFile[] = [
-      ...OFFICIAL_CEREBRO_DRIVE_DOCUMENTS,
-      {
-        id: 'brain_doc_01',
-        name: '🧠 Cerebro Ontológico: Marco Teórico OSAR & Axiomas RBC',
-        mimeType: 'application/vnd.google-apps.document',
-        webViewLink: 'https://docs.google.com/document/d/1_marco_teorico_ontologia_rbc/edit',
-        uploadedAt: new Date(Date.now() - 3600000 * 24 * 5).toISOString(),
-        sizeFormatted: 'Google Doc',
-        category: 'knowledge_base',
-        isBrainDocument: true,
-        description:
-          'Pilares de la consultoría ontológica: El observador, sistema y acción (Modelo OSAR). Distinción de juicios vs afirmaciones, quiebre vs problema, y diseño de declaraciones de poder.',
-        tags: ['Cerebro RBC', 'Marco Teórico', 'OSAR', 'ICF', 'Axiomas'],
-        contentSnippet:
-          'El lenguaje genera realidades y abre o cierra posibilidades. En las sesiones directivas, intervenir sobre el observador que la persona está siendo transforma los resultados sin caer en la sobre-exigencia ciega.',
-      },
-      {
-        id: 'brain_doc_02',
-        name: '📊 Matriz Directiva & Directorio Maestro de Clientes Ancla (Sync)',
-        mimeType: 'application/vnd.google-apps.spreadsheet',
-        webViewLink: 'https://docs.google.com/spreadsheets/d/1_directorio_maestro_rbc/edit',
-        uploadedAt: new Date(Date.now() - 3600000 * 12).toISOString(),
-        sizeFormatted: 'Google Sheet',
-        category: 'sheet',
-        isBrainDocument: true,
-        description:
-          'Hoja de cálculo centralizada con estado semáforo de coachees, montos transaccionales, quiebres declarados y bitácora de seguimiento 1 a 1.',
-        tags: ['CRM', 'Clientes Ancla', 'Finanzas', 'Métricas'],
-      },
-      {
-        id: 'brain_doc_03',
-        name: '📄 Protocolo de Intervención & Acuerdos de Sesión Ontológica 1 a 1',
-        mimeType: 'application/vnd.google-apps.document',
-        webViewLink: 'https://docs.google.com/document/d/1_protocolo_sesiones_rbc/edit',
-        uploadedAt: new Date(Date.now() - 3600000 * 24 * 3).toISOString(),
-        sizeFormatted: 'Google Doc',
-        category: 'doc',
-        isBrainDocument: true,
-        description:
-          'Guía procedimental y ética para el coach: Apertura, indagación apreciativa, identificación del quiebre, quiebre corporal/somático y cierre con compromisos verificables.',
-        tags: ['Protocolos', 'Sesión 1 a 1', 'Ética ICF', 'Indagación'],
-      },
-      {
-        id: 'brain_doc_04',
-        name: '📝 Cuestionario Somático Post-Sesión (Certeza, Fronteras & Quiebres)',
-        mimeType: 'application/vnd.google-apps.form',
-        webViewLink: 'https://docs.google.com/forms/d/1_cuestionario_somatico_rbc/viewform',
-        uploadedAt: new Date(Date.now() - 3600000 * 48).toISOString(),
-        sizeFormatted: 'Google Form',
-        category: 'form',
-        isBrainDocument: true,
-        description:
-          'Formulario oficial para registro de sensaciones corporales, validación de conversaciones pendientes y autoevaluación entre sesiones.',
-        tags: ['Cuestionarios', 'Somática', 'Forms', 'Evaluación'],
-      },
-      {
-        id: 'brain_doc_05',
-        name: '🖥️ Presentación Oficial: Certeza, Fronteras & Dirección Personal',
-        mimeType: 'application/vnd.google-apps.presentation',
-        webViewLink: 'https://docs.google.com/presentation/d/1_masterclass_fronteras_rbc/edit',
-        uploadedAt: new Date(Date.now() - 3600000 * 24 * 7).toISOString(),
-        sizeFormatted: 'Google Slides',
-        category: 'slide',
-        isBrainDocument: true,
-        description:
-          'Diapositivas maestras para conversatorios y talleres grupales transmitidos por Google Meet, abordando límites directivos y diseño de conversaciones complejas.',
-        tags: ['Talleres', 'Slides', 'Límites', 'Meet'],
-      },
-      {
-        id: 'drive_doc_01',
-        name: '📑 Informe Ontológico - Carlos Eduardo Mendoza (Sesión 4).pdf',
-        mimeType: 'application/pdf',
-        webViewLink: OFFICIAL_CEREBRO_DRIVE_FOLDER_URL,
-        uploadedAt: new Date(Date.now() - 3600000 * 24 * 2).toISOString(),
-        sizeFormatted: '482 KB',
-        category: 'pdf_report',
-        clientId: 'c1',
-        clientName: 'Carlos Eduardo Mendoza',
-        isBrainDocument: false,
-        description: 'Informe clínico-ontológico sobre liderazgo situacional y delegación de autoridad.',
-        tags: ['Informe', 'PDF', 'Carlos Mendoza'],
-      },
-    ];
-
-    try {
-      localStorage.setItem(EXPORTED_FILES_KEY, JSON.stringify(initialFiles));
-    } catch {
-      // ignore
-    }
+    // Default pre-seeded documents from official Drive folder
+    const initialFiles = [...OFFICIAL_CEREBRO_DRIVE_DOCUMENTS];
+    this.saveExportedFiles(initialFiles);
+    // Background sync to Firebase Firestore
+    FirestoreSyncService.syncAllWorkspaceDocuments(initialFiles).catch(() => {});
     return initialFiles;
   }
 
@@ -425,6 +502,7 @@ export class GoogleWorkspaceService {
 
     if (updatedDoc) {
       this.saveExportedFiles(newFiles);
+      FirestoreSyncService.syncWorkspaceDocument(updatedDoc).catch(() => {});
     }
     return updatedDoc;
   }
@@ -498,6 +576,7 @@ export class GoogleWorkspaceService {
     const list = this.getExportedFiles();
     const updated = [file, ...list.filter((f) => f.id !== file.id)];
     this.saveExportedFiles(updated);
+    FirestoreSyncService.syncWorkspaceDocument(file).catch(() => {});
   }
 
   // Delete exported file
@@ -505,6 +584,7 @@ export class GoogleWorkspaceService {
     const list = this.getExportedFiles();
     const updated = list.filter((f) => f.id !== id);
     this.saveExportedFiles(updated);
+    FirestoreSyncService.deleteWorkspaceDocument(id).catch(() => {});
   }
 
   // Import a Gemini AI generated Workspace document directly into the app's catalog & Brain
@@ -781,28 +861,24 @@ export class GoogleWorkspaceService {
     }
 
     // Direct Instant Workspace Mapping
-    const generatedRootId = `drive_folder_${Date.now()}`;
-    const generatedReportsId = `folder_rep_${Date.now()}`;
-    const generatedSheetsId = `folder_sht_${Date.now()}`;
-    const generatedFormsId = `folder_frm_${Date.now()}`;
-
     this.saveConfig({
       drive: {
         ...config.drive,
-        rootFolderId: generatedRootId,
-        reportsFolderId: generatedReportsId,
-        sheetsFolderId: generatedSheetsId,
-        formsFolderId: generatedFormsId,
+        rootFolderId: OFFICIAL_CEREBRO_DRIVE_FOLDER_ID,
+        rootFolderUrl: OFFICIAL_CEREBRO_DRIVE_FOLDER_URL,
+        reportsFolderId: config.drive.reportsFolderId || 'folder_rep_rbc',
+        sheetsFolderId: config.drive.sheetsFolderId || 'folder_sht_rbc',
+        formsFolderId: config.drive.formsFolderId || 'folder_frm_rbc',
       },
     });
 
     return {
       success: true,
-      rootFolderId: generatedRootId,
-      reportsFolderId: generatedReportsId,
-      sheetsFolderId: generatedSheetsId,
-      formsFolderId: generatedFormsId,
-      rootFolderUrl: `https://drive.google.com/drive/u/0/folders/my-drive`,
+      rootFolderId: OFFICIAL_CEREBRO_DRIVE_FOLDER_ID,
+      reportsFolderId: config.drive.reportsFolderId || 'folder_rep_rbc',
+      sheetsFolderId: config.drive.sheetsFolderId || 'folder_sht_rbc',
+      formsFolderId: config.drive.formsFolderId || 'folder_frm_rbc',
+      rootFolderUrl: OFFICIAL_CEREBRO_DRIVE_FOLDER_URL,
     };
   }
 
@@ -961,8 +1037,8 @@ export class GoogleWorkspaceService {
     }
 
     if (!sheetId) {
-      sheetId = `sheet_master_${Date.now()}`;
-      sheetUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/edit`;
+      sheetId = 'brain_doc_drive_matriz';
+      sheetUrl = OFFICIAL_CEREBRO_DRIVE_FOLDER_URL;
     }
 
     const now = new Date().toISOString();
@@ -975,15 +1051,19 @@ export class GoogleWorkspaceService {
       },
     });
 
-    // Log document in Drive list
+    // Update document in Drive list without creating duplicates
     this.logExportedFile({
       id: sheetId,
-      name: 'Directorio Maestro de Clientes (Google Sheets - Sync)',
+      name: '📊 Matriz Directiva de Quiebres & Directorio de Clientes (Google Sheets)',
       mimeType: 'application/vnd.google-apps.spreadsheet',
       webViewLink: sheetUrl,
       uploadedAt: now,
-      sizeFormatted: `${clients.length} registros`,
+      sizeFormatted: `${clients.length} coachees registrados`,
       category: 'sheet',
+      isBrainDocument: true,
+      description: `Matriz en Google Sheets con ${clients.length} clientes, quiebres ontológicos y semáforo de seguimiento.`,
+      tags: ['Google Sheets', 'CRM', 'Drive Sync', 'Métricas'],
+      contentSnippet: `Sincronización de matriz directiva completada con ${clients.length} registros ontológicos.`,
     });
 
     return {
@@ -1140,9 +1220,9 @@ export class GoogleWorkspaceService {
     }
 
     if (!formId) {
-      formId = `form_ontologico_${Date.now()}`;
-      formUrl = `https://docs.google.com/forms/d/e/${formId}/viewform`;
-      formEditUrl = `https://docs.google.com/forms/d/${formId}/edit`;
+      formId = 'brain_doc_drive_cuestionario';
+      formUrl = OFFICIAL_CEREBRO_DRIVE_FOLDER_URL;
+      formEditUrl = OFFICIAL_CEREBRO_DRIVE_FOLDER_URL;
     }
 
     const now = new Date().toISOString();
@@ -1158,12 +1238,15 @@ export class GoogleWorkspaceService {
 
     this.logExportedFile({
       id: formId,
-      name: 'Cuestionario Ontológico Post-Sesión (Google Forms)',
+      name: '📝 Cuestionario de Quiebres, Creencias & Somática (Google Forms)',
       mimeType: 'application/vnd.google-apps.form',
       webViewLink: formUrl,
       uploadedAt: now,
       sizeFormatted: '5 preguntas clave',
       category: 'form',
+      isBrainDocument: true,
+      description: 'Cuestionario oficial estructurado en Google Forms para la evaluación de quiebres y registro somático.',
+      tags: ['Google Forms', 'Cuestionarios', 'Drive Sync', 'Somática'],
     });
 
     return {

@@ -507,6 +507,8 @@ export interface DriveExportedFile {
   clientName?: string;
   isBrainDocument?: boolean;
   contentSnippet?: string;
+  fullContent?: string;
+  axiomaClave?: string;
 }
 
 export interface GeminiGeneratedWorkspaceDoc {

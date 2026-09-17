@@ -705,24 +705,7 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
         </header>
 
         {/* ========================================================================= */}
-        {/* 2. MÓDULO 1: HISTORIAL DE TALLERES ASISTIDOS & CRONOGRAMA (TALLERES 1RO) */}
-        {/* ========================================================================= */}
-        <ParticipantTalleresModule
-          isExpanded={expandedModules.talleres}
-          onToggle={() => toggleModule('talleres')}
-          accreditedWorkshopsCount={accreditedWorkshopsCount}
-          coreWorkshops={CORE_WORKSHOPS}
-          selectedWorkshopId={selectedWorkshopId}
-          onSelectWorkshopId={setSelectedWorkshopId}
-          isWorkshopAttended={isWorkshopAttended}
-          getWorkshopMemoryDetails={getWorkshopMemoryDetails}
-          onDownloadWorkshopMemory={handleDownloadWorkshopMemory}
-          onCopyPaymentKey={handleCopyPaymentKey}
-          copiedPaymentKey={copiedPaymentKey}
-        />
-
-        {/* ========================================================================= */}
-        {/* 3. MÓDULO 2: SESIONES INDIVIDUALES 1 A 1 & RUTA GRÁFICA INTEGRAL           */}
+        {/* 2. TU MOMENTO ACTUAL (PRIMERO): FOTOGRAFÍA, PREGUNTA Y PRÓXIMO PASO       */}
         {/* ========================================================================= */}
         <section
           id="tu-momento-actual"
@@ -906,6 +889,23 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
             </div>
           </div>
         </section>
+
+        {/* ========================================================================= */}
+        {/* 3. MÓDULO: HISTORIAL DE TALLERES ASISTIDOS & CRONOGRAMA (DESPUÉS DE TU MOMENTO ACTUAL) */}
+        {/* ========================================================================= */}
+        <ParticipantTalleresModule
+          isExpanded={expandedModules.talleres}
+          onToggle={() => toggleModule('talleres')}
+          accreditedWorkshopsCount={accreditedWorkshopsCount}
+          coreWorkshops={CORE_WORKSHOPS}
+          selectedWorkshopId={selectedWorkshopId}
+          onSelectWorkshopId={setSelectedWorkshopId}
+          isWorkshopAttended={isWorkshopAttended}
+          getWorkshopMemoryDetails={getWorkshopMemoryDetails}
+          onDownloadWorkshopMemory={handleDownloadWorkshopMemory}
+          onCopyPaymentKey={handleCopyPaymentKey}
+          copiedPaymentKey={copiedPaymentKey}
+        />
 
         {/* ========================================================================= */}
         {/* 4. MÓDULO 2 (CONTINUACIÓN): TU RUTA GRÁFICA & 12 ESTACIONES 1 A 1         */}
