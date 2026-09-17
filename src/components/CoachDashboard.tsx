@@ -47,6 +47,9 @@ const ExecutiveAnalyticsCharts = lazy(() =>
 const AdminAcademicManager = lazy(() =>
   import('./admin/AdminAcademicManager').then((m) => ({ default: m.AdminAcademicManager }))
 );
+const AdminSessionsManager = lazy(() =>
+  import('./admin/AdminSessionsManager').then((m) => ({ default: m.AdminSessionsManager }))
+);
 const ExperienceEditorManager = lazy(() =>
   import('./admin/ExperienceEditorManager').then((m) => ({ default: m.ExperienceEditorManager }))
 );
@@ -119,8 +122,8 @@ export const CoachDashboard: React.FC<CoachDashboardProps> = ({
   onRefreshClients,
   onOpenRegistrationPortal,
 }) => {
-  // Navigation tabs: Clientes vs Eventos y sesiones vs Validación de Pagos vs Google Workspace Hub vs Gemini AI vs Experiencias B&W
-  const [activeMainTab, setActiveMainTab] = useState<'clients' | 'crm' | 'events_sessions' | 'academic' | 'events' | 'payments' | 'workspace' | 'gemini' | 'experiences'>('clients');
+  // Navigation tabs: Clientes vs Eventos y Talleres vs Sesiones de Consultoría vs Pagos vs Gemini AI
+  const [activeMainTab, setActiveMainTab] = useState<'clients' | 'crm' | 'events_sessions' | 'academic' | 'events' | 'sessions' | 'payments' | 'workspace' | 'gemini' | 'experiences'>('clients');
   const [academicInitialSubTab, setAcademicInitialSubTab] = useState<AcademicAdminSubTab>('events');
 
   // Sub-view inside 'clients' tab: Pipeline (CRM Kan-Ban & Gestión de Coachees) vs Workstation (Ficha 1 a 1)
@@ -465,10 +468,10 @@ export const CoachDashboard: React.FC<CoachDashboardProps> = ({
             </div>
           </div>
 
-          {/* Funciones de la Consola: Botones delgados, lineales y con altura compacta */}
+          {/* Funciones de la Consola: 5 Botones Principales Unificados */}
           <div className="w-full pt-1">
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-2.5 w-full max-w-7xl mx-auto">
-              {/* Función 1: Clientes (Unifica Pipeline CRM & Clientes Ancla) */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-2.5 w-full max-w-7xl mx-auto">
+              {/* Función 1: Clientes (Pipeline & Directorio) */}
               <button
                 id="coach-nav-clients-btn"
                 type="button"
@@ -502,27 +505,27 @@ export const CoachDashboard: React.FC<CoachDashboardProps> = ({
                   <span className={`text-[10px] block truncate font-light leading-tight mt-0.5 ${
                     activeMainTab === 'clients' || activeMainTab === 'crm' ? 'text-white/80 dark:text-black/70' : 'text-gray-500 dark:text-neutral-400'
                   }`}>
-                    Pipeline ({prospects.length}) & Activos
+                    Pipeline ({prospects.length}) & Directorio
                   </span>
                 </div>
               </button>
 
-              {/* Función 2: Eventos y sesiones (Unifica Académico & Eventos Meet) */}
+              {/* Función 2: Eventos y Talleres */}
               <button
                 id="coach-nav-events-btn"
                 type="button"
                 onClick={() => {
                   setAcademicInitialSubTab('events');
-                  setActiveMainTab('academic');
+                  setActiveMainTab('events');
                 }}
                 className={`group px-3 py-2 sm:py-2.5 rounded-xl transition-all cursor-pointer text-left flex items-center gap-2.5 w-full ${
-                  activeMainTab === 'events' || activeMainTab === 'academic'
+                  activeMainTab === 'events' || activeMainTab === 'academic' || activeMainTab === 'events_sessions'
                     ? 'bg-black text-white dark:bg-white dark:text-black shadow-sm ring-1 ring-black/10 dark:ring-white/20'
                     : 'glass-panel-opal hover:bg-white/90 dark:hover:bg-[#202026] text-neutral-800 dark:text-neutral-200 border border-white/60 dark:border-white/10 shadow-2xs hover:border-black/20 dark:hover:border-white/20'
                 }`}
               >
                 <div className={`p-1.5 rounded-lg shrink-0 ${
-                  activeMainTab === 'events' || activeMainTab === 'academic'
+                  activeMainTab === 'events' || activeMainTab === 'academic' || activeMainTab === 'events_sessions'
                     ? 'bg-white/20 dark:bg-black/20 text-white dark:text-black'
                     : 'bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400'
                 }`}>
@@ -530,9 +533,9 @@ export const CoachDashboard: React.FC<CoachDashboardProps> = ({
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between gap-1">
-                    <span className="text-xs font-semibold truncate leading-tight">Eventos y Sesiones</span>
+                    <span className="text-xs font-semibold truncate leading-tight">Eventos y Talleres</span>
                     <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono font-bold shrink-0 ${
-                      activeMainTab === 'events' || activeMainTab === 'academic'
+                      activeMainTab === 'events' || activeMainTab === 'academic' || activeMainTab === 'events_sessions'
                         ? 'bg-white/20 dark:bg-black/20 text-white dark:text-black'
                         : 'bg-rose-100 dark:bg-rose-900/60 text-rose-800 dark:text-rose-200'
                     }`}>
@@ -540,14 +543,53 @@ export const CoachDashboard: React.FC<CoachDashboardProps> = ({
                     </span>
                   </div>
                   <span className={`text-[10px] block truncate font-light leading-tight mt-0.5 ${
-                    activeMainTab === 'events' || activeMainTab === 'academic' ? 'text-white/80 dark:text-black/70' : 'text-gray-500 dark:text-neutral-400'
+                    activeMainTab === 'events' || activeMainTab === 'academic' || activeMainTab === 'events_sessions' ? 'text-white/80 dark:text-black/70' : 'text-gray-500 dark:text-neutral-400'
                   }`}>
-                    Meet, Programas & Talleres
+                    Afiche, Catálogo & Forms
                   </span>
                 </div>
               </button>
 
-              {/* Función 5: Validación Pagos */}
+              {/* Función 3: Sesiones de Consultoría */}
+              <button
+                id="coach-nav-sessions-btn"
+                type="button"
+                onClick={() => {
+                  setActiveMainTab('sessions');
+                }}
+                className={`group px-3 py-2 sm:py-2.5 rounded-xl transition-all cursor-pointer text-left flex items-center gap-2.5 w-full ${
+                  activeMainTab === 'sessions'
+                    ? 'bg-black text-white dark:bg-white dark:text-black shadow-sm ring-1 ring-black/10 dark:ring-white/20'
+                    : 'glass-panel-opal hover:bg-white/90 dark:hover:bg-[#202026] text-neutral-800 dark:text-neutral-200 border border-white/60 dark:border-white/10 shadow-2xs hover:border-black/20 dark:hover:border-white/20'
+                }`}
+              >
+                <div className={`p-1.5 rounded-lg shrink-0 ${
+                  activeMainTab === 'sessions'
+                    ? 'bg-white/20 dark:bg-black/20 text-white dark:text-black'
+                    : 'bg-sky-50 dark:bg-sky-950/50 text-sky-600 dark:text-sky-400'
+                }`}>
+                  <BookOpen className="w-3.5 h-3.5" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between gap-1">
+                    <span className="text-xs font-semibold truncate leading-tight">Sesiones Consultoría</span>
+                    <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono font-bold shrink-0 ${
+                      activeMainTab === 'sessions'
+                        ? 'bg-white/20 dark:bg-black/20 text-white dark:text-black'
+                        : 'bg-sky-100 dark:bg-sky-900/60 text-sky-800 dark:text-sky-200'
+                    }`}>
+                      6 Módulos
+                    </span>
+                  </div>
+                  <span className={`text-[10px] block truncate font-light leading-tight mt-0.5 ${
+                    activeMainTab === 'sessions' ? 'text-white/80 dark:text-black/70' : 'text-gray-500 dark:text-neutral-400'
+                  }`}>
+                    Roadmap 1 a 1 & Triggers
+                  </span>
+                </div>
+              </button>
+
+              {/* Función 4: Validación Pagos */}
               <button
                 id="coach-nav-payments-btn"
                 type="button"
@@ -590,41 +632,7 @@ export const CoachDashboard: React.FC<CoachDashboardProps> = ({
                 </div>
               </button>
 
-              {/* Función 6: Google Workspace */}
-              <button
-                id="coach-nav-workspace-btn"
-                type="button"
-                onClick={() => setActiveMainTab('workspace')}
-                className={`group px-3 py-2 sm:py-2.5 rounded-xl transition-all cursor-pointer text-left flex items-center gap-2.5 w-full ${
-                  activeMainTab === 'workspace'
-                    ? 'bg-black text-white dark:bg-white dark:text-black shadow-sm ring-1 ring-black/10 dark:ring-white/20'
-                    : 'glass-panel-opal hover:bg-white/90 dark:hover:bg-[#202026] text-neutral-800 dark:text-neutral-200 border border-white/60 dark:border-white/10 shadow-2xs hover:border-black/20 dark:hover:border-white/20'
-                }`}
-              >
-                <div className={`p-1.5 rounded-lg shrink-0 ${
-                  activeMainTab === 'workspace'
-                    ? 'bg-white/20 dark:bg-black/20 text-white dark:text-black'
-                    : 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400'
-                }`}>
-                  <HardDrive className="w-3.5 h-3.5" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between gap-1">
-                    <span className="text-xs font-semibold truncate leading-tight">Workspace</span>
-                    <span className="inline-flex items-center gap-1 text-[10px] font-medium text-emerald-600 dark:text-emerald-400 shrink-0">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                      <span>Sync</span>
-                    </span>
-                  </div>
-                  <span className={`text-[10px] block truncate font-light leading-tight mt-0.5 ${
-                    activeMainTab === 'workspace' ? 'text-white/80 dark:text-black/70' : 'text-gray-500 dark:text-neutral-400'
-                  }`}>
-                    Drive, Sheets, Forms
-                  </span>
-                </div>
-              </button>
-
-              {/* Función: Gemini 3.7 Copiloto */}
+              {/* Función 5: Gemini 3.7 Copiloto */}
               <button
                 id="coach-nav-gemini-btn"
                 type="button"
@@ -657,43 +665,6 @@ export const CoachDashboard: React.FC<CoachDashboardProps> = ({
                     activeMainTab === 'gemini' ? 'text-white/80 dark:text-black/70' : 'text-gray-500 dark:text-neutral-400'
                   }`}>
                     Copiloto Ontológico
-                  </span>
-                </div>
-              </button>
-
-              {/* Función: Editor de Experiencias B&W */}
-              <button
-                id="coach-nav-experiences-btn"
-                type="button"
-                onClick={() => setActiveMainTab('experiences')}
-                className={`group px-3 py-2 sm:py-2.5 rounded-xl transition-all cursor-pointer text-left flex items-center gap-2.5 w-full ${
-                  activeMainTab === 'experiences'
-                    ? 'bg-black text-white dark:bg-white dark:text-black shadow-sm ring-1 ring-black/10 dark:ring-white/20'
-                    : 'glass-panel-opal hover:bg-white/90 dark:hover:bg-[#202026] text-neutral-800 dark:text-neutral-200 border border-white/60 dark:border-white/10 shadow-2xs hover:border-black/20 dark:hover:border-white/20'
-                }`}
-              >
-                <div className={`p-1.5 rounded-lg shrink-0 ${
-                  activeMainTab === 'experiences'
-                    ? 'bg-white/20 dark:bg-black/20 text-white dark:text-black'
-                    : 'bg-neutral-100 dark:bg-neutral-800 text-black dark:text-white'
-                }`}>
-                  <Layers className="w-3.5 h-3.5" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between gap-1">
-                    <span className="text-xs font-semibold truncate leading-tight">Experiencias</span>
-                    <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono font-bold shrink-0 ${
-                      activeMainTab === 'experiences'
-                        ? 'bg-white/20 dark:bg-black/20 text-white dark:text-black'
-                        : 'bg-black/10 dark:bg-white/20 text-black dark:text-white'
-                    }`}>
-                      Lienzo B&W
-                    </span>
-                  </div>
-                  <span className={`text-[10px] block truncate font-light leading-tight mt-0.5 ${
-                    activeMainTab === 'experiences' ? 'text-white/80 dark:text-black/70' : 'text-gray-500 dark:text-neutral-400'
-                  }`}>
-                    Constructor Visual
                   </span>
                 </div>
               </button>
@@ -767,13 +738,9 @@ export const CoachDashboard: React.FC<CoachDashboardProps> = ({
           <div className="space-y-3 pb-4 border-b border-gray-100 dark:border-neutral-800">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
-                <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full bg-[#F5F5F7] dark:bg-neutral-800 border border-gray-200/80 dark:border-neutral-700 text-[10px] font-semibold text-gray-700 dark:text-neutral-300 uppercase tracking-wider mb-1">
-                  <Users className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
-                  CRM & Gestión Integral de Clientes
-                </div>
                 <h2 className="text-xl sm:text-2xl font-light text-black dark:text-white tracking-tight">
                   {clientsViewMode === 'pipeline' ? (
-                    <>CRM & Clientes: <strong className="font-semibold">Pipeline y Directorio ({prospects.length + clients.length})</strong></>
+                    <>CRM & Clientes: <strong className="font-semibold">Pipeline y Directorio</strong></>
                   ) : (
                     <>Ficha Integral del Coachee: <strong className="font-semibold">{selectedClient?.name || 'Cliente'}</strong></>
                   )}
@@ -912,6 +879,15 @@ export const CoachDashboard: React.FC<CoachDashboardProps> = ({
               onRefreshRegistrations={handleRefreshRegistrations}
               onOpenRegistrationPortal={onOpenRegistrationPortal}
             />
+          </Suspense>
+        </div>
+      ) : activeMainTab === 'sessions' ? (
+        /* ========================================================================= */
+        /* VIEW: SESIONES DE CONSULTORÍA (1 A 1) & ROADMAP EJECUTIVO                 */
+        /* ========================================================================= */
+        <div className="flex-1 flex flex-col p-4 sm:p-8 lg:p-10 max-w-7xl mx-auto w-full space-y-6">
+          <Suspense fallback={<SectionLoadingFallback title="Cargando Módulos de Consultoría y Roadmap..." />}>
+            <AdminSessionsManager onRefreshParent={handleRefreshEvents} />
           </Suspense>
         </div>
       ) : activeMainTab === 'workspace' ? (

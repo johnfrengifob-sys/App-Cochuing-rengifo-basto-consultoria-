@@ -252,6 +252,13 @@ export interface ProgramNodeInfo {
   }[];
   reflectiveQuestions?: string[];
   roadmapSteps?: WorkshopRoadmapStep[];
+  // Integraciones secundarias unificadas: Formularios, Activadores, Recursos y Experiencias
+  googleFormsUrl?: string;
+  googleDriveFolderUrl?: string;
+  triggersEnabled?: boolean;
+  triggerReminderDays?: number;
+  experienceToolEnabled?: boolean;
+  experienceCanvasType?: string;
 }
 
 export type QuestionType =
@@ -442,6 +449,13 @@ export interface CronogramaEvent {
   // Sección 3: Evaluación y Cuaderno Descargable
   postWorkshopQuestions?: PostWorkshopQuestion[];
   workbookSubmissions?: WorkshopWorkbookSubmission[];
+  // Integraciones secundarias unificadas: Formularios, Activadores, Cerebro/Recursos y Experiencias
+  googleFormsUrl?: string;
+  googleDriveFolderUrl?: string;
+  triggersEnabled?: boolean;
+  triggerNotificationTemplate?: string;
+  experienceToolEnabled?: boolean;
+  experienceCanvasType?: string;
 }
 
 export interface GoogleWorkspaceConfig {

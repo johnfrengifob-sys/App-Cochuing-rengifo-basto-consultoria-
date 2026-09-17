@@ -6,7 +6,6 @@ import { getEmailAvatarUrl } from '../utils/avatar';
 import { ClientTrafficStatusBadge } from './ClientTrafficStatusBadge';
 import {
   Kanban,
-  List,
   Search,
   Plus,
   Phone,
@@ -73,7 +72,7 @@ export const CrmPipelineManager: React.FC<CrmPipelineManagerProps> = ({
   const safeClients = Array.isArray(clients) ? clients : [];
   const safeRegistrations = Array.isArray(eventRegistrations) ? eventRegistrations : [];
 
-  const [viewLayout, setViewLayout] = useState<'kanban' | 'clients' | 'list'>('kanban');
+  const [viewLayout, setViewLayout] = useState<'kanban' | 'clients'>('kanban');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedOriginFilter, setSelectedOriginFilter] = useState<string>('all');
   const [copiedCalendarLink, setCopiedCalendarLink] = useState(false);
@@ -379,41 +378,39 @@ export const CrmPipelineManager: React.FC<CrmPipelineManagerProps> = ({
 
   return (
     <div className={embedded ? "w-full flex-1 flex flex-col space-y-6" : "p-4 sm:p-8 lg:p-10 max-w-7xl mx-auto w-full flex-1 flex flex-col space-y-6"}>
-      {/* 1. Header with Compact Summary Metrics */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between pb-5 border-b border-gray-100 dark:border-neutral-800 gap-4">
-        <div>
-          <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full bg-[#F5F5F7] dark:bg-neutral-800 border border-gray-200/80 dark:border-neutral-700 text-[10px] font-semibold text-gray-700 dark:text-neutral-300 uppercase tracking-wider mb-1.5">
-            <Kanban className="w-3 h-3 text-black dark:text-white" />
-            Embudo de Atracción & Conversión Comercial
+      {/* 1. Header with Compact Summary Metrics (Solo visible en vista independiente) */}
+      {!embedded && (
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between pb-5 border-b border-gray-100 dark:border-neutral-800 gap-4">
+          <div>
+            <h2 className="text-xl sm:text-2xl font-light text-black dark:text-white tracking-tight">
+              CRM & Clientes: <strong className="font-semibold">Pipeline y Directorio</strong>
+            </h2>
+            <p className="text-xs font-light text-gray-500 dark:text-neutral-400 mt-0.5 max-w-2xl">
+              Embudo comercial ontológico, prospección de talleres y directorio interactivo integrado de clientes activos e inactivos.
+            </p>
           </div>
-          <h2 className="text-xl sm:text-2xl font-light text-black dark:text-white tracking-tight">
-            Pipeline Ontológico: <strong className="font-semibold">Conversatorio Raíz y Balance</strong>
-          </h2>
-          <p className="text-xs font-light text-gray-500 dark:text-neutral-400 mt-0.5 max-w-2xl">
-            Control de prospectos, agendamiento de sesiones de 20 minutos y conversión al programa ejecutivo de 12 semanas.
-          </p>
-        </div>
 
-        <div className="flex flex-wrap items-center gap-2 shrink-0">
-          <button
-            type="button"
-            onClick={onOpenMakeModal}
-            className="px-3 py-1.5 rounded-xl border border-gray-200 dark:border-neutral-700 bg-white dark:bg-[#1A1A1E] hover:bg-gray-50 dark:hover:bg-neutral-800 text-black dark:text-white text-xs font-medium transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
-          >
-            <Workflow className="w-3.5 h-3.5 text-black dark:text-white" />
-            <span>Make.com & Webhooks</span>
-          </button>
+          <div className="flex flex-wrap items-center gap-2 shrink-0">
+            <button
+              type="button"
+              onClick={onOpenMakeModal}
+              className="px-3 py-1.5 rounded-xl border border-gray-200 dark:border-neutral-700 bg-white dark:bg-[#1A1A1E] hover:bg-gray-50 dark:hover:bg-neutral-800 text-black dark:text-white text-xs font-medium transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
+            >
+              <Workflow className="w-3.5 h-3.5 text-black dark:text-white" />
+              <span>Make.com & Webhooks</span>
+            </button>
 
-          <button
-            type="button"
-            onClick={() => setShowAddProspectModal(true)}
-            className="px-3.5 py-1.5 rounded-xl bg-black dark:bg-white text-white dark:text-black hover:bg-neutral-800 dark:hover:bg-neutral-200 text-xs font-medium transition-all flex items-center gap-1.5 cursor-pointer shadow-xs"
-          >
-            <UserPlus className="w-3.5 h-3.5 stroke-[2]" />
-            <span>+ Nuevo Prospecto</span>
-          </button>
+            <button
+              type="button"
+              onClick={() => setShowAddProspectModal(true)}
+              className="px-3.5 py-1.5 rounded-xl bg-black dark:bg-white text-white dark:text-black hover:bg-neutral-800 dark:hover:bg-neutral-200 text-xs font-medium transition-all flex items-center gap-1.5 cursor-pointer shadow-xs"
+            >
+              <UserPlus className="w-3.5 h-3.5 stroke-[2]" />
+              <span>+ Nuevo Prospecto</span>
+            </button>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* 2. Grouped Summary KPI Metric Pills (Compact & Clean) */}
       <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-5 gap-3">
@@ -549,26 +546,19 @@ export const CrmPipelineManager: React.FC<CrmPipelineManagerProps> = ({
                 {safeClients.length}
               </span>
             </button>
-
-            <button
-              type="button"
-              onClick={() => setViewLayout('list')}
-              className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-medium transition-all cursor-pointer ${
-                viewLayout === 'list'
-                  ? 'bg-black dark:bg-white text-white dark:text-black font-semibold shadow-2xs'
-                  : 'text-gray-500 dark:text-neutral-400 hover:text-black dark:hover:text-white'
-              }`}
-            >
-              <List className="w-3.5 h-3.5" />
-              <span>Lista Agrupada</span>
-              <span className="text-[10px] px-1 py-0.1 font-mono text-gray-400">
-                {filteredProspects.length}
-              </span>
-            </button>
           </div>
 
           {/* Quick Create Buttons */}
           <div className="inline-flex items-center gap-1.5">
+            <button
+              type="button"
+              onClick={onOpenMakeModal}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-gray-200 dark:border-neutral-700 bg-white dark:bg-[#1E1E22] hover:bg-gray-50 dark:hover:bg-neutral-800 text-black dark:text-white text-xs font-semibold transition-all cursor-pointer shadow-2xs"
+            >
+              <Workflow className="w-3.5 h-3.5 text-black dark:text-white" />
+              <span>Make.com & Webhooks</span>
+            </button>
+
             <button
               type="button"
               onClick={() => setShowAddProspectModal(true)}
@@ -862,7 +852,7 @@ export const CrmPipelineManager: React.FC<CrmPipelineManagerProps> = ({
             </div>
           </div>
         </div>
-      ) : viewLayout === 'clients' ? (
+      ) : (
         /* ================= INTERACTIVE CLIENT DIRECTORY VIEW ================= */
         <div className="space-y-4">
           {/* Sub-header & Status Badges */}
@@ -1086,153 +1076,6 @@ export const CrmPipelineManager: React.FC<CrmPipelineManagerProps> = ({
                 </tbody>
               </table>
             </div>
-          </div>
-        </div>
-      ) : (
-        /* ================= COMPACT GROUPED LIST VIEW ================= */
-        <div className="glass-panel-sheer rounded-2xl overflow-hidden shadow-2xs">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse text-xs">
-              <thead>
-                <tr className="border-b border-gray-200/80 dark:border-neutral-800 bg-[#F9F9F9] dark:bg-[#1A1A1E] text-gray-500 dark:text-neutral-400 text-[10px] uppercase tracking-wider font-semibold">
-                  <th className="py-3 px-4">Prospecto / Contacto</th>
-                  <th className="py-3 px-4">Etapa del Embudo</th>
-                  <th className="py-3 px-4">Fecha Sesión 20m</th>
-                  <th className="py-3 px-4">Notas / Quiebre Detectado</th>
-                  <th className="py-3 px-4 text-right">Acciones Rápidas</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100 dark:divide-neutral-800">
-                {filteredProspects.length === 0 ? (
-                  <tr>
-                    <td colSpan={5} className="py-8 text-center text-gray-400 text-xs font-light">
-                      No se encontraron prospectos con los filtros aplicados.
-                    </td>
-                  </tr>
-                ) : (
-                  filteredProspects.map((p) => {
-                    const isEditingNote = editingProspectNotes?.id === p.id;
-                    return (
-                      <tr
-                        key={p.id}
-                        className="hover:bg-gray-50/70 dark:hover:bg-neutral-800/40 transition-colors"
-                      >
-                        <td className="py-3 px-4">
-                          <div className="font-bold text-black dark:text-white">{p.name}</div>
-                          <div className="flex items-center gap-2 mt-0.5 text-[11px] text-gray-500 dark:text-neutral-400">
-                            <a
-                              href={`https://wa.me/${p.whatsapp.replace(/[^0-9]/g, '')}`}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="inline-flex items-center gap-1 hover:text-emerald-600 transition-colors"
-                            >
-                              <Phone className="w-2.5 h-2.5 text-emerald-500" />
-                              <span>{p.whatsapp}</span>
-                            </a>
-                            {p.email && <span>&bull; {p.email}</span>}
-                          </div>
-                        </td>
-
-                        <td className="py-3 px-4">
-                          <select
-                            value={p.status}
-                            onChange={(e) =>
-                              handleStatusChange(p.id, e.target.value as ProspectStatus)
-                            }
-                            className="text-xs bg-white dark:bg-[#1E1E22] border border-gray-200 dark:border-neutral-700 rounded-lg px-2 py-1 font-medium text-black dark:text-white cursor-pointer focus:outline-none"
-                          >
-                            <option value="matriz_enviada">1. Matriz Enviada</option>
-                            <option value="sesion_20min_agendada">2. Sesión 20m Agendada</option>
-                            <option value="convertido">3. Convertido 1 a 1</option>
-                            <option value="descartado">Descartado</option>
-                          </select>
-                        </td>
-
-                        <td className="py-3 px-4">
-                          {p.session20minDate ? (
-                            <div className="text-amber-800 dark:text-amber-300 font-medium">
-                              {formatDate(p.session20minDate)}
-                            </div>
-                          ) : (
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setSchedulingProspect(p);
-                                setScheduleDateTime(new Date().toISOString().substring(0, 16));
-                              }}
-                              className="text-[11px] text-blue-600 dark:text-blue-400 hover:underline cursor-pointer"
-                            >
-                              + Agendar Fecha
-                            </button>
-                          )}
-                        </td>
-
-                        <td className="py-3 px-4 max-w-xs">
-                          {isEditingNote ? (
-                            <div className="flex items-center gap-1.5">
-                              <input
-                                type="text"
-                                value={editingProspectNotes.notes}
-                                onChange={(e) =>
-                                  setEditingProspectNotes({
-                                    id: p.id,
-                                    notes: e.target.value,
-                                  })
-                                }
-                                className="w-full text-xs px-2 py-1 bg-white dark:bg-[#202024] border border-gray-300 dark:border-neutral-600 rounded-md"
-                              />
-                              <button
-                                type="button"
-                                onClick={() => handleSaveNotes(p.id)}
-                                className="px-2 py-1 bg-black text-white text-[10px] rounded-md font-semibold"
-                              >
-                                Guardar
-                              </button>
-                            </div>
-                          ) : (
-                            <div
-                              onClick={() =>
-                                setEditingProspectNotes({
-                                  id: p.id,
-                                  notes: p.notes || '',
-                                })
-                              }
-                              className="text-[11px] text-gray-600 dark:text-neutral-300 truncate cursor-pointer hover:bg-gray-100 dark:hover:bg-neutral-800 p-1 rounded-md transition-colors"
-                              title="Haz clic para editar notas"
-                            >
-                              {p.notes || <span className="italic text-gray-400">Sin notas (clic para añadir)</span>}
-                            </div>
-                          )}
-                        </td>
-
-                        <td className="py-3 px-4 text-right">
-                          <div className="flex items-center justify-end gap-1.5">
-                            {p.status !== 'convertido' && (
-                              <button
-                                type="button"
-                                onClick={() => setConvertingProspect(p)}
-                                title="Convertir a Cliente 1 a 1"
-                                className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[10px] font-semibold transition-all"
-                              >
-                                Convertir
-                              </button>
-                            )}
-                            <button
-                              type="button"
-                              onClick={() => handleDeleteProspect(p.id, p.name)}
-                              title="Eliminar del pipeline"
-                              className="p-1 text-gray-400 hover:text-red-500 rounded-md transition-colors"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })
-                )}
-              </tbody>
-            </table>
           </div>
         </div>
       )}

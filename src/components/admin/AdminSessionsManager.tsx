@@ -28,6 +28,12 @@ import {
   Brain,
   ListOrdered,
   Award,
+  Zap,
+  HardDrive,
+  Video,
+  ExternalLink,
+  Radio,
+  Workflow,
 } from 'lucide-react';
 import {
   ProgramNodeInfo,
@@ -61,7 +67,7 @@ export const AdminSessionsManager: React.FC<AdminSessionsManagerProps> = ({
   // Modo de vista: 'catalog' (grilla/lista) o 'editor' (edición exhaustiva de un módulo)
   const [viewMode, setViewMode] = useState<'catalog' | 'editor'>('catalog');
   const [activeStep, setActiveStep] = useState<number>(1);
-  const [editorTab, setEditorTab] = useState<'general' | 'content' | 'questions' | 'materials'>('general');
+  const [editorTab, setEditorTab] = useState<'general' | 'content' | 'questions' | 'materials' | 'integrations'>('general');
 
   // Formulario local del módulo en edición
   const [formData, setFormData] = useState<ProgramNodeInfo | null>(null);
@@ -814,7 +820,7 @@ export const AdminSessionsManager: React.FC<AdminSessionsManagerProps> = ({
             </div>
 
             {/* Pestañas de Navegación del Editor */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
               <button
                 type="button"
                 onClick={() => setEditorTab('general')}
@@ -826,10 +832,10 @@ export const AdminSessionsManager: React.FC<AdminSessionsManagerProps> = ({
               >
                 <div className="flex items-center gap-2">
                   <Compass className="w-4 h-4 text-indigo-500" />
-                  <span className="text-xs font-bold">1. Objetivos & Ficha</span>
+                  <span className="text-xs font-bold">1. Ficha</span>
                 </div>
                 <p className="text-[11px] text-gray-500 dark:text-neutral-400 font-light mt-1 truncate">
-                  Título, nivel, quiebre y outcomes
+                  Título, nivel y outcomes
                 </p>
               </button>
 
@@ -844,10 +850,10 @@ export const AdminSessionsManager: React.FC<AdminSessionsManagerProps> = ({
               >
                 <div className="flex items-center gap-2">
                   <Layers className="w-4 h-4 text-emerald-500" />
-                  <span className="text-xs font-bold">2. Contenido en 3 Dominios</span>
+                  <span className="text-xs font-bold">2. Contenido</span>
                 </div>
                 <p className="text-[11px] text-gray-500 dark:text-neutral-400 font-light mt-1 truncate">
-                  Lenguaje, somática y emociones
+                  Lenguaje, cuerpo y emoción
                 </p>
               </button>
 
@@ -862,10 +868,10 @@ export const AdminSessionsManager: React.FC<AdminSessionsManagerProps> = ({
               >
                 <div className="flex items-center gap-2">
                   <HelpCircle className="w-4 h-4 text-amber-500" />
-                  <span className="text-xs font-bold">3. Banco de Preguntas</span>
+                  <span className="text-xs font-bold">3. Preguntas</span>
                 </div>
                 <p className="text-[11px] text-gray-500 dark:text-neutral-400 font-light mt-1 truncate">
-                  Preguntas guía y cuestionario coachee
+                  Cuestionario del coachee
                 </p>
               </button>
 
@@ -880,10 +886,28 @@ export const AdminSessionsManager: React.FC<AdminSessionsManagerProps> = ({
               >
                 <div className="flex items-center gap-2">
                   <FileText className="w-4 h-4 text-purple-500" />
-                  <span className="text-xs font-bold">4. Guías & Materiales</span>
+                  <span className="text-xs font-bold">4. Guías</span>
                 </div>
                 <p className="text-[11px] text-gray-500 dark:text-neutral-400 font-light mt-1 truncate">
-                  Fichas, dinámicas y lecturas
+                  Fichas y lecturas
+                </p>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setEditorTab('integrations')}
+                className={`p-3 rounded-2xl border text-left transition-all cursor-pointer ${
+                  editorTab === 'integrations'
+                    ? 'border-indigo-600 bg-indigo-50/60 dark:bg-indigo-950/30 text-indigo-900 dark:text-indigo-200 shadow-xs'
+                    : 'border-gray-200 dark:border-neutral-800 hover:bg-gray-50 dark:hover:bg-neutral-800 text-gray-600 dark:text-neutral-400'
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <Zap className="w-4 h-4 text-amber-500" />
+                  <span className="text-xs font-bold">5. Formularios & Triggers</span>
+                </div>
+                <p className="text-[11px] text-gray-500 dark:text-neutral-400 font-light mt-1 truncate">
+                  Google Forms, Drive y Lienzo
                 </p>
               </button>
             </div>
@@ -1606,6 +1630,190 @@ export const AdminSessionsManager: React.FC<AdminSessionsManagerProps> = ({
               </div>
             )}
 
+            {/* ------------------------------------------------------------- */}
+            {/* PESTAÑA 5: FORMULARIOS, ACTIVADORES Y RECURSOS INTEGRADOS     */}
+            {/* ------------------------------------------------------------- */}
+            {editorTab === 'integrations' && (
+              <div className="space-y-6">
+                <div className="bg-amber-50/60 dark:bg-amber-950/20 border border-amber-200/80 dark:border-amber-900/40 rounded-2xl p-4">
+                  <div className="flex items-center gap-2">
+                    <Zap className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
+                    <h4 className="text-xs font-bold text-amber-900 dark:text-amber-200">
+                      Gestión Integrada del Módulo de Consultoría
+                    </h4>
+                  </div>
+                  <p className="text-[11px] text-amber-800/80 dark:text-amber-300/80 font-light mt-1">
+                    Enlaza directamente los formularios de diagnóstico, carpetas de Google Drive, automatizaciones de seguimiento y herramientas vivenciales de este paso formativo.
+                  </p>
+                </div>
+
+                {/* 1. Google Forms */}
+                <div className="p-4 rounded-2xl border border-gray-200 dark:border-neutral-800 bg-gray-50/50 dark:bg-neutral-800/30 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="p-1.5 rounded-lg bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400">
+                        <FileText className="w-3.5 h-3.5" />
+                      </div>
+                      <span className="text-xs font-bold text-black dark:text-white">
+                        Formulario de Google Forms Vinculado
+                      </span>
+                    </div>
+                    {formData.googleFormsUrl && (
+                      <a
+                        href={formData.googleFormsUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex items-center gap-1 text-[11px] font-semibold text-indigo-600 dark:text-indigo-400 hover:underline"
+                      >
+                        <span>Abrir Formulario</span>
+                        <ExternalLink className="w-3 h-3" />
+                      </a>
+                    )}
+                  </div>
+
+                  <p className="text-[11px] text-gray-500 dark:text-neutral-400 font-light">
+                    Pega el enlace de Google Forms para que el coachee complete su evaluación previa o posterior a la sesión.
+                  </p>
+
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="url"
+                      placeholder="https://docs.google.com/forms/d/e/.../viewform"
+                      value={formData.googleFormsUrl || ''}
+                      onChange={(e) => setFormData({ ...formData, googleFormsUrl: e.target.value })}
+                      className="flex-1 px-3.5 py-2 text-xs rounded-xl border border-gray-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-black dark:text-white font-mono placeholder:font-sans"
+                    />
+                    {formData.googleFormsUrl && (
+                      <button
+                        type="button"
+                        onClick={() => setFormData({ ...formData, googleFormsUrl: '' })}
+                        className="px-2.5 py-2 text-xs text-gray-400 hover:text-rose-600 cursor-pointer"
+                        title="Limpiar enlace"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {/* 2. Google Drive y Carpeta Compartida */}
+                <div className="p-4 rounded-2xl border border-gray-200 dark:border-neutral-800 bg-gray-50/50 dark:bg-neutral-800/30 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="p-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400">
+                        <HardDrive className="w-3.5 h-3.5" />
+                      </div>
+                      <span className="text-xs font-bold text-black dark:text-white">
+                        Google Drive: Carpeta de Materiales & Grabaciones
+                      </span>
+                    </div>
+                    {formData.googleDriveFolderUrl && (
+                      <a
+                        href={formData.googleDriveFolderUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 hover:underline"
+                      >
+                        <span>Ver en Drive</span>
+                        <ExternalLink className="w-3 h-3" />
+                      </a>
+                    )}
+                  </div>
+
+                  <input
+                    type="url"
+                    placeholder="https://drive.google.com/drive/folders/..."
+                    value={formData.googleDriveFolderUrl || ''}
+                    onChange={(e) => setFormData({ ...formData, googleDriveFolderUrl: e.target.value })}
+                    className="w-full px-3.5 py-2 text-xs rounded-xl border border-gray-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-black dark:text-white font-mono placeholder:font-sans"
+                  />
+                </div>
+
+                {/* 3. Activadores Automáticos de Seguimiento */}
+                <div className="p-4 rounded-2xl border border-gray-200 dark:border-neutral-800 bg-gray-50/50 dark:bg-neutral-800/30 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="p-1.5 rounded-lg bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400">
+                        <Zap className="w-3.5 h-3.5" />
+                      </div>
+                      <span className="text-xs font-bold text-black dark:text-white">
+                        Activadores de Seguimiento Automático
+                      </span>
+                    </div>
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={formData.triggersEnabled ?? true}
+                        onChange={(e) => setFormData({ ...formData, triggersEnabled: e.target.checked })}
+                        className="sr-only peer"
+                      />
+                      <div className="w-9 h-5 bg-gray-200 peer-focus:outline-hidden rounded-full peer dark:bg-neutral-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-600" />
+                    </label>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1 text-[11px] text-gray-600 dark:text-neutral-400 font-light">
+                    <div className="p-2.5 rounded-xl bg-white dark:bg-neutral-800 border border-gray-100 dark:border-neutral-700">
+                      <span className="font-semibold text-black dark:text-white block mb-0.5">Recordatorio 24h</span>
+                      Alerta automática de la sesión por WhatsApp y correo.
+                    </div>
+                    <div className="p-2.5 rounded-xl bg-white dark:bg-neutral-800 border border-gray-100 dark:border-neutral-700">
+                      <span className="font-semibold text-black dark:text-white block mb-0.5">Alerta Inactividad</span>
+                      Disparo a los 7 y 14 días si no hay avance en el cuaderno.
+                    </div>
+                    <div className="p-2.5 rounded-xl bg-white dark:bg-neutral-800 border border-gray-100 dark:border-neutral-700">
+                      <span className="font-semibold text-black dark:text-white block mb-0.5">Entrega de Cuaderno</span>
+                      Notificación al coach y confirmación de generación de PDF.
+                    </div>
+                  </div>
+                </div>
+
+                {/* 4. Herramientas de Experiencia (Lienzo B&W) */}
+                <div className="p-4 rounded-2xl border border-gray-200 dark:border-neutral-800 bg-gray-50/50 dark:bg-neutral-800/30 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="p-1.5 rounded-lg bg-neutral-900 text-white dark:bg-white dark:text-black">
+                        <Sparkles className="w-3.5 h-3.5" />
+                      </div>
+                      <span className="text-xs font-bold text-black dark:text-white">
+                        Herramienta Vivencial Asignada (Lienzo B&W)
+                      </span>
+                    </div>
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={formData.experienceToolEnabled ?? true}
+                        onChange={(e) => setFormData({ ...formData, experienceToolEnabled: e.target.checked })}
+                        className="sr-only peer"
+                      />
+                      <div className="w-9 h-5 bg-gray-200 peer-focus:outline-hidden rounded-full peer dark:bg-neutral-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-neutral-900 dark:peer-checked:bg-white" />
+                    </label>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                    {[
+                      { id: 'somatic_wheel', title: 'Rueda de Coherencia Somática', desc: 'Matriz corporal de 4 disposiciones y respiración' },
+                      { id: 'conversational_matrix', title: 'Matriz de Actos Lingüísticos', desc: 'Afirmaciones, juicios, promesas y pedidos' },
+                      { id: 'breakdown_canvas', title: 'Lienzo de Declaración de Quiebre', desc: 'Desarticulación del relato limitante' },
+                    ].map((tool) => (
+                      <button
+                        key={tool.id}
+                        type="button"
+                        onClick={() => setFormData({ ...formData, experienceCanvasType: tool.id })}
+                        className={`p-3 rounded-xl border text-left cursor-pointer transition-all ${
+                          (formData.experienceCanvasType || 'somatic_wheel') === tool.id
+                            ? 'border-black dark:border-white bg-black/5 dark:bg-white/5 font-semibold text-black dark:text-white'
+                            : 'border-gray-200 dark:border-neutral-700 hover:bg-gray-100 dark:hover:bg-neutral-800 text-gray-600 dark:text-neutral-400'
+                        }`}
+                      >
+                        <span className="text-xs block font-bold">{tool.title}</span>
+                        <span className="text-[10px] text-gray-500 font-light mt-0.5 block">{tool.desc}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Navegación al pie del editor */}
             <div className="flex items-center justify-between pt-6 mt-8 border-t border-gray-100 dark:border-neutral-800">
               <button
@@ -1614,6 +1822,7 @@ export const AdminSessionsManager: React.FC<AdminSessionsManagerProps> = ({
                   if (editorTab === 'content') setEditorTab('general');
                   else if (editorTab === 'questions') setEditorTab('content');
                   else if (editorTab === 'materials') setEditorTab('questions');
+                  else if (editorTab === 'integrations') setEditorTab('materials');
                   else setViewMode('catalog');
                 }}
                 className="px-4 py-2 rounded-xl border border-gray-200 dark:border-neutral-700 text-xs font-semibold text-gray-700 dark:text-neutral-300 hover:bg-gray-50 dark:hover:bg-neutral-800 cursor-pointer"
@@ -1622,13 +1831,14 @@ export const AdminSessionsManager: React.FC<AdminSessionsManagerProps> = ({
               </button>
 
               <div className="flex items-center gap-2">
-                {editorTab !== 'materials' ? (
+                {editorTab !== 'integrations' ? (
                   <button
                     type="button"
                     onClick={() => {
                       if (editorTab === 'general') setEditorTab('content');
                       else if (editorTab === 'content') setEditorTab('questions');
                       else if (editorTab === 'questions') setEditorTab('materials');
+                      else if (editorTab === 'materials') setEditorTab('integrations');
                     }}
                     className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-black dark:bg-white text-white dark:text-black hover:bg-neutral-800 dark:hover:bg-neutral-200 text-xs font-bold shadow-xs cursor-pointer transition-all"
                   >

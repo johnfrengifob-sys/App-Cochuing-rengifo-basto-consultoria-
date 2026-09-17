@@ -47,6 +47,8 @@ import {
 import { EventGeneralConfigSection } from './admin/events/EventGeneralConfigSection';
 import { EventContentSyllabusSection } from './admin/events/EventContentSyllabusSection';
 import { EventEvaluationWorkbookSection } from './admin/events/EventEvaluationWorkbookSection';
+import { EventIntegratedResourcesSection } from './admin/events/EventIntegratedResourcesSection';
+import { PromotionalEventBanner } from './PromotionalEventBanner';
 import { AdminSessionsManager } from './admin/AdminSessionsManager';
 import { PublicPortalMultiActionButton } from './admin/PublicPortalMultiActionButton';
 import {
@@ -128,9 +130,9 @@ export const ProgramsAndEventsManager: React.FC<ProgramsAndEventsManagerProps> =
   const [tempMasterMeet, setTempMasterMeet] = useState(masterMeetUrl);
   const [copiedMeetFeedback, setCopiedMeetFeedback] = useState(false);
 
-  // Editor states (for creating or editing an event with the 3 sections)
+  // Editor states (for creating or editing an event with the integrated sections)
   const [editingEventId, setEditingEventId] = useState<string | null>(null);
-  const [editorActiveSection, setEditorActiveSection] = useState<'general' | 'content' | 'evaluation'>('general');
+  const [editorActiveSection, setEditorActiveSection] = useState<'general' | 'content' | 'evaluation' | 'integrations'>('general');
   const [eventFormData, setEventFormData] = useState<Partial<CronogramaEvent>>({
     title: '',
     subtitle: '',
@@ -589,6 +591,9 @@ export const ProgramsAndEventsManager: React.FC<ProgramsAndEventsManagerProps> =
       {/* ========================================================================= */}
       {activeSubTab === 'events' && (
         <div className="space-y-4">
+          {/* Afiche Promocional del Próximo Taller con Contador Numérico sobre la Imagen */}
+          <PromotionalEventBanner variant="participant" />
+
           {/* Barra de Búsqueda y Filtros */}
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-white dark:bg-neutral-900 p-3.5 rounded-2xl border border-gray-200 dark:border-neutral-800">
             <div className="relative flex-1">
@@ -859,8 +864,8 @@ export const ProgramsAndEventsManager: React.FC<ProgramsAndEventsManagerProps> =
               </div>
             </div>
 
-            {/* Stepper de navegación entre las 3 Secciones */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+            {/* Stepper de navegación entre las 4 Secciones */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
               <button
                 type="button"
                 onClick={() => setEditorActiveSection('general')}
@@ -877,7 +882,7 @@ export const ProgramsAndEventsManager: React.FC<ProgramsAndEventsManagerProps> =
                   <span className="text-xs font-bold">1. Configuración General</span>
                 </div>
                 <p className="text-[11px] text-gray-500 dark:text-neutral-400 font-light mt-1 truncate">
-                  Nombre, Portada & Toggle Home, Capacidad, Precio
+                  Nombre, Portada, Capacidad, Precio
                 </p>
               </button>
 
@@ -897,7 +902,7 @@ export const ProgramsAndEventsManager: React.FC<ProgramsAndEventsManagerProps> =
                   <span className="text-xs font-bold">2. Contenido y Temario</span>
                 </div>
                 <p className="text-[11px] text-gray-500 dark:text-neutral-400 font-light mt-1 truncate">
-                  Temario, Preguntas Guía y Suministros Adjuntos
+                  Temario, Preguntas Guía y Suministros
                 </p>
               </button>
 
@@ -917,7 +922,27 @@ export const ProgramsAndEventsManager: React.FC<ProgramsAndEventsManagerProps> =
                   <span className="text-xs font-bold">3. Evaluación y Cuaderno</span>
                 </div>
                 <p className="text-[11px] text-gray-500 dark:text-neutral-400 font-light mt-1 truncate">
-                  Cuestionario Posterior & Descarga de PDF
+                  Cuestionario y Descarga de PDF
+                </p>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setEditorActiveSection('integrations')}
+                className={`p-3 rounded-2xl border text-left transition-all cursor-pointer ${
+                  editorActiveSection === 'integrations'
+                    ? 'border-indigo-600 bg-indigo-50/60 dark:bg-indigo-950/30 text-indigo-900 dark:text-indigo-200 shadow-xs'
+                    : 'border-gray-200 dark:border-neutral-800 hover:bg-gray-50 dark:hover:bg-neutral-800 text-gray-600 dark:text-neutral-400'
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <span className="w-5 h-5 rounded-full bg-indigo-600 text-white flex items-center justify-center text-[10px] font-bold">
+                    4
+                  </span>
+                  <span className="text-xs font-bold">4. Formularios & Activadores</span>
+                </div>
+                <p className="text-[11px] text-gray-500 dark:text-neutral-400 font-light mt-1 truncate">
+                  Google Forms, Triggers, Drive y Lienzo
                 </p>
               </button>
             </div>
@@ -947,6 +972,13 @@ export const ProgramsAndEventsManager: React.FC<ProgramsAndEventsManagerProps> =
               />
             )}
 
+            {editorActiveSection === 'integrations' && (
+              <EventIntegratedResourcesSection
+                event={eventFormData}
+                onChange={(updates) => setEventFormData((prev) => ({ ...prev, ...updates }))}
+              />
+            )}
+
             {/* Navegación al pie del editor */}
             <div className="flex items-center justify-between pt-6 mt-8 border-t border-gray-100 dark:border-neutral-800">
               <button
@@ -954,6 +986,7 @@ export const ProgramsAndEventsManager: React.FC<ProgramsAndEventsManagerProps> =
                 onClick={() => {
                   if (editorActiveSection === 'content') setEditorActiveSection('general');
                   else if (editorActiveSection === 'evaluation') setEditorActiveSection('content');
+                  else if (editorActiveSection === 'integrations') setEditorActiveSection('evaluation');
                   else setActiveSubTab('events');
                 }}
                 className="px-4 py-2 rounded-xl border border-gray-200 dark:border-neutral-700 text-xs font-semibold text-gray-700 dark:text-neutral-300 hover:bg-gray-50 dark:hover:bg-neutral-800 cursor-pointer"
@@ -962,12 +995,13 @@ export const ProgramsAndEventsManager: React.FC<ProgramsAndEventsManagerProps> =
               </button>
 
               <div className="flex items-center gap-2">
-                {editorActiveSection !== 'evaluation' ? (
+                {editorActiveSection !== 'integrations' ? (
                   <button
                     type="button"
                     onClick={() => {
                       if (editorActiveSection === 'general') setEditorActiveSection('content');
                       else if (editorActiveSection === 'content') setEditorActiveSection('evaluation');
+                      else if (editorActiveSection === 'evaluation') setEditorActiveSection('integrations');
                     }}
                     className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-black dark:bg-white text-white dark:text-black hover:bg-neutral-800 dark:hover:bg-neutral-200 text-xs font-bold shadow-md cursor-pointer transition-all"
                   >

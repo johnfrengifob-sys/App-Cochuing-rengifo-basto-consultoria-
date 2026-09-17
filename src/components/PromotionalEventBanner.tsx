@@ -130,71 +130,69 @@ export const PromotionalEventBanner: React.FC<PromotionalEventBannerProps> = ({
     }
   };
 
-  // Reusable Countdown Numbers Component (Double-sized, minimalist, high legibility)
-  const renderCountdown = () => {
+  // Render clean numeric countdown directly overlaid on the event image (no boxes, no containers, pure typography)
+  const renderImageNumericCountdown = () => {
     if (timeLeft.isLive) {
       return (
-        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-rose-600/95 text-white font-bold text-xs sm:text-sm animate-pulse border border-rose-400/30 shadow-md">
-          <Radio className="w-4 h-4 text-white shrink-0" />
-          <span>🔴 ¡TALLER EN VIVO AHORA!</span>
+        <div className="absolute inset-x-0 bottom-0 p-3.5 bg-gradient-to-t from-black/90 via-black/50 to-transparent flex items-center justify-center pointer-events-none">
+          <span className="text-xs sm:text-sm font-bold text-rose-400 uppercase tracking-wider animate-pulse drop-shadow-md">
+            🔴 Taller en Vivo Ahora
+          </span>
         </div>
       );
     }
 
     return (
-      <div className="pt-1">
-        <span className="text-[10px] sm:text-[11px] uppercase font-bold tracking-widest text-emerald-400 block mb-2">
-          ⏱️ Inicio de Taller en Vivo:
-        </span>
-        <div className="flex items-baseline gap-2.5 sm:gap-4 font-mono">
+      <div className="absolute inset-x-0 bottom-0 pt-10 pb-3 px-3 bg-gradient-to-t from-black/90 via-black/40 to-transparent flex flex-col items-center justify-end pointer-events-none select-none">
+        <div className="flex items-baseline gap-2 sm:gap-3.5 font-mono drop-shadow-[0_2px_8px_rgba(0,0,0,0.95)]">
           {/* Días */}
-          <div className="flex flex-col items-start sm:items-center">
-            <span className="text-3xl sm:text-4xl md:text-5xl font-black text-white tracking-tight leading-none">
+          <div className="flex flex-col items-center">
+            <span className="text-2xl sm:text-3xl md:text-4xl font-black text-white leading-none tracking-tight">
               {String(timeLeft.days).padStart(2, '0')}
             </span>
-            <span className="text-[10px] sm:text-[11px] font-bold text-gray-300 uppercase tracking-widest mt-1.5">
+            <span className="text-[9px] sm:text-[10px] font-bold text-white/90 uppercase tracking-widest mt-1">
               Días
             </span>
           </div>
 
-          <span className="text-2xl sm:text-3xl md:text-4xl text-white/40 font-light select-none -translate-y-1 sm:-translate-y-2">
+          <span className="text-xl sm:text-2xl md:text-3xl text-white/70 font-light -translate-y-1">
             :
           </span>
 
           {/* Horas */}
-          <div className="flex flex-col items-start sm:items-center">
-            <span className="text-3xl sm:text-4xl md:text-5xl font-black text-white tracking-tight leading-none">
+          <div className="flex flex-col items-center">
+            <span className="text-2xl sm:text-3xl md:text-4xl font-black text-white leading-none tracking-tight">
               {String(timeLeft.hours).padStart(2, '0')}
             </span>
-            <span className="text-[10px] sm:text-[11px] font-bold text-gray-300 uppercase tracking-widest mt-1.5">
+            <span className="text-[9px] sm:text-[10px] font-bold text-white/90 uppercase tracking-widest mt-1">
               Horas
             </span>
           </div>
 
-          <span className="text-2xl sm:text-3xl md:text-4xl text-white/40 font-light select-none -translate-y-1 sm:-translate-y-2">
+          <span className="text-xl sm:text-2xl md:text-3xl text-white/70 font-light -translate-y-1">
             :
           </span>
 
           {/* Minutos */}
-          <div className="flex flex-col items-start sm:items-center">
-            <span className="text-3xl sm:text-4xl md:text-5xl font-black text-white tracking-tight leading-none">
+          <div className="flex flex-col items-center">
+            <span className="text-2xl sm:text-3xl md:text-4xl font-black text-white leading-none tracking-tight">
               {String(timeLeft.minutes).padStart(2, '0')}
             </span>
-            <span className="text-[10px] sm:text-[11px] font-bold text-gray-300 uppercase tracking-widest mt-1.5">
+            <span className="text-[9px] sm:text-[10px] font-bold text-white/90 uppercase tracking-widest mt-1">
               Min
             </span>
           </div>
 
-          <span className="text-2xl sm:text-3xl md:text-4xl text-white/40 font-light select-none -translate-y-1 sm:-translate-y-2">
+          <span className="text-xl sm:text-2xl md:text-3xl text-white/70 font-light -translate-y-1">
             :
           </span>
 
           {/* Segundos */}
-          <div className="flex flex-col items-start sm:items-center">
-            <span className="text-3xl sm:text-4xl md:text-5xl font-black text-emerald-400 tracking-tight leading-none animate-pulse">
+          <div className="flex flex-col items-center">
+            <span className="text-2xl sm:text-3xl md:text-4xl font-black text-emerald-400 leading-none tracking-tight animate-pulse">
               {String(timeLeft.seconds).padStart(2, '0')}
             </span>
-            <span className="text-[10px] sm:text-[11px] font-bold text-emerald-300 uppercase tracking-widest mt-1.5">
+            <span className="text-[9px] sm:text-[10px] font-bold text-emerald-300 uppercase tracking-widest mt-1">
               Seg
             </span>
           </div>
@@ -213,7 +211,7 @@ export const PromotionalEventBanner: React.FC<PromotionalEventBannerProps> = ({
         >
           {/* Balanced 2-Zone Grid: Left Workshop Poster Image | Right Counter & Info */}
           <div className="grid grid-cols-1 lg:grid-cols-12 items-stretch">
-            {/* 1. PRIMERO LA IMAGEN DEL AFICHE */}
+            {/* 1. PRIMERO LA IMAGEN DEL AFICHE CON CONTADOR NUMÉRICO DIRECTO */}
             <div className="lg:col-span-5 relative bg-black/40 backdrop-blur-md flex items-center justify-center p-3 sm:p-5 border-b lg:border-b-0 lg:border-r border-white/10">
               <div
                 onClick={() => setShowImageModal(true)}
@@ -228,17 +226,18 @@ export const PromotionalEventBanner: React.FC<PromotionalEventBannerProps> = ({
                   className="w-full h-full object-cover sm:object-contain object-center group-hover/poster:scale-[1.02] transition-transform duration-500"
                 />
 
-                {/* Subtle Hover Action Pill */}
-                <div className="absolute inset-0 bg-black/20 group-hover/poster:bg-black/10 transition-colors pointer-events-none" />
-                
-                <div className="absolute bottom-3 right-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-black/75 group-hover/poster:bg-black/90 backdrop-blur-md border border-white/20 text-white text-[11px] font-medium shadow-md transition-all">
-                  <Maximize2 className="w-3.5 h-3.5 text-emerald-400" />
-                  <span>Ampliar afiche</span>
+                {/* Subtle Hover Action Pill (top right so it doesn't collide with the counter) */}
+                <div className="absolute top-2.5 right-2.5 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/75 group-hover/poster:bg-black/90 backdrop-blur-md border border-white/20 text-white text-[10px] font-medium shadow-md transition-all">
+                  <Maximize2 className="w-3 h-3 text-emerald-400" />
+                  <span>Ampliar</span>
                 </div>
+
+                {/* CONTADOR GRÁFICO NUMÉRICO LIMPIO SOBRE LA IMAGEN (Sin recuadros ni contenedores, solo los números) */}
+                {renderImageNumericCountdown()}
               </div>
             </div>
 
-            {/* 2. LUEGO EL CONTADOR Y LA INFORMACIÓN */}
+            {/* 2. LUEGO LA INFORMACIÓN Y ACCIONES */}
             <div className="lg:col-span-7 p-6 sm:p-7 md:p-8 flex flex-col justify-between space-y-6 text-left">
               {/* Header Badges */}
               <div className="flex items-center gap-2 flex-wrap">
@@ -250,9 +249,6 @@ export const PromotionalEventBanner: React.FC<PromotionalEventBannerProps> = ({
                   Google Meet
                 </span>
               </div>
-
-              {/* CONTADOR EN VIVO */}
-              {renderCountdown()}
 
               {/* EXPLICACIÓN E INFORMACIÓN */}
               <div className="space-y-1.5 pt-1 border-t border-white/10">
@@ -412,7 +408,7 @@ export const PromotionalEventBanner: React.FC<PromotionalEventBannerProps> = ({
       >
         {/* Balanced Split Layout: Left Workshop Image | Right Counter & Info */}
         <div className="grid grid-cols-1 lg:grid-cols-12 items-stretch">
-          {/* 1. PRIMERO LA IMAGEN DEL AFICHE */}
+          {/* 1. PRIMERO LA IMAGEN DEL AFICHE CON CONTADOR NUMÉRICO DIRECTO */}
           <div className="lg:col-span-5 relative bg-black/40 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 border-b lg:border-b-0 lg:border-r border-white/10">
             <div
               onClick={() => setShowImageModal(true)}
@@ -427,17 +423,18 @@ export const PromotionalEventBanner: React.FC<PromotionalEventBannerProps> = ({
                 className="w-full h-full object-cover sm:object-contain object-center group-hover/poster:scale-[1.02] transition-transform duration-500"
               />
 
-              {/* Hover Badge */}
-              <div className="absolute inset-0 bg-black/20 group-hover/poster:bg-black/10 transition-colors pointer-events-none" />
-
-              <div className="absolute bottom-3.5 right-3.5 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-black/75 group-hover/poster:bg-black/90 backdrop-blur-md border border-white/20 text-white text-[11px] font-medium shadow-md transition-all">
+              {/* Hover Badge at top right */}
+              <div className="absolute top-3.5 right-3.5 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/75 group-hover/poster:bg-black/90 backdrop-blur-md border border-white/20 text-white text-[11px] font-medium shadow-md transition-all">
                 <Maximize2 className="w-3.5 h-3.5 text-emerald-400" />
-                <span>Ampliar afiche completo</span>
+                <span>Ampliar afiche</span>
               </div>
+
+              {/* CONTADOR GRÁFICO NUMÉRICO LIMPIO SOBRE LA IMAGEN (Sin recuadros ni contenedores, solo los números) */}
+              {renderImageNumericCountdown()}
             </div>
           </div>
 
-          {/* 2. LUEGO EL CONTADOR Y LA INFORMACIÓN */}
+          {/* 2. LUEGO LA INFORMACIÓN Y ACCIONES */}
           <div className="lg:col-span-7 p-6 sm:p-8 flex flex-col justify-between space-y-6 text-left">
             {/* Top Badges */}
             <div className="flex items-center justify-between gap-3 flex-wrap">
@@ -451,9 +448,6 @@ export const PromotionalEventBanner: React.FC<PromotionalEventBannerProps> = ({
                 <span>{spotsLeft} Cupos Restantes</span>
               </div>
             </div>
-
-            {/* CONTADOR EN VIVO */}
-            {renderCountdown()}
 
             {/* INFORMACIÓN DEL EVENTO */}
             <div className="space-y-2 pt-1 border-t border-white/10">
