@@ -78,6 +78,19 @@ export const AdminMeetWorkshopsManager: React.FC<AdminMeetWorkshopsManagerProps>
   const [participantName, setParticipantName] = useState('');
   const [participantEmail, setParticipantEmail] = useState('');
   const [participantPhone, setParticipantPhone] = useState('');
+
+  // Safe deletion modal state (avoids window.confirm blocked in iframes)
+  const [deleteConfirmEvent, setDeleteConfirmEvent] = useState<{ id: string; title: string } | null>(null);
+
+  const confirmDeleteEvent = () => {
+    if (!deleteConfirmEvent) return;
+    const { id, title } = deleteConfirmEvent;
+    OntologicalStore.deleteCronogramaEvent(id);
+    setEvents(OntologicalStore.getCronogramaEvents());
+    showNotification(`Taller "${title}" eliminado.`);
+    setDeleteConfirmEvent(null);
+    if (onRefresh) onRefresh();
+  };
   const [participantEventId, setParticipantEventId] = useState(events[0]?.id || '');
 
   const showNotification = (msg: string) => {
@@ -166,12 +179,7 @@ export const AdminMeetWorkshopsManager: React.FC<AdminMeetWorkshopsManagerProps>
   };
 
   const handleDeleteEvent = (id: string, title: string) => {
-    if (window.confirm(`¿Estás seguro de eliminar el taller "${title}"?`)) {
-      OntologicalStore.deleteCronogramaEvent(id);
-      setEvents(OntologicalStore.getCronogramaEvents());
-      showNotification(`Taller "${title}" eliminado.`);
-      if (onRefresh) onRefresh();
-    }
+    setDeleteConfirmEvent({ id, title });
   };
 
   const handleAdjustSpots = (eventId: string, delta: number) => {
@@ -855,6 +863,48 @@ export const AdminMeetWorkshopsManager: React.FC<AdminMeetWorkshopsManagerProps>
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de confirmación para eliminar taller */}
+      {deleteConfirmEvent && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+          <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4">
+            <div className="flex items-center gap-3 text-rose-600">
+              <div className="p-2.5 rounded-2xl bg-rose-50 dark:bg-rose-950/40">
+                <Trash2 className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-neutral-900 dark:text-neutral-100">
+                  ¿Eliminar Taller?
+                </h3>
+                <p className="text-xs text-neutral-500">Acción permanente</p>
+              </div>
+            </div>
+            <p className="text-sm text-neutral-600 dark:text-neutral-300 leading-relaxed">
+              ¿Estás seguro de que deseas eliminar permanentemente el taller{' '}
+              <strong className="text-neutral-900 dark:text-white font-semibold">
+                "{deleteConfirmEvent.title}"
+              </strong>
+              ? Se removerá del cronograma.
+            </p>
+            <div className="flex items-center justify-end gap-2.5 pt-2">
+              <button
+                type="button"
+                onClick={() => setDeleteConfirmEvent(null)}
+                className="px-4 py-2 rounded-xl text-xs font-semibold text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={confirmDeleteEvent}
+                className="px-4 py-2 rounded-xl text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 transition-colors shadow-sm cursor-pointer"
+              >
+                Sí, eliminar taller
+              </button>
+            </div>
           </div>
         </div>
       )}

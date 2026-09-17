@@ -82,6 +82,22 @@ export const AdminSessionsManager: React.FC<AdminSessionsManagerProps> = ({
   const [editingQuestion, setEditingQuestion] = useState<Partial<QuestionnaireQuestion> | null>(null);
   const [isNewQuestion, setIsNewQuestion] = useState(false);
 
+  // Safe modal state for deleting session modules (avoids blocked window.confirm in iframes)
+  const [deleteModuleTarget, setDeleteModuleTarget] = useState<{ step: number; title: string } | null>(null);
+
+  const confirmDeleteModule = () => {
+    if (!deleteModuleTarget) return;
+    const { step } = deleteModuleTarget;
+    OntologicalStore.deleteProgramNode(step);
+    refreshAll();
+    showNotification(`Módulo ${step} eliminado.`);
+    if (viewMode === 'editor' && formData?.step === step) {
+      setViewMode('catalog');
+      setFormData(null);
+    }
+    setDeleteModuleTarget(null);
+  };
+
   // Sincronización con eventos de la aplicación
   useEffect(() => {
     const handleSync = () => {
@@ -223,18 +239,14 @@ export const AdminSessionsManager: React.FC<AdminSessionsManagerProps> = ({
   const handleDelete = (step: number, e: React.MouseEvent) => {
     e.stopPropagation();
     if (nodes.length <= 1) {
-      alert('Debe existir al menos un módulo de sesión activo.');
+      showNotification('Debe existir al menos un módulo de sesión activo.');
       return;
     }
-    if (window.confirm(`¿Estás seguro de eliminar el Módulo ${step}? Esta acción no se puede deshacer.`)) {
-      OntologicalStore.deleteProgramNode(step);
-      refreshAll();
-      showNotification(`Módulo ${step} eliminado.`);
-      if (viewMode === 'editor' && formData?.step === step) {
-        setViewMode('catalog');
-        setFormData(null);
-      }
-    }
+    const targetNode = nodes.find((n) => n.step === step);
+    setDeleteModuleTarget({
+      step,
+      title: targetNode?.sessionTitle || `Módulo ${step}`,
+    });
   };
 
   // Restablecer a fábrica (12 módulos estándar RBC)
@@ -447,11 +459,9 @@ export const AdminSessionsManager: React.FC<AdminSessionsManagerProps> = ({
 
   const handleDeleteQuestion = (questionId: string) => {
     if (!activeQuestionnaire) return;
-    if (window.confirm('¿Deseas eliminar esta pregunta del cuestionario?')) {
-      OntologicalStore.deleteQuestionFromQuestionnaire(activeQuestionnaire.id, questionId);
-      refreshAll();
-      showNotification('Pregunta eliminada.');
-    }
+    OntologicalStore.deleteQuestionFromQuestionnaire(activeQuestionnaire.id, questionId);
+    refreshAll();
+    showNotification('Pregunta eliminada.');
   };
 
   const handleMoveQuestion = (index: number, direction: 'up' | 'down') => {
@@ -2161,6 +2171,50 @@ export const AdminSessionsManager: React.FC<AdminSessionsManagerProps> = ({
           </div>
         </div>
       )}
+
+      {/* Modal de confirmación para eliminar módulo de sesión */}
+      {deleteModuleTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+          <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4">
+            <div className="flex items-center gap-3 text-rose-600">
+              <div className="p-2.5 rounded-2xl bg-rose-50 dark:bg-rose-950/40">
+                <Trash2 className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-neutral-900 dark:text-neutral-100">
+                  ¿Eliminar Módulo {deleteModuleTarget.step}?
+                </h3>
+                <p className="text-xs text-neutral-500">Acción permanente</p>
+              </div>
+            </div>
+            <p className="text-sm text-neutral-600 dark:text-neutral-300 leading-relaxed">
+              ¿Estás seguro de que deseas eliminar permanentemente el módulo{' '}
+              <strong className="text-neutral-900 dark:text-white font-semibold">
+                "{deleteModuleTarget.title}"
+              </strong>
+              ? Se eliminarán su temario, materiales y cuestionarios reflexivos asociados.
+            </p>
+            <div className="flex items-center justify-end gap-2.5 pt-2">
+              <button
+                type="button"
+                onClick={() => setDeleteModuleTarget(null)}
+                className="px-4 py-2 rounded-xl text-xs font-semibold text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={confirmDeleteModule}
+                className="px-4 py-2 rounded-xl text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 transition-colors shadow-sm cursor-pointer"
+              >
+                Sí, eliminar módulo
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
+
+export default AdminSessionsManager;

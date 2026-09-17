@@ -1826,7 +1826,7 @@ export class OntologicalStore {
       STORAGE_KEYS.PROGRAM_NODES,
       PROGRAM_NODES
     );
-    const safe = Array.isArray(list) && list.length >= 12 ? list : PROGRAM_NODES;
+    const safe = Array.isArray(list) && list.length > 0 ? list : PROGRAM_NODES;
     safe.forEach((node) => {
       if (!node.roadmapSteps || node.roadmapSteps.length === 0) {
         node.roadmapSteps = DEFAULT_ROADMAP_STEPS[node.step] || [];
@@ -1988,6 +1988,11 @@ export class OntologicalStore {
     if (nodes.length <= 1) return false;
     const filtered = nodes.filter((n) => n.step !== step);
     this.saveProgramNodes(filtered);
+    try {
+      FirestoreSyncService.deleteSession(String(step));
+    } catch (e) {
+      console.warn('Firestore delete session error:', e);
+    }
     return true;
   }
 
@@ -2261,8 +2266,7 @@ export class OntologicalStore {
       INITIAL_CRONOGRAMA_EVENTS
     );
 
-    // Si la lista está vacía o contiene eventos que no corresponden a Raíz y Balance, restablecer
-    if (!Array.isArray(list) || list.length === 0 || !list.some((e) => e.id.includes('raiz') || e.id.includes('taller-1'))) {
+    if (!Array.isArray(list)) {
       this.saveCronogramaEvents(INITIAL_CRONOGRAMA_EVENTS);
       return INITIAL_CRONOGRAMA_EVENTS;
     }
@@ -2276,6 +2280,11 @@ export class OntologicalStore {
       FirestoreSyncService.syncAllCronogramaEvents(events);
     } catch (e) {
       console.warn('Sync events warning:', e);
+    }
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('rbc-cronograma-events-updated', { detail: { events } }));
+      window.dispatchEvent(new CustomEvent('rbc-workshops-updated', { detail: { events } }));
+      window.dispatchEvent(new Event('storage'));
     }
   }
 
@@ -2293,13 +2302,23 @@ export class OntologicalStore {
 
   static getUpcomingEvent(): CronogramaEvent {
     const events = this.getCronogramaEvents();
-    // Prioritize events that are upcoming, featured, and marked to show on home
-    const homeUpcoming = events.find((e) => e.status === 'upcoming' && e.showOnHome !== false && e.featured);
-    if (homeUpcoming) return homeUpcoming;
-    const anyHome = events.find((e) => e.showOnHome !== false && e.status === 'upcoming');
+    // Prioritize events that are marked to show on home and featured
+    const homeFeatured = events.find((e) => e.showOnHome !== false && e.featured && e.status === 'upcoming');
+    if (homeFeatured) return homeFeatured;
+    const homeFeaturedAnyStatus = events.find((e) => e.showOnHome !== false && e.featured);
+    if (homeFeaturedAnyStatus) return homeFeaturedAnyStatus;
+    const anyHomeUpcoming = events.find((e) => e.showOnHome !== false && e.status === 'upcoming');
+    if (anyHomeUpcoming) return anyHomeUpcoming;
+    const anyHome = events.find((e) => e.showOnHome !== false);
     if (anyHome) return anyHome;
+    // Fallback if none are visible on home
     const upcoming = events.find((e) => e.status === 'upcoming' && e.featured);
     return upcoming || events[0] || INITIAL_CRONOGRAMA_EVENTS[0];
+  }
+
+  static hasVisibleHomeEvent(): boolean {
+    const events = this.getCronogramaEvents();
+    return events.some((e) => e.showOnHome !== false);
   }
 
   static addWorkshopWorkbookSubmission(
@@ -2370,6 +2389,11 @@ export class OntologicalStore {
       updated[0].featured = true;
     }
     this.saveCronogramaEvents(updated);
+    try {
+      FirestoreSyncService.deleteCronogramaEvent(id);
+    } catch (e) {
+      console.warn('Firestore delete cronograma notice:', e);
+    }
   }
 
   // =========================================================================

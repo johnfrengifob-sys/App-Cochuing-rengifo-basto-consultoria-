@@ -105,11 +105,9 @@ export const AdminQuestionnairesManager: React.FC<AdminQuestionnairesManagerProp
   };
 
   const handleDeleteQuestion = (questionId: string, label: string) => {
-    if (window.confirm(`¿Eliminar la pregunta "${label.slice(0, 45)}..."?`)) {
-      OntologicalStore.deleteQuestionFromQuestionnaire(activeQuestionnaire.id, questionId);
-      refreshList();
-      showNotification('Pregunta eliminada del cuestionario.');
-    }
+    OntologicalStore.deleteQuestionFromQuestionnaire(activeQuestionnaire.id, questionId);
+    refreshList();
+    showNotification(`Pregunta "${label.slice(0, 30)}..." eliminada.`);
   };
 
   const handleMoveQuestion = (index: number, direction: 'up' | 'down') => {

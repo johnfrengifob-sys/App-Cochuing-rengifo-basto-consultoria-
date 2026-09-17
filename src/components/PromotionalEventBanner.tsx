@@ -29,24 +29,56 @@ import {
 } from 'lucide-react';
 
 interface PromotionalEventBannerProps {
+  event?: CronogramaEvent;
   onRegisterInterest?: (event: CronogramaEvent) => void;
   className?: string;
   variant?: 'landing' | 'compact' | 'participant' | 'full';
 }
 
 export const PromotionalEventBanner: React.FC<PromotionalEventBannerProps> = ({
+  event: initialEventProp,
   onRegisterInterest,
   className = '',
   variant = 'landing',
 }) => {
   const [event, setEvent] = useState<CronogramaEvent>(() =>
-    OntologicalStore.getUpcomingEvent()
+    initialEventProp || OntologicalStore.getUpcomingEvent()
   );
   const [isRegistered, setIsRegistered] = useState(false);
   const [showShareNotice, setShowShareNotice] = useState(false);
   const [copiedMeetNotice, setCopiedMeetNotice] = useState(false);
   const [spotsLeft, setSpotsLeft] = useState(event.spotsLeft);
   const [showImageModal, setShowImageModal] = useState(false);
+
+  // Synchronize when initialEventProp changes
+  useEffect(() => {
+    if (initialEventProp) {
+      setEvent(initialEventProp);
+      setSpotsLeft(initialEventProp.spotsLeft);
+    }
+  }, [initialEventProp]);
+
+  // Listen for event updates across the app
+  useEffect(() => {
+    if (initialEventProp) return;
+
+    const handleEventsUpdated = () => {
+      const updated = OntologicalStore.getUpcomingEvent();
+      if (updated) {
+        setEvent(updated);
+        setSpotsLeft(updated.spotsLeft);
+      }
+    };
+
+    window.addEventListener('rbc-cronograma-events-updated', handleEventsUpdated);
+    window.addEventListener('rbc-workshops-updated', handleEventsUpdated);
+    window.addEventListener('storage', handleEventsUpdated);
+    return () => {
+      window.removeEventListener('rbc-cronograma-events-updated', handleEventsUpdated);
+      window.removeEventListener('rbc-workshops-updated', handleEventsUpdated);
+      window.removeEventListener('storage', handleEventsUpdated);
+    };
+  }, [initialEventProp]);
 
   const meetUrl = useMemo(
     () => event.meetUrl || 'https://meet.google.com/rbc-conversatorio-ontologico',
@@ -130,72 +162,28 @@ export const PromotionalEventBanner: React.FC<PromotionalEventBannerProps> = ({
     }
   };
 
-  // Render clean numeric countdown directly overlaid on the event image (no boxes, no containers, pure typography)
+  // Render clean numeric countdown directly overlaid on the event image (upper left, pure numbers without container)
   const renderImageNumericCountdown = () => {
     if (timeLeft.isLive) {
       return (
-        <div className="absolute inset-x-0 bottom-0 p-3.5 bg-gradient-to-t from-black/90 via-black/50 to-transparent flex items-center justify-center pointer-events-none">
-          <span className="text-xs sm:text-sm font-bold text-rose-400 uppercase tracking-wider animate-pulse drop-shadow-md">
-            🔴 Taller en Vivo Ahora
+        <div className="absolute top-2.5 left-2.5 sm:top-3.5 sm:left-3.5 z-10 pointer-events-none select-none">
+          <span className="text-xs sm:text-sm font-bold text-rose-400 uppercase tracking-wider animate-pulse drop-shadow-[0_2px_4px_rgba(0,0,0,0.95)]">
+            🔴 En Vivo
           </span>
         </div>
       );
     }
 
     return (
-      <div className="absolute inset-x-0 bottom-0 pt-10 pb-3 px-3 bg-gradient-to-t from-black/90 via-black/40 to-transparent flex flex-col items-center justify-end pointer-events-none select-none">
-        <div className="flex items-baseline gap-2 sm:gap-3.5 font-mono drop-shadow-[0_2px_8px_rgba(0,0,0,0.95)]">
-          {/* Días */}
-          <div className="flex flex-col items-center">
-            <span className="text-2xl sm:text-3xl md:text-4xl font-black text-white leading-none tracking-tight">
-              {String(timeLeft.days).padStart(2, '0')}
-            </span>
-            <span className="text-[9px] sm:text-[10px] font-bold text-white/90 uppercase tracking-widest mt-1">
-              Días
-            </span>
-          </div>
-
-          <span className="text-xl sm:text-2xl md:text-3xl text-white/70 font-light -translate-y-1">
-            :
-          </span>
-
-          {/* Horas */}
-          <div className="flex flex-col items-center">
-            <span className="text-2xl sm:text-3xl md:text-4xl font-black text-white leading-none tracking-tight">
-              {String(timeLeft.hours).padStart(2, '0')}
-            </span>
-            <span className="text-[9px] sm:text-[10px] font-bold text-white/90 uppercase tracking-widest mt-1">
-              Horas
-            </span>
-          </div>
-
-          <span className="text-xl sm:text-2xl md:text-3xl text-white/70 font-light -translate-y-1">
-            :
-          </span>
-
-          {/* Minutos */}
-          <div className="flex flex-col items-center">
-            <span className="text-2xl sm:text-3xl md:text-4xl font-black text-white leading-none tracking-tight">
-              {String(timeLeft.minutes).padStart(2, '0')}
-            </span>
-            <span className="text-[9px] sm:text-[10px] font-bold text-white/90 uppercase tracking-widest mt-1">
-              Min
-            </span>
-          </div>
-
-          <span className="text-xl sm:text-2xl md:text-3xl text-white/70 font-light -translate-y-1">
-            :
-          </span>
-
-          {/* Segundos */}
-          <div className="flex flex-col items-center">
-            <span className="text-2xl sm:text-3xl md:text-4xl font-black text-emerald-400 leading-none tracking-tight animate-pulse">
-              {String(timeLeft.seconds).padStart(2, '0')}
-            </span>
-            <span className="text-[9px] sm:text-[10px] font-bold text-emerald-300 uppercase tracking-widest mt-1">
-              Seg
-            </span>
-          </div>
+      <div className="absolute top-2.5 left-2.5 sm:top-3.5 sm:left-3.5 z-10 pointer-events-none select-none">
+        <div className="flex items-center gap-1 sm:gap-1.5 font-mono text-sm sm:text-base md:text-lg font-black drop-shadow-[0_2px_4px_rgba(0,0,0,0.95)] [text-shadow:_0_1px_3px_rgb(0_0_0_/_95%),_0_2px_8px_rgb(0_0_0_/_85%)]">
+          <span className="text-white">{String(timeLeft.days).padStart(2, '0')}</span>
+          <span className="text-white/60 font-light">:</span>
+          <span className="text-white">{String(timeLeft.hours).padStart(2, '0')}</span>
+          <span className="text-white/60 font-light">:</span>
+          <span className="text-white">{String(timeLeft.minutes).padStart(2, '0')}</span>
+          <span className="text-white/60 font-light">:</span>
+          <span className="text-emerald-400 animate-pulse">{String(timeLeft.seconds).padStart(2, '0')}</span>
         </div>
       </div>
     );

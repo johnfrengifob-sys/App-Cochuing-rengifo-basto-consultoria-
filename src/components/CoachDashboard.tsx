@@ -24,33 +24,34 @@ import { ExecutiveMetricsBar } from './ExecutiveMetricsBar';
 import { FirebaseFirestoreMonitor } from './FirebaseFirestoreMonitor';
 import { SecurityAuditModal } from './SecurityAuditModal';
 import type { AcademicAdminSubTab } from './admin/AdminAcademicManager';
+import { lazyWithRetry } from '../utils/lazyWithRetry';
 
-// Lazy load secondary dashboard modules to keep the primary view fast and prevent initial load freeze
-const ClientWorkstationView = lazy(() =>
+// Lazy load secondary dashboard modules with automatic retry resilience
+const ClientWorkstationView = lazyWithRetry(() =>
   import('./ClientWorkstationView').then((m) => ({ default: m.ClientWorkstationView }))
 );
-const GoogleWorkspaceHub = lazy(() =>
+const GoogleWorkspaceHub = lazyWithRetry(() =>
   import('./GoogleWorkspaceHub').then((m) => ({ default: m.GoogleWorkspaceHub }))
 );
-const GeminiOntologicalCopilot = lazy(() =>
+const GeminiOntologicalCopilot = lazyWithRetry(() =>
   import('./GeminiOntologicalCopilot').then((m) => ({ default: m.GeminiOntologicalCopilot }))
 );
-const CrmPipelineManager = lazy(() =>
+const CrmPipelineManager = lazyWithRetry(() =>
   import('./CrmPipelineManager').then((m) => ({ default: m.CrmPipelineManager }))
 );
-const PaymentValidationManager = lazy(() =>
+const PaymentValidationManager = lazyWithRetry(() =>
   import('./PaymentValidationManager').then((m) => ({ default: m.PaymentValidationManager }))
 );
-const ExecutiveAnalyticsCharts = lazy(() =>
+const ExecutiveAnalyticsCharts = lazyWithRetry(() =>
   import('./ExecutiveAnalyticsCharts').then((m) => ({ default: m.ExecutiveAnalyticsCharts }))
 );
-const AdminAcademicManager = lazy(() =>
+const AdminAcademicManager = lazyWithRetry(() =>
   import('./admin/AdminAcademicManager').then((m) => ({ default: m.AdminAcademicManager }))
 );
-const AdminSessionsManager = lazy(() =>
+const AdminSessionsManager = lazyWithRetry(() =>
   import('./admin/AdminSessionsManager').then((m) => ({ default: m.AdminSessionsManager }))
 );
-const ExperienceEditorManager = lazy(() =>
+const ExperienceEditorManager = lazyWithRetry(() =>
   import('./admin/ExperienceEditorManager').then((m) => ({ default: m.ExperienceEditorManager }))
 );
 

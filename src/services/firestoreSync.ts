@@ -159,6 +159,16 @@ export class FirestoreSyncService {
     }
   }
 
+  // Delete workshop / cronograma event from Firestore
+  static async deleteCronogramaEvent(id: string): Promise<void> {
+    const collectionPath = 'cronogramaEvents';
+    try {
+      await deleteDoc(doc(db, collectionPath, id));
+    } catch (error) {
+      console.warn('Firestore deleteCronogramaEvent notice:', error);
+    }
+  }
+
   // Synchronize individual experience into Firestore
   static async syncExperience(experience: OntologicalExperience): Promise<void> {
     const collectionPath = 'experiences';

@@ -22,9 +22,19 @@ export class ErrorBoundary extends Component<Props, State> {
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error('ErrorBoundary caught an unhandled error:', error, errorInfo);
+    const isChunkError =
+      error?.message?.includes('Failed to fetch dynamically imported module') ||
+      error?.message?.includes('Importing a module script failed') ||
+      error?.name === 'ChunkLoadError';
+
+    if (isChunkError && !sessionStorage.getItem('chunk_error_reloaded')) {
+      sessionStorage.setItem('chunk_error_reloaded', 'true');
+      window.location.reload();
+    }
   }
 
   private handleReset = () => {
+    sessionStorage.removeItem('chunk_error_reloaded');
     this.setState({ hasError: false, error: null });
     window.location.reload();
   };

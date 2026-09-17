@@ -89,11 +89,9 @@ export const AdminCoursesManager: React.FC<AdminCoursesManagerProps> = ({ onRefr
   };
 
   const handleDeleteProgram = (id: string, name: string) => {
-    if (window.confirm(`¿Estás seguro de eliminar el curso "${name}"? Esta acción no se puede deshacer.`)) {
-      OntologicalStore.deleteProgram(id);
-      refreshList();
-      showNotification(`Curso "${name}" eliminado.`);
-    }
+    OntologicalStore.deleteProgram(id);
+    refreshList();
+    showNotification(`Curso "${name}" eliminado.`);
   };
 
   const handleOpenCreate = () => {

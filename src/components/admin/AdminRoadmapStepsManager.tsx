@@ -89,11 +89,9 @@ export const AdminRoadmapStepsManager: React.FC<AdminRoadmapStepsManagerProps> =
   };
 
   const handleDeleteStep = (stepId: string, title: string) => {
-    if (window.confirm(`¿Estás seguro de eliminar el paso "${title}"?`)) {
-      OntologicalStore.deleteRoadmapStep(selectedStep, stepId);
-      refreshNodes();
-      showNotification(`Paso eliminado.`);
-    }
+    OntologicalStore.deleteRoadmapStep(selectedStep, stepId);
+    refreshNodes();
+    showNotification(`Paso "${title}" eliminado.`);
   };
 
   const handleMove = (index: number, direction: 'up' | 'down') => {
@@ -112,12 +110,10 @@ export const AdminRoadmapStepsManager: React.FC<AdminRoadmapStepsManagerProps> =
   };
 
   const handleResetRecommended = () => {
-    if (window.confirm(`¿Restablecer los pasos del Taller ${selectedStep} al estándar recomendado?`)) {
-      const defaultForThis = DEFAULT_ROADMAP_STEPS[selectedStep] || [];
-      OntologicalStore.updateProgramNode(selectedStep, { roadmapSteps: defaultForThis });
-      refreshNodes();
-      showNotification(`Pasos del Taller ${selectedStep} restablecidos.`);
-    }
+    const defaultForThis = DEFAULT_ROADMAP_STEPS[selectedStep] || [];
+    OntologicalStore.updateProgramNode(selectedStep, { roadmapSteps: defaultForThis });
+    refreshNodes();
+    showNotification(`Pasos del Taller ${selectedStep} restablecidos.`);
   };
 
   const getPhaseBadgeColor = (phase: string) => {

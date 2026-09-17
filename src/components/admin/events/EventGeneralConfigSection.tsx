@@ -81,7 +81,7 @@ export const EventGeneralConfigSection: React.FC<EventGeneralConfigSectionProps>
   };
 
   const currentCover = event.coverImage || event.imageUrl || PRESET_COVERS[0].url;
-  const isShowOnHome = event.showOnHome ?? true;
+  const isShowOnHome = event.showOnHome !== false;
   const capacityType = event.capacityType || (event.totalSpots === 1 ? 'individual' : 'grupal');
   const priceAmount = event.priceAmount ?? (event.price && !event.price.toLowerCase().includes('libre') ? 180000 : 0);
 

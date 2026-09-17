@@ -1,4 +1,4 @@
-import React, { useState, useEffect, lazy, Suspense } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Calendar,
   BookOpen,
@@ -13,13 +13,8 @@ import {
   OntologicalProgram,
   EventRegistration,
 } from '../../types';
-
-const ProgramsAndEventsManager = lazy(() =>
-  import('../ProgramsAndEventsManager').then((m) => ({ default: m.ProgramsAndEventsManager }))
-);
-const AdminSessionsManager = lazy(() =>
-  import('./AdminSessionsManager').then((m) => ({ default: m.AdminSessionsManager }))
-);
+import { ProgramsAndEventsManager } from '../ProgramsAndEventsManager';
+import { AdminSessionsManager } from './AdminSessionsManager';
 
 function SubPanelFallback({ title = 'Cargando Sub-Panel...' }: { title?: string }) {
   return (
@@ -196,23 +191,19 @@ export const AdminAcademicManager: React.FC<AdminAcademicManagerProps> = ({
       {/* RENDERIZADO DEL PANEL ACTIVO */}
       <div key={version}>
         {currentTab === 'events' && (
-          <Suspense fallback={<SubPanelFallback title="Cargando Eventos y Talleres..." />}>
-            <ProgramsAndEventsManager
-              cronogramaEvents={rawEvents}
-              programs={rawPrograms}
-              eventRegistrations={rawRegistrations}
-              onRefreshEvents={handleRefresh}
-              onRefreshPrograms={handleRefresh}
-              onRefreshRegistrations={handleRefresh}
-              onOpenRegistrationPortal={onOpenRegistrationPortal}
-            />
-          </Suspense>
+          <ProgramsAndEventsManager
+            cronogramaEvents={rawEvents}
+            programs={rawPrograms}
+            eventRegistrations={rawRegistrations}
+            onRefreshEvents={handleRefresh}
+            onRefreshPrograms={handleRefresh}
+            onRefreshRegistrations={handleRefresh}
+            onOpenRegistrationPortal={onOpenRegistrationPortal}
+          />
         )}
 
         {currentTab === 'sessions' && (
-          <Suspense fallback={<SubPanelFallback title="Cargando Sesiones de Consultoría (12 Módulos)..." />}>
-            <AdminSessionsManager onRefreshParent={handleRefresh} />
-          </Suspense>
+          <AdminSessionsManager onRefreshParent={handleRefresh} />
         )}
       </div>
     </div>

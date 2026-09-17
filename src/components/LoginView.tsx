@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { User } from '../types';
+import React, { useState, useEffect } from 'react';
+import { User, CronogramaEvent } from '../types';
 import { ThemeToggle } from './ThemeToggle';
 import { AuthenticationSpace } from './AuthenticationSpace';
 import { BrandLogo } from './BrandLogo';
@@ -105,6 +105,26 @@ export const LoginView: React.FC<LoginViewProps> = ({
   const [adminQuickCode, setAdminQuickCode] = useState('');
   const [showAdminCode, setShowAdminCode] = useState(false);
   const [adminQuickError, setAdminQuickError] = useState<string | null>(null);
+
+  // Upcoming home event state
+  const [homeEvent, setHomeEvent] = useState<CronogramaEvent>(() => OntologicalStore.getUpcomingEvent());
+  const [hasVisibleHomeEvent, setHasVisibleHomeEvent] = useState<boolean>(() => OntologicalStore.hasVisibleHomeEvent());
+
+  useEffect(() => {
+    const handleEventsChange = () => {
+      setHomeEvent(OntologicalStore.getUpcomingEvent());
+      setHasVisibleHomeEvent(OntologicalStore.hasVisibleHomeEvent());
+    };
+
+    window.addEventListener('rbc-cronograma-events-updated', handleEventsChange);
+    window.addEventListener('rbc-workshops-updated', handleEventsChange);
+    window.addEventListener('storage', handleEventsChange);
+    return () => {
+      window.removeEventListener('rbc-cronograma-events-updated', handleEventsChange);
+      window.removeEventListener('rbc-workshops-updated', handleEventsChange);
+      window.removeEventListener('storage', handleEventsChange);
+    };
+  }, []);
 
   // Handle participant email and optional PIN verification
   const handleVerifyEmail = async (e?: React.FormEvent) => {
@@ -608,31 +628,34 @@ export const LoginView: React.FC<LoginViewProps> = ({
       {/* ------------------------------------------------------------------- */}
       {/* TALLER ONTOLÓGICO EN CURSO (PromotionalEventBanner)                 */}
       {/* ------------------------------------------------------------------- */}
-      <div className="w-full max-w-4xl mx-auto space-y-3">
-        <div className="flex items-center justify-between px-2">
-          <div className="flex items-center gap-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
-            <h2 className="text-xs sm:text-sm font-bold uppercase tracking-widest text-black dark:text-white">
-              Taller Ontológico en Curso • Acceso Abierto
-            </h2>
+      {hasVisibleHomeEvent && (
+        <div className="w-full max-w-4xl mx-auto space-y-3 animate-fade-in">
+          <div className="flex items-center justify-between px-2">
+            <div className="flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
+              <h2 className="text-xs sm:text-sm font-bold uppercase tracking-widest text-black dark:text-white">
+                Taller Ontológico en Curso • Acceso Abierto
+              </h2>
+            </div>
+            <span className="text-[11px] sm:text-xs font-semibold text-emerald-700 dark:text-emerald-400 bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/20">
+              {homeEvent.displayDate || (homeEvent.date ? homeEvent.date.split('T')[0] : 'Próxima Sesión')} • {homeEvent.time || '9:00 AM'}
+            </span>
           </div>
-          <span className="text-[11px] sm:text-xs font-semibold text-emerald-700 dark:text-emerald-400 bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/20">
-            Sábado 28 de Marzo • 9:00 AM
-          </span>
-        </div>
 
-        <PromotionalEventBanner
-          variant="landing"
-          onRegisterInterest={() => {
-            setActiveTab('participant');
-            setParticipantMode('register');
-            const targetEl = document.getElementById('login-card-container');
-            if (targetEl) {
-              targetEl.scrollIntoView({ behavior: 'smooth' });
-            }
-          }}
-        />
-      </div>
+          <PromotionalEventBanner
+            event={homeEvent}
+            variant="landing"
+            onRegisterInterest={() => {
+              setActiveTab('participant');
+              setParticipantMode('register');
+              const targetEl = document.getElementById('login-card-container');
+              if (targetEl) {
+                targetEl.scrollIntoView({ behavior: 'smooth' });
+              }
+            }}
+          />
+        </div>
+      )}
 
       {/* Main Authentication Card - Matched Width (max-w-4xl) & Transparent Glass Container */}
       <div id="login-card-container" className="w-full max-w-4xl mx-auto">
