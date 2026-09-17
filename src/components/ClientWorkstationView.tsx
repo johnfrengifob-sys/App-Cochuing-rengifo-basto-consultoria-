@@ -20,12 +20,14 @@ import { PulseBadge } from './PulseBadge';
 import { ClientTrafficStatusBadge } from './ClientTrafficStatusBadge';
 import { GeminiOntologicalCopilot } from './GeminiOntologicalCopilot';
 import { PostSessionWorkbookModal } from './PostSessionWorkbookModal';
+import { UnifiedFormsSheetsClientView } from './UnifiedFormsSheetsClientView';
 import {
   ArrowLeft,
   Calendar,
   Sparkles,
   Brain,
   FileText,
+  FileSpreadsheet,
   DollarSign,
   HeartPulse,
   Plus,
@@ -135,11 +137,14 @@ export const ClientWorkstationView: React.FC<ClientWorkstationViewProps> = ({
     );
   }
 
-  const [activeTab, setActiveTab] = useState<'material' | 'diagnosis' | 'report'>('material');
+  const [activeTab, setActiveTab] = useState<'material' | 'diagnosis' | 'report' | 'cross_workspace'>('material');
   const [isEditingBreakdown, setIsEditingBreakdown] = useState(false);
   const [tempBreakdown, setTempBreakdown] = useState(client.primaryBreakdown || '');
   const [isEditingInvested, setIsEditingInvested] = useState(false);
   const [tempInvested, setTempInvested] = useState(client.totalInvested || client.programFee || '$1.500.000 COP');
+
+  // Expediente unificado cruzado desde Google Forms & Sheets (4 Fuentes)
+  const crossData = OntologicalStore.getUnifiedClientOntologicalCrossData(client.email, client.uid, client.name);
 
   // Local state for forms and sessions so edits reflect immediately in view
   const [localForms, setLocalForms] = useState<FormSubmission[]>(propForms);
@@ -1218,6 +1223,24 @@ export const ClientWorkstationView: React.FC<ClientWorkstationViewProps> = ({
           <Download className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
           <span>Informe Ejecutivo PDF</span>
         </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab('cross_workspace')}
+          className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer flex items-center gap-2 ${
+            activeTab === 'cross_workspace'
+              ? 'bg-white dark:bg-[#1A1A1E] text-black dark:text-white shadow-2xs'
+              : 'text-gray-500 dark:text-neutral-400 hover:text-black dark:hover:text-white'
+          }`}
+        >
+          <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+          <span>Expediente Google Forms & Sheets</span>
+          {crossData.totalCrossRecords > 0 && (
+            <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 font-mono font-medium">
+              {crossData.totalCrossRecords}
+            </span>
+          )}
+        </button>
       </div>
 
       {/* Tab 1: Material del Módulo (Nodo Actual del Programa) */}
@@ -1534,6 +1557,11 @@ export const ClientWorkstationView: React.FC<ClientWorkstationViewProps> = ({
             </p>
           )}
         </div>
+      )}
+
+      {/* Tab 4: Expediente Cruzado Google Forms & Sheets (4 Recursos) */}
+      {activeTab === 'cross_workspace' && (
+        <UnifiedFormsSheetsClientView client={client} onRefreshParent={onRefreshClients} />
       )}
 
       {/* Modal de Formulario Post-Sesión & Generación de Cuaderno de Trabajo */}
@@ -1967,6 +1995,48 @@ export const ClientWorkstationView: React.FC<ClientWorkstationViewProps> = ({
             </div>
 
             <form onSubmit={handleSaveNewSession} className="space-y-4">
+              {/* Validación de Acuerdo en Google Sheets */}
+              {crossData.sesionIndividualAcuerdo ? (
+                <div className="p-3 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900/40 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                    <div className="text-xs">
+                      <span className="font-semibold text-emerald-900 dark:text-emerald-200">
+                        Acuerdo Co-creativo Diligenciado en Google Sheets
+                      </span>
+                      <p className="text-[11px] text-emerald-700 dark:text-emerald-400">
+                        {crossData.sesionIndividualAcuerdo.fullName || crossData.sesionIndividualAcuerdo.coacheeFullName} • {crossData.sesionIndividualAcuerdo.digitalSignatureAndIdNumber || crossData.sesionIndividualAcuerdo.idDocumentNumber}
+                      </p>
+                    </div>
+                  </div>
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900 text-emerald-800 dark:text-emerald-200 font-mono font-bold">
+                    Firmado
+                  </span>
+                </div>
+              ) : (
+                <div className="p-3 rounded-2xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/40 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <AlertCircle className="w-4 h-4 text-amber-600 shrink-0" />
+                    <div className="text-xs">
+                      <span className="font-semibold text-amber-900 dark:text-amber-200">
+                        Acuerdo de Sesiones Individuales Pendiente
+                      </span>
+                      <p className="text-[11px] text-amber-700 dark:text-amber-400">
+                        El coachee aún no ha diligenciado el Google Form oficial de sesiones.
+                      </p>
+                    </div>
+                  </div>
+                  <a
+                    href="https://forms.gle/dfStXtTyb1MW6W5K9"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[11px] font-bold text-amber-800 dark:text-amber-300 hover:underline shrink-0"
+                  >
+                    Abrir Formulario
+                  </a>
+                </div>
+              )}
+
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-semibold text-gray-700 dark:text-neutral-300 mb-1">

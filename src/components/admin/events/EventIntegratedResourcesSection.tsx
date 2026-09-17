@@ -26,8 +26,9 @@ import {
   ChevronDown,
   ChevronUp,
 } from 'lucide-react';
-import { CronogramaEvent } from '../../../types';
+import { CronogramaEvent, TallerRegistroEntry } from '../../../types';
 import { safeCopyToClipboard } from '../../../utils/clipboard';
+import { OntologicalStore } from '../../../services/store';
 
 interface EventIntegratedResourcesSectionProps {
   event: Partial<CronogramaEvent>;
@@ -35,6 +36,16 @@ interface EventIntegratedResourcesSectionProps {
 }
 
 const GOOGLE_FORMS_PRESETS = [
+  {
+    title: 'Talleres (Registro General) — OFICIAL RBC',
+    url: 'https://forms.gle/H5gLF1KBzPnKsBWq7',
+    description: 'Formulario oficial de inscripción y aceptación de confidencialidad para talleres grupales.',
+  },
+  {
+    title: 'Bitácora Talleres (Cosecha Post-Taller) — OFICIAL RBC',
+    url: 'https://forms.gle/5Hiuxwq13n3gC3zt6',
+    description: 'Cosecha de quiebres, decodificación somática, retos y nueva perspectiva post-taller.',
+  },
   {
     title: 'Evaluación y Cosecha Post-Taller Ontológico',
     url: 'https://docs.google.com/forms/d/e/1FAIpQLSc-rbc-evaluacion-post-taller/viewform',
@@ -72,6 +83,22 @@ export const EventIntegratedResourcesSection: React.FC<EventIntegratedResourcesS
   const [copiedLink, setCopiedLink] = useState<string | null>(null);
   const [previewForm, setPreviewForm] = useState(false);
   const [expandedTrigger, setExpandedTrigger] = useState<'welcome' | 'reminder' | 'survey' | 'webhook' | null>('welcome');
+  const [sheetSearch, setSheetSearch] = useState('');
+  const [tallerRegistros, setTallerRegistros] = useState<TallerRegistroEntry[]>(() =>
+    OntologicalStore.getTallerRegistros()
+  );
+
+  const officialIntegrations = OntologicalStore.getFormsSheetsIntegrations();
+  const officialTalleresPair = officialIntegrations.find((p) => p.id === 'talleres_registro');
+
+  const handleApplyOfficialTalleresPair = () => {
+    if (officialTalleresPair) {
+      onChange({
+        googleFormsUrl: officialTalleresPair.formUrl,
+        googleSheetsUrl: officialTalleresPair.sheetUrl,
+      });
+    }
+  };
 
   const handleCopy = async (text: string, label: string) => {
     await safeCopyToClipboard(text);
@@ -109,17 +136,31 @@ export const EventIntegratedResourcesSection: React.FC<EventIntegratedResourcesS
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Encabezado Unificado */}
-      <div className="p-5 rounded-2xl bg-neutral-900 text-white border border-neutral-800 shadow-md">
-        <div className="flex items-center gap-2 text-emerald-400 font-semibold text-xs uppercase tracking-wider">
-          <Zap className="w-4 h-4 text-amber-400" />
-          <span>Ecosistema Integral del Taller</span>
+      <div className="p-5 rounded-2xl bg-neutral-900 text-white border border-neutral-800 shadow-md flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="space-y-1">
+          <div className="flex items-center gap-2 text-emerald-400 font-semibold text-xs uppercase tracking-wider">
+            <Zap className="w-4 h-4 text-amber-400" />
+            <span>Ecosistema Integral del Taller</span>
+          </div>
+          <h3 className="text-lg font-bold text-white mt-1">
+            Formularios, Base de Datos Google Sheets y Activadores de Seguimiento 1 a 1
+          </h3>
+          <p className="text-xs text-neutral-300 font-light max-w-3xl">
+            Configura en un solo lugar la conexión con tus hojas de Google Sheets para alimentar la base de datos de coachees, formularios de Google Forms y personaliza las reglas automáticas de seguimiento para este evento.
+          </p>
         </div>
-        <h3 className="text-lg font-bold text-white mt-1">
-          Formularios, Base de Datos Google Sheets y Activadores de Seguimiento 1 a 1
-        </h3>
-        <p className="text-xs text-neutral-300 font-light mt-0.5 max-w-3xl">
-          Configura en un solo lugar la conexión con tus hojas de Google Sheets para alimentar la base de datos de coachees, formularios de Google Forms y personaliza las reglas automáticas de seguimiento para este evento.
-        </p>
+
+        {officialTalleresPair && (
+          <button
+            type="button"
+            onClick={handleApplyOfficialTalleresPair}
+            className="px-4 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black text-xs font-bold transition-all shadow-md flex items-center gap-2 shrink-0 cursor-pointer"
+            title="Vincular con el Formulario y Sheet oficial de Talleres (Registro General)"
+          >
+            <FileSpreadsheet className="w-4 h-4 text-black" />
+            <span>Vincular con 'Talleres Oficial'</span>
+          </button>
+        )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -604,6 +645,88 @@ export const EventIntegratedResourcesSection: React.FC<EventIntegratedResourcesS
             className="w-full px-3.5 py-2 rounded-xl border border-gray-200 dark:border-neutral-700 bg-gray-50 dark:bg-neutral-800 text-xs text-black dark:text-white font-mono"
           />
         </div>
+      </div>
+
+      {/* BLOQUE 5: LECTURA Y FILTRO DE PARTICIPANTES DESDE GOOGLE SHEETS */}
+      <div className="p-5 rounded-2xl bg-white dark:bg-neutral-900 border border-purple-200/80 dark:border-purple-900/40 space-y-4 shadow-xs">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-gray-100 dark:border-neutral-800">
+          <div className="flex items-center gap-2.5">
+            <div className="p-2 rounded-xl bg-purple-100 dark:bg-purple-950 text-purple-600 dark:text-purple-300">
+              <UserCheck className="w-4 h-4" />
+            </div>
+            <div>
+              <h4 className="text-sm font-bold text-black dark:text-white flex items-center gap-2">
+                <span>Participantes en Hoja de Registro (Google Sheets)</span>
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-purple-100 dark:bg-purple-950 text-purple-800 dark:text-purple-300 font-mono font-bold">
+                  {tallerRegistros.length} Inscritos
+                </span>
+              </h4>
+              <p className="text-[11px] text-gray-500 dark:text-neutral-400 font-light">
+                Lectura en tiempo real de inscritos en el formulario oficial de talleres.
+              </p>
+            </div>
+          </div>
+
+          {/* Search bar */}
+          <div className="w-full sm:w-64">
+            <input
+              type="text"
+              placeholder="Buscar participante o correo..."
+              value={sheetSearch}
+              onChange={(e) => setSheetSearch(e.target.value)}
+              className="w-full px-3 py-1.5 rounded-xl border border-gray-200 dark:border-neutral-700 bg-gray-50 dark:bg-neutral-800 text-xs text-black dark:text-white focus:outline-hidden"
+            />
+          </div>
+        </div>
+
+        {tallerRegistros.length > 0 ? (
+          <div className="overflow-x-auto max-h-60 rounded-xl border border-gray-200 dark:border-neutral-800">
+            <table className="w-full text-left text-xs">
+              <thead className="bg-gray-50 dark:bg-neutral-800/60 text-gray-500 dark:text-neutral-400 font-semibold sticky top-0">
+                <tr>
+                  <th className="p-2.5">Fecha</th>
+                  <th className="p-2.5">Nombre</th>
+                  <th className="p-2.5">Correo</th>
+                  <th className="p-2.5">Teléfono</th>
+                  <th className="p-2.5">Taller Asignado</th>
+                  <th className="p-2.5">Estatus</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100 dark:divide-neutral-800">
+                {tallerRegistros
+                  .filter(
+                    (r) =>
+                      !sheetSearch ||
+                      r.participantName.toLowerCase().includes(sheetSearch.toLowerCase()) ||
+                      r.email.toLowerCase().includes(sheetSearch.toLowerCase())
+                  )
+                  .map((item) => (
+                    <tr key={item.id} className="hover:bg-gray-50 dark:hover:bg-neutral-800/40">
+                      <td className="p-2.5 font-mono text-[11px] text-gray-400">{item.timestamp}</td>
+                      <td className="p-2.5 font-bold text-black dark:text-white">{item.participantName}</td>
+                      <td className="p-2.5 font-mono text-[11px] text-gray-600 dark:text-neutral-300">{item.email}</td>
+                      <td className="p-2.5 text-gray-500">{item.phone || '—'}</td>
+                      <td className="p-2.5">
+                        <span className="px-2 py-0.5 rounded-md bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 text-[10px] font-semibold">
+                          {item.matchedWorkshopTitle || 'Taller General'}
+                        </span>
+                      </td>
+                      <td className="p-2.5">
+                        <span className="text-emerald-600 dark:text-emerald-400 text-[11px] font-medium flex items-center gap-1">
+                          <CheckCircle2 className="w-3 h-3" />
+                          Validado en Sheet
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <p className="text-xs text-gray-400 italic py-2">
+            No se han sincronizado registros en la hoja de cálculo de Talleres aún.
+          </p>
+        )}
       </div>
     </div>
   );

@@ -21,6 +21,11 @@ import {
   OntologicalExperience,
   PostSessionForm,
   DriveExportedFile,
+  TallerRegistroEntry,
+  SesionIndividualAcuerdoEntry,
+  BitacoraSesionB2BEntry,
+  BitacoraTallerEntry,
+  FormsSheetsIntegrationPair,
 } from '../types';
 import { ServerDbSyncService } from './serverDbSync';
 
@@ -944,19 +949,28 @@ export class FirestoreSyncService {
   }
 
   // Pull all cloud records to keep client store in sync
-  static async syncAllFromFirestore(): Promise<{ usersCount: number; regsCount: number }> {
+  static async syncAllFromFirestore(): Promise<{
+    usersCount: number;
+    regsCount: number;
+    tallerRegistrosCount: number;
+    formsSheetsCount: number;
+  }> {
     try {
-      const [remoteUsers, remoteRegs] = await Promise.all([
+      const [remoteUsers, remoteRegs, remoteTalleres, remoteIntegrations] = await Promise.all([
         this.fetchUsers(),
         this.fetchEventRegistrations(),
+        this.fetchTallerRegistros(),
+        this.fetchFormsSheetsIntegrations(),
       ]);
       return {
         usersCount: remoteUsers.length,
         regsCount: remoteRegs.length,
+        tallerRegistrosCount: remoteTalleres.length,
+        formsSheetsCount: remoteIntegrations.length,
       };
     } catch (e) {
       console.warn('syncAllFromFirestore notice:', e);
-      return { usersCount: 0, regsCount: 0 };
+      return { usersCount: 0, regsCount: 0, tallerRegistrosCount: 0, formsSheetsCount: 0 };
     }
   }
 
@@ -968,6 +982,11 @@ export class FirestoreSyncService {
     prospects: Prospect[];
     payments: PaymentRequest[];
     eventRegistrations: EventRegistration[];
+    tallerRegistros?: TallerRegistroEntry[];
+    sesionIndividualAcuerdos?: SesionIndividualAcuerdoEntry[];
+    bitacorasSesionesB2B?: BitacoraSesionB2BEntry[];
+    bitacorasTalleres?: BitacoraTallerEntry[];
+    formsSheetsIntegrations?: FormsSheetsIntegrationPair[];
   }): Promise<{ syncedCount: number; errors: number }> {
     let syncedCount = 0;
     let errors = 0;
@@ -1023,6 +1042,61 @@ export class FirestoreSyncService {
         syncedCount++;
       } catch {
         errors++;
+      }
+    }
+
+    if (params.tallerRegistros && params.tallerRegistros.length > 0) {
+      for (const tr of params.tallerRegistros) {
+        try {
+          await this.syncTallerRegistro(tr);
+          syncedCount++;
+        } catch {
+          errors++;
+        }
+      }
+    }
+
+    if (params.sesionIndividualAcuerdos && params.sesionIndividualAcuerdos.length > 0) {
+      for (const sia of params.sesionIndividualAcuerdos) {
+        try {
+          await this.syncSesionIndividualAcuerdo(sia);
+          syncedCount++;
+        } catch {
+          errors++;
+        }
+      }
+    }
+
+    if (params.bitacorasSesionesB2B && params.bitacorasSesionesB2B.length > 0) {
+      for (const b2b of params.bitacorasSesionesB2B) {
+        try {
+          await this.syncBitacoraSesionB2B(b2b);
+          syncedCount++;
+        } catch {
+          errors++;
+        }
+      }
+    }
+
+    if (params.bitacorasTalleres && params.bitacorasTalleres.length > 0) {
+      for (const bt of params.bitacorasTalleres) {
+        try {
+          await this.syncBitacoraTaller(bt);
+          syncedCount++;
+        } catch {
+          errors++;
+        }
+      }
+    }
+
+    if (params.formsSheetsIntegrations && params.formsSheetsIntegrations.length > 0) {
+      for (const pair of params.formsSheetsIntegrations) {
+        try {
+          await this.syncFormsSheetsIntegration(pair);
+          syncedCount++;
+        } catch {
+          errors++;
+        }
       }
     }
 
@@ -1119,6 +1193,344 @@ export class FirestoreSyncService {
       }
     }
     return count;
+  }
+
+  // ==========================================
+  // GOOGLE FORMS & SHEETS INTEGRATED COLLECTIONS
+  // ==========================================
+
+  // 1. Talleres (Registro General & Acuerdos de Participantes)
+  static async syncTallerRegistro(entry: TallerRegistroEntry): Promise<void> {
+    const collectionPath = 'tallerRegistros';
+    try {
+      const ref = doc(db, collectionPath, entry.id);
+      await setDoc(
+        ref,
+        {
+          id: entry.id,
+          timestamp: entry.timestamp || new Date().toISOString(),
+          email: entry.email || '',
+          participantName: entry.participantName || '',
+          phone: entry.phone || '',
+          confidentialityAccepted: entry.confidentialityAccepted !== false,
+          aiConsentAccepted: entry.aiConsentAccepted !== false,
+          conductAgreed: entry.conductAgreed !== false,
+          groupConfidentialityAccepted: entry.confidentialityAccepted !== false,
+          aiAdministrativeSupportAccepted: entry.aiConsentAccepted !== false,
+          ethicalStandardsAccepted: entry.conductAgreed !== false,
+          matchedWorkshopId: entry.matchedWorkshopId || entry.matchedEventId || null,
+          matchedWorkshopTitle: entry.matchedWorkshopTitle || entry.matchedEventTitle || null,
+          matchedEventId: entry.matchedEventId || entry.matchedWorkshopId || null,
+          matchedEventTitle: entry.matchedEventTitle || entry.matchedWorkshopTitle || null,
+          matchedDate: entry.matchedDate || null,
+          updatedAt: new Date().toISOString(),
+        },
+        { merge: true }
+      );
+    } catch (error) {
+      console.warn('Firestore syncTallerRegistro notice:', error);
+    }
+  }
+
+  static async syncAllTallerRegistros(entries: TallerRegistroEntry[]): Promise<number> {
+    let count = 0;
+    for (const e of entries) {
+      try {
+        await this.syncTallerRegistro(e);
+        count++;
+      } catch {
+        // continue
+      }
+    }
+    return count;
+  }
+
+  static async deleteTallerRegistro(id: string): Promise<void> {
+    const collectionPath = 'tallerRegistros';
+    try {
+      await deleteDoc(doc(db, collectionPath, id));
+    } catch (error) {
+      console.warn('Firestore deleteTallerRegistro notice:', error);
+    }
+  }
+
+  static async fetchTallerRegistros(): Promise<TallerRegistroEntry[]> {
+    const collectionPath = 'tallerRegistros';
+    try {
+      const snap = await getDocs(collection(db, collectionPath));
+      if (snap.empty) return [];
+      return snap.docs.map((d) => d.data() as TallerRegistroEntry);
+    } catch (error) {
+      console.warn('Firestore fetchTallerRegistros notice:', error);
+      return [];
+    }
+  }
+
+  static subscribeToTallerRegistros(
+    onUpdate: (entries: TallerRegistroEntry[]) => void
+  ): () => void {
+    const collectionPath = 'tallerRegistros';
+    try {
+      const unsubscribe = onSnapshot(
+        collection(db, collectionPath),
+        (snap) => {
+          const entries = snap.docs.map((d) => d.data() as TallerRegistroEntry);
+          onUpdate(entries);
+        },
+        (error) => {
+          console.warn('Firestore subscribeToTallerRegistros notice:', error);
+        }
+      );
+      return unsubscribe;
+    } catch (error) {
+      console.warn('Firestore subscribeToTallerRegistros error:', error);
+      return () => {};
+    }
+  }
+
+  // 2. Sesiones Individuales (Acuerdos Co-creativos de Trabajo)
+  static async syncSesionIndividualAcuerdo(entry: SesionIndividualAcuerdoEntry): Promise<void> {
+    const collectionPath = 'sesionIndividualAcuerdos';
+    try {
+      const ref = doc(db, collectionPath, entry.id);
+      await setDoc(
+        ref,
+        {
+          id: entry.id,
+          timestamp: entry.timestamp || new Date().toISOString(),
+          email: entry.email || '',
+          fullName: entry.fullName || '',
+          phone: entry.phone || '',
+          coachingScopeAccepted: entry.coachingScopeAccepted !== false,
+          commitmentAccepted: entry.commitmentAccepted !== false,
+          techSupportAuthorized: entry.techSupportAuthorized !== false,
+          aiScopeClarificationAccepted: entry.aiScopeClarificationAccepted !== false,
+          confidentialityAccepted: entry.confidentialityAccepted !== false,
+          digitalSignatureAndIdNumber: entry.digitalSignatureAndIdNumber || '',
+          mergedDocId: entry.mergedDocId || null,
+          mergedDocUrl: entry.mergedDocUrl || null,
+          linkToMergedDoc: entry.linkToMergedDoc || null,
+          documentMergeStatus: entry.documentMergeStatus || 'Registrado en Firestore',
+          updatedAt: new Date().toISOString(),
+        },
+        { merge: true }
+      );
+    } catch (error) {
+      console.warn('Firestore syncSesionIndividualAcuerdo notice:', error);
+    }
+  }
+
+  static async syncAllSesionIndividualAcuerdos(entries: SesionIndividualAcuerdoEntry[]): Promise<number> {
+    let count = 0;
+    for (const e of entries) {
+      try {
+        await this.syncSesionIndividualAcuerdo(e);
+        count++;
+      } catch {
+        // continue
+      }
+    }
+    return count;
+  }
+
+  static async fetchSesionIndividualAcuerdos(): Promise<SesionIndividualAcuerdoEntry[]> {
+    const collectionPath = 'sesionIndividualAcuerdos';
+    try {
+      const snap = await getDocs(collection(db, collectionPath));
+      if (snap.empty) return [];
+      return snap.docs.map((d) => d.data() as SesionIndividualAcuerdoEntry);
+    } catch (error) {
+      console.warn('Firestore fetchSesionIndividualAcuerdos notice:', error);
+      return [];
+    }
+  }
+
+  // 3. Bitácora de Sesiones B2B
+  static async syncBitacoraSesionB2B(entry: BitacoraSesionB2BEntry): Promise<void> {
+    const collectionPath = 'bitacorasSesionesB2B';
+    try {
+      const ref = doc(db, collectionPath, entry.id);
+      await setDoc(
+        ref,
+        {
+          id: entry.id,
+          timestamp: entry.timestamp || new Date().toISOString(),
+          email: entry.email || '',
+          fullName: entry.fullName || '',
+          city: entry.city || '',
+          centralChallenge: entry.centralChallenge || '',
+          primaryEmotion: entry.primaryEmotion || '',
+          limitingBeliefsAndJudgments: entry.limitingBeliefsAndJudgments || '',
+          realizationOrPerspective: entry.realizationOrPerspective || '',
+          balanceAreaNeeded: entry.balanceAreaNeeded || '',
+          valuableLearning: entry.valuableLearning || '',
+          concreteActionCommitment: entry.concreteActionCommitment || '',
+          digitalValidationSignatureAndId: entry.digitalValidationSignatureAndId || '',
+          updatedAt: new Date().toISOString(),
+        },
+        { merge: true }
+      );
+    } catch (error) {
+      console.warn('Firestore syncBitacoraSesionB2B notice:', error);
+    }
+  }
+
+  static async syncAllBitacorasSesionesB2B(entries: BitacoraSesionB2BEntry[]): Promise<number> {
+    let count = 0;
+    for (const e of entries) {
+      try {
+        await this.syncBitacoraSesionB2B(e);
+        count++;
+      } catch {
+        // continue
+      }
+    }
+    return count;
+  }
+
+  static async fetchBitacorasSesionesB2B(): Promise<BitacoraSesionB2BEntry[]> {
+    const collectionPath = 'bitacorasSesionesB2B';
+    try {
+      const snap = await getDocs(collection(db, collectionPath));
+      if (snap.empty) return [];
+      return snap.docs.map((d) => d.data() as BitacoraSesionB2BEntry);
+    } catch (error) {
+      console.warn('Firestore fetchBitacorasSesionesB2B notice:', error);
+      return [];
+    }
+  }
+
+  // 4. Bitácora de Talleres
+  static async syncBitacoraTaller(entry: BitacoraTallerEntry): Promise<void> {
+    const collectionPath = 'bitacorasTalleres';
+    try {
+      const ref = doc(db, collectionPath, entry.id);
+      await setDoc(
+        ref,
+        {
+          id: entry.id,
+          timestamp: entry.timestamp || new Date().toISOString(),
+          email: entry.email || '',
+          fullName: entry.fullName || '',
+          city: entry.city || '',
+          workshopLevel: entry.workshopLevel || '',
+          personalChallenge: entry.personalChallenge || '',
+          predominantEmotion: entry.predominantEmotion || '',
+          limitingTruths: entry.limitingTruths || '',
+          newDiscovery: entry.newDiscovery || '',
+          lifeBalanceMessage: entry.lifeBalanceMessage || '',
+          mostValuableLearning: entry.mostValuableLearning || '',
+          concreteCommitmentAction: entry.concreteCommitmentAction || '',
+          digitalValidationSignatureAndId: entry.digitalValidationSignatureAndId || '',
+          updatedAt: new Date().toISOString(),
+        },
+        { merge: true }
+      );
+    } catch (error) {
+      console.warn('Firestore syncBitacoraTaller notice:', error);
+    }
+  }
+
+  static async syncAllBitacorasTalleres(entries: BitacoraTallerEntry[]): Promise<number> {
+    let count = 0;
+    for (const e of entries) {
+      try {
+        await this.syncBitacoraTaller(e);
+        count++;
+      } catch {
+        // continue
+      }
+    }
+    return count;
+  }
+
+  static async fetchBitacorasTalleres(): Promise<BitacoraTallerEntry[]> {
+    const collectionPath = 'bitacorasTalleres';
+    try {
+      const snap = await getDocs(collection(db, collectionPath));
+      if (snap.empty) return [];
+      return snap.docs.map((d) => d.data() as BitacoraTallerEntry);
+    } catch (error) {
+      console.warn('Firestore fetchBitacorasTalleres notice:', error);
+      return [];
+    }
+  }
+
+  // 5. Configuración y Estado de Pares Google Forms & Sheets
+  static async syncFormsSheetsIntegration(pair: FormsSheetsIntegrationPair): Promise<void> {
+    const collectionPath = 'formsSheetsIntegrations';
+    try {
+      const ref = doc(db, collectionPath, pair.id);
+      await setDoc(
+        ref,
+        {
+          id: pair.id,
+          title: pair.title,
+          sheetId: pair.sheetId || '',
+          sheetTabName: pair.sheetTabName || '',
+          formUrl: pair.formUrl || '',
+          sheetUrl: pair.sheetUrl || '',
+          sheetEmbedUrl: pair.sheetEmbedUrl || '',
+          status: pair.status || 'connected',
+          lastSyncedAt: pair.lastSyncedAt || new Date().toISOString(),
+          recordsCount: pair.recordsCount || 0,
+          notes: pair.notes || '',
+          webhookUrl: pair.webhookUrl || '',
+          targetDatabaseCollection: pair.targetDatabaseCollection || pair.id,
+          updatedAt: new Date().toISOString(),
+        },
+        { merge: true }
+      );
+    } catch (error) {
+      console.warn('Firestore syncFormsSheetsIntegration notice:', error);
+    }
+  }
+
+  static async syncAllFormsSheetsIntegrations(pairs: FormsSheetsIntegrationPair[]): Promise<number> {
+    let count = 0;
+    for (const p of pairs) {
+      try {
+        await this.syncFormsSheetsIntegration(p);
+        count++;
+      } catch {
+        // continue
+      }
+    }
+    return count;
+  }
+
+  static async fetchFormsSheetsIntegrations(): Promise<FormsSheetsIntegrationPair[]> {
+    const collectionPath = 'formsSheetsIntegrations';
+    try {
+      const snap = await getDocs(collection(db, collectionPath));
+      if (snap.empty) return [];
+      return snap.docs.map((d) => d.data() as FormsSheetsIntegrationPair);
+    } catch (error) {
+      console.warn('Firestore fetchFormsSheetsIntegrations notice:', error);
+      return [];
+    }
+  }
+
+  static subscribeToFormsSheetsIntegrations(
+    onUpdate: (pairs: FormsSheetsIntegrationPair[]) => void
+  ): () => void {
+    const collectionPath = 'formsSheetsIntegrations';
+    try {
+      const unsubscribe = onSnapshot(
+        collection(db, collectionPath),
+        (snap) => {
+          const pairs = snap.docs.map((d) => d.data() as FormsSheetsIntegrationPair);
+          onUpdate(pairs);
+        },
+        (error) => {
+          console.warn('Firestore subscribeToFormsSheetsIntegrations notice:', error);
+        }
+      );
+      return unsubscribe;
+    } catch (error) {
+      console.warn('Firestore subscribeToFormsSheetsIntegrations error:', error);
+      return () => {};
+    }
   }
 }
 

@@ -434,6 +434,302 @@
         }
       },
       "required": ["id", "type", "title", "subtitle"]
+    },
+    "TallerRegistro": {
+      "title": "TallerRegistro",
+      "description": "Acuerdo de participación y registro general en talleres ontológicos con validación de confidencialidad, ética e IA",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "timestamp": {
+          "type": "string",
+          "maxLength": 60
+        },
+        "email": {
+          "type": "string",
+          "maxLength": 120
+        },
+        "participantName": {
+          "type": "string",
+          "maxLength": 120
+        },
+        "phone": {
+          "type": "string",
+          "maxLength": 40
+        },
+        "confidentialityAccepted": {
+          "type": "boolean"
+        },
+        "aiConsentAccepted": {
+          "type": "boolean"
+        },
+        "conductAgreed": {
+          "type": "boolean"
+        },
+        "matchedWorkshopId": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "matchedWorkshopTitle": {
+          "type": "string",
+          "maxLength": 200
+        },
+        "matchedDate": {
+          "type": "string",
+          "maxLength": 50
+        },
+        "updatedAt": {
+          "type": "string",
+          "maxLength": 50
+        }
+      },
+      "required": ["id", "email", "participantName"]
+    },
+    "SesionIndividualAcuerdo": {
+      "title": "SesionIndividualAcuerdo",
+      "description": "Acuerdo co-creativo de trabajo para sesiones individuales de coaching ontológico",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "timestamp": {
+          "type": "string",
+          "maxLength": 60
+        },
+        "email": {
+          "type": "string",
+          "maxLength": 120
+        },
+        "fullName": {
+          "type": "string",
+          "maxLength": 120
+        },
+        "phone": {
+          "type": "string",
+          "maxLength": 40
+        },
+        "coachingScopeAccepted": {
+          "type": "boolean"
+        },
+        "commitmentAccepted": {
+          "type": "boolean"
+        },
+        "aiScopeClarificationAccepted": {
+          "type": "boolean"
+        },
+        "confidentialityAccepted": {
+          "type": "boolean"
+        },
+        "digitalSignatureAndIdNumber": {
+          "type": "string",
+          "maxLength": 200
+        },
+        "mergedDocId": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "mergedDocUrl": {
+          "type": "string",
+          "maxLength": 500
+        },
+        "documentMergeStatus": {
+          "type": "string",
+          "maxLength": 100
+        },
+        "updatedAt": {
+          "type": "string",
+          "maxLength": 50
+        }
+      },
+      "required": ["id", "email", "fullName"]
+    },
+    "BitacoraSesionB2B": {
+      "title": "BitacoraSesionB2B",
+      "description": "Bitácora reflexiva post-sesión de coaching ontológico directivo B2B",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "timestamp": {
+          "type": "string",
+          "maxLength": 60
+        },
+        "email": {
+          "type": "string",
+          "maxLength": 120
+        },
+        "fullName": {
+          "type": "string",
+          "maxLength": 120
+        },
+        "sessionFocusOrDilemma": {
+          "type": "string",
+          "maxLength": 2000
+        },
+        "primaryEmotion": {
+          "type": "string",
+          "maxLength": 500
+        },
+        "limitingBeliefsAndJudgments": {
+          "type": "string",
+          "maxLength": 2000
+        },
+        "realizationOrPerspective": {
+          "type": "string",
+          "maxLength": 2000
+        },
+        "balanceAreaNeeded": {
+          "type": "string",
+          "maxLength": 1000
+        },
+        "valuableLearning": {
+          "type": "string",
+          "maxLength": 2000
+        },
+        "concreteActionCommitment": {
+          "type": "string",
+          "maxLength": 2000
+        },
+        "digitalValidationSignatureAndId": {
+          "type": "string",
+          "maxLength": 200
+        },
+        "updatedAt": {
+          "type": "string",
+          "maxLength": 50
+        }
+      },
+      "required": ["id", "email", "fullName"]
+    },
+    "BitacoraTaller": {
+      "title": "BitacoraTaller",
+      "description": "Bitácora y reflexiones ontológicas post-taller grupal",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "timestamp": {
+          "type": "string",
+          "maxLength": 60
+        },
+        "email": {
+          "type": "string",
+          "maxLength": 120
+        },
+        "fullName": {
+          "type": "string",
+          "maxLength": 120
+        },
+        "workshopLevel": {
+          "type": "string",
+          "maxLength": 100
+        },
+        "personalChallenge": {
+          "type": "string",
+          "maxLength": 2000
+        },
+        "predominantEmotion": {
+          "type": "string",
+          "maxLength": 500
+        },
+        "limitingTruths": {
+          "type": "string",
+          "maxLength": 2000
+        },
+        "newDiscovery": {
+          "type": "string",
+          "maxLength": 2000
+        },
+        "lifeBalanceMessage": {
+          "type": "string",
+          "maxLength": 1000
+        },
+        "mostValuableLearning": {
+          "type": "string",
+          "maxLength": 2000
+        },
+        "concreteCommitmentAction": {
+          "type": "string",
+          "maxLength": 2000
+        },
+        "digitalValidationSignatureAndId": {
+          "type": "string",
+          "maxLength": 200
+        },
+        "updatedAt": {
+          "type": "string",
+          "maxLength": 50
+        }
+      },
+      "required": ["id", "email", "fullName"]
+    },
+    "FormsSheetsIntegration": {
+      "title": "FormsSheetsIntegration",
+      "description": "Configuración y estado de pares de integración Google Forms y Google Sheets",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "title": {
+          "type": "string",
+          "maxLength": 150
+        },
+        "sheetId": {
+          "type": "string",
+          "maxLength": 200
+        },
+        "sheetTabName": {
+          "type": "string",
+          "maxLength": 100
+        },
+        "formUrl": {
+          "type": "string",
+          "maxLength": 500
+        },
+        "sheetUrl": {
+          "type": "string",
+          "maxLength": 500
+        },
+        "sheetEmbedUrl": {
+          "type": "string",
+          "maxLength": 500
+        },
+        "status": {
+          "type": "string",
+          "enum": ["connected", "pending", "syncing", "error"]
+        },
+        "lastSyncedAt": {
+          "type": "string",
+          "maxLength": 60
+        },
+        "recordsCount": {
+          "type": "number"
+        },
+        "notes": {
+          "type": "string",
+          "maxLength": 1000
+        },
+        "webhookUrl": {
+          "type": "string",
+          "maxLength": 500
+        },
+        "updatedAt": {
+          "type": "string",
+          "maxLength": 50
+        }
+      },
+      "required": ["id", "title", "formUrl", "sheetUrl", "status"]
     }
   },
   "firestore": {
@@ -472,6 +768,26 @@
     "/payments/{paymentId}": {
       "schema": "PaymentValidation",
       "description": "Comprobantes y verificaciones de pago Bre-B Nu"
+    },
+    "/tallerRegistros/{tallerRegistroId}": {
+      "schema": "TallerRegistro",
+      "description": "Acuerdos y registros de participantes de talleres en Google Forms/Sheets"
+    },
+    "/sesionIndividualAcuerdos/{acuerdoId}": {
+      "schema": "SesionIndividualAcuerdo",
+      "description": "Acuerdos co-creativos individuales diligenciados en Google Sheets"
+    },
+    "/bitacorasSesionesB2B/{b2bId}": {
+      "schema": "BitacoraSesionB2B",
+      "description": "Bitácoras reflexivas de sesiones directivas B2B"
+    },
+    "/bitacorasTalleres/{tallerId}": {
+      "schema": "BitacoraTaller",
+      "description": "Bitácoras y descubrimientos post-talleres ontológicos"
+    },
+    "/formsSheetsIntegrations/{integrationId}": {
+      "schema": "FormsSheetsIntegration",
+      "description": "Configuración viva de enlaces y sincronización de Google Forms & Sheets"
     }
   }
 }

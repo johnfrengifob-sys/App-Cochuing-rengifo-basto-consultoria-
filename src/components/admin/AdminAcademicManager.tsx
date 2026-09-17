@@ -15,6 +15,7 @@ import {
 } from '../../types';
 import { ProgramsAndEventsManager } from '../ProgramsAndEventsManager';
 import { AdminSessionsManager } from './AdminSessionsManager';
+import { AdminFormsSheetsIntegrationPanel } from './AdminFormsSheetsIntegrationPanel';
 
 function SubPanelFallback({ title = 'Cargando Sub-Panel...' }: { title?: string }) {
   return (
@@ -60,8 +61,10 @@ export const AdminAcademicManager: React.FC<AdminAcademicManagerProps> = ({
   onRefreshRegistrations: propOnRefreshRegistrations,
   onOpenRegistrationPortal,
 }) => {
-  const [currentTab, setCurrentTab] = useState<'events' | 'sessions'>(() => {
-    return initialSubTab === 'sessions' ? 'sessions' : 'events';
+  const [currentTab, setCurrentTab] = useState<'events' | 'sessions' | 'forms_sheets'>(() => {
+    if (initialSubTab === 'sessions') return 'sessions';
+    if (initialSubTab === 'forms_sheets' || initialSubTab === 'integrations' || initialSubTab === 'sheets') return 'forms_sheets';
+    return 'events';
   });
 
   const [version, setVersion] = useState(0);
@@ -69,6 +72,8 @@ export const AdminAcademicManager: React.FC<AdminAcademicManagerProps> = ({
   useEffect(() => {
     if (initialSubTab === 'sessions') {
       setCurrentTab('sessions');
+    } else if (initialSubTab === 'forms_sheets' || initialSubTab === 'integrations' || initialSubTab === 'sheets') {
+      setCurrentTab('forms_sheets');
     } else {
       setCurrentTab('events');
     }
@@ -151,13 +156,13 @@ export const AdminAcademicManager: React.FC<AdminAcademicManagerProps> = ({
         </div>
       </div>
 
-      {/* NAVEGACIÓN UNIFICADA: EXACTAMENTE DOS BOTONES PRINCIPALES */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-1.5 rounded-2xl bg-neutral-100 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800">
+      {/* NAVEGACIÓN UNIFICADA: TRES MÓDULOS DE GESTIÓN */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 p-1.5 rounded-2xl bg-neutral-100 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800">
         {/* BOTÓN 1: EVENTOS Y TALLERES */}
         <button
           type="button"
           onClick={() => setCurrentTab('events')}
-          className={`flex items-center justify-center gap-3 px-6 py-3.5 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
+          className={`flex items-center justify-center gap-2.5 px-4 py-3 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
             currentTab === 'events'
               ? 'bg-black text-white dark:bg-white dark:text-black shadow-md'
               : 'text-neutral-600 dark:text-neutral-400 hover:text-black dark:hover:text-white hover:bg-white/60 dark:hover:bg-neutral-800/60'
@@ -174,16 +179,33 @@ export const AdminAcademicManager: React.FC<AdminAcademicManagerProps> = ({
         <button
           type="button"
           onClick={() => setCurrentTab('sessions')}
-          className={`flex items-center justify-center gap-3 px-6 py-3.5 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
+          className={`flex items-center justify-center gap-2.5 px-4 py-3 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
             currentTab === 'sessions'
               ? 'bg-black text-white dark:bg-white dark:text-black shadow-md'
               : 'text-neutral-600 dark:text-neutral-400 hover:text-black dark:hover:text-white hover:bg-white/60 dark:hover:bg-neutral-800/60'
           }`}
         >
           <BookOpen className="w-4 h-4 text-emerald-500" />
-          <span>Sesiones de Consultoría (12 Módulos)</span>
+          <span>Sesiones de Consultoría</span>
           <span className="text-[11px] px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 font-mono">
-            {programNodes.length} Módulos
+            {programNodes.length}
+          </span>
+        </button>
+
+        {/* BOTÓN 3: GOOGLE FORMS & SHEETS (4 FUENTES) */}
+        <button
+          type="button"
+          onClick={() => setCurrentTab('forms_sheets')}
+          className={`flex items-center justify-center gap-2.5 px-4 py-3 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
+            currentTab === 'forms_sheets'
+              ? 'bg-black text-white dark:bg-white dark:text-black shadow-md'
+              : 'text-neutral-600 dark:text-neutral-400 hover:text-black dark:hover:text-white hover:bg-white/60 dark:hover:bg-neutral-800/60'
+          }`}
+        >
+          <FileSpreadsheet className="w-4 h-4 text-emerald-500" />
+          <span>Google Forms & Sheets</span>
+          <span className="text-[11px] px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 font-mono">
+            4 Recursos
           </span>
         </button>
       </div>
@@ -204,6 +226,10 @@ export const AdminAcademicManager: React.FC<AdminAcademicManagerProps> = ({
 
         {currentTab === 'sessions' && (
           <AdminSessionsManager onRefreshParent={handleRefresh} />
+        )}
+
+        {currentTab === 'forms_sheets' && (
+          <AdminFormsSheetsIntegrationPanel />
         )}
       </div>
     </div>

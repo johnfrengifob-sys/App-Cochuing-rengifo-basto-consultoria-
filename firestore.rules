@@ -1,0 +1,143 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global Safety Net: default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && (
+        request.auth.token.email == 'rengifobastoco@gmail.com' ||
+        (request.auth.token.email_verified == true && request.auth.token.email == 'rengifobastoco@gmail.com') ||
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+      );
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    // Colección de Usuarios (Coaches y Coachees)
+    match /users/{userId} {
+      allow get: if isSignedIn() && (isOwner(userId) || isAdmin());
+      allow list: if isAdmin();
+      allow create, update: if isSignedIn() && (isOwner(userId) || isAdmin());
+      allow delete: if isAdmin();
+    }
+
+    // Colección de Prospectos CRM
+    match /prospects/{prospectId} {
+      allow get, list: if isAdmin();
+      allow create: if true; // Permite captura de prospectos desde formularios web y landings
+      allow update, delete: if isAdmin();
+    }
+
+    // Colección de Sesiones Individuales
+    match /sessions/{sessionId} {
+      allow get: if isSignedIn() && (resource.data.clientId == request.auth.uid || isAdmin());
+      allow list: if isSignedIn();
+      allow create, update, delete: if isSignedIn();
+    }
+
+    // Bitácoras Reflexivas y Somáticas de Coachees
+    match /formSubmissions/{submissionId} {
+      allow get, list: if isSignedIn() && (resource.data.clientId == request.auth.uid || isAdmin());
+      allow create: if isSignedIn();
+      allow update, delete: if isSignedIn() && (resource.data.clientId == request.auth.uid || isAdmin());
+    }
+
+    // Auditorías Post-Sesión de Coaching (Coach ICF)
+    match /postSessionForms/{formId} {
+      allow read, write: if isSignedIn();
+    }
+
+    // Inscripciones a Eventos y Talleres
+    match /eventRegistrations/{regId} {
+      allow get: if true;
+      allow list: if isSignedIn();
+      allow create: if true; // Registro público con ticket
+      allow update, delete: if isSignedIn();
+    }
+
+    // Cronograma Oficial de Eventos y Talleres Quincenales
+    match /cronogramaEvents/{eventId} {
+      allow read: if true; // Visibles en la landing y catálogo
+      allow write: if isSignedIn();
+    }
+
+    // Experiencias Ontológicas
+    match /experiences/{experienceId} {
+      allow read: if true;
+      allow write: if isSignedIn();
+    }
+
+    // Validaciones de Pago Bre-B Nu
+    match /payments/{paymentId} {
+      allow get, list: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update, delete: if isAdmin();
+    }
+
+    // 1. Talleres (Registro General & Acuerdos de Participantes)
+    match /tallerRegistros/{tallerRegistroId} {
+      allow read: if true; // Visible para participantes y panel administrativo
+      allow create: if true; // Permite ingesta desde Google Sheets/Forms y registro web
+      allow update, delete: if isSignedIn();
+    }
+
+    // 2. Sesiones Individuales (Acuerdo Co-creativo de Trabajo)
+    match /sesionIndividualAcuerdos/{acuerdoId} {
+      allow read: if isSignedIn();
+      allow create, update: if isSignedIn() || true; // Ingesta desde webhook/Sheets
+      allow delete: if isAdmin();
+    }
+
+    // 3. Bitácora de Sesiones B2B
+    match /bitacorasSesionesB2B/{b2bId} {
+      allow read: if isSignedIn();
+      allow create, update: if isSignedIn() || true;
+      allow delete: if isAdmin();
+    }
+
+    // 4. Bitácora de Talleres
+    match /bitacorasTalleres/{tallerId} {
+      allow read: if isSignedIn();
+      allow create, update: if isSignedIn() || true;
+      allow delete: if isAdmin();
+    }
+
+    // Configuración viva de Pares Google Forms & Sheets
+    match /formsSheetsIntegrations/{integrationId} {
+      allow read: if true;
+      allow write: if isSignedIn();
+    }
+
+    // Documentos Google Workspace vinculados
+    match /workspaceDocuments/{docId} {
+      allow read: if true;
+      allow write: if isSignedIn();
+    }
+
+    // Colección de Admins
+    match /admins/{adminId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+
+    // Documento de verificación de conexión
+    match /test/{docId} {
+      allow read, write: if true;
+    }
+  }
+}

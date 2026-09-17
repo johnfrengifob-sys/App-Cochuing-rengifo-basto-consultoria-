@@ -717,5 +717,153 @@ export interface OntologicalExperience {
   createdAt?: string;
 }
 
+// =========================================================================
+// GOOGLE FORMS & GOOGLE SHEETS INTEGRATION (4 RESOURCE PAIRS)
+// =========================================================================
+
+export type FormsSheetsIntegrationSourceKey =
+  | 'talleres_registro'
+  | 'sesiones_individuales'
+  | 'bitacora_sesiones_b2b'
+  | 'bitacora_talleres';
+
+export interface FormsSheetsIntegrationPair {
+  id: FormsSheetsIntegrationSourceKey;
+  title: string;
+  category: 'Talleres' | 'Sesiones Individuales' | 'Bitácora B2B' | 'Bitácora Talleres';
+  moduleTarget: 'workshops' | 'sessions' | 'crm';
+  formUrl: string;
+  sheetUrl: string;
+  sheetGid?: string;
+  sheetHeaders: string[];
+  status: 'connected' | 'pending' | 'syncing' | 'error';
+  lastSyncedAt?: string;
+  recordsCount: number;
+  notes: string;
+  webhookUrl?: string;
+  appsScriptSnippet?: string;
+}
+
+// 1. Talleres (Registro General)
+export interface TallerRegistroEntry {
+  id: string;
+  timestamp: string; // Marca temporal
+  email: string; // Dirección de correo electrónico
+  participantName: string; // Nombre del Participante
+  phone: string; // Teléfono / WhatsApp
+  confidentialityAccepted: boolean; // Me comprometo a respetar la confidencialidad compartida del grupo
+  aiConsentAccepted: boolean; // Comprendo y acepto el uso de herramientas tecnológicas y de IA como soporte administrativo y de registro del taller.
+  conductAgreed: boolean; // Autorizo el cumplimiento de los acuerdos de convivencia y los estándares éticos del espacio.
+  groupConfidentialityAccepted?: boolean;
+  aiAdministrativeSupportAccepted?: boolean;
+  ethicalStandardsAccepted?: boolean;
+  matchedWorkshopId?: string;
+  matchedWorkshopTitle?: string;
+  matchedEventId?: string;
+  matchedEventTitle?: string;
+  matchedDate?: string;
+  updatedAt?: string;
+  rawSource?: Record<string, any>;
+}
+
+// 2. Sesiones Individuales (Acuerdo Co-creativo)
+export interface SesionIndividualAcuerdoEntry {
+  id: string;
+  timestamp: string; // Marca temporal
+  email: string; // Dirección de correo electrónico
+  fullName: string; // Nombre completo y Apellidos
+  coacheeFullName?: string;
+  idDocumentNumber?: string;
+  phone: string; // Número de contacto / WhatsApp
+  coachingScopeAccepted: boolean; // Comprendo que el coaching no es terapia, mentoría, consultoría ni asesoría...
+  commitmentAccepted: boolean; // Reconozco que los resultados dependen de mi nivel de compromiso...
+  techSupportAuthorized: boolean; // Autorizo el uso de herramientas tecnológicas y sistemas automatizados de apoyo...
+  aiScopeClarificationAccepted: boolean; // Comprendo y acepto que ninguna decisión del proceso de coaching... es generada o sustituida por IA...
+  confidentialityAccepted: boolean; // Entiendo que la información compartida es estrictamente confidencial...
+  audioConsentAccepted?: boolean;
+  digitalSignatureAndIdNumber: string; // Para validar digitalmente este acuerdo, escribe tu Nombre Completo y Número de Documento de Identidad...
+  mergedDocId?: string; // Merged Doc ID - Acuerdo Co-creativo de Trabajo Sesiones
+  mergedDocUrl?: string; // Merged Doc URL - Acuerdo Co-creativo de Trabajo Sesiones
+  linkToMergedDoc?: string; // Link to merged Doc - Acuerdo Co-creativo de Trabajo Sesiones
+  documentMergeStatus?: string; // Document Merge Status - Acuerdo Co-creativo de Trabajo Sesiones
+  rawSource?: Record<string, any>;
+}
+
+// 3. Bitácora Sesiones B2B
+export interface BitacoraSesionB2BEntry {
+  id: string;
+  timestamp: string; // Marca temporal
+  email: string; // Dirección de correo electrónico
+  fullName: string; // Cuál es tu Nombre completo
+  city: string; // Ciudad
+  centralChallenge: string; // ¿Cuál es el desafío, situación o tema central que eliges trabajar en nuestra sesión de hoy?
+  primaryEmotion: string; // ¿Qué emoción principal estuvo presente al abordar este tema y qué mensaje sientes que te traía?
+  limitingBeliefsAndJudgments: string; // ¿Qué ideas, juicios o historias repetitivas sobre ti o sobre esta situación descubriste que te están limitando?
+  realizationOrPerspective: string; // ¿Qué "darse cuenta" (descubrimiento o nueva perspectiva) te llevas de ti mismo tras esta conversación?
+  realizationMoment?: string;
+  balanceAreaNeeded: string; // Si miras este proceso como un llamado a encontrar equilibrio, ¿qué parte de ti o de tu entorno necesita mayor atención hoy?
+  valuableLearning: string; // ¿Cuál es el aprendizaje más valioso que te regalas al finalizar este espacio?
+  concreteActionCommitment: string; // ¿Qué acción concreta, alineada con tus compromisos, te llevarás para realizar antes de nuestra próxima sesión?
+  digitalValidationSignatureAndId: string; // Para validar que podemos utilizar esta information para hacer un registro detallado...
+  rawSource?: Record<string, any>;
+}
+
+// 4. Bitácora Talleres
+export interface BitacoraTallerEntry {
+  id: string;
+  timestamp: string; // Marca temporal
+  workshopLevel: string; // Nivel Taller
+  fullName: string; // Tu Nombre
+  city: string; // Ciudad
+  email: string; // Dirección de correo electrónico
+  personalChallenge: string; // ¿Qué tema, situación o reto personal quieres poner sobre la mesa en este espacio?
+  predominantEmotion: string; // ¿Qué emoción predominante traes al espacio y qué te está diciendo?
+  primaryEmotion?: string;
+  limitingTruths: string; // ¿Qué ideas o "verdades" sobre ti o sobre esta situación te estás repitiendo con más fuerza?
+  newDiscovery: string; // ¿Qué nueva perspectiva o "descubrimiento" te llevas de ti mismo tras esta exploración?
+  lifeBalanceMessage: string; // Si esta situación fuera un mensaje sobre lo que necesitas equilibrar en tu vida, ¿cuál dirías que es?
+  valuableLearning: string; // ¿Cuál es el aprendizaje más valioso que te regalas de este espacio?
+  concreteChallengeAction: string; // ¿Qué acción concreta, sencilla pero retadora, te comprometes a realizar antes de nuestro próximo encuentro?
+  digitalValidationSignatureAndId: string; // Para validar digitalmente la lectura de esta information por nuestro equipo...
+  rawSource?: Record<string, any>;
+}
+
+export interface UnifiedSynthesis {
+  totalWorkshopsRegistered: number;
+  hasSignedIndividualAgreement: boolean;
+  agreementDocumentId?: string;
+  totalB2BLogs: number;
+  totalWorkshopLogs: number;
+  lastActivityAt?: string;
+  predominantEmotions: string[];
+  declaredBreakdowns: string[];
+  activeCommitments: string[];
+  primaryEmotions: string[];
+  declaredChallenges: string[];
+  committedActions: string[];
+}
+
+// Unified client record combining all 4 sources
+export interface UnifiedClientOntologicalCrossData {
+  clientEmail: string;
+  clientName: string;
+  phone?: string;
+  totalCrossRecords: number;
+  // Primary naming
+  tallerRegistrations: TallerRegistroEntry[];
+  sesionIndividualAcuerdos: SesionIndividualAcuerdoEntry[];
+  sesionIndividualAcuerdo?: SesionIndividualAcuerdoEntry;
+  bitacorasSesionesB2B: BitacoraSesionB2BEntry[];
+  bitacorasTalleres: BitacoraTallerEntry[];
+  summary: UnifiedSynthesis;
+  // Aliases for unified components
+  workshopRegistrations: TallerRegistroEntry[];
+  individualSessionAgreements: SesionIndividualAcuerdoEntry[];
+  b2bSessionLogs: BitacoraSesionB2BEntry[];
+  workshopLogs: BitacoraTallerEntry[];
+  synthesis: UnifiedSynthesis;
+}
+
+
 
 

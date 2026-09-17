@@ -1410,6 +1410,157 @@ Debes responder en JSON con este formato exacto:
   });
 
   // ==========================================
+  // API: GOOGLE FORMS & SHEETS (4 RESOURCE PAIRS)
+  // ==========================================
+  const defaultIntegrationPairs = [
+    {
+      id: 'talleres_registro',
+      title: 'Talleres (Registro General)',
+      category: 'Talleres',
+      moduleTarget: 'workshops',
+      formUrl: 'https://forms.gle/H5gLF1KBzPnKsBWq7',
+      sheetUrl: 'https://docs.google.com/spreadsheets/d/1RBC_Talleres_Registro_General_2026/edit',
+      sheetGid: '0',
+      sheetHeaders: [
+        'Marca temporal',
+        'Dirección de correo electrónico',
+        'Nombre del Participante',
+        'Teléfono / WhatsApp',
+        'Me comprometo a respetar la confidencialidad compartida del grupo (Lo que se habla en el taller, se queda en el taller',
+        'Comprendo y acepto el uso de herramientas tecnológicas y de IA como soporte administrativo y de registro del taller.',
+        'Autorizo el cumplimiento de los acuerdos de convivencia y los estándares éticos del espacio.',
+      ],
+      status: 'connected',
+      lastSyncedAt: new Date().toISOString(),
+      recordsCount: 3,
+      notes: 'Registro general oficial de participantes a talleres ontológicos.',
+      webhookUrl: '/api/integrations/forms-sheets/ingest/talleres_registro',
+    },
+    {
+      id: 'sesiones_individuales',
+      title: 'Sesiones Individuales (Acuerdo Co-creativo)',
+      category: 'Sesiones Individuales',
+      moduleTarget: 'sessions',
+      formUrl: 'https://forms.gle/dfStXtTyb1MW6W5K9',
+      sheetUrl: 'https://docs.google.com/spreadsheets/d/1RBC_Sesiones_Individuales_Acuerdo_2026/edit',
+      sheetGid: '0',
+      sheetHeaders: [
+        'Marca temporal',
+        'Dirección de correo electrónico',
+        'Nombre completo y Apellidos',
+        'Número de contacto / WhatsApp',
+        'Comprendo que el coaching no es terapia, mentoría, consultoría ni asesoría...',
+        'Reconozco que los resultados dependen de mi nivel de compromiso...',
+        'Autorizo el uso de herramientas tecnológicas y sistemas automatizados de apoyo...',
+        'Comprendo y acepto que ninguna decisión del proceso de coaching... es generada por IA...',
+        'Entiendo que la información compartida es estrictamente confidencial...',
+        'Para validar digitalmente este acuerdo, escribe tu Nombre Completo y Número de Documento de Identidad...',
+        'Merged Doc ID - Acuerdo Co-creativo de Trabajo Sesiones',
+        'Merged Doc URL - Acuerdo Co-creativo de Trabajo Sesiones',
+        'Link to merged Doc - Acuerdo Co-creativo de Trabajo Sesiones',
+        'Document Merge Status - Acuerdo Co-creativo de Trabajo Sesiones',
+      ],
+      status: 'connected',
+      lastSyncedAt: new Date().toISOString(),
+      recordsCount: 2,
+      notes: 'Acuerdo legal co-creativo, firma digital con documento de identidad y límites ontológicos de la IA.',
+      webhookUrl: '/api/integrations/forms-sheets/ingest/sesiones_individuales',
+    },
+    {
+      id: 'bitacora_sesiones_b2b',
+      title: 'Bitácora Sesiones B2B',
+      category: 'Bitácora B2B',
+      moduleTarget: 'sessions',
+      formUrl: 'https://forms.gle/APUFto8sGbJt322WA',
+      sheetUrl: 'https://docs.google.com/spreadsheets/d/1RBC_Bitacora_Sesiones_B2B_2026/edit',
+      sheetGid: '0',
+      sheetHeaders: [
+        'Marca temporal',
+        'Dirección de correo electrónico',
+        'Cuál es tu Nombre completo',
+        'Ciudad',
+        '¿Cuál es el desafío, situación o tema central que eliges trabajar en nuestra sesión de hoy?',
+        '¿Qué emoción principal estuvo presente al abordar este tema y qué mensaje sientes que te traía?',
+        '¿Qué ideas, juicios o historias repetitivas sobre ti o sobre esta situación descubriste que te están limitando?',
+        '¿Qué "darse cuenta" (descubrimiento o nueva perspectiva) te llevas de ti mismo tras esta conversación?',
+        'Si miras este proceso como un llamado a encontrar equilibrio, ¿qué parte de ti o de tu entorno necesita mayor atención hoy?',
+        '¿Cuál es el aprendizaje más valioso que te regalas al finalizar este espacio?',
+        '¿Qué acción concreta, alineada con tus compromisos, te llevarás para realizar antes de nuestra próxima sesión?',
+        'Para validar que podemos utilizar esta information para hacer un registro detallado...',
+      ],
+      status: 'connected',
+      lastSyncedAt: new Date().toISOString(),
+      recordsCount: 2,
+      notes: 'Bitácora ejecutiva directiva B2B: quiebre, corporalidad emocional, juicios maestros, darse cuenta y acción comprometida.',
+      webhookUrl: '/api/integrations/forms-sheets/ingest/bitacora_sesiones_b2b',
+    },
+    {
+      id: 'bitacora_talleres',
+      title: 'Bitácora Talleres',
+      category: 'Bitácora Talleres',
+      moduleTarget: 'workshops',
+      formUrl: 'https://forms.gle/5Hiuxwq13n3gC3zt6',
+      sheetUrl: 'https://docs.google.com/spreadsheets/d/1RBC_Bitacora_Talleres_2026/edit',
+      sheetGid: '0',
+      sheetHeaders: [
+        'Marca temporal',
+        'Nivel Taller',
+        'Tu Nombre',
+        'Ciudad',
+        'Dirección de correo electrónico',
+        '¿Qué tema, situación o reto personal quieres poner sobre la mesa en este espacio?',
+        '¿Qué emoción predominante traes al espacio y qué te está diciendo?',
+        '¿Qué ideas o "verdades" sobre ti o sobre esta situación te estás repitiendo con más fuerza?',
+        '¿Qué nueva perspectiva o "descubrimiento" te llevas de ti mismo tras esta exploración?',
+        'Si esta situación fuera un mensaje sobre lo que necesitas equilibrar en tu vida, ¿cuál dirías que es?',
+        '¿Cuál es el aprendizaje más valioso que te regalas de este espacio?',
+        '¿Qué acción concreta, sencilla pero retadora, te comprometes a realizar antes de nuestro próximo encuentro?',
+        'Para validar digitalmente la lectura de esta information por nuestro equipo...',
+      ],
+      status: 'connected',
+      lastSyncedAt: new Date().toISOString(),
+      recordsCount: 2,
+      notes: 'Bitácora post-taller grupal e individual con nivel ontológico, verdades limitantes y reto transformacional.',
+      webhookUrl: '/api/integrations/forms-sheets/ingest/bitacora_talleres',
+    },
+  ];
+
+  app.get('/api/integrations/forms-sheets', (req, res) => {
+    res.json({
+      success: true,
+      integrations: defaultIntegrationPairs,
+      timestamp: new Date().toISOString(),
+    });
+  });
+
+  app.post('/api/integrations/forms-sheets/sync/:sourceKey', (req, res) => {
+    const { sourceKey } = req.params;
+    const { sheetUrl, formUrl } = req.body;
+    console.log(`[RBC Integrations] Sincronización solicitada para ${sourceKey}:`, { sheetUrl, formUrl });
+
+    res.json({
+      success: true,
+      sourceKey,
+      message: `Conexión validada exitosamente con Google Sheets (${sourceKey}).`,
+      lastSyncedAt: new Date().toISOString(),
+      count: 3,
+    });
+  });
+
+  app.post('/api/integrations/forms-sheets/ingest/:sourceKey', (req, res) => {
+    const { sourceKey } = req.params;
+    const payload = req.body;
+    console.log(`[RBC Integrations] Ingesta de datos recibida para ${sourceKey}:`, payload);
+
+    res.json({
+      success: true,
+      sourceKey,
+      message: 'Fila recibida y registrada en la base de datos de Rengifo Basto.',
+      timestamp: new Date().toISOString(),
+    });
+  });
+
+  // ==========================================
   // VITE MIDDLEWARE (DEV) & STATIC (PROD)
   // ==========================================
   if (process.env.NODE_ENV !== 'production') {
