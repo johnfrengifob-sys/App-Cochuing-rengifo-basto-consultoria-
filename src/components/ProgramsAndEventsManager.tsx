@@ -43,13 +43,14 @@ import {
   Shield,
   Filter,
   CalendarCheck2,
+  FileSpreadsheet,
+  Zap,
 } from 'lucide-react';
 import { EventGeneralConfigSection } from './admin/events/EventGeneralConfigSection';
 import { EventContentSyllabusSection } from './admin/events/EventContentSyllabusSection';
 import { EventEvaluationWorkbookSection } from './admin/events/EventEvaluationWorkbookSection';
 import { EventIntegratedResourcesSection } from './admin/events/EventIntegratedResourcesSection';
 import { PromotionalEventBanner } from './PromotionalEventBanner';
-import { AdminSessionsManager } from './admin/AdminSessionsManager';
 import { PublicPortalMultiActionButton } from './admin/PublicPortalMultiActionButton';
 import {
   downloadWorkshopNotebookPdf,
@@ -100,8 +101,7 @@ export const ProgramsAndEventsManager: React.FC<ProgramsAndEventsManagerProps> =
   }, []);
 
   // Active navigation sub-tab
-  const [activeSubTab, setActiveSubTab] = useState<'events' | 'sessions' | 'editor' | 'workbooks' | 'participants'>(() => {
-    if (initialSubTab === 'sessions') return 'sessions';
+  const [activeSubTab, setActiveSubTab] = useState<'events' | 'editor' | 'workbooks' | 'participants'>(() => {
     if (initialSubTab === 'participants') return 'participants';
     if (initialSubTab === 'editor') return 'editor';
     if (initialSubTab === 'workbooks') return 'workbooks';
@@ -109,8 +109,7 @@ export const ProgramsAndEventsManager: React.FC<ProgramsAndEventsManagerProps> =
   });
 
   useEffect(() => {
-    if (initialSubTab === 'sessions') setActiveSubTab('sessions');
-    else if (initialSubTab === 'participants') setActiveSubTab('participants');
+    if (initialSubTab === 'participants') setActiveSubTab('participants');
     else if (initialSubTab === 'editor') setActiveSubTab('editor');
     else if (initialSubTab === 'workbooks') setActiveSubTab('workbooks');
     else if (initialSubTab === 'events') setActiveSubTab('events');
@@ -299,6 +298,19 @@ export const ProgramsAndEventsManager: React.FC<ProgramsAndEventsManagerProps> =
         },
       ],
       workbookSubmissions: [],
+      googleFormsUrl: 'https://docs.google.com/forms/d/e/1FAIpQLSc-rbc-evaluacion-post-taller/viewform',
+      googleSheetsUrl: 'https://docs.google.com/spreadsheets/d/1rbc-master-database-coachees/edit#gid=0',
+      googleDriveFolderUrl: 'https://drive.google.com/drive/folders/rbc-taller-materiales',
+      triggersEnabled: true,
+      customTriggers: {
+        welcomeImmediate: true,
+        welcomeMessage: '¡Hola! Tu cupo para el Taller Ontológico ha sido confirmado exitosamente. Tu pase de acceso, enlace de Google Meet y cuaderno preparatorio en PDF han sido activados.',
+        reminder24h: true,
+        reminderMessage: 'Recordatorio: Nos encontraremos mañana a las 7:00 PM en Google Meet para nuestro taller ontológico.',
+        postSurveyDispatched: true,
+        postSurveyMessage: 'Apreciado participante, gracias por asistir. Te invitamos a diligenciar la evaluación para compilar tu cuaderno descargable de memorias en PDF.',
+        customWebhookUrl: '',
+      },
     });
     setActiveSubTab('editor');
   };
@@ -314,6 +326,19 @@ export const ProgramsAndEventsManager: React.FC<ProgramsAndEventsManagerProps> =
       capacity: evt.capacity || evt.totalSpots || 25,
       priceAmount: evt.priceAmount !== undefined ? evt.priceAmount : 180000,
       launchDate: evt.launchDate || (evt.date ? evt.date.split('T')[0] : ''),
+      googleFormsUrl: evt.googleFormsUrl || 'https://docs.google.com/forms/d/e/1FAIpQLSc-rbc-evaluacion-post-taller/viewform',
+      googleSheetsUrl: evt.googleSheetsUrl || 'https://docs.google.com/spreadsheets/d/1rbc-master-database-coachees/edit#gid=0',
+      googleDriveFolderUrl: evt.googleDriveFolderUrl || 'https://drive.google.com/drive/folders/rbc-taller-materiales',
+      triggersEnabled: evt.triggersEnabled !== false,
+      customTriggers: evt.customTriggers || {
+        welcomeImmediate: true,
+        welcomeMessage: '¡Hola! Tu cupo para el Taller Ontológico ha sido confirmado exitosamente. Tu pase de acceso, enlace de Google Meet y cuaderno preparatorio en PDF han sido activados.',
+        reminder24h: true,
+        reminderMessage: 'Recordatorio: Nos encontraremos mañana a las 7:00 PM en Google Meet para nuestro taller ontológico.',
+        postSurveyDispatched: true,
+        postSurveyMessage: 'Apreciado participante, gracias por asistir. Te invitamos a diligenciar la evaluación para compilar tu cuaderno descargable de memorias en PDF.',
+        customWebhookUrl: '',
+      },
     });
     setActiveSubTab('editor');
   };
@@ -397,205 +422,16 @@ export const ProgramsAndEventsManager: React.FC<ProgramsAndEventsManagerProps> =
 
   return (
     <div className="space-y-6">
-      {/* 1. HEADER EJECUTIVO & MÉTRICAS PRINCIPALES */}
-      <div className="bg-white dark:bg-neutral-900 rounded-3xl border border-gray-200 dark:border-neutral-800 p-5 sm:p-7 shadow-xs">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5">
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] font-mono font-bold uppercase tracking-widest px-2.5 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-400">
-                Módulo Oficial RBC
-              </span>
-              <span className="text-xs text-gray-400">•</span>
-              <span className="text-xs text-gray-500 dark:text-neutral-400">
-                Gestión de Talleres, Temarios y Cuadernos
-              </span>
-            </div>
-            <h1 className="text-xl sm:text-2xl font-black text-black dark:text-white mt-1">
-              Eventos y Sesiones
-            </h1>
-            <p className="text-xs sm:text-sm text-gray-500 dark:text-neutral-400 font-light max-w-2xl mt-0.5">
-              Administra los talleres ontológicos, define sus temarios pedagógicos, preguntas guía y compila automáticamente las evaluaciones en cuadernos descargables en formato PDF.
-            </p>
-          </div>
-
-          {/* Botones de acción directos */}
-          <div className="flex flex-wrap items-center gap-2.5 shrink-0">
-            {onOpenRegistrationPortal && (
-              <PublicPortalMultiActionButton
-                onOpenPortal={onOpenRegistrationPortal}
-                eventTitle={safeEvents[0]?.title}
-              />
-            )}
-
-            <button
-              type="button"
-              onClick={handleOpenCreateEvent}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-black dark:bg-white text-white dark:text-black hover:bg-neutral-800 dark:hover:bg-neutral-200 text-xs font-bold shadow-sm hover:shadow cursor-pointer transition-all"
-            >
-              <Plus className="w-4 h-4" />
-              <span>+ Nuevo Evento o Taller</span>
-            </button>
-          </div>
-        </div>
-
-        {/* BARRAS DE MÉTRICAS RÁPIDAS */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mt-6 pt-5 border-t border-gray-100 dark:border-neutral-800">
-          <div className="p-3.5 rounded-2xl bg-gray-50/70 dark:bg-neutral-800/40 border border-gray-100 dark:border-neutral-800/80">
-            <span className="text-[10px] font-semibold text-gray-500 uppercase tracking-wider block">
-              Total Talleres
-            </span>
-            <div className="flex items-baseline gap-2 mt-0.5">
-              <span className="text-lg font-black text-black dark:text-white">
-                {totalEventsCount}
-              </span>
-              <span className="text-[11px] text-gray-400 font-light">creados</span>
-            </div>
-          </div>
-
-          <div className="p-3.5 rounded-2xl bg-emerald-50/40 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-900/40">
-            <span className="text-[10px] font-semibold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider block">
-              Portada Principal
-            </span>
-            <div className="flex items-baseline gap-2 mt-0.5">
-              <span className="text-lg font-black text-emerald-700 dark:text-emerald-300">
-                {homeFeaturedCount}
-              </span>
-              <span className="text-[11px] text-emerald-600/70 dark:text-emerald-400 font-light">
-                en Home
-              </span>
-            </div>
-          </div>
-
-          <div className="p-3.5 rounded-2xl bg-gray-50/70 dark:bg-neutral-800/40 border border-gray-100 dark:border-neutral-800/80">
-            <span className="text-[10px] font-semibold text-gray-500 uppercase tracking-wider block">
-              Solo Internos
-            </span>
-            <div className="flex items-baseline gap-2 mt-0.5">
-              <span className="text-lg font-black text-neutral-700 dark:text-neutral-300">
-                {internalCount}
-              </span>
-              <span className="text-[11px] text-gray-400 font-light">privados</span>
-            </div>
-          </div>
-
-          <div className="p-3.5 rounded-2xl bg-neutral-50 dark:bg-neutral-800/60 border border-neutral-200/80 dark:border-neutral-800">
-            <span className="text-[10px] font-semibold text-neutral-600 dark:text-neutral-400 uppercase tracking-wider block">
-              Cuadernos PDF
-            </span>
-            <div className="flex items-baseline gap-2 mt-0.5">
-              <span className="text-lg font-black text-black dark:text-white">
-                {totalSubmissionsCount}
-              </span>
-              <span className="text-[11px] text-neutral-500 font-light">
-                generados
-              </span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* 2. BARRA DE NAVEGACIÓN ENTRE SUB-PESTAÑAS */}
-      <div className="flex items-center justify-between gap-3 overflow-x-auto pb-1 scrollbar-none">
-        <div className="flex items-center gap-1.5 p-1 bg-gray-100 dark:bg-neutral-900 rounded-2xl border border-gray-200 dark:border-neutral-800 shrink-0">
-          {/* Pestaña Catálogo de Eventos */}
-          <button
-            type="button"
-            onClick={() => setActiveSubTab('events')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
-              activeSubTab === 'events'
-                ? 'bg-white dark:bg-neutral-800 text-black dark:text-white shadow-xs'
-                : 'text-gray-600 dark:text-neutral-400 hover:text-black dark:hover:text-white'
-            }`}
-          >
-            <Calendar className="w-3.5 h-3.5 text-neutral-700 dark:text-neutral-300" />
-            <span>Eventos y Talleres</span>
-            <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-gray-200 dark:bg-neutral-700 font-mono">
-              {safeEvents.length}
-            </span>
-          </button>
-
-          {/* Pestaña Sesiones de Consultoría (Módulos & Contenido) */}
-          <button
-            type="button"
-            onClick={() => setActiveSubTab('sessions')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
-              activeSubTab === 'sessions'
-                ? 'bg-white dark:bg-neutral-800 text-black dark:text-white shadow-xs'
-                : 'text-gray-600 dark:text-neutral-400 hover:text-black dark:hover:text-white'
-            }`}
-          >
-            <BookOpen className="w-3.5 h-3.5 text-neutral-700 dark:text-neutral-300" />
-            <span>Sesiones de Consultoría</span>
-            <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-neutral-200 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-300 font-mono">
-              {programNodes.length} Módulos
-            </span>
-          </button>
-
-          {/* Pestaña Cuadernos Descargables */}
-          <button
-            type="button"
-            onClick={() => setActiveSubTab('workbooks')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
-              activeSubTab === 'workbooks'
-                ? 'bg-white dark:bg-neutral-800 text-black dark:text-white shadow-xs'
-                : 'text-gray-600 dark:text-neutral-400 hover:text-black dark:hover:text-white'
-            }`}
-          >
-            <Award className="w-3.5 h-3.5 text-neutral-700 dark:text-neutral-300" />
-            <span>Cuadernos y Memorias</span>
-            <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-neutral-200 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-300 font-mono">
-              PDF
-            </span>
-          </button>
-
-          {/* Pestaña Asistentes */}
-          <button
-            type="button"
-            onClick={() => setActiveSubTab('participants')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
-              activeSubTab === 'participants'
-                ? 'bg-white dark:bg-neutral-800 text-black dark:text-white shadow-xs'
-                : 'text-gray-600 dark:text-neutral-400 hover:text-black dark:hover:text-white'
-            }`}
-          >
-            <Users className="w-3.5 h-3.5 text-neutral-700 dark:text-neutral-300" />
-            <span>Asistentes & Sala Meet</span>
-            <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-gray-200 dark:bg-neutral-700 font-mono">
-              {safeRegistrations.length}
-            </span>
-          </button>
-        </div>
-
-        {/* Botón rápido para abrir editor nuevo */}
-        {activeSubTab !== 'editor' && (
-          <button
-            type="button"
-            onClick={handleOpenCreateEvent}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-black dark:bg-white text-white dark:text-black hover:bg-neutral-800 dark:hover:bg-neutral-200 text-xs font-semibold cursor-pointer shrink-0 transition-all shadow-xs"
-          >
-            <Plus className="w-3.5 h-3.5" />
-            <span>Crear Taller</span>
-          </button>
-        )}
-      </div>
-
-      {/* ========================================================================= */}
-      {/* VISTA: GESTIÓN DIRECTA DE SESIONES DE CONSULTORÍA (1 A 1)                 */}
-      {/* ========================================================================= */}
-      {activeSubTab === 'sessions' && (
-        <AdminSessionsManager onRefreshParent={onRefreshEvents} />
-      )}
-
       {/* ========================================================================= */}
       {/* VISTA 1: CATÁLOGO DE EVENTOS Y TALLERES                                    */}
       {/* ========================================================================= */}
       {activeSubTab === 'events' && (
-        <div className="space-y-4">
-          {/* Afiche Promocional del Próximo Taller con Contador Numérico sobre la Imagen */}
+        <div className="space-y-5">
+          {/* AFICHE PROMOCIONAL DEL PRÓXIMO TALLER - AL INICIO DIRECTO TRAS LOS BOTONES PRINCIPALES */}
           <PromotionalEventBanner variant="participant" />
 
-          {/* Barra de Búsqueda y Filtros */}
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-white dark:bg-neutral-900 p-3.5 rounded-2xl border border-gray-200 dark:border-neutral-800">
+          {/* Barra de Búsqueda, Filtros y Botón Crear Taller / Evento */}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-white dark:bg-neutral-900 p-3.5 rounded-2xl border border-gray-200 dark:border-neutral-800 shadow-xs">
             <div className="relative flex-1">
               <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
               <input
@@ -622,10 +458,10 @@ export const ProgramsAndEventsManager: React.FC<ProgramsAndEventsManagerProps> =
               <button
                 type="button"
                 onClick={handleOpenCreateEvent}
-                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold cursor-pointer shadow-xs"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-black dark:bg-white text-white dark:text-black hover:bg-neutral-800 dark:hover:bg-neutral-200 text-xs font-bold cursor-pointer shadow-xs transition-all"
               >
-                <Plus className="w-3.5 h-3.5" />
-                <span>Nuevo</span>
+                <Plus className="w-4 h-4" />
+                <span>+ Crear Taller / Evento</span>
               </button>
             </div>
           </div>
@@ -743,6 +579,45 @@ export const ProgramsAndEventsManager: React.FC<ProgramsAndEventsManagerProps> =
                             </a>
                           </div>
                         )}
+
+                        {/* Integraciones Activas: Google Sheets, Forms, Triggers */}
+                        <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                          {evt.googleSheetsUrl ? (
+                            <a
+                              href={evt.googleSheetsUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                              title="Base de Datos y Seguimiento 1 a 1 en Google Sheets"
+                              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 text-[10px] font-semibold hover:bg-emerald-100 transition-colors"
+                            >
+                              <FileSpreadsheet className="w-3 h-3 text-emerald-600" />
+                              <span>Google Sheets 1 a 1</span>
+                            </a>
+                          ) : null}
+
+                          {evt.googleFormsUrl ? (
+                            <a
+                              href={evt.googleFormsUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                              title="Formulario Google Forms"
+                              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800 text-[10px] font-semibold hover:bg-purple-100 transition-colors"
+                            >
+                              <FileText className="w-3 h-3 text-purple-600" />
+                              <span>Formulario</span>
+                            </a>
+                          ) : null}
+
+                          {evt.triggersEnabled !== false ? (
+                            <span
+                              title="Activadores de seguimiento 1 a 1 habilitados"
+                              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800 text-[10px] font-semibold"
+                            >
+                              <Zap className="w-3 h-3 text-amber-500" />
+                              <span>Activadores ON</span>
+                            </span>
+                          ) : null}
+                        </div>
                       </div>
                     </div>
 
@@ -939,10 +814,10 @@ export const ProgramsAndEventsManager: React.FC<ProgramsAndEventsManagerProps> =
                   <span className="w-5 h-5 rounded-full bg-indigo-600 text-white flex items-center justify-center text-[10px] font-bold">
                     4
                   </span>
-                  <span className="text-xs font-bold">4. Formularios & Activadores</span>
+                  <span className="text-xs font-bold">4. Formularios, Google Sheets & Activadores</span>
                 </div>
                 <p className="text-[11px] text-gray-500 dark:text-neutral-400 font-light mt-1 truncate">
-                  Google Forms, Triggers, Drive y Lienzo
+                  Base de Datos 1 a 1, Triggers, Meet y Drive
                 </p>
               </button>
             </div>
@@ -1198,24 +1073,38 @@ export const ProgramsAndEventsManager: React.FC<ProgramsAndEventsManagerProps> =
 
           {/* Tabla de Asistentes Registrados */}
           <div className="bg-white dark:bg-neutral-900 rounded-3xl border border-gray-200 dark:border-neutral-800 overflow-hidden shadow-xs">
-            <div className="p-5 border-b border-gray-100 dark:border-neutral-800 flex items-center justify-between">
+            <div className="p-5 border-b border-gray-100 dark:border-neutral-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
                 <h3 className="text-sm font-bold text-black dark:text-white">
-                  Participantes Registrados en Talleres
+                  Participantes Registrados & Base de Datos 1 a 1
                 </h3>
                 <span className="text-xs text-gray-400">
-                  {safeRegistrations.length} registros totales
+                  {safeRegistrations.length} participantes para seguimiento individual
                 </span>
               </div>
 
-              <button
-                type="button"
-                onClick={() => setIsManualRegModalOpen(true)}
-                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold cursor-pointer shadow-xs"
-              >
-                <UserPlus className="w-3.5 h-3.5" />
-                <span>Inscribir Participante</span>
-              </button>
+              <div className="flex items-center gap-2">
+                {safeEvents.some((e) => e.googleSheetsUrl) && (
+                  <a
+                    href={safeEvents.find((e) => e.googleSheetsUrl)?.googleSheetsUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold cursor-pointer shadow-xs transition-colors"
+                  >
+                    <FileSpreadsheet className="w-3.5 h-3.5" />
+                    <span>Abrir Google Sheets</span>
+                  </a>
+                )}
+
+                <button
+                  type="button"
+                  onClick={() => setIsManualRegModalOpen(true)}
+                  className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold cursor-pointer shadow-xs"
+                >
+                  <UserPlus className="w-3.5 h-3.5" />
+                  <span>Inscribir Participante</span>
+                </button>
+              </div>
             </div>
 
             {safeRegistrations.length > 0 ? (
@@ -1225,7 +1114,7 @@ export const ProgramsAndEventsManager: React.FC<ProgramsAndEventsManagerProps> =
                     <tr>
                       <th className="px-5 py-3">Código</th>
                       <th className="px-5 py-3">Participante</th>
-                      <th className="px-5 py-3">Contacto</th>
+                      <th className="px-5 py-3">Contacto & Seguimiento 1 a 1</th>
                       <th className="px-5 py-3">Taller Asignado</th>
                       <th className="px-5 py-3 text-right">Asistencia</th>
                     </tr>
@@ -1245,7 +1134,22 @@ export const ProgramsAndEventsManager: React.FC<ProgramsAndEventsManagerProps> =
                           </td>
                           <td className="px-5 py-3 text-gray-500 dark:text-neutral-400">
                             <span>{reg.email}</span>
-                            {reg.phone && <span className="block text-[10px]">{reg.phone}</span>}
+                            {reg.phone && (
+                              <div className="flex items-center gap-2 mt-0.5">
+                                <span className="text-[10px]">{reg.phone}</span>
+                                <a
+                                  href={`https://wa.me/${reg.phone.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(
+                                    `Hola ${reg.name}, te saludamos de Rengifo Basto Consultoría para darte seguimiento a tu participación en el taller "${eventMatch?.title || 'Ontológico'}".`
+                                  )}`}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  title="Contactar 1 a 1 por WhatsApp"
+                                  className="text-[10px] text-emerald-600 dark:text-emerald-400 hover:underline font-bold"
+                                >
+                                  WhatsApp 1 a 1
+                                </a>
+                              </div>
+                            )}
                           </td>
                           <td className="px-5 py-3 font-medium text-black dark:text-white">
                             {eventMatch?.title || reg.eventId}

@@ -102,7 +102,6 @@ import {
   LayoutList,
   UserCircle2,
   HardDrive,
-  BookOpen,
   Banknote,
   Smartphone,
   GraduationCap,
@@ -468,9 +467,9 @@ export const CoachDashboard: React.FC<CoachDashboardProps> = ({
             </div>
           </div>
 
-          {/* Funciones de la Consola: 5 Botones Principales Unificados */}
+          {/* Funciones de la Consola: 4 Botones Principales Unificados */}
           <div className="w-full pt-1">
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-2.5 w-full max-w-7xl mx-auto">
+            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-2.5 w-full max-w-7xl mx-auto">
               {/* Función 1: Clientes (Pipeline & Directorio) */}
               <button
                 id="coach-nav-clients-btn"
@@ -550,46 +549,7 @@ export const CoachDashboard: React.FC<CoachDashboardProps> = ({
                 </div>
               </button>
 
-              {/* Función 3: Sesiones de Consultoría */}
-              <button
-                id="coach-nav-sessions-btn"
-                type="button"
-                onClick={() => {
-                  setActiveMainTab('sessions');
-                }}
-                className={`group px-3 py-2 sm:py-2.5 rounded-xl transition-all cursor-pointer text-left flex items-center gap-2.5 w-full ${
-                  activeMainTab === 'sessions'
-                    ? 'bg-black text-white dark:bg-white dark:text-black shadow-sm ring-1 ring-black/10 dark:ring-white/20'
-                    : 'glass-panel-opal hover:bg-white/90 dark:hover:bg-[#202026] text-neutral-800 dark:text-neutral-200 border border-white/60 dark:border-white/10 shadow-2xs hover:border-black/20 dark:hover:border-white/20'
-                }`}
-              >
-                <div className={`p-1.5 rounded-lg shrink-0 ${
-                  activeMainTab === 'sessions'
-                    ? 'bg-white/20 dark:bg-black/20 text-white dark:text-black'
-                    : 'bg-sky-50 dark:bg-sky-950/50 text-sky-600 dark:text-sky-400'
-                }`}>
-                  <BookOpen className="w-3.5 h-3.5" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between gap-1">
-                    <span className="text-xs font-semibold truncate leading-tight">Sesiones Consultoría</span>
-                    <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono font-bold shrink-0 ${
-                      activeMainTab === 'sessions'
-                        ? 'bg-white/20 dark:bg-black/20 text-white dark:text-black'
-                        : 'bg-sky-100 dark:bg-sky-900/60 text-sky-800 dark:text-sky-200'
-                    }`}>
-                      6 Módulos
-                    </span>
-                  </div>
-                  <span className={`text-[10px] block truncate font-light leading-tight mt-0.5 ${
-                    activeMainTab === 'sessions' ? 'text-white/80 dark:text-black/70' : 'text-gray-500 dark:text-neutral-400'
-                  }`}>
-                    Roadmap 1 a 1 & Triggers
-                  </span>
-                </div>
-              </button>
-
-              {/* Función 4: Validación Pagos */}
+              {/* Función 3: Validación Pagos */}
               <button
                 id="coach-nav-payments-btn"
                 type="button"

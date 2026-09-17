@@ -449,11 +449,21 @@ export interface CronogramaEvent {
   // Sección 3: Evaluación y Cuaderno Descargable
   postWorkshopQuestions?: PostWorkshopQuestion[];
   workbookSubmissions?: WorkshopWorkbookSubmission[];
-  // Integraciones secundarias unificadas: Formularios, Activadores, Cerebro/Recursos y Experiencias
+  // Integraciones unificadas: Formularios, Google Sheets (Base de Datos & Seguimiento 1 a 1), Activadores Personalizables y Recursos
   googleFormsUrl?: string;
+  googleSheetsUrl?: string;
   googleDriveFolderUrl?: string;
   triggersEnabled?: boolean;
   triggerNotificationTemplate?: string;
+  customTriggers?: {
+    welcomeImmediate?: boolean;
+    welcomeMessage?: string;
+    reminder24h?: boolean;
+    reminderMessage?: string;
+    postSurveyDispatched?: boolean;
+    postSurveyMessage?: string;
+    customWebhookUrl?: string;
+  };
   experienceToolEnabled?: boolean;
   experienceCanvasType?: string;
 }

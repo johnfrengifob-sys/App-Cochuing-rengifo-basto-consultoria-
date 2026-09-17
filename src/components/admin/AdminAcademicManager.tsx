@@ -1,13 +1,11 @@
 import React, { useState, useEffect, lazy, Suspense } from 'react';
 import {
-  ShieldCheck,
-  Workflow,
-  Zap,
-  Ticket,
-  Link2,
-  CalendarCheck2,
-  Layers,
+  Calendar,
   BookOpen,
+  CalendarCheck2,
+  FileSpreadsheet,
+  UserCheck,
+  Zap,
 } from 'lucide-react';
 import { OntologicalStore } from '../../services/store';
 import {
@@ -16,20 +14,11 @@ import {
   EventRegistration,
 } from '../../types';
 
-const AdminAutomationsManager = lazy(() =>
-  import('./AdminAutomationsManager').then((m) => ({ default: m.AdminAutomationsManager }))
-);
-const AutomatedTriggersManager = lazy(() =>
-  import('../AutomatedTriggersManager').then((m) => ({ default: m.AutomatedTriggersManager }))
-);
 const ProgramsAndEventsManager = lazy(() =>
   import('../ProgramsAndEventsManager').then((m) => ({ default: m.ProgramsAndEventsManager }))
 );
-const CerebroVinculacionManager = lazy(() =>
-  import('../CerebroVinculacionManager').then((m) => ({ default: m.CerebroVinculacionManager }))
-);
-const ExperienceEditorManager = lazy(() =>
-  import('./ExperienceEditorManager').then((m) => ({ default: m.ExperienceEditorManager }))
+const AdminSessionsManager = lazy(() =>
+  import('./AdminSessionsManager').then((m) => ({ default: m.AdminSessionsManager }))
 );
 
 function SubPanelFallback({ title = 'Cargando Sub-Panel...' }: { title?: string }) {
@@ -46,21 +35,14 @@ function SubPanelFallback({ title = 'Cargando Sub-Panel...' }: { title?: string 
 export type AcademicAdminSubTab =
   | 'events'
   | 'sessions'
-  | 'experiences'
+  | 'automations'
+  | 'triggers'
   | 'activadores'
   | 'cerebro'
-  | 'triggers'
-  | 'automations'
   | 'participants'
-  // Backward compatibility aliases
-  | 'curriculum'
-  | 'generator'
-  | 'emails'
-  | 'courses'
-  | 'temarios'
-  | 'steps'
-  | 'questionnaires'
-  | 'pricing';
+  | 'workbooks'
+  | 'editor'
+  | string;
 
 interface AdminAcademicManagerProps {
   initialSubTab?: AcademicAdminSubTab | string;
@@ -83,66 +65,24 @@ export const AdminAcademicManager: React.FC<AdminAcademicManagerProps> = ({
   onRefreshRegistrations: propOnRefreshRegistrations,
   onOpenRegistrationPortal,
 }) => {
-  const [currentTab, setCurrentTab] = useState<'events' | 'activadores' | 'cerebro' | 'espacios' | 'experiences'>(() => {
-    if (initialSubTab === 'cerebro') return 'cerebro';
-    if (initialSubTab === 'espacios') return 'espacios';
-    if (initialSubTab === 'experiences') return 'experiences';
-    if (
-      initialSubTab === 'automations' ||
-      initialSubTab === 'triggers' ||
-      initialSubTab === 'activadores'
-    ) {
-      return 'activadores';
-    }
-    return 'events';
-  });
-
-  const [activadoresMode, setActivadoresMode] = useState<'triggers' | 'automations'>(() => {
-    return initialSubTab === 'automations' ? 'automations' : 'triggers';
-  });
-
-  const [eventsInitialSubTab, setEventsInitialSubTab] = useState<'events' | 'sessions' | 'participants'>(() => {
-    if (initialSubTab === 'sessions') return 'sessions';
-    if (initialSubTab === 'participants') return 'participants';
-    return 'events';
+  const [currentTab, setCurrentTab] = useState<'events' | 'sessions'>(() => {
+    return initialSubTab === 'sessions' ? 'sessions' : 'events';
   });
 
   const [version, setVersion] = useState(0);
 
   useEffect(() => {
-    if (initialSubTab) {
-      if (initialSubTab === 'cerebro') {
-        setCurrentTab('cerebro');
-      } else if (initialSubTab === 'espacios') {
-        setCurrentTab('espacios');
-      } else if (initialSubTab === 'experiences') {
-        setCurrentTab('experiences');
-      } else if (initialSubTab === 'automations') {
-        setCurrentTab('activadores');
-        setActivadoresMode('automations');
-      } else if (initialSubTab === 'triggers' || initialSubTab === 'activadores') {
-        setCurrentTab('activadores');
-        setActivadoresMode('triggers');
-      } else if (initialSubTab === 'sessions') {
-        setCurrentTab('events');
-        setEventsInitialSubTab('sessions');
-      } else if (initialSubTab === 'participants') {
-        setCurrentTab('events');
-        setEventsInitialSubTab('participants');
-      } else {
-        setCurrentTab('events');
-        setEventsInitialSubTab('events');
-      }
+    if (initialSubTab === 'sessions') {
+      setCurrentTab('sessions');
+    } else {
+      setCurrentTab('events');
     }
   }, [initialSubTab]);
 
   const rawPrograms = propPrograms || OntologicalStore.getPrograms();
   const rawEvents = propEvents || OntologicalStore.getCronogramaEvents();
   const rawRegistrations = propRegistrations || OntologicalStore.getEventRegistrations();
-  const rawSessions = OntologicalStore.getSessions();
   const programNodes = OntologicalStore.getProgramNodes();
-  const automatedTriggers = OntologicalStore.getAutomatedTriggers();
-  const activeTriggersCount = automatedTriggers.filter((t) => t.enabled).length;
   const homeEventsCount = rawEvents.filter((e) => e.showOnHome !== false).length;
 
   const handleRefresh = () => {
@@ -154,159 +94,109 @@ export const AdminAcademicManager: React.FC<AdminAcademicManagerProps> = ({
 
   return (
     <div className="space-y-6">
-      {/* Top Banner Header */}
+      {/* Encabezado Principal Unificado */}
       <div className="p-6 rounded-3xl banner-executive text-white shadow-xl relative overflow-hidden">
         <div className="absolute right-0 top-0 w-96 h-96 bg-white/5 rounded-full blur-3xl pointer-events-none" />
         <div className="relative z-10 flex flex-col gap-5">
           <div className="space-y-2 max-w-3xl">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/20 text-neutral-300 text-xs font-semibold backdrop-blur-md">
-              <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-              <span>Eventos y Sesiones</span>
+              <CalendarCheck2 className="w-3.5 h-3.5 text-emerald-400" />
+              <span>Gestión Integral Ontológica</span>
             </div>
             <h2 className="text-xl md:text-2xl font-bold tracking-tight text-white flex items-center gap-2.5">
-              <span>Eventos y Sesiones</span>
+              <span>Eventos, Talleres y Sesiones de Consultoría</span>
             </h2>
             <p className="text-xs md:text-sm text-neutral-300 font-light leading-relaxed">
-              Consola integral para agendar conversatorios y talleres en vivo, gestionar asistentes RSVP, emitir cuadernos de trabajo en PDF y configurar activadores automáticos de integración.
+              Consola unificada para crear talleres y eventos en vivo, integrar activadores de seguimiento, vincular formularios y bases de datos en Google Sheets para el seguimiento 1 a 1 de participantes, y administrar los 12 módulos de sesiones de consultoría.
             </p>
           </div>
 
-          {/* Quick Metrics */}
-          <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5 pt-4 border-t border-white/10 w-full">
-            <div className="p-2.5 rounded-2xl bg-white/10 backdrop-blur-md border border-white/10 text-center">
-              <span className="text-[9px] text-rose-300 block font-medium uppercase tracking-wider">
-                Talleres
+          {/* Métricas Clave */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-4 border-t border-white/10 w-full">
+            <div className="p-3 rounded-2xl bg-white/10 backdrop-blur-md border border-white/10">
+              <span className="text-[10px] text-rose-300 block font-semibold uppercase tracking-wider">
+                Eventos y Talleres
               </span>
-              <span className="text-base font-bold font-mono text-white">{rawEvents.length}</span>
-              <span className="text-[9px] text-neutral-300 block">{homeEventsCount} en Home</span>
+              <div className="flex items-baseline gap-2 mt-1">
+                <span className="text-xl font-bold font-mono text-white">{rawEvents.length}</span>
+                <span className="text-[10px] text-neutral-300">({homeEventsCount} en Home)</span>
+              </div>
             </div>
 
-            <div className="p-2.5 rounded-2xl bg-white/10 backdrop-blur-md border border-white/10 text-center">
-              <span className="text-[9px] text-emerald-300 block font-medium uppercase tracking-wider">
-                Módulos de Sesión
+            <div className="p-3 rounded-2xl bg-white/10 backdrop-blur-md border border-white/10">
+              <span className="text-[10px] text-emerald-300 block font-semibold uppercase tracking-wider">
+                Sesiones Consultoría
               </span>
-              <span className="text-base font-bold font-mono text-white">{programNodes.length}</span>
-              <span className="text-[9px] text-emerald-200 block">Estructurados</span>
+              <div className="flex items-baseline gap-2 mt-1">
+                <span className="text-xl font-bold font-mono text-white">{programNodes.length}</span>
+                <span className="text-[10px] text-emerald-200">Módulos 1 a 1</span>
+              </div>
             </div>
 
-            <div className="p-2.5 rounded-2xl bg-white/10 backdrop-blur-md border border-white/10 text-center">
-              <span className="text-[9px] text-amber-300 block font-medium uppercase tracking-wider">
-                Asistentes
+            <div className="p-3 rounded-2xl bg-white/10 backdrop-blur-md border border-white/10">
+              <span className="text-[10px] text-amber-300 block font-semibold uppercase tracking-wider">
+                Participantes
               </span>
-              <span className="text-base font-bold font-mono text-white">{rawRegistrations.length}</span>
-              <span className="text-[9px] text-neutral-300 block">Pre-Registros</span>
+              <div className="flex items-baseline gap-2 mt-1">
+                <span className="text-xl font-bold font-mono text-white">{rawRegistrations.length}</span>
+                <span className="text-[10px] text-amber-200">En Base de Datos</span>
+              </div>
             </div>
 
-            <div className="p-2.5 rounded-2xl bg-white/10 backdrop-blur-md border border-white/10 text-center">
-              <span className="text-[9px] text-neutral-300 block font-medium uppercase tracking-wider">
-                Activadores
+            <div className="p-3 rounded-2xl bg-white/10 backdrop-blur-md border border-white/10">
+              <span className="text-[10px] text-cyan-300 block font-semibold uppercase tracking-wider">
+                Google Sheets & Triggers
               </span>
-              <span className="text-base font-bold font-mono text-white">
-                {activeTriggersCount} / {automatedTriggers.length}
-              </span>
-              <span className="text-[9px] text-neutral-300 block">Reglas Activas</span>
-            </div>
-
-            <div className="p-2.5 rounded-2xl bg-white/10 backdrop-blur-md border border-white/10 text-center col-span-2 sm:col-span-1">
-              <span className="text-[9px] text-neutral-300 block font-medium uppercase tracking-wider">
-                Automatizaciones
-              </span>
-              <span className="text-base font-bold font-mono text-white">4 Fases</span>
-              <span className="text-[9px] text-neutral-300 block">Make.com Webhooks</span>
+              <div className="flex items-baseline gap-2 mt-1">
+                <span className="text-sm font-bold text-white">Sincronizado</span>
+                <span className="text-[10px] text-neutral-300">1 a 1</span>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Navigation Sub-Tabs: 1. Eventos & Talleres, 2. Sesiones 1 a 1, 3. Activadores, 4. Cerebro */}
-      <div className="flex items-center gap-2 p-1.5 rounded-2xl bg-neutral-100/90 dark:bg-[#18181B] border border-neutral-200/80 dark:border-neutral-800 overflow-x-auto no-scrollbar">
-        {/* Tab 1: Eventos & Talleres */}
+      {/* NAVEGACIÓN UNIFICADA: EXACTAMENTE DOS BOTONES PRINCIPALES */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-1.5 rounded-2xl bg-neutral-100 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800">
+        {/* BOTÓN 1: EVENTOS Y TALLERES */}
         <button
           type="button"
-          onClick={() => {
-            setCurrentTab('events');
-            setEventsInitialSubTab('events');
-          }}
-          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-medium transition-all cursor-pointer shrink-0 ${
-            currentTab === 'events' && eventsInitialSubTab !== 'sessions'
-              ? 'bg-black text-white dark:bg-white dark:text-black shadow-xs font-semibold'
-              : 'text-neutral-600 dark:text-neutral-400 hover:text-black dark:hover:text-white hover:bg-white/70 dark:hover:bg-neutral-800/70'
+          onClick={() => setCurrentTab('events')}
+          className={`flex items-center justify-center gap-3 px-6 py-3.5 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
+            currentTab === 'events'
+              ? 'bg-black text-white dark:bg-white dark:text-black shadow-md'
+              : 'text-neutral-600 dark:text-neutral-400 hover:text-black dark:hover:text-white hover:bg-white/60 dark:hover:bg-neutral-800/60'
           }`}
         >
-          <Ticket className="w-3.5 h-3.5 text-rose-500" />
-          <span>Eventos y Talleres ({rawEvents.length})</span>
+          <Calendar className="w-4 h-4 text-rose-500" />
+          <span>Eventos y Talleres</span>
+          <span className="text-[11px] px-2 py-0.5 rounded-full bg-neutral-200 dark:bg-neutral-700 text-neutral-800 dark:text-neutral-200 font-mono">
+            {rawEvents.length}
+          </span>
         </button>
 
-        {/* Tab 2: Módulos de Sesiones de Consultoría */}
+        {/* BOTÓN 2: SESIONES DE CONSULTORÍA (12 MÓDULOS) */}
         <button
           type="button"
-          onClick={() => {
-            setCurrentTab('events');
-            setEventsInitialSubTab('sessions');
-          }}
-          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-medium transition-all cursor-pointer shrink-0 ${
-            currentTab === 'events' && eventsInitialSubTab === 'sessions'
-              ? 'bg-black text-white dark:bg-white dark:text-black shadow-xs font-semibold'
-              : 'text-neutral-600 dark:text-neutral-400 hover:text-black dark:hover:text-white hover:bg-white/70 dark:hover:bg-neutral-800/70'
+          onClick={() => setCurrentTab('sessions')}
+          className={`flex items-center justify-center gap-3 px-6 py-3.5 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
+            currentTab === 'sessions'
+              ? 'bg-black text-white dark:bg-white dark:text-black shadow-md'
+              : 'text-neutral-600 dark:text-neutral-400 hover:text-black dark:hover:text-white hover:bg-white/60 dark:hover:bg-neutral-800/60'
           }`}
         >
-          <BookOpen className="w-3.5 h-3.5 text-emerald-500" />
-          <span>Sesiones de Consultoría ({programNodes.length} Módulos)</span>
-        </button>
-
-        {/* Tab 3: Activadores */}
-        <button
-          type="button"
-          onClick={() => setCurrentTab('activadores')}
-          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-medium transition-all cursor-pointer shrink-0 ${
-            currentTab === 'activadores'
-              ? 'bg-black text-white dark:bg-white dark:text-black shadow-xs font-semibold'
-              : 'text-neutral-600 dark:text-neutral-400 hover:text-black dark:hover:text-white hover:bg-white/70 dark:hover:bg-neutral-800/70'
-          }`}
-        >
-          <Zap className="w-3.5 h-3.5 text-amber-500" />
-          <span>Activadores ({activeTriggersCount})</span>
-        </button>
-
-        {/* Tab 4: Cerebro & Vinculación */}
-        <button
-          type="button"
-          onClick={() => setCurrentTab('cerebro')}
-          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-medium transition-all cursor-pointer shrink-0 ${
-            currentTab === 'cerebro'
-              ? 'bg-black text-white dark:bg-white dark:text-black shadow-xs font-semibold'
-              : 'text-neutral-600 dark:text-neutral-400 hover:text-black dark:hover:text-white hover:bg-white/70 dark:hover:bg-neutral-800/70'
-          }`}
-        >
-          <Link2 className="w-3.5 h-3.5 text-neutral-700 dark:text-neutral-300" />
-          <span>Cerebro & Enlaces</span>
-        </button>
-
-        {/* Tab 5: Editor de Experiencias B&W */}
-        <button
-          type="button"
-          onClick={() => setCurrentTab('experiences')}
-          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-medium transition-all cursor-pointer shrink-0 ${
-            currentTab === 'experiences'
-              ? 'bg-black text-white dark:bg-white dark:text-black shadow-xs font-semibold'
-              : 'text-neutral-600 dark:text-neutral-400 hover:text-black dark:hover:text-white hover:bg-white/70 dark:hover:bg-neutral-800/70'
-          }`}
-        >
-          <Layers className="w-3.5 h-3.5 text-emerald-500" />
-          <span>Editor de Experiencias (Lienzo B&W)</span>
+          <BookOpen className="w-4 h-4 text-emerald-500" />
+          <span>Sesiones de Consultoría (12 Módulos)</span>
+          <span className="text-[11px] px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 font-mono">
+            {programNodes.length} Módulos
+          </span>
         </button>
       </div>
 
-      {/* Render Active Sub-Panel */}
+      {/* RENDERIZADO DEL PANEL ACTIVO */}
       <div key={version}>
-        {currentTab === 'experiences' && (
-          <Suspense fallback={<SubPanelFallback title="Cargando Constructor de Experiencias B&W..." />}>
-            <ExperienceEditorManager />
-          </Suspense>
-        )}
-
         {currentTab === 'events' && (
-          <Suspense fallback={<SubPanelFallback title="Cargando Programas y Eventos..." />}>
+          <Suspense fallback={<SubPanelFallback title="Cargando Eventos y Talleres..." />}>
             <ProgramsAndEventsManager
               cronogramaEvents={rawEvents}
               programs={rawPrograms}
@@ -315,71 +205,16 @@ export const AdminAcademicManager: React.FC<AdminAcademicManagerProps> = ({
               onRefreshPrograms={handleRefresh}
               onRefreshRegistrations={handleRefresh}
               onOpenRegistrationPortal={onOpenRegistrationPortal}
-              initialSubTab={eventsInitialSubTab}
             />
           </Suspense>
         )}
 
-        {currentTab === 'cerebro' && (
-          <Suspense fallback={<SubPanelFallback title="Cargando Cerebro de Vinculaciones & Enlaces..." />}>
-            <CerebroVinculacionManager />
+        {currentTab === 'sessions' && (
+          <Suspense fallback={<SubPanelFallback title="Cargando Sesiones de Consultoría (12 Módulos)..." />}>
+            <AdminSessionsManager onRefreshParent={handleRefresh} />
           </Suspense>
-        )}
-
-        {currentTab === 'activadores' && (
-          <div className="space-y-6">
-            {/* Header switcher between Triggers and Automations within Activadores */}
-            <div className="p-4 rounded-2xl bg-white dark:bg-[#18181B] border border-gray-200/80 dark:border-neutral-800 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <div>
-                <h3 className="text-sm font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                  <Zap className="w-4 h-4 text-amber-500" />
-                  <span>Activadores y Automatizaciones</span>
-                </h3>
-                <p className="text-xs text-gray-500 dark:text-neutral-400">
-                  Gestión centralizada de reglas automáticas de eventos, webhooks y flujos de integración Make.com
-                </p>
-              </div>
-
-              <div className="inline-flex p-1 rounded-xl bg-gray-100 dark:bg-neutral-900 border border-gray-200/70 dark:border-neutral-800 shrink-0 self-start sm:self-auto">
-                <button
-                  type="button"
-                  onClick={() => setActivadoresMode('triggers')}
-                  className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-                    activadoresMode === 'triggers'
-                      ? 'bg-white dark:bg-[#202024] text-gray-900 dark:text-white shadow-xs'
-                      : 'text-gray-500 dark:text-neutral-400 hover:text-gray-900 dark:hover:text-white'
-                  }`}
-                >
-                  <Zap className="w-3.5 h-3.5 text-amber-500" />
-                  <span>Disparadores de Eventos ({activeTriggersCount})</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setActivadoresMode('automations')}
-                  className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-                    activadoresMode === 'automations'
-                      ? 'bg-white dark:bg-[#202024] text-gray-900 dark:text-white shadow-xs'
-                      : 'text-gray-500 dark:text-neutral-400 hover:text-gray-900 dark:hover:text-white'
-                  }`}
-                >
-                  <Workflow className="w-3.5 h-3.5 text-indigo-500" />
-                  <span>Automatizaciones Make.com (Webhooks)</span>
-                </button>
-              </div>
-            </div>
-
-            <Suspense fallback={<SubPanelFallback title="Cargando Módulo de Automatización..." />}>
-              {activadoresMode === 'triggers' ? (
-                <AutomatedTriggersManager />
-              ) : (
-                <AdminAutomationsManager onRefresh={handleRefresh} />
-              )}
-            </Suspense>
-          </div>
         )}
       </div>
     </div>
   );
 };
-
