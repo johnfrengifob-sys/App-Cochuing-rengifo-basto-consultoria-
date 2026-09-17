@@ -103,6 +103,7 @@ import {
   Banknote,
   Smartphone,
   GraduationCap,
+  ArrowLeft,
 } from 'lucide-react';
 
 interface CoachDashboardProps {
@@ -122,8 +123,8 @@ export const CoachDashboard: React.FC<CoachDashboardProps> = ({
   const [activeMainTab, setActiveMainTab] = useState<'clients' | 'crm' | 'events_sessions' | 'academic' | 'events' | 'payments' | 'workspace' | 'gemini' | 'experiences'>('clients');
   const [academicInitialSubTab, setAcademicInitialSubTab] = useState<AcademicAdminSubTab>('events');
 
-  // Sub-view inside 'clients' tab: Pipeline (CRM Kan-Ban) vs Directory (table/scale 20-30+) vs Workstation (1 on 1 session view)
-  const [clientsViewMode, setClientsViewMode] = useState<'pipeline' | 'directory' | 'workstation'>('directory');
+  // Sub-view inside 'clients' tab: Pipeline (CRM Kan-Ban & Gestión de Coachees) vs Workstation (Ficha 1 a 1)
+  const [clientsViewMode, setClientsViewMode] = useState<'pipeline' | 'workstation'>('pipeline');
 
   // Payment Requests (Cash & Bre-B Nu Validation)
   const [paymentRequests, setPaymentRequests] = useState<PaymentRequest[]>(() =>
@@ -741,7 +742,7 @@ export const CoachDashboard: React.FC<CoachDashboardProps> = ({
       {activeMainTab === 'clients' || activeMainTab === 'crm' ? (
         <div className="flex-1 flex flex-col p-4 sm:p-8 lg:p-10 max-w-7xl mx-auto w-full space-y-6">
           {/* Executive KPI & Health Barometer */}
-          {(clientsViewMode === 'directory' || clientsViewMode === 'pipeline') && (
+          {clientsViewMode === 'pipeline' && (
             <ExecutiveMetricsBar
               clients={clients}
               prospects={prospects}
@@ -749,7 +750,7 @@ export const CoachDashboard: React.FC<CoachDashboardProps> = ({
               sessions={allSessions}
               onGoToClients={() => {
                 setActiveMainTab('clients');
-                setClientsViewMode('directory');
+                setClientsViewMode('pipeline');
               }}
               onGoToCRM={() => {
                 setActiveMainTab('clients');
@@ -762,91 +763,38 @@ export const CoachDashboard: React.FC<CoachDashboardProps> = ({
             />
           )}
 
-          {/* View Mode Switcher Header with Title Clientes & Centered Navigation Bar */}
-          <div className="space-y-4 pb-4 border-b border-gray-100 dark:border-neutral-800">
+          {/* CRM & Clientes Unified View Header */}
+          <div className="space-y-3 pb-4 border-b border-gray-100 dark:border-neutral-800">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
                 <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full bg-[#F5F5F7] dark:bg-neutral-800 border border-gray-200/80 dark:border-neutral-700 text-[10px] font-semibold text-gray-700 dark:text-neutral-300 uppercase tracking-wider mb-1">
                   <Users className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
-                  Ecosistema Directivo de Clientes & Conversión
+                  CRM & Gestión Integral de Clientes
                 </div>
                 <h2 className="text-xl sm:text-2xl font-light text-black dark:text-white tracking-tight">
                   {clientsViewMode === 'pipeline' ? (
-                    <>Clientes: <strong className="font-semibold">Pipeline CRM & Embudo ({prospects.length})</strong></>
-                  ) : clientsViewMode === 'directory' ? (
-                    <>Clientes: <strong className="font-semibold">Directorio Activo ({clients.length})</strong></>
+                    <>CRM & Clientes: <strong className="font-semibold">Pipeline y Directorio ({prospects.length + clients.length})</strong></>
                   ) : (
-                    <>Clientes: Ficha 1 a 1 de <strong className="font-semibold">{selectedClient?.name || 'Cliente'}</strong></>
+                    <>Ficha Integral del Coachee: <strong className="font-semibold">{selectedClient?.name || 'Cliente'}</strong></>
                   )}
                 </h2>
                 <p className="text-xs text-gray-500 dark:text-neutral-400 font-light mt-0.5">
                   {clientsViewMode === 'pipeline'
-                    ? 'Embudo comercial ontológico, prospección de talleres y conversión al programa ejecutivo.'
-                    : clientsViewMode === 'directory'
-                    ? 'Directorio central de clientes ancla con seguimiento de quiebres, estados e inversión.'
-                    : 'Ficha de intervención ontológica, bitácora de sesiones y copiloto interpretativo con IA.'}
+                    ? 'Embudo comercial ontológico, prospección de talleres y directorio interactivo integrado de clientes activos e inactivos.'
+                    : 'Ficha individualizada de acompañamiento, quiebre ontológico central, bitácora y sesiones ejecutivas.'}
                 </p>
               </div>
-            </div>
 
-            {/* Centered Navigation Bar: 1. Pipeline CRM vs 2. Directorio Activos vs 3. Ficha 1 a 1 */}
-            <div className="flex justify-center items-center w-full pt-1">
-              <div className="inline-flex items-center justify-center p-1.5 rounded-2xl bg-[#F5F5F7] dark:bg-[#18181B] border border-gray-200/80 dark:border-neutral-800 shadow-2xs max-w-full overflow-x-auto gap-1">
+              {clientsViewMode === 'workstation' && (
                 <button
                   type="button"
                   onClick={() => setClientsViewMode('pipeline')}
-                  className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-medium transition-all cursor-pointer shrink-0 ${
-                    clientsViewMode === 'pipeline'
-                      ? 'bg-white dark:bg-[#27272A] text-black dark:text-white shadow-xs font-semibold'
-                      : 'text-gray-500 dark:text-neutral-400 hover:text-black dark:hover:text-white hover:bg-white/60 dark:hover:bg-neutral-800/60'
-                  }`}
+                  className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-gray-100 dark:bg-neutral-800 hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black text-xs font-semibold text-gray-700 dark:text-neutral-300 transition-all cursor-pointer shadow-2xs self-start sm:self-auto"
                 >
-                  <Kanban className="w-3.5 h-3.5 text-sky-500" />
-                  <span>1. Pipeline CRM</span>
-                  <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono font-medium ${
-                    clientsViewMode === 'pipeline'
-                      ? 'bg-sky-500 text-white'
-                      : 'bg-sky-100 dark:bg-sky-950 text-sky-700 dark:text-sky-300'
-                  }`}>
-                    {prospects.length}
-                  </span>
+                  <ArrowLeft className="w-3.5 h-3.5" />
+                  <span>Volver al CRM General</span>
                 </button>
-
-                <button
-                  type="button"
-                  onClick={() => setClientsViewMode('directory')}
-                  className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-medium transition-all cursor-pointer shrink-0 ${
-                    clientsViewMode === 'directory'
-                      ? 'bg-white dark:bg-[#27272A] text-black dark:text-white shadow-xs font-semibold'
-                      : 'text-gray-500 dark:text-neutral-400 hover:text-black dark:hover:text-white hover:bg-white/60 dark:hover:bg-neutral-800/60'
-                  }`}
-                >
-                  <LayoutList className="w-3.5 h-3.5 text-emerald-500" />
-                  <span>2. Directorio Activos</span>
-                  <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono font-medium ${
-                    clientsViewMode === 'directory'
-                      ? 'bg-emerald-500 text-white'
-                      : 'bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300'
-                  }`}>
-                    {clients.length}
-                  </span>
-                </button>
-
-                {selectedClient && (
-                  <button
-                    type="button"
-                    onClick={() => setClientsViewMode('workstation')}
-                    className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-medium transition-all cursor-pointer shrink-0 ${
-                      clientsViewMode === 'workstation'
-                        ? 'bg-white dark:bg-[#27272A] text-black dark:text-white shadow-xs font-semibold'
-                        : 'text-gray-500 dark:text-neutral-400 hover:text-black dark:hover:text-white hover:bg-white/60 dark:hover:bg-neutral-800/60'
-                    }`}
-                  >
-                    <UserCircle2 className="w-3.5 h-3.5 text-indigo-500" />
-                    <span>3. Ficha 1 a 1 ({selectedClient.name.split(' ')[0]})</span>
-                  </button>
-                )}
-              </div>
+              )}
             </div>
           </div>
 
@@ -860,6 +808,12 @@ export const CoachDashboard: React.FC<CoachDashboardProps> = ({
                 eventRegistrations={eventRegistrations}
                 onRefreshProspects={handleRefreshProspects}
                 onRefreshClients={handleRefreshClientsList}
+                onUpdateClientStatus={(clientId, newStatus) => {
+                  handleUpdateClientStatus(clientId, newStatus);
+                }}
+                onDeleteClient={(clientId) => {
+                  handleDeleteClient(clientId);
+                }}
                 onSelectClientAndOpenWorkstation={(cid) => {
                   handleSelectClient(cid, true);
                   setClientsViewMode('workstation');
@@ -868,26 +822,8 @@ export const CoachDashboard: React.FC<CoachDashboardProps> = ({
                   setAcademicInitialSubTab('automations');
                   setActiveMainTab('academic');
                 }}
-                onOpenRegistrationPortal={onOpenRegistrationPortal}
               />
             </Suspense>
-          ) : clientsViewMode === 'directory' ? (
-            <ClientDirectoryTable
-              clients={clients}
-              selectedClientId={selectedClientId}
-              onSelectClient={(clientId) => handleSelectClient(clientId, true)}
-              onQuickSelect={(clientId) => handleSelectClient(clientId, false)}
-              onUpdateStatus={handleUpdateClientStatus}
-              onUpdateBreakdown={handleUpdateClientBreakdown}
-              onUpdateInvested={handleUpdateClientInvested}
-              onDeleteClient={handleDeleteClient}
-              onAddClient={handleAddClient}
-              onRefreshClients={handleRefreshClientsList}
-              onOpenNewSession={(clientId) => {
-                handleSelectClient(clientId, false);
-                setShowNewSessionModal(true);
-              }}
-            />
           ) : selectedClient ? (
             <Suspense fallback={<SectionLoadingFallback title="Cargando Estación de Trabajo Directiva..." />}>
               <ClientWorkstationView
@@ -901,7 +837,11 @@ export const CoachDashboard: React.FC<CoachDashboardProps> = ({
                 generationFeedback={generationFeedback}
                 onRefreshClients={handleRefreshClientsList}
                 onSelectClient={(clientId) => handleSelectClient(clientId, true)}
-                onBackToDirectory={() => setClientsViewMode('directory')}
+                onBackToDirectory={() => setClientsViewMode('pipeline')}
+                onGoToEvents={(subTab) => {
+                  setAcademicInitialSubTab(subTab as any || 'events');
+                  setActiveMainTab('academic');
+                }}
                 onGenerateAI={handleGenerateAIAnalysis}
                 onGenerateAIAnalysis={handleGenerateAIAnalysis}
                 onOpenNewSession={() => setShowNewSessionModal(true)}
@@ -921,10 +861,10 @@ export const CoachDashboard: React.FC<CoachDashboardProps> = ({
               <p className="text-sm font-medium text-black dark:text-white">No hay clientes seleccionados.</p>
               <button
                 type="button"
-                onClick={() => setClientsViewMode('directory')}
+                onClick={() => setClientsViewMode('pipeline')}
                 className="mt-3 text-xs font-medium text-black dark:text-white underline cursor-pointer"
               >
-                Volver al Directorio
+                Volver al Pipeline CRM
               </button>
             </div>
           )}

@@ -1,8 +1,9 @@
 import React, { useState, useMemo } from 'react';
-import { Prospect, ProspectStatus, PaymentStatus, User, EventRegistration } from '../types';
+import { Prospect, ProspectStatus, PaymentStatus, User, EventRegistration, ClientStatus } from '../types';
 import { OntologicalStore } from '../services/store';
 import { safeCopyToClipboard } from '../utils/clipboard';
-import { getPublicPortalUrl } from '../utils/urlHelper';
+import { getEmailAvatarUrl } from '../utils/avatar';
+import { ClientTrafficStatusBadge } from './ClientTrafficStatusBadge';
 import {
   Kanban,
   List,
@@ -30,6 +31,15 @@ import {
   Layers,
   TrendingUp,
   UserPlus,
+  Users,
+  DollarSign,
+  Mail,
+  Building,
+  Briefcase,
+  ChevronRight,
+  BookOpen,
+  Check,
+  X,
 } from 'lucide-react';
 
 interface CrmPipelineManagerProps {
@@ -41,6 +51,8 @@ interface CrmPipelineManagerProps {
   onSelectClientAndOpenWorkstation?: (clientId: string) => void;
   onOpenMakeModal: () => void;
   onOpenRegistrationPortal?: () => void;
+  onUpdateClientStatus?: (clientId: string, status: ClientStatus) => void;
+  onDeleteClient?: (clientId: string) => void;
   embedded?: boolean;
 }
 
@@ -53,17 +65,32 @@ export const CrmPipelineManager: React.FC<CrmPipelineManagerProps> = ({
   onSelectClientAndOpenWorkstation,
   onOpenMakeModal,
   onOpenRegistrationPortal,
+  onUpdateClientStatus,
+  onDeleteClient,
   embedded = false,
 }) => {
   const safeProspects = Array.isArray(prospects) ? prospects : [];
   const safeClients = Array.isArray(clients) ? clients : [];
   const safeRegistrations = Array.isArray(eventRegistrations) ? eventRegistrations : [];
 
-  const [viewLayout, setViewLayout] = useState<'kanban' | 'list'>('kanban');
+  const [viewLayout, setViewLayout] = useState<'kanban' | 'clients' | 'list'>('kanban');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedOriginFilter, setSelectedOriginFilter] = useState<string>('all');
-  const [copiedLinkFeedback, setCopiedLinkFeedback] = useState(false);
   const [copiedCalendarLink, setCopiedCalendarLink] = useState(false);
+
+  // Client Directory Filter inside CRM
+  const [clientStatusFilter, setClientStatusFilter] = useState<'all' | ClientStatus>('all');
+
+  // New Client Modal
+  const [showAddClientModal, setShowAddClientModal] = useState(false);
+  const [newClientName, setNewClientName] = useState('');
+  const [newClientEmail, setNewClientEmail] = useState('');
+  const [newClientPhone, setNewClientPhone] = useState('');
+  const [newClientTitle, setNewClientTitle] = useState('Cliente Directivo');
+  const [newClientProgram, setNewClientProgram] = useState('Certeza, Fronteras & Dirección Personal');
+  const [newClientFee, setNewClientFee] = useState('$1.500.000 COP');
+  const [newClientBreakdown, setNewClientBreakdown] = useState('Fronteras, auto-observación y claridad directiva');
+  const [newClientStatus, setNewClientStatus] = useState<ClientStatus>('active');
 
   // New Prospect Modal
   const [showAddProspectModal, setShowAddProspectModal] = useState(false);
@@ -101,6 +128,93 @@ export const CrmPipelineManager: React.FC<CrmPipelineManagerProps> = ({
     });
   }, [safeProspects, searchQuery, selectedOriginFilter]);
 
+  // Filter clients inside the CRM
+  const filteredClients = useMemo(() => {
+    return safeClients.filter((client) => {
+      if (!client) return false;
+      const matchesStatus =
+        clientStatusFilter === 'all' || (client.status || 'active') === clientStatusFilter;
+
+      const q = searchQuery.toLowerCase().trim();
+      if (!q) return matchesStatus;
+
+      const matchesSearch =
+        (client.name || '').toLowerCase().includes(q) ||
+        (client.title || '').toLowerCase().includes(q) ||
+        (client.email || '').toLowerCase().includes(q) ||
+        (client.primaryBreakdown || '').toLowerCase().includes(q) ||
+        (client.phone || '').toLowerCase().includes(q);
+
+      return matchesStatus && matchesSearch;
+    });
+  }, [safeClients, searchQuery, clientStatusFilter]);
+
+  const countActiveClients = safeClients.filter((c) => (c?.status || 'active') === 'active').length;
+  const countWaitingClients = safeClients.filter((c) => c?.status === 'waiting').length;
+  const countInactiveClients = safeClients.filter((c) => c?.status === 'inactive').length;
+
+  const totalClientsInvested = useMemo(() => {
+    return safeClients.reduce((acc, c) => {
+      if (!c) return acc;
+      const cleanStr = (c.totalInvested || c.programFee || '0').replace(/[^0-9]/g, '');
+      const num = parseInt(cleanStr, 10) || 0;
+      return acc + num;
+    }, 0);
+  }, [safeClients]);
+
+  const formatCurrency = (val: number) => {
+    return new Intl.NumberFormat('es-CO', {
+      style: 'currency',
+      currency: 'COP',
+      maximumFractionDigits: 0,
+    }).format(val);
+  };
+
+  const handleUpdateClientStatusLocal = (clientId: string, newStatus: ClientStatus) => {
+    if (onUpdateClientStatus) {
+      onUpdateClientStatus(clientId, newStatus);
+    } else {
+      OntologicalStore.updateClientStatus(clientId, newStatus);
+    }
+    onRefreshClients();
+  };
+
+  const handleCreateClient = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newClientName.trim() || !newClientEmail.trim()) return;
+
+    const newClientObj: User = {
+      uid: 'client-' + Date.now(),
+      email: newClientEmail.trim().toLowerCase(),
+      name: newClientName.trim(),
+      role: 'client',
+      avatarUrl: `https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=256`,
+      title: newClientTitle.trim() || 'Cliente Directivo',
+      status: newClientStatus,
+      phone: newClientPhone.trim() || undefined,
+      programProgress: 1,
+      programFee: newClientFee,
+      totalInvested: newClientFee,
+      primaryBreakdown: newClientBreakdown.trim(),
+      joinedAt: new Date().toISOString().split('T')[0],
+    };
+
+    const currentUsers = OntologicalStore.getUsers();
+    OntologicalStore.saveUsers([...currentUsers, newClientObj]);
+    onRefreshClients();
+    setShowAddClientModal(false);
+
+    // Reset form
+    setNewClientName('');
+    setNewClientEmail('');
+    setNewClientPhone('');
+
+    // Directly open their individual workstation in the CRM flow
+    if (onSelectClientAndOpenWorkstation) {
+      onSelectClientAndOpenWorkstation(newClientObj.uid);
+    }
+  };
+
   // Stage Grouping
   const groupMatriz = filteredProspects.filter((p) => p && p.status === 'matriz_enviada');
   const groupSesion20 = filteredProspects.filter((p) => p && p.status === 'sesion_20min_agendada');
@@ -114,19 +228,6 @@ export const CrmPipelineManager: React.FC<CrmPipelineManagerProps> = ({
           (safeProspects.filter((p) => p && p.status === 'convertido').length / totalCount) * 100
         )
       : 0;
-
-  const handleCopyRegistrationLink = async () => {
-    const url = getPublicPortalUrl('registro');
-    await safeCopyToClipboard(url);
-    setCopiedLinkFeedback(true);
-    setTimeout(() => setCopiedLinkFeedback(false), 2500);
-  };
-
-  const handleConfirmAttendance = (ticketCodeOrId: string) => {
-    OntologicalStore.confirmEventAttendance(ticketCodeOrId);
-    onRefreshProspects();
-    onRefreshClients();
-  };
 
   const handleStatusChange = (prospectId: string, newStatus: ProspectStatus) => {
     if (newStatus === 'sesion_20min_agendada') {
@@ -383,139 +484,109 @@ export const CrmPipelineManager: React.FC<CrmPipelineManagerProps> = ({
         </div>
       </div>
 
-      {/* 3. Pre-Inscripción Direct Link & Live RSVPs Ticket Bar */}
-      <div className="p-4 sm:p-5 rounded-2xl bg-neutral-900 text-white dark:bg-[#151518] border border-neutral-800 shadow-md space-y-3">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-amber-400/20 text-amber-300 flex items-center justify-center shrink-0">
-              <Ticket className="w-4 h-4" />
-            </div>
-            <div>
-              <div className="text-xs font-semibold text-white tracking-tight flex items-center gap-2">
-                <span>Portal Público de Registro & Ticket RSVP ({eventRegistrations.length} inscritos)</span>
-                <span className="text-[9px] px-2 py-0.2 rounded-full bg-amber-400/20 text-amber-300 font-medium">
-                  Enlace Independiente
-                </span>
-              </div>
-              <p className="text-[11px] font-light text-neutral-300 dark:text-neutral-400">
-                Al confirmar asistencia en vivo con su ticket digital, el asistente activa su acceso al portal directivo.
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2 shrink-0">
-            <button
-              type="button"
-              onClick={handleCopyRegistrationLink}
-              className="px-3 py-1.5 rounded-full bg-white text-black text-xs font-semibold hover:bg-neutral-200 transition-all flex items-center gap-1.5 cursor-pointer shadow-xs"
-            >
-              {copiedLinkFeedback ? (
-                <>
-                  <CheckCheck className="w-3.5 h-3.5 text-emerald-600" />
-                  <span>¡Link Copiado!</span>
-                </>
-              ) : (
-                <>
-                  <Copy className="w-3.5 h-3.5" />
-                  <span>Copiar Link</span>
-                </>
-              )}
-            </button>
-
-            {onOpenRegistrationPortal && (
-              <button
-                type="button"
-                onClick={onOpenRegistrationPortal}
-                className="px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white text-xs font-medium border border-white/20 transition-all flex items-center gap-1.5 cursor-pointer"
-              >
-                <ExternalLink className="w-3.5 h-3.5" />
-                <span>Ver Landing</span>
-              </button>
-            )}
-          </div>
-        </div>
-
-        {/* Compact RSVP List */}
-        {eventRegistrations.length > 0 && (
-          <div className="pt-2.5 border-t border-white/10 flex flex-wrap items-center gap-2 text-xs">
-            {eventRegistrations.map((reg) => (
-              <div
-                key={reg.id}
-                className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-white/10 border border-white/10 text-[11px]"
-              >
-                <span className="font-semibold text-white truncate max-w-[130px]">{reg.name}</span>
-                <span className="font-mono text-[9px] text-amber-300">{reg.ticketCode}</span>
-                {reg.attendedEvent ? (
-                  <span className="text-[9px] px-1.5 py-0.2 rounded-full bg-emerald-500/30 text-emerald-300 font-semibold">
-                    Asistió
-                  </span>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => handleConfirmAttendance(reg.ticketCode)}
-                    title="Confirmar asistencia para activar acceso al portal"
-                    className="text-[9px] px-2 py-0.5 rounded-full bg-amber-400 text-black font-semibold hover:bg-amber-300 cursor-pointer transition-all"
-                  >
-                    Confirmar
-                  </button>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* 4. Controls Toolbar: Search, Origin Filter & Layout Switcher */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 glass-panel-opal rounded-2xl">
-        <div className="flex flex-1 items-center gap-2 max-w-md">
+      {/* 3. Controls Toolbar: Search, Filter, Layout Switcher & Actions */}
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 p-3 glass-panel-opal rounded-2xl">
+        <div className="flex flex-1 items-center gap-2 max-w-lg">
           <div className="relative flex-1">
             <Search className="w-3.5 h-3.5 text-gray-400 dark:text-neutral-500 absolute left-3 top-1/2 -translate-y-1/2" />
             <input
               type="text"
-              placeholder="Buscar por nombre, teléfono, notas..."
+              placeholder={
+                viewLayout === 'clients'
+                  ? "Buscar coachee por nombre, email, quiebre, teléfono..."
+                  : "Buscar por nombre, teléfono, notas..."
+              }
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-8.5 pr-3 py-1.5 text-xs bg-white dark:bg-[#1E1E22] border border-gray-200 dark:border-neutral-700 rounded-xl text-black dark:text-white placeholder-gray-400 dark:placeholder-neutral-500 focus:outline-none focus:border-black dark:focus:border-white transition-colors"
             />
           </div>
 
-          <select
-            value={selectedOriginFilter}
-            onChange={(e) => setSelectedOriginFilter(e.target.value)}
-            className="px-2.5 py-1.5 text-xs bg-white dark:bg-[#1E1E22] border border-gray-200 dark:border-neutral-700 rounded-xl text-black dark:text-white focus:outline-none cursor-pointer"
-          >
-            <option value="all">Todos los orígenes</option>
-            <option value="Conversatorio Raíz y Balance">Conversatorio Raíz y Balance</option>
-          </select>
+          {viewLayout !== 'clients' && (
+            <select
+              value={selectedOriginFilter}
+              onChange={(e) => setSelectedOriginFilter(e.target.value)}
+              className="px-2.5 py-1.5 text-xs bg-white dark:bg-[#1E1E22] border border-gray-200 dark:border-neutral-700 rounded-xl text-black dark:text-white focus:outline-none cursor-pointer"
+            >
+              <option value="all">Todos los orígenes</option>
+              <option value="Conversatorio Raíz y Balance">Conversatorio Raíz y Balance</option>
+            </select>
+          )}
         </div>
 
-        {/* Layout Switcher */}
-        <div className="inline-flex items-center p-1 rounded-xl bg-white/80 dark:bg-[#1E1E22]/80 border border-gray-200/80 dark:border-neutral-700 self-start sm:self-auto">
-          <button
-            type="button"
-            onClick={() => setViewLayout('kanban')}
-            className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-medium transition-all cursor-pointer ${
-              viewLayout === 'kanban'
-                ? 'bg-black dark:bg-white text-white dark:text-black font-semibold shadow-2xs'
-                : 'text-gray-500 dark:text-neutral-400 hover:text-black dark:hover:text-white'
-            }`}
-          >
-            <Kanban className="w-3.5 h-3.5" />
-            <span>Tablero Kanban</span>
-          </button>
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Layout Switcher */}
+          <div className="inline-flex items-center p-1 rounded-xl bg-white/80 dark:bg-[#1E1E22]/80 border border-gray-200/80 dark:border-neutral-700">
+            <button
+              type="button"
+              onClick={() => setViewLayout('kanban')}
+              className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-medium transition-all cursor-pointer ${
+                viewLayout === 'kanban'
+                  ? 'bg-black dark:bg-white text-white dark:text-black font-semibold shadow-2xs'
+                  : 'text-gray-500 dark:text-neutral-400 hover:text-black dark:hover:text-white'
+              }`}
+            >
+              <Kanban className="w-3.5 h-3.5" />
+              <span>Tablero Pipeline</span>
+            </button>
 
-          <button
-            type="button"
-            onClick={() => setViewLayout('list')}
-            className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-medium transition-all cursor-pointer ${
-              viewLayout === 'list'
-                ? 'bg-black dark:bg-white text-white dark:text-black font-semibold shadow-2xs'
-                : 'text-gray-500 dark:text-neutral-400 hover:text-black dark:hover:text-white'
-            }`}
-          >
-            <List className="w-3.5 h-3.5" />
-            <span>Lista Agrupada</span>
-          </button>
+            <button
+              type="button"
+              onClick={() => setViewLayout('clients')}
+              className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-medium transition-all cursor-pointer ${
+                viewLayout === 'clients'
+                  ? 'bg-black dark:bg-white text-white dark:text-black font-semibold shadow-2xs'
+                  : 'text-gray-500 dark:text-neutral-400 hover:text-black dark:hover:text-white'
+              }`}
+            >
+              <Users className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+              <span>Listado de Clientes</span>
+              <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono font-medium ${
+                viewLayout === 'clients'
+                  ? 'bg-white/20 dark:bg-black/20 text-white dark:text-black'
+                  : 'bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300'
+              }`}>
+                {safeClients.length}
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setViewLayout('list')}
+              className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-medium transition-all cursor-pointer ${
+                viewLayout === 'list'
+                  ? 'bg-black dark:bg-white text-white dark:text-black font-semibold shadow-2xs'
+                  : 'text-gray-500 dark:text-neutral-400 hover:text-black dark:hover:text-white'
+              }`}
+            >
+              <List className="w-3.5 h-3.5" />
+              <span>Lista Agrupada</span>
+              <span className="text-[10px] px-1 py-0.1 font-mono text-gray-400">
+                {filteredProspects.length}
+              </span>
+            </button>
+          </div>
+
+          {/* Quick Create Buttons */}
+          <div className="inline-flex items-center gap-1.5">
+            <button
+              type="button"
+              onClick={() => setShowAddProspectModal(true)}
+              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl border border-gray-200 dark:border-neutral-700 bg-white dark:bg-[#1E1E22] hover:bg-gray-50 dark:hover:bg-neutral-800 text-black dark:text-white text-xs font-semibold transition-all cursor-pointer shadow-2xs"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>Nuevo Prospecto</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setShowAddClientModal(true)}
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-black dark:bg-white text-white dark:text-black text-xs font-semibold hover:opacity-90 transition-all cursor-pointer shadow-xs"
+            >
+              <UserPlus className="w-3.5 h-3.5 text-emerald-400 dark:text-emerald-600" />
+              <span>Nuevo Cliente</span>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -717,10 +788,22 @@ export const CrmPipelineManager: React.FC<CrmPipelineManagerProps> = ({
                       >
                         <div className="flex items-start justify-between">
                           <div>
-                            <div className="text-xs font-bold text-black dark:text-white flex items-center gap-1.5">
-                              <span>{p.name}</span>
-                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                            </div>
+                            {matchedClient && onSelectClientAndOpenWorkstation ? (
+                              <button
+                                type="button"
+                                onClick={() => onSelectClientAndOpenWorkstation(matchedClient.uid)}
+                                className="text-xs font-bold text-black dark:text-white hover:text-emerald-600 dark:hover:text-emerald-400 hover:underline cursor-pointer flex items-center gap-1.5 text-left transition-colors"
+                                title={`Abrir Ficha Detallada de ${matchedClient.name}`}
+                              >
+                                <span>{p.name}</span>
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                              </button>
+                            ) : (
+                              <div className="text-xs font-bold text-black dark:text-white flex items-center gap-1.5">
+                                <span>{p.name}</span>
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                              </div>
+                            )}
                             <span className="text-[9px] px-1.5 py-0.2 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 font-bold uppercase tracking-wider">
                               Convertido 1 a 1
                             </span>
@@ -730,9 +813,10 @@ export const CrmPipelineManager: React.FC<CrmPipelineManagerProps> = ({
                             <button
                               type="button"
                               onClick={() => onSelectClientAndOpenWorkstation(matchedClient.uid)}
-                              className="text-[10px] text-black dark:text-white underline font-semibold cursor-pointer"
+                              className="inline-flex items-center gap-1 text-[10px] text-emerald-700 dark:text-emerald-300 bg-emerald-100/60 dark:bg-emerald-950 hover:bg-emerald-200 dark:hover:bg-emerald-900 px-2 py-0.5 rounded-full font-semibold transition-all cursor-pointer"
                             >
-                              Ver en Clientes
+                              <span>Abrir Ficha</span>
+                              <ArrowRight className="w-2.5 h-2.5" />
                             </button>
                           )}
                         </div>
@@ -775,6 +859,232 @@ export const CrmPipelineManager: React.FC<CrmPipelineManagerProps> = ({
                   ))}
                 </>
               )}
+            </div>
+          </div>
+        </div>
+      ) : viewLayout === 'clients' ? (
+        /* ================= INTERACTIVE CLIENT DIRECTORY VIEW ================= */
+        <div className="space-y-4">
+          {/* Sub-header & Status Badges */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 bg-white dark:bg-[#18181B] border border-gray-200/80 dark:border-neutral-800 rounded-2xl shadow-2xs">
+            <div className="flex flex-wrap items-center gap-1.5">
+              <span className="text-xs font-semibold text-gray-500 dark:text-neutral-400 mr-1 flex items-center gap-1">
+                <Filter className="w-3 h-3" />
+                Estado:
+              </span>
+              <button
+                type="button"
+                onClick={() => setClientStatusFilter('all')}
+                className={`px-3 py-1 rounded-xl text-xs font-medium transition-all cursor-pointer ${
+                  clientStatusFilter === 'all'
+                    ? 'bg-black dark:bg-white text-white dark:text-black font-semibold shadow-2xs'
+                    : 'bg-gray-100 dark:bg-neutral-800 text-gray-600 dark:text-neutral-300 hover:bg-gray-200 dark:hover:bg-neutral-700'
+                }`}
+              >
+                Todos ({safeClients.length})
+              </button>
+              <button
+                type="button"
+                onClick={() => setClientStatusFilter('active')}
+                className={`px-3 py-1 rounded-xl text-xs font-medium transition-all cursor-pointer ${
+                  clientStatusFilter === 'active'
+                    ? 'bg-emerald-600 text-white font-semibold shadow-2xs'
+                    : 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/50'
+                }`}
+              >
+                Activos ({countActiveClients})
+              </button>
+              <button
+                type="button"
+                onClick={() => setClientStatusFilter('waiting')}
+                className={`px-3 py-1 rounded-xl text-xs font-medium transition-all cursor-pointer ${
+                  clientStatusFilter === 'waiting'
+                    ? 'bg-amber-500 text-white font-semibold shadow-2xs'
+                    : 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900/50'
+                }`}
+              >
+                En Espera ({countWaitingClients})
+              </button>
+              <button
+                type="button"
+                onClick={() => setClientStatusFilter('inactive')}
+                className={`px-3 py-1 rounded-xl text-xs font-medium transition-all cursor-pointer ${
+                  clientStatusFilter === 'inactive'
+                    ? 'bg-gray-600 text-white font-semibold shadow-2xs'
+                    : 'bg-gray-100 dark:bg-neutral-800 text-gray-500 dark:text-neutral-400 hover:bg-gray-200'
+                }`}
+              >
+                Inactivos ({countInactiveClients})
+              </button>
+            </div>
+
+            <div className="flex items-center gap-3 text-xs text-gray-500 dark:text-neutral-400">
+              <div className="flex items-center gap-1.5">
+                <span className="font-semibold text-black dark:text-white">Cartera Activa:</span>
+                <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400">
+                  {formatCurrency(totalClientsInvested)}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Interactive Clients Table */}
+          <div className="glass-panel-sheer rounded-2xl overflow-hidden shadow-2xs">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse text-xs">
+                <thead>
+                  <tr className="border-b border-gray-200/80 dark:border-neutral-800 bg-[#F9F9F9] dark:bg-[#1A1A1E] text-gray-500 dark:text-neutral-400 text-[10px] uppercase tracking-wider font-semibold">
+                    <th className="py-3 px-4">Coachee / Datos de Contacto</th>
+                    <th className="py-3 px-4">Estado</th>
+                    <th className="py-3 px-4">Programa & Progreso</th>
+                    <th className="py-3 px-4">Quiebre Ontológico Central</th>
+                    <th className="py-3 px-4">Inversión</th>
+                    <th className="py-3 px-4 text-right">Ficha Individual</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100 dark:divide-neutral-800">
+                  {filteredClients.length === 0 ? (
+                    <tr>
+                      <td colSpan={6} className="py-12 text-center text-gray-400 text-xs font-light">
+                        <Users className="w-8 h-8 mx-auto text-gray-300 dark:text-neutral-600 mb-2 opacity-60" />
+                        <p className="font-medium text-gray-600 dark:text-neutral-400">
+                          No se encontraron clientes con los criterios de búsqueda.
+                        </p>
+                        <p className="text-[11px] text-gray-400 mt-1">
+                          Prueba a restablecer los filtros o registra un nuevo coachee directivo.
+                        </p>
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredClients.map((client) => {
+                      const clientStatus = client.status || 'active';
+                      const avatarUrl = getEmailAvatarUrl(client.email, client.name, client.avatarUrl);
+                      return (
+                        <tr
+                          key={client.uid}
+                          className="hover:bg-gray-50/70 dark:hover:bg-neutral-800/40 transition-colors group"
+                        >
+                          {/* Coachee info with clickable name */}
+                          <td className="py-3.5 px-4">
+                            <div className="flex items-center gap-3">
+                              <img
+                                src={avatarUrl}
+                                alt={client.name}
+                                className="w-9 h-9 rounded-full object-cover border border-gray-200 dark:border-neutral-700 shrink-0 shadow-2xs"
+                              />
+                              <div className="min-w-0">
+                                <button
+                                  type="button"
+                                  onClick={() => onSelectClientAndOpenWorkstation?.(client.uid)}
+                                  className="font-bold text-sm text-black dark:text-white hover:text-emerald-600 dark:hover:text-emerald-400 hover:underline cursor-pointer transition-colors text-left flex items-center gap-1.5 group-hover:text-emerald-600 dark:group-hover:text-emerald-400"
+                                  title={`Abrir Ficha Detallada de ${client.name}`}
+                                >
+                                  <span className="truncate">{client.name}</span>
+                                  <ChevronRight className="w-3.5 h-3.5 text-emerald-500 opacity-70 group-hover:translate-x-0.5 transition-transform" />
+                                </button>
+                                <div className="text-[11px] text-gray-500 dark:text-neutral-400 truncate">
+                                  {client.title || 'Cliente Directivo'}
+                                </div>
+                                <div className="flex items-center gap-2 mt-0.5 text-[10px] text-gray-400 dark:text-neutral-500">
+                                  <span className="truncate">{client.email}</span>
+                                  {client.phone && (
+                                    <>
+                                      <span>&bull;</span>
+                                      <a
+                                        href={`https://wa.me/${client.phone.replace(/[^0-9]/g, '')}`}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        className="hover:text-emerald-600 transition-colors inline-flex items-center gap-0.5"
+                                      >
+                                        <Phone className="w-2.5 h-2.5 text-emerald-500" />
+                                        <span>{client.phone}</span>
+                                      </a>
+                                    </>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          </td>
+
+                          {/* Status */}
+                          <td className="py-3.5 px-4">
+                            <select
+                              value={clientStatus}
+                              onChange={(e) =>
+                                handleUpdateClientStatusLocal(client.uid, e.target.value as ClientStatus)
+                              }
+                              className={`text-[11px] font-semibold rounded-lg px-2.5 py-1 border cursor-pointer focus:outline-none transition-all ${
+                                clientStatus === 'active'
+                                  ? 'bg-emerald-50 dark:bg-emerald-950/60 border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300'
+                                  : clientStatus === 'waiting'
+                                  ? 'bg-amber-50 dark:bg-amber-950/60 border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-300'
+                                  : 'bg-gray-100 dark:bg-neutral-800 border-gray-200 dark:border-neutral-700 text-gray-600 dark:text-neutral-400'
+                              }`}
+                            >
+                              <option value="active">Activo</option>
+                              <option value="waiting">En Espera</option>
+                              <option value="inactive">Inactivo</option>
+                            </select>
+                          </td>
+
+                          {/* Program & Progress */}
+                          <td className="py-3.5 px-4">
+                            <div className="space-y-1 max-w-[200px]">
+                              <div className="font-semibold text-black dark:text-white truncate">
+                                {client.programName || 'Certeza & Fronteras'}
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <div className="flex-1 h-1.5 bg-gray-100 dark:bg-neutral-800 rounded-full overflow-hidden">
+                                  <div
+                                    className="h-full bg-emerald-500 rounded-full transition-all"
+                                    style={{
+                                      width: `${Math.min(100, ((client.programProgress || 1) / 6) * 100)}%`,
+                                    }}
+                                  />
+                                </div>
+                                <span className="text-[10px] font-mono text-gray-500 dark:text-neutral-400 shrink-0">
+                                  Paso {client.programProgress || 1}/6
+                                </span>
+                              </div>
+                            </div>
+                          </td>
+
+                          {/* Breakdown / Quiebre */}
+                          <td className="py-3.5 px-4 max-w-xs">
+                            {client.primaryBreakdown ? (
+                              <p className="text-[11px] font-light text-gray-600 dark:text-neutral-300 line-clamp-2 italic">
+                                &ldquo;{client.primaryBreakdown}&rdquo;
+                              </p>
+                            ) : (
+                              <span className="text-[11px] text-gray-400 italic">
+                                En proceso de exploración ontológica
+                              </span>
+                            )}
+                          </td>
+
+                          {/* Investment */}
+                          <td className="py-3.5 px-4 font-mono font-semibold text-black dark:text-white">
+                            {client.totalInvested || client.programFee || '$1.500.000 COP'}
+                          </td>
+
+                          {/* Action Button: Open Ficha */}
+                          <td className="py-3.5 px-4 text-right">
+                            <button
+                              type="button"
+                              onClick={() => onSelectClientAndOpenWorkstation?.(client.uid)}
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-black dark:bg-white text-white dark:text-black text-xs font-semibold hover:opacity-90 transition-all cursor-pointer shadow-2xs group-hover:shadow-xs"
+                              title={`Abrir Ficha Detallada de ${client.name}`}
+                            >
+                              <span>Abrir Ficha</span>
+                              <ArrowRight className="w-3 h-3" />
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
             </div>
           </div>
         </div>
@@ -1190,6 +1500,156 @@ export const CrmPipelineManager: React.FC<CrmPipelineManagerProps> = ({
                 </button>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ================= MODAL: ADD NEW CLIENT DIRECTLY ================= */}
+      {showAddClientModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
+          <div className="bg-white dark:bg-[#18181B] rounded-3xl max-w-lg w-full p-6 border border-gray-100 dark:border-neutral-800 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between pb-3 border-b border-gray-100 dark:border-neutral-800">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-xl bg-emerald-100 dark:bg-emerald-950 flex items-center justify-center text-emerald-700 dark:text-emerald-300">
+                  <UserPlus className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-base font-semibold text-black dark:text-white">
+                    Registrar Nuevo Cliente / Coachee
+                  </h3>
+                  <p className="text-[11px] text-gray-500 dark:text-neutral-400">
+                    Se creará en el CRM e inmediatamente se abrirá su ficha individual integrada
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowAddClientModal(false)}
+                className="text-gray-400 hover:text-black dark:hover:text-white p-1"
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateClient} className="space-y-3.5 text-xs">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="font-medium text-black dark:text-white block mb-1">
+                    Nombre Completo *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="Ej: Andrés Morales"
+                    value={newClientName}
+                    onChange={(e) => setNewClientName(e.target.value)}
+                    className="w-full px-3 py-2 bg-gray-50 dark:bg-[#202024] border border-gray-200 dark:border-neutral-700 rounded-xl text-black dark:text-white focus:outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="font-medium text-black dark:text-white block mb-1">
+                    Correo Electrónico *
+                  </label>
+                  <input
+                    type="email"
+                    required
+                    placeholder="andres@empresa.com"
+                    value={newClientEmail}
+                    onChange={(e) => setNewClientEmail(e.target.value)}
+                    className="w-full px-3 py-2 bg-gray-50 dark:bg-[#202024] border border-gray-200 dark:border-neutral-700 rounded-xl text-black dark:text-white focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="font-medium text-black dark:text-white block mb-1">
+                    Teléfono / WhatsApp
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="+57 300 123 4567"
+                    value={newClientPhone}
+                    onChange={(e) => setNewClientPhone(e.target.value)}
+                    className="w-full px-3 py-2 bg-gray-50 dark:bg-[#202024] border border-gray-200 dark:border-neutral-700 rounded-xl text-black dark:text-white focus:outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="font-medium text-black dark:text-white block mb-1">
+                    Cargo / Rol Profesional
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Director General / VP"
+                    value={newClientTitle}
+                    onChange={(e) => setNewClientTitle(e.target.value)}
+                    className="w-full px-3 py-2 bg-gray-50 dark:bg-[#202024] border border-gray-200 dark:border-neutral-700 rounded-xl text-black dark:text-white focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="font-medium text-black dark:text-white block mb-1">
+                    Estado Inicial
+                  </label>
+                  <select
+                    value={newClientStatus}
+                    onChange={(e) => setNewClientStatus(e.target.value as ClientStatus)}
+                    className="w-full px-3 py-2 bg-gray-50 dark:bg-[#202024] border border-gray-200 dark:border-neutral-700 rounded-xl text-black dark:text-white focus:outline-none font-medium"
+                  >
+                    <option value="active">Activo (En Acompañamiento)</option>
+                    <option value="waiting">En Espera / Pausa</option>
+                    <option value="inactive">Inactivo / Completado</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="font-medium text-black dark:text-white block mb-1">
+                    Inversión Acordada
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="$1.500.000 COP"
+                    value={newClientFee}
+                    onChange={(e) => setNewClientFee(e.target.value)}
+                    className="w-full px-3 py-2 bg-gray-50 dark:bg-[#202024] border border-gray-200 dark:border-neutral-700 rounded-xl text-black dark:text-white focus:outline-none font-mono"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="font-medium text-black dark:text-white block mb-1">
+                  Quiebre Ontológico / Foco de Intervención
+                </label>
+                <textarea
+                  rows={2}
+                  placeholder="Ej: Dificultad para poner límites a socios; reactividad ante la incertidumbre..."
+                  value={newClientBreakdown}
+                  onChange={(e) => setNewClientBreakdown(e.target.value)}
+                  className="w-full px-3 py-2 bg-gray-50 dark:bg-[#202024] border border-gray-200 dark:border-neutral-700 rounded-xl text-black dark:text-white focus:outline-none"
+                />
+              </div>
+
+              <div className="pt-3 border-t border-gray-100 dark:border-neutral-800 flex items-center justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowAddClientModal(false)}
+                  className="px-4 py-2 rounded-xl border border-gray-200 dark:border-neutral-700 text-black dark:text-white font-medium"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 rounded-xl bg-black dark:bg-white text-white dark:text-black font-semibold hover:opacity-90 transition-all cursor-pointer shadow-xs inline-flex items-center gap-1.5"
+                >
+                  <UserPlus className="w-3.5 h-3.5" />
+                  <span>Crear & Abrir Ficha</span>
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
