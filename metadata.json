@@ -1,10 +1,6 @@
 {
   "name": "Rengifo Basto Consultoría Ontológica",
   "description": "Plataforma de consultoría ontológica de alta gama para clientes y coaches con análisis lingüístico, emocional y corporal.",
-  "requestFramePermissions": [
-    "camera"
-  ],
-  "majorCapabilities": [
-    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
-  ]
+  "requestFramePermissions": ["camera", "microphone"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

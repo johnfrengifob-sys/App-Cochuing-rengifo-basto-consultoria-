@@ -19,7 +19,7 @@ interface FirebaseAppletConfig {
 const typedConfig = config as FirebaseAppletConfig;
 
 const firebaseConfig = {
-  apiKey: typedConfig.apiKey,
+  apiKey: (typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_FIREBASE_API_KEY) || typedConfig.apiKey,
   authDomain: typedConfig.authDomain,
   projectId: typedConfig.projectId,
   storageBucket: typedConfig.storageBucket,
