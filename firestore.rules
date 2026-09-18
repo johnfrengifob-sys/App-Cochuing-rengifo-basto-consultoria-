@@ -123,6 +123,12 @@ service cloud.firestore {
       allow write: if isSignedIn();
     }
 
+    // Módulos y Sesiones Curriculares del Programa Ontológico
+    match /programNodes/{nodeId} {
+      allow read: if true;
+      allow write: if isSignedIn();
+    }
+
     // Documentos Google Workspace vinculados
     match /workspaceDocuments/{docId} {
       allow read: if true;

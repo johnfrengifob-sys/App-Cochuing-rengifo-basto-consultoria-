@@ -254,6 +254,7 @@ export interface ProgramNodeInfo {
   roadmapSteps?: WorkshopRoadmapStep[];
   // Integraciones secundarias unificadas: Formularios, Activadores, Recursos y Experiencias
   googleFormsUrl?: string;
+  googleSheetsUrl?: string;
   googleDriveFolderUrl?: string;
   triggersEnabled?: boolean;
   triggerReminderDays?: number;

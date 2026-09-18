@@ -91,13 +91,13 @@ export const EventGeneralConfigSection: React.FC<EventGeneralConfigSectionProps>
       <div className="border-b border-gray-100 dark:border-neutral-800 pb-4">
         <div className="flex items-center gap-2 text-indigo-600 dark:text-indigo-400 font-semibold text-xs uppercase tracking-wider">
           <Layers className="w-4 h-4" />
-          <span>1. Configuración General del Evento / Sesión</span>
+          <span>Sección 1: Configuración General</span>
         </div>
         <h3 className="text-lg font-bold text-black dark:text-white mt-1">
-          Identidad, Visibilidad, Capacidad & Cronograma
+          Identidad, Portada, Capacidad de Participantes & Valor de la Inversión
         </h3>
         <p className="text-xs text-gray-500 dark:text-neutral-400 font-light mt-0.5">
-          Define el nombre personalizable, la imagen de portada con control de visibilidad en la Home, cupos y valor de inversión.
+          Define el nombre oficial del taller o sesión, la imagen de portada con control de visibilidad en la Home, la capacidad de participantes y el valor de la inversión.
         </p>
       </div>
 

@@ -26,6 +26,7 @@ import {
   BitacoraSesionB2BEntry,
   BitacoraTallerEntry,
   FormsSheetsIntegrationPair,
+  ProgramNodeInfo,
 } from '../types';
 import { ServerDbSyncService } from './serverDbSync';
 
@@ -954,23 +955,26 @@ export class FirestoreSyncService {
     regsCount: number;
     tallerRegistrosCount: number;
     formsSheetsCount: number;
+    programNodesCount: number;
   }> {
     try {
-      const [remoteUsers, remoteRegs, remoteTalleres, remoteIntegrations] = await Promise.all([
+      const [remoteUsers, remoteRegs, remoteTalleres, remoteIntegrations, remoteProgramNodes] = await Promise.all([
         this.fetchUsers(),
         this.fetchEventRegistrations(),
         this.fetchTallerRegistros(),
         this.fetchFormsSheetsIntegrations(),
+        this.fetchProgramNodes(),
       ]);
       return {
         usersCount: remoteUsers.length,
         regsCount: remoteRegs.length,
         tallerRegistrosCount: remoteTalleres.length,
         formsSheetsCount: remoteIntegrations.length,
+        programNodesCount: remoteProgramNodes.length,
       };
     } catch (e) {
       console.warn('syncAllFromFirestore notice:', e);
-      return { usersCount: 0, regsCount: 0, tallerRegistrosCount: 0, formsSheetsCount: 0 };
+      return { usersCount: 0, regsCount: 0, tallerRegistrosCount: 0, formsSheetsCount: 0, programNodesCount: 0 };
     }
   }
 
@@ -1419,8 +1423,8 @@ export class FirestoreSyncService {
           limitingTruths: entry.limitingTruths || '',
           newDiscovery: entry.newDiscovery || '',
           lifeBalanceMessage: entry.lifeBalanceMessage || '',
-          mostValuableLearning: entry.mostValuableLearning || '',
-          concreteCommitmentAction: entry.concreteCommitmentAction || '',
+          valuableLearning: entry.valuableLearning || '',
+          concreteChallengeAction: entry.concreteChallengeAction || '',
           digitalValidationSignatureAndId: entry.digitalValidationSignatureAndId || '',
           updatedAt: new Date().toISOString(),
         },
@@ -1466,17 +1470,17 @@ export class FirestoreSyncService {
         {
           id: pair.id,
           title: pair.title,
-          sheetId: pair.sheetId || '',
-          sheetTabName: pair.sheetTabName || '',
+          category: pair.category,
+          moduleTarget: pair.moduleTarget,
           formUrl: pair.formUrl || '',
           sheetUrl: pair.sheetUrl || '',
-          sheetEmbedUrl: pair.sheetEmbedUrl || '',
+          sheetGid: pair.sheetGid || '',
+          sheetHeaders: pair.sheetHeaders || [],
           status: pair.status || 'connected',
           lastSyncedAt: pair.lastSyncedAt || new Date().toISOString(),
           recordsCount: pair.recordsCount || 0,
           notes: pair.notes || '',
           webhookUrl: pair.webhookUrl || '',
-          targetDatabaseCollection: pair.targetDatabaseCollection || pair.id,
           updatedAt: new Date().toISOString(),
         },
         { merge: true }
@@ -1529,6 +1533,76 @@ export class FirestoreSyncService {
       return unsubscribe;
     } catch (error) {
       console.warn('Firestore subscribeToFormsSheetsIntegrations error:', error);
+      return () => {};
+    }
+  }
+
+  // 6. Módulos / Sesiones Curriculares (ProgramNodeInfo con Google Forms & Sheets)
+  static async syncProgramNode(node: ProgramNodeInfo): Promise<void> {
+    const collectionPath = 'programNodes';
+    try {
+      const docId = `step-${node.step}`;
+      const ref = doc(db, collectionPath, docId);
+      await setDoc(
+        ref,
+        {
+          ...node,
+          updatedAt: new Date().toISOString(),
+        },
+        { merge: true }
+      );
+    } catch (error) {
+      console.warn('Firestore syncProgramNode notice:', error);
+    }
+  }
+
+  static async syncAllProgramNodes(nodes: ProgramNodeInfo[]): Promise<number> {
+    let count = 0;
+    for (const node of nodes) {
+      try {
+        await this.syncProgramNode(node);
+        count++;
+      } catch {
+        // continue
+      }
+    }
+    return count;
+  }
+
+  static async fetchProgramNodes(): Promise<ProgramNodeInfo[]> {
+    const collectionPath = 'programNodes';
+    try {
+      const snap = await getDocs(collection(db, collectionPath));
+      if (snap.empty) return [];
+      return snap.docs
+        .map((d) => d.data() as ProgramNodeInfo)
+        .sort((a, b) => (a.step || 0) - (b.step || 0));
+    } catch (error) {
+      console.warn('Firestore fetchProgramNodes notice:', error);
+      return [];
+    }
+  }
+
+  static subscribeToProgramNodes(
+    onUpdate: (nodes: ProgramNodeInfo[]) => void
+  ): () => void {
+    const collectionPath = 'programNodes';
+    try {
+      const unsubscribe = onSnapshot(
+        collection(db, collectionPath),
+        (snap) => {
+          const nodes = snap.docs
+            .map((d) => d.data() as ProgramNodeInfo)
+            .sort((a, b) => (a.step || 0) - (b.step || 0));
+          onUpdate(nodes);
+        },
+        (error) => {
+          console.warn('Firestore subscribeToProgramNodes notice:', error);
+        }
+      );
+      return unsubscribe;
+    } catch (error) {
+      console.warn('Firestore subscribeToProgramNodes error:', error);
       return () => {};
     }
   }

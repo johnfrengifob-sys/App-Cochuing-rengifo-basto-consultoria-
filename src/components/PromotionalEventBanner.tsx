@@ -2,7 +2,6 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { CronogramaEvent } from '../types';
 import { OntologicalStore } from '../services/store';
 import { LiquidGlassButton } from './LiquidGlassButton';
-import { downloadWorkshopNotebookPdf } from '../services/notebookPdfGenerator';
 import { safeCopyToClipboard } from '../utils/clipboard';
 import { getPublicPortalUrl } from '../utils/urlHelper';
 import {
@@ -275,15 +274,16 @@ export const PromotionalEventBanner: React.FC<PromotionalEventBannerProps> = ({
                   )}
                 </button>
 
-                <button
-                  type="button"
-                  onClick={() => downloadWorkshopNotebookPdf(event)}
-                  className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-emerald-600/90 hover:bg-emerald-500 backdrop-blur-md text-white text-xs font-semibold transition-colors cursor-pointer shadow-md"
-                  title="Descargar Cuaderno y Memorias del Taller (PDF)"
+                <a
+                  href={event.googleFormsUrl || 'https://forms.gle/5Hiuxwq13n3gC3zt6'}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-purple-600/90 hover:bg-purple-500 backdrop-blur-md text-white text-xs font-semibold transition-colors cursor-pointer shadow-md"
+                  title="Formulario Oficial de Evaluación y Cosecha (Google Forms)"
                 >
-                  <Download className="w-3.5 h-3.5 text-white" />
-                  <span>Cuaderno PDF</span>
-                </button>
+                  <ExternalLink className="w-3.5 h-3.5 text-white" />
+                  <span>Evaluación Forms</span>
+                </a>
 
                 <button
                   type="button"
@@ -478,15 +478,16 @@ export const PromotionalEventBanner: React.FC<PromotionalEventBannerProps> = ({
                 )}
               </button>
 
-              <button
-                type="button"
-                onClick={() => downloadWorkshopNotebookPdf(event)}
-                className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-full bg-emerald-600/90 hover:bg-emerald-500 backdrop-blur-md text-white text-xs font-semibold transition-colors cursor-pointer shadow-md"
-                title="Descargar Cuaderno y Memorias del Taller en formato PDF"
+              <a
+                href={event.googleFormsUrl || 'https://forms.gle/5Hiuxwq13n3gC3zt6'}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-full bg-purple-600/90 hover:bg-purple-500 backdrop-blur-md text-white text-xs font-semibold transition-colors cursor-pointer shadow-md"
+                title="Formulario Oficial de Evaluación y Cosecha (Google Forms)"
               >
-                <Download className="w-3.5 h-3.5 text-white" />
-                <span>Cuaderno PDF</span>
-              </button>
+                <ExternalLink className="w-3.5 h-3.5 text-white" />
+                <span>Evaluación Forms</span>
+              </a>
 
               <button
                 type="button"

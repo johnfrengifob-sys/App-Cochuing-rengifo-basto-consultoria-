@@ -184,13 +184,13 @@ export const EventContentSyllabusSection: React.FC<EventContentSyllabusSectionPr
       <div className="border-b border-gray-100 dark:border-neutral-800 pb-4">
         <div className="flex items-center gap-2 text-indigo-600 dark:text-indigo-400 font-semibold text-xs uppercase tracking-wider">
           <BookOpen className="w-4 h-4" />
-          <span>2. Definición del Contenido y Temario</span>
+          <span>Sección 2: Contenido y Temario</span>
         </div>
         <h3 className="text-lg font-bold text-black dark:text-white mt-1">
-          Estructura Pedagógica, Ejes de Indagación & Suministros
+          Bloques Temáticos & Estructuras de Indagación de la Sesión
         </h3>
         <p className="text-xs text-gray-500 dark:text-neutral-400 font-light mt-0.5">
-          Organiza los bloques temáticos, las preguntas reflexivas clave de la sesión y adjunta materiales de apoyo didácticos.
+          Organiza los bloques temáticos y las estructuras de indagación de la sesión con preguntas ontológicas clave y suministros didácticos.
         </p>
       </div>
 

@@ -34,6 +34,8 @@ import {
   ExternalLink,
   Radio,
   Workflow,
+  FileSpreadsheet,
+  Database,
 } from 'lucide-react';
 import {
   ProgramNodeInfo,
@@ -43,6 +45,7 @@ import {
   QuestionType,
 } from '../../types';
 import { OntologicalStore } from '../../services/store';
+import { FirestoreSyncService } from '../../services/firestoreSync';
 
 interface AdminSessionsManagerProps {
   onSelectClientForFicha?: (clientId: string) => void;
@@ -1682,13 +1685,13 @@ export const AdminSessionsManager: React.FC<AdminSessionsManagerProps> = ({
                   </div>
 
                   <p className="text-[11px] text-gray-500 dark:text-neutral-400 font-light">
-                    Pega el enlace de Google Forms para que el coachee complete su evaluación previa o posterior a la sesión.
+                    Pega el enlace de Google Forms para que el coachee complete su acuerdo co-creativo, bitácora o evaluación previa/posterior.
                   </p>
 
                   <div className="flex items-center gap-2">
                     <input
                       type="url"
-                      placeholder="https://docs.google.com/forms/d/e/.../viewform"
+                      placeholder="https://forms.gle/qYd64L1q521hD6Vj9"
                       value={formData.googleFormsUrl || ''}
                       onChange={(e) => setFormData({ ...formData, googleFormsUrl: e.target.value })}
                       className="flex-1 px-3.5 py-2 text-xs rounded-xl border border-gray-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-black dark:text-white font-mono placeholder:font-sans"
@@ -1704,6 +1707,121 @@ export const AdminSessionsManager: React.FC<AdminSessionsManagerProps> = ({
                       </button>
                     )}
                   </div>
+
+                  {/* Preajustes rápidos oficiales de Google Forms */}
+                  <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                    <span className="text-[10px] text-gray-400 font-medium mr-1">Preajustes oficiales:</span>
+                    <button
+                      type="button"
+                      onClick={() => setFormData({ ...formData, googleFormsUrl: 'https://forms.gle/qYd64L1q521hD6Vj9' })}
+                      className="px-2.5 py-1 text-[10px] rounded-lg bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 border border-indigo-200/60 dark:border-indigo-800/40 transition-colors"
+                    >
+                      Acuerdo Co-creativo Sesiones
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setFormData({ ...formData, googleFormsUrl: 'https://forms.gle/4N1x2K3z7g9fQ5wR8' })}
+                      className="px-2.5 py-1 text-[10px] rounded-lg bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 border border-indigo-200/60 dark:border-indigo-800/40 transition-colors"
+                    >
+                      Bitácora Sesiones B2B
+                    </button>
+                  </div>
+                </div>
+
+                {/* 2. Google Sheets */}
+                <div className="p-4 rounded-2xl border border-gray-200 dark:border-neutral-800 bg-gray-50/50 dark:bg-neutral-800/30 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="p-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400">
+                        <FileSpreadsheet className="w-3.5 h-3.5" />
+                      </div>
+                      <span className="text-xs font-bold text-black dark:text-white">
+                        Hoja de Google Sheets Vinculada
+                      </span>
+                    </div>
+                    {formData.googleSheetsUrl && (
+                      <a
+                        href={formData.googleSheetsUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 hover:underline"
+                      >
+                        <span>Abrir Hoja</span>
+                        <ExternalLink className="w-3 h-3" />
+                      </a>
+                    )}
+                  </div>
+
+                  <p className="text-[11px] text-gray-500 dark:text-neutral-400 font-light">
+                    Planilla de cálculo donde se almacenan las respuestas, acuerdos o bitácoras asociadas a este módulo.
+                  </p>
+
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="url"
+                      placeholder="https://docs.google.com/spreadsheets/d/1_9i5jB1j4sV61h8Wk3Y6W1J-k-B_bK7cK0o5tV8wR2M/edit"
+                      value={formData.googleSheetsUrl || ''}
+                      onChange={(e) => setFormData({ ...formData, googleSheetsUrl: e.target.value })}
+                      className="flex-1 px-3.5 py-2 text-xs rounded-xl border border-gray-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-black dark:text-white font-mono placeholder:font-sans"
+                    />
+                    {formData.googleSheetsUrl && (
+                      <button
+                        type="button"
+                        onClick={() => setFormData({ ...formData, googleSheetsUrl: '' })}
+                        className="px-2.5 py-2 text-xs text-gray-400 hover:text-rose-600 cursor-pointer"
+                        title="Limpiar enlace"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Preajustes rápidos oficiales de Google Sheets */}
+                  <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                    <span className="text-[10px] text-gray-400 font-medium mr-1">Preajustes oficiales:</span>
+                    <button
+                      type="button"
+                      onClick={() => setFormData({ ...formData, googleSheetsUrl: 'https://docs.google.com/spreadsheets/d/1_9i5jB1j4sV61h8Wk3Y6W1J-k-B_bK7cK0o5tV8wR2M/edit' })}
+                      className="px-2.5 py-1 text-[10px] rounded-lg bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 border border-emerald-200/60 dark:border-emerald-800/40 transition-colors"
+                    >
+                      Planilla Maestra Sesiones & Acuerdos
+                    </button>
+                  </div>
+                </div>
+
+                {/* 3. Estado de Integración con Firebase Firestore */}
+                <div className="p-3.5 rounded-2xl border border-emerald-200/60 dark:border-emerald-900/40 bg-emerald-50/40 dark:bg-emerald-950/20 flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="p-1.5 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 shrink-0">
+                      <Database className="w-4 h-4" />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-bold text-emerald-950 dark:text-emerald-200">
+                          Base de Datos Integrada en Firebase Firestore
+                        </span>
+                        <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300 font-semibold">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                          Colección programNodes
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-emerald-800/70 dark:text-emerald-300/70 truncate font-light mt-0.5">
+                        Al guardar, este módulo, sus Google Forms y Google Sheets se respaldan en la nube automáticamente.
+                      </p>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      if (!formData) return;
+                      await FirestoreSyncService.syncProgramNode(formData);
+                      showNotification(`Módulo ${formData.step} sincronizado directamente en Firebase.`);
+                    }}
+                    className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-[11px] font-bold shrink-0 transition-colors shadow-sm"
+                  >
+                    Sincronizar Nube
+                  </button>
                 </div>
 
                 {/* 2. Google Drive y Carpeta Compartida */}

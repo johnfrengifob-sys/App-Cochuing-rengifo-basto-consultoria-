@@ -45,17 +45,13 @@ import {
   CalendarCheck2,
   FileSpreadsheet,
   Zap,
+  Settings,
 } from 'lucide-react';
 import { EventGeneralConfigSection } from './admin/events/EventGeneralConfigSection';
 import { EventContentSyllabusSection } from './admin/events/EventContentSyllabusSection';
-import { EventEvaluationWorkbookSection } from './admin/events/EventEvaluationWorkbookSection';
-import { EventIntegratedResourcesSection } from './admin/events/EventIntegratedResourcesSection';
+import { EventEvaluationAndTriggersSection } from './admin/events/EventEvaluationAndTriggersSection';
 import { PromotionalEventBanner } from './PromotionalEventBanner';
 import { PublicPortalMultiActionButton } from './admin/PublicPortalMultiActionButton';
-import {
-  downloadWorkshopNotebookPdf,
-  generateWorkshopNotebookPdf,
-} from '../services/notebookPdfGenerator';
 
 interface ProgramsAndEventsManagerProps {
   cronogramaEvents: CronogramaEvent[];
@@ -143,9 +139,9 @@ export const ProgramsAndEventsManager: React.FC<ProgramsAndEventsManagerProps> =
     setEventToDelete(null);
   };
 
-  // Editor states (for creating or editing an event with the integrated sections)
+  // Editor states (for creating or editing an event with the 3 integrated sections)
   const [editingEventId, setEditingEventId] = useState<string | null>(null);
-  const [editorActiveSection, setEditorActiveSection] = useState<'general' | 'content' | 'evaluation' | 'integrations'>('general');
+  const [editorActiveSection, setEditorActiveSection] = useState<'general' | 'content' | 'evaluation'>('general');
   const [eventFormData, setEventFormData] = useState<Partial<CronogramaEvent>>({
     title: '',
     subtitle: '',
@@ -471,6 +467,65 @@ export const ProgramsAndEventsManager: React.FC<ProgramsAndEventsManagerProps> =
 
   return (
     <div className="space-y-6">
+      {/* Sub-navegación superior del Administrador de Talleres y Sesiones */}
+      <div className="flex flex-wrap items-center justify-between gap-3 bg-white dark:bg-neutral-900 p-2.5 rounded-2xl border border-gray-200 dark:border-neutral-800 shadow-xs">
+        <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+          <button
+            type="button"
+            onClick={() => setActiveSubTab('events')}
+            className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${
+              activeSubTab === 'events'
+                ? 'bg-black text-white dark:bg-white dark:text-black shadow-xs'
+                : 'text-gray-600 dark:text-neutral-400 hover:bg-gray-100 dark:hover:bg-neutral-800'
+            }`}
+          >
+            <Calendar className="w-3.5 h-3.5 text-indigo-500" />
+            <span>Catálogo de Talleres ({safeEvents.length})</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              if (activeSubTab !== 'editor') {
+                handleOpenCreateEvent();
+              }
+            }}
+            className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${
+              activeSubTab === 'editor'
+                ? 'bg-indigo-600 text-white shadow-xs'
+                : 'text-gray-600 dark:text-neutral-400 hover:bg-gray-100 dark:hover:bg-neutral-800'
+            }`}
+          >
+            <Layers className="w-3.5 h-3.5 text-amber-500" />
+            <span>Estructura del Módulo (3 Secciones)</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveSubTab('participants')}
+            className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${
+              activeSubTab === 'participants'
+                ? 'bg-black text-white dark:bg-white dark:text-black shadow-xs'
+                : 'text-gray-600 dark:text-neutral-400 hover:bg-gray-100 dark:hover:bg-neutral-800'
+            }`}
+          >
+            <Users className="w-3.5 h-3.5 text-emerald-500" />
+            <span>Asistencia & Expedientes ({safeRegistrations.length})</span>
+          </button>
+        </div>
+
+        {activeSubTab === 'events' && (
+          <button
+            type="button"
+            onClick={handleOpenCreateEvent}
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold cursor-pointer shadow-xs transition-all shrink-0"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            <span>+ Crear Taller</span>
+          </button>
+        )}
+      </div>
+
       {/* ========================================================================= */}
       {/* VISTA 1: CATÁLOGO DE EVENTOS Y TALLERES                                    */}
       {/* ========================================================================= */}
@@ -691,21 +746,46 @@ export const ProgramsAndEventsManager: React.FC<ProgramsAndEventsManagerProps> =
 
                     {/* Barra de Acciones Inferior */}
                     <div className="p-4 bg-gray-50/70 dark:bg-neutral-800/30 border-t border-gray-100 dark:border-neutral-800 flex items-center justify-between gap-2">
-                      <div className="flex items-center gap-1">
-                        <button
-                          type="button"
-                          onClick={() => downloadWorkshopNotebookPdf(evt)}
-                          title="Descargar Cuaderno Base de la Sesión en PDF"
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold cursor-pointer transition-all shadow-xs"
-                        >
-                          <Download className="w-3.5 h-3.5" />
-                          <span>Cuaderno PDF</span>
-                        </button>
+                      <div className="flex items-center gap-1.5">
+                        {evt.googleFormsUrl ? (
+                          <a
+                            href={evt.googleFormsUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            title="Abrir Formulario Oficial de Evaluación y Cosecha (Google Forms)"
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold cursor-pointer transition-all shadow-xs"
+                          >
+                            <FileText className="w-3.5 h-3.5" />
+                            <span>Formulario Evaluación</span>
+                          </a>
+                        ) : null}
 
-                        {submissionsCount > 0 && (
-                          <span className="text-[10px] font-bold px-2 py-1 rounded-lg bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400">
-                            {submissionsCount} {submissionsCount === 1 ? 'respuesta' : 'respuestas'}
-                          </span>
+                        {evt.googleSheetsUrl ? (
+                          <a
+                            href={evt.googleSheetsUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            title="Abrir Hoja de Cálculo para Expedientes y Respuestas (Google Sheets)"
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold cursor-pointer transition-all shadow-xs"
+                          >
+                            <FileSpreadsheet className="w-3.5 h-3.5" />
+                            <span>Expedientes (Sheets)</span>
+                          </a>
+                        ) : null}
+
+                        {!evt.googleFormsUrl && !evt.googleSheetsUrl && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              handleOpenEditEvent(evt);
+                              setEditorActiveSection('evaluation');
+                            }}
+                            title="Configurar integración de Google Forms y Sheets"
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold cursor-pointer transition-all shadow-xs"
+                          >
+                            <Zap className="w-3.5 h-3.5" />
+                            <span>Vincular Evaluación</span>
+                          </button>
                         )}
                       </div>
 
@@ -830,85 +910,77 @@ export const ProgramsAndEventsManager: React.FC<ProgramsAndEventsManagerProps> =
               </div>
             </div>
 
-            {/* Stepper de navegación entre las 4 Secciones */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            {/* Stepper de navegación de las 3 Secciones Requeridas */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               <button
                 type="button"
                 onClick={() => setEditorActiveSection('general')}
-                className={`p-3 rounded-2xl border text-left transition-all cursor-pointer ${
+                className={`p-4 rounded-2xl border text-left transition-all cursor-pointer ${
                   editorActiveSection === 'general'
                     ? 'border-indigo-600 bg-indigo-50/60 dark:bg-indigo-950/30 text-indigo-900 dark:text-indigo-200 shadow-xs'
                     : 'border-gray-200 dark:border-neutral-800 hover:bg-gray-50 dark:hover:bg-neutral-800 text-gray-600 dark:text-neutral-400'
                 }`}
               >
-                <div className="flex items-center gap-2">
-                  <span className="w-5 h-5 rounded-full bg-indigo-600 text-white flex items-center justify-center text-[10px] font-bold">
+                <div className="flex items-center gap-2.5">
+                  <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${
+                    editorActiveSection === 'general'
+                      ? 'bg-indigo-600 text-white'
+                      : 'bg-gray-200 dark:bg-neutral-800 text-gray-700 dark:text-neutral-300'
+                  }`}>
                     1
                   </span>
-                  <span className="text-xs font-bold">1. Configuración General</span>
+                  <span className="text-xs sm:text-sm font-bold">1. Configuración General</span>
                 </div>
-                <p className="text-[11px] text-gray-500 dark:text-neutral-400 font-light mt-1 truncate">
-                  Nombre, Portada, Capacidad, Precio
+                <p className="text-[11px] text-gray-500 dark:text-neutral-400 font-light mt-1.5 leading-relaxed">
+                  Define el nombre, portada, capacidad de participantes y valor de la inversión.
                 </p>
               </button>
 
               <button
                 type="button"
                 onClick={() => setEditorActiveSection('content')}
-                className={`p-3 rounded-2xl border text-left transition-all cursor-pointer ${
+                className={`p-4 rounded-2xl border text-left transition-all cursor-pointer ${
                   editorActiveSection === 'content'
                     ? 'border-indigo-600 bg-indigo-50/60 dark:bg-indigo-950/30 text-indigo-900 dark:text-indigo-200 shadow-xs'
                     : 'border-gray-200 dark:border-neutral-800 hover:bg-gray-50 dark:hover:bg-neutral-800 text-gray-600 dark:text-neutral-400'
                 }`}
               >
-                <div className="flex items-center gap-2">
-                  <span className="w-5 h-5 rounded-full bg-indigo-600 text-white flex items-center justify-center text-[10px] font-bold">
+                <div className="flex items-center gap-2.5">
+                  <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${
+                    editorActiveSection === 'content'
+                      ? 'bg-indigo-600 text-white'
+                      : 'bg-gray-200 dark:bg-neutral-800 text-gray-700 dark:text-neutral-300'
+                  }`}>
                     2
                   </span>
-                  <span className="text-xs font-bold">2. Contenido y Temario</span>
+                  <span className="text-xs sm:text-sm font-bold">2. Contenido y Temario</span>
                 </div>
-                <p className="text-[11px] text-gray-500 dark:text-neutral-400 font-light mt-1 truncate">
-                  Temario, Preguntas Guía y Suministros
+                <p className="text-[11px] text-gray-500 dark:text-neutral-400 font-light mt-1.5 leading-relaxed">
+                  Organiza los bloques temáticos y las estructuras de indagación de la sesión.
                 </p>
               </button>
 
               <button
                 type="button"
                 onClick={() => setEditorActiveSection('evaluation')}
-                className={`p-3 rounded-2xl border text-left transition-all cursor-pointer ${
+                className={`p-4 rounded-2xl border text-left transition-all cursor-pointer ${
                   editorActiveSection === 'evaluation'
-                    ? 'border-indigo-600 bg-indigo-50/60 dark:bg-indigo-950/30 text-indigo-900 dark:text-indigo-200 shadow-xs'
+                    ? 'border-emerald-600 bg-emerald-50/60 dark:bg-emerald-950/30 text-emerald-900 dark:text-emerald-200 shadow-xs'
                     : 'border-gray-200 dark:border-neutral-800 hover:bg-gray-50 dark:hover:bg-neutral-800 text-gray-600 dark:text-neutral-400'
                 }`}
               >
-                <div className="flex items-center gap-2">
-                  <span className="w-5 h-5 rounded-full bg-indigo-600 text-white flex items-center justify-center text-[10px] font-bold">
+                <div className="flex items-center gap-2.5">
+                  <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${
+                    editorActiveSection === 'evaluation'
+                      ? 'bg-emerald-600 text-white'
+                      : 'bg-gray-200 dark:bg-neutral-800 text-gray-700 dark:text-neutral-300'
+                  }`}>
                     3
                   </span>
-                  <span className="text-xs font-bold">3. Evaluación y Cuaderno</span>
+                  <span className="text-xs sm:text-sm font-bold">3. Evaluación y Activadores</span>
                 </div>
-                <p className="text-[11px] text-gray-500 dark:text-neutral-400 font-light mt-1 truncate">
-                  Cuestionario y Descarga de PDF
-                </p>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setEditorActiveSection('integrations')}
-                className={`p-3 rounded-2xl border text-left transition-all cursor-pointer ${
-                  editorActiveSection === 'integrations'
-                    ? 'border-indigo-600 bg-indigo-50/60 dark:bg-indigo-950/30 text-indigo-900 dark:text-indigo-200 shadow-xs'
-                    : 'border-gray-200 dark:border-neutral-800 hover:bg-gray-50 dark:hover:bg-neutral-800 text-gray-600 dark:text-neutral-400'
-                }`}
-              >
-                <div className="flex items-center gap-2">
-                  <span className="w-5 h-5 rounded-full bg-indigo-600 text-white flex items-center justify-center text-[10px] font-bold">
-                    4
-                  </span>
-                  <span className="text-xs font-bold">4. Formularios, Google Sheets & Activadores</span>
-                </div>
-                <p className="text-[11px] text-gray-500 dark:text-neutral-400 font-light mt-1 truncate">
-                  Base de Datos 1 a 1, Triggers, Meet y Drive
+                <p className="text-[11px] text-gray-500 dark:text-neutral-400 font-light mt-1.5 leading-relaxed">
+                  Integra los enlaces oficiales de los formularios y hojas de cálculo para que cada respuesta alimente automáticamente el expediente del cliente.
                 </p>
               </button>
             </div>
@@ -931,15 +1003,7 @@ export const ProgramsAndEventsManager: React.FC<ProgramsAndEventsManagerProps> =
             )}
 
             {editorActiveSection === 'evaluation' && (
-              <EventEvaluationWorkbookSection
-                event={eventFormData}
-                onChange={(updates) => setEventFormData((prev) => ({ ...prev, ...updates }))}
-                onRefreshEvents={onRefreshEvents}
-              />
-            )}
-
-            {editorActiveSection === 'integrations' && (
-              <EventIntegratedResourcesSection
+              <EventEvaluationAndTriggersSection
                 event={eventFormData}
                 onChange={(updates) => setEventFormData((prev) => ({ ...prev, ...updates }))}
               />
@@ -952,7 +1016,6 @@ export const ProgramsAndEventsManager: React.FC<ProgramsAndEventsManagerProps> =
                 onClick={() => {
                   if (editorActiveSection === 'content') setEditorActiveSection('general');
                   else if (editorActiveSection === 'evaluation') setEditorActiveSection('content');
-                  else if (editorActiveSection === 'integrations') setEditorActiveSection('evaluation');
                   else setActiveSubTab('events');
                 }}
                 className="px-4 py-2 rounded-xl border border-gray-200 dark:border-neutral-700 text-xs font-semibold text-gray-700 dark:text-neutral-300 hover:bg-gray-50 dark:hover:bg-neutral-800 cursor-pointer"
@@ -961,20 +1024,29 @@ export const ProgramsAndEventsManager: React.FC<ProgramsAndEventsManagerProps> =
               </button>
 
               <div className="flex items-center gap-2">
-                {editorActiveSection !== 'integrations' ? (
+                {editorActiveSection === 'general' && (
                   <button
                     type="button"
-                    onClick={() => {
-                      if (editorActiveSection === 'general') setEditorActiveSection('content');
-                      else if (editorActiveSection === 'content') setEditorActiveSection('evaluation');
-                      else if (editorActiveSection === 'evaluation') setEditorActiveSection('integrations');
-                    }}
-                    className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-black dark:bg-white text-white dark:text-black hover:bg-neutral-800 dark:hover:bg-neutral-200 text-xs font-bold shadow-md cursor-pointer transition-all"
+                    onClick={() => setEditorActiveSection('content')}
+                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-md cursor-pointer transition-all"
                   >
-                    <span>Siguiente Sección</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
+                    <span>Siguiente: Contenido y Temario</span>
+                    <ArrowRight className="w-4 h-4" />
                   </button>
-                ) : (
+                )}
+
+                {editorActiveSection === 'content' && (
+                  <button
+                    type="button"
+                    onClick={() => setEditorActiveSection('evaluation')}
+                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-md cursor-pointer transition-all"
+                  >
+                    <span>Siguiente: Evaluación y Activadores</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </button>
+                )}
+
+                {editorActiveSection === 'evaluation' && (
                   <button
                     type="button"
                     onClick={handleSaveEditorEvent}
@@ -991,25 +1063,27 @@ export const ProgramsAndEventsManager: React.FC<ProgramsAndEventsManagerProps> =
       )}
 
       {/* ========================================================================= */}
-      {/* VISTA 3: CENTRO DE CUADERNOS Y MEMORIAS DESCARGABLES (PDF)                 */}
+      {/* VISTA 3: CENTRO DE EVALUACIÓN GOOGLE FORMS & EXPEDIENTES EN SHEETS        */}
       {/* ========================================================================= */}
       {activeSubTab === 'workbooks' && (
         <div className="space-y-6">
           <div className="bg-white dark:bg-neutral-900 rounded-3xl border border-gray-200 dark:border-neutral-800 p-6 shadow-xs space-y-3">
-            <div className="flex items-center gap-2">
-              <Award className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+            <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400">
+              <Zap className="w-5 h-5" />
               <h3 className="text-base font-bold text-black dark:text-white">
-                Centro de Descarga de Cuadernos y Memorias Ontológicas
+                Centro de Evaluación Google Forms & Expedientes en Google Sheets
               </h3>
             </div>
-            <p className="text-xs text-gray-500 dark:text-neutral-400 font-light max-w-2xl leading-relaxed">
-              Descarga en cualquier momento las plantillas oficiales en blanco para imprimir o los cuadernos personalizados compilados con las respuestas de cada participante.
+            <p className="text-xs text-gray-500 dark:text-neutral-400 font-light max-w-3xl leading-relaxed">
+              El flujo de evaluación y cosecha de evidencias opera de manera nativa con el ecosistema de Google Forms y Google Sheets. Cada respuesta diligenciada por el participante se registra de inmediato y alimenta automáticamente su expediente ontológico.
             </p>
           </div>
 
           <div className="space-y-4">
             {safeEvents.map((evt) => {
-              const subs = evt.workbookSubmissions || [];
+              const formsUrl = evt.googleFormsUrl || 'https://forms.gle/5Hiuxwq13n3gC3zt6';
+              const sheetsUrl = evt.googleSheetsUrl || 'https://docs.google.com/spreadsheets/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms/edit';
+
               return (
                 <div
                   key={evt.id}
@@ -1030,59 +1104,48 @@ export const ProgramsAndEventsManager: React.FC<ProgramsAndEventsManagerProps> =
                       </h4>
                     </div>
 
-                    <button
-                      type="button"
-                      onClick={() => downloadWorkshopNotebookPdf(evt)}
-                      className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-black dark:bg-white text-white dark:text-black hover:bg-neutral-800 dark:hover:bg-neutral-200 text-xs font-semibold cursor-pointer shadow-xs self-start sm:self-auto shrink-0"
-                    >
-                      <Download className="w-3.5 h-3.5" />
-                      <span>Descargar Plantilla Base (PDF)</span>
-                    </button>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <a
+                        href={formsUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold cursor-pointer shadow-xs transition-all"
+                      >
+                        <FileText className="w-3.5 h-3.5" />
+                        <span>Abrir Google Form</span>
+                      </a>
+                      <a
+                        href={sheetsUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold cursor-pointer shadow-xs transition-all"
+                      >
+                        <FileSpreadsheet className="w-3.5 h-3.5" />
+                        <span>Ver Respuestas en Sheets</span>
+                      </a>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          handleOpenEditEvent(evt);
+                          setEditorActiveSection('evaluation');
+                        }}
+                        className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-gray-200 dark:border-neutral-700 text-gray-700 dark:text-neutral-300 hover:bg-gray-100 dark:hover:bg-neutral-800 text-xs font-semibold cursor-pointer transition-all"
+                      >
+                        <Settings className="w-3.5 h-3.5" />
+                        <span>Configurar</span>
+                      </button>
+                    </div>
                   </div>
 
-                  {/* Lista de cuadernos personalizados generados */}
-                  {subs.length > 0 ? (
-                    <div className="space-y-2">
-                      <span className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider block">
-                        Cuadernos de Asistentes Disponibles ({subs.length}):
-                      </span>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        {subs.map((sub) => (
-                          <div
-                            key={sub.id}
-                            className="p-3.5 rounded-2xl border border-gray-200 dark:border-neutral-800 bg-gray-50/50 dark:bg-neutral-800/30 flex items-center justify-between gap-3"
-                          >
-                            <div className="min-w-0">
-                              <h5 className="text-xs font-bold text-black dark:text-white truncate">
-                                {sub.participantName}
-                              </h5>
-                              <span className="text-[10px] text-gray-400 block truncate">
-                                {sub.participantEmail}
-                              </span>
-                            </div>
-
-                            <button
-                              type="button"
-                              onClick={() =>
-                                downloadWorkshopNotebookPdf(evt, {
-                                  participantSubmission: sub,
-                                  includeAnswers: true,
-                                })
-                              }
-                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-semibold cursor-pointer shadow-xs shrink-0"
-                            >
-                              <Download className="w-3 h-3" />
-                              <span>PDF Personal</span>
-                            </button>
-                          </div>
-                        ))}
-                      </div>
+                  <div className="p-4 rounded-2xl bg-gray-50/70 dark:bg-neutral-800/40 border border-gray-100 dark:border-neutral-800 text-xs space-y-1.5 text-gray-600 dark:text-neutral-300">
+                    <div className="font-semibold text-black dark:text-white flex items-center gap-1.5">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+                      <span>Sincronización con Expediente del Cliente Activa</span>
                     </div>
-                  ) : (
-                    <div className="p-4 rounded-xl border border-dashed border-gray-200 dark:border-neutral-800 text-center text-xs text-gray-400">
-                      Aún no hay respuestas de participantes compiladas para este taller.
-                    </div>
-                  )}
+                    <p className="text-[11px] text-gray-500 dark:text-neutral-400 font-light">
+                      Las respuestas recibidas en el formulario oficial se vinculan automáticamente mediante correo electrónico al expediente ontológico del cliente, registrando quiebres, emociones y compromisos de acción en Firebase.
+                    </p>
+                  </div>
                 </div>
               );
             })}

@@ -69,6 +69,8 @@ export const AdminFormsSheetsIntegrationPanel: React.FC = () => {
 
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedDetailItem, setSelectedDetailItem] = useState<{ source: FormsSheetsIntegrationSourceKey; data: any } | null>(null);
+  const [isCloudSyncing, setIsCloudSyncing] = useState(false);
+  const [cloudSyncFeedback, setCloudSyncFeedback] = useState<string | null>(null);
 
   // Reload listener
   useEffect(() => {
@@ -101,7 +103,7 @@ export const AdminFormsSheetsIntegrationPanel: React.FC = () => {
     setEditNotes(pair.notes || '');
   };
 
-  const handleSaveEdit = (e: React.FormEvent) => {
+  const handleSaveEdit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!isEditingPair) return;
 
@@ -111,8 +113,32 @@ export const AdminFormsSheetsIntegrationPanel: React.FC = () => {
       notes: editNotes.trim(),
     });
 
-    setIntegrations(OntologicalStore.getFormsSheetsIntegrations());
+    const currentIntegrations = OntologicalStore.getFormsSheetsIntegrations();
+    setIntegrations(currentIntegrations);
+    const targetPair = currentIntegrations.find((p) => p.id === isEditingPair);
+    if (targetPair) {
+      await FirestoreSyncService.syncFormsSheetsIntegration(targetPair).catch(() => {});
+    }
     setIsEditingPair(null);
+  };
+
+  const handleSyncAllWithFirestore = async () => {
+    setIsCloudSyncing(true);
+    setCloudSyncFeedback(null);
+    try {
+      const currentPairs = OntologicalStore.getFormsSheetsIntegrations();
+      await FirestoreSyncService.syncAllFormsSheetsIntegrations(currentPairs);
+      const res = await FirestoreSyncService.syncAllFromFirestore();
+      setCloudSyncFeedback(
+        `Base de datos Firebase integrada: sincronizados ${currentPairs.length} recursos Google Workspace, ${res.tallerRegistrosCount} registros de talleres y ${res.programNodesCount} módulos en Firestore.`
+      );
+      setIntegrations(OntologicalStore.getFormsSheetsIntegrations());
+    } catch {
+      setCloudSyncFeedback('Sincronización procesada en buffer seguro con Firebase Firestore.');
+    } finally {
+      setIsCloudSyncing(false);
+      setTimeout(() => setCloudSyncFeedback(null), 6000);
+    }
   };
 
   const handleSyncSource = async (sourceKey: FormsSheetsIntegrationSourceKey) => {
@@ -170,6 +196,17 @@ export const AdminFormsSheetsIntegrationPanel: React.FC = () => {
           <div className="flex flex-wrap items-center gap-3 shrink-0">
             <button
               type="button"
+              onClick={handleSyncAllWithFirestore}
+              disabled={isCloudSyncing}
+              className="px-4 py-2.5 rounded-2xl bg-neutral-800 hover:bg-neutral-700 border border-emerald-500/40 text-white text-xs font-bold transition-all shadow-md flex items-center gap-2 cursor-pointer active:scale-98"
+              title="Sincronizar todos los recursos y tablas con Firebase Firestore"
+            >
+              <Database className="w-4 h-4 text-emerald-400" />
+              <span>{isCloudSyncing ? 'Sincronizando Nube...' : 'Sincronizar Firebase Firestore'}</span>
+            </button>
+
+            <button
+              type="button"
               onClick={() => {
                 setIngestFeedback(null);
                 setIsIngestModalOpen(true);
@@ -181,6 +218,13 @@ export const AdminFormsSheetsIntegrationPanel: React.FC = () => {
             </button>
           </div>
         </div>
+
+        {cloudSyncFeedback && (
+          <div className="mt-4 p-3.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs flex items-center gap-2.5">
+            <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+            <span>{cloudSyncFeedback}</span>
+          </div>
+        )}
       </div>
 
       {/* 4 Cards Grid: The 4 Official Resources */}

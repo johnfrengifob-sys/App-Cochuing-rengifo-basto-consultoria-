@@ -160,6 +160,18 @@ export default function App() {
       refreshUsers();
     });
 
+    const unsubFormsSheets = FirestoreSyncService.subscribeToFormsSheetsIntegrations((remoteIntegrations) => {
+      OntologicalStore.mergeFormsSheetsIntegrationsFromFirestore(remoteIntegrations);
+    });
+
+    const unsubTalleres = FirestoreSyncService.subscribeToTallerRegistros((remoteTalleres) => {
+      OntologicalStore.mergeTallerRegistrosFromFirestore(remoteTalleres);
+    });
+
+    const unsubProgramNodes = FirestoreSyncService.subscribeToProgramNodes((remoteNodes) => {
+      OntologicalStore.mergeProgramNodesFromFirestore(remoteNodes);
+    });
+
     // Initial sync sweep from Firestore and persistent server database
     FirestoreSyncService.syncAllFromFirestore()
       .then(({ usersCount, regsCount }) => {
@@ -326,6 +338,9 @@ export default function App() {
       window.removeEventListener('rbc-event-registrations-updated', handleStoreRegsUpdated);
       unsubUsers();
       unsubRegs();
+      unsubFormsSheets();
+      unsubTalleres();
+      unsubProgramNodes();
       unsubscribeAuth();
     };
   }, []);

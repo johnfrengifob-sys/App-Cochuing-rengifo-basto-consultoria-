@@ -1848,6 +1848,30 @@ export class OntologicalStore {
     PROGRAM_NODES.length = 0;
     PROGRAM_NODES.push(...nodes);
     try {
+      FirestoreSyncService.syncAllProgramNodes(nodes).catch(() => {});
+    } catch {
+      // safe fallback
+    }
+    try {
+      window.dispatchEvent(new CustomEvent('rbc-program-nodes-updated'));
+    } catch {
+      // ignore
+    }
+  }
+
+  static mergeProgramNodesFromFirestore(remoteNodes: ProgramNodeInfo[]): void {
+    if (!Array.isArray(remoteNodes) || remoteNodes.length === 0) return;
+    const current = this.getProgramNodes();
+    const map = new Map<number, ProgramNodeInfo>();
+    remoteNodes.forEach((n) => map.set(n.step, n));
+    current.forEach((c) => {
+      if (!map.has(c.step)) map.set(c.step, c);
+    });
+    const merged = Array.from(map.values()).sort((a, b) => a.step - b.step);
+    this.save(STORAGE_KEYS.PROGRAM_NODES, merged);
+    PROGRAM_NODES.length = 0;
+    PROGRAM_NODES.push(...merged);
+    try {
       window.dispatchEvent(new CustomEvent('rbc-program-nodes-updated'));
     } catch {
       // ignore
