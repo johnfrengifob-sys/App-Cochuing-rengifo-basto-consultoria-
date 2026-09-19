@@ -16,20 +16,21 @@ import { Header } from './components/Header';
 import { LoginView } from './components/LoginView';
 import { EventRegistrationLanding } from './components/EventRegistrationLanding';
 import whiteWavesBg from './assets/images/white_waves_bg_1788461168119.jpg';
+import { lazyWithRetry } from './utils/lazyWithRetry';
 
-// Lazy load heavy authenticated dashboard views and secondary modals
-const ClientDashboard = lazy(() =>
+// Lazy load heavy authenticated dashboard views and secondary modals with auto-retry resilience
+const ClientDashboard = lazyWithRetry(() =>
   import('./components/ClientDashboard').then((m) => ({ default: m.ClientDashboard }))
 );
-const CoachDashboard = lazy(() =>
+const CoachDashboard = lazyWithRetry(() =>
   import('./components/CoachDashboard').then((m) => ({ default: m.CoachDashboard }))
 );
-const WebhookConfigModal = lazy(() =>
+const WebhookConfigModal = lazyWithRetry(() =>
   import('./components/WebhookConfigModal').then((m) => ({
     default: m.WebhookConfigModal,
   }))
 );
-const VideoConferenceModal = lazy(() =>
+const VideoConferenceModal = lazyWithRetry(() =>
   import('./components/VideoConferenceModal').then((m) => ({
     default: m.VideoConferenceModal,
   }))

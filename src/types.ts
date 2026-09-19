@@ -10,6 +10,7 @@ export interface User {
   uid: string;
   id?: string;
   name: string;
+  displayName?: string;
   email: string;
   role: UserRole;
   avatarUrl: string;
@@ -138,9 +139,16 @@ export interface Session {
   unlockedPaymentPlan?: 'level' | 'full';
   durationMinutes?: number;
   programNodeStep?: number;
+  scheduledDate?: string;
+  scheduledTime?: string;
   keyInsights?: string[];
   actionAgreements?: string[];
   somaticFocus?: string;
+  googleFormsUrl?: string;
+  googleSheetsUrl?: string;
+  formsIntegrationId?: string;
+  agreementFormUrl?: string;
+  bitacoraFormUrl?: string;
 }
 
 export interface PostSessionForm {

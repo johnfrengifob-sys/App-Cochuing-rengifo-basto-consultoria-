@@ -1948,6 +1948,11 @@ export class OntologicalStore {
           description: 'Declaración de acuerdos y micro-práctica de integración.',
         },
       ],
+      googleFormsUrl: nodeData.googleFormsUrl || '',
+      googleSheetsUrl: nodeData.googleSheetsUrl || '',
+      googleDriveFolderUrl: nodeData.googleDriveFolderUrl || '',
+      triggersEnabled: nodeData.triggersEnabled ?? true,
+      experienceToolEnabled: nodeData.experienceToolEnabled ?? true,
     };
     nodes.push(newNode);
     this.saveProgramNodes(nodes);

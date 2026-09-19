@@ -27,14 +27,20 @@ export class ErrorBoundary extends Component<Props, State> {
       error?.message?.includes('Importing a module script failed') ||
       error?.name === 'ChunkLoadError';
 
-    if (isChunkError && !sessionStorage.getItem('chunk_error_reloaded')) {
-      sessionStorage.setItem('chunk_error_reloaded', 'true');
-      window.location.reload();
+    if (isChunkError) {
+      const lastReload = Number(sessionStorage.getItem('chunk_error_reloaded_ts') || '0');
+      const now = Date.now();
+      if (now - lastReload > 10000) {
+        sessionStorage.setItem('chunk_error_reloaded_ts', String(now));
+        window.location.reload();
+      }
     }
   }
 
   private handleReset = () => {
     sessionStorage.removeItem('chunk_error_reloaded');
+    sessionStorage.removeItem('chunk_error_reloaded_ts');
+    sessionStorage.removeItem('chunk_retry_reload_ts');
     this.setState({ hasError: false, error: null });
     window.location.reload();
   };
