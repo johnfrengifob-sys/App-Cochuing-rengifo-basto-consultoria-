@@ -50,6 +50,11 @@ import {
   MASTER_PROGRAM_RAIZ_BALANCE,
 } from '../data/raizBalanceWorkshops';
 import { INITIAL_EXPERIENCES, DEFAULT_UNIVERSAL_BLOCK_TEMPLATES } from '../data/initialExperiences';
+import {
+  OFFICIAL_FORMS_SHEETS_BASE_LIST,
+  isIntegrationListModifiedFromCodeBase,
+  isPairModifiedFromCodeBase,
+} from '../data/officialFormsSheetsBase';
 import { getEmailAvatarUrl } from '../utils/avatar';
 
 export { getEmailAvatarUrl };
@@ -6174,129 +6179,80 @@ Rengifo Basto Consultoría Ontológica`;
   }
 
   // =========================================================================
-  // GESTIÓN DE LAS 4 FUENTES: GOOGLE FORMS & GOOGLE SHEETS
+  // GESTIÓN DE LAS 4 FUENTES: GOOGLE FORMS & GOOGLE SHEETS (BASE ANCLADA EN CÓDIGO)
   // =========================================================================
 
-  public static readonly DEFAULT_FORMS_SHEETS_PAIRS: FormsSheetsIntegrationPair[] = [
-    {
-      id: 'talleres_registro',
-      title: 'Talleres (Registro General)',
-      category: 'Talleres',
-      moduleTarget: 'workshops',
-      formUrl: 'https://forms.gle/H5gLF1KBzPnKsBWq7',
-      sheetUrl: 'https://docs.google.com/spreadsheets/d/1RBC_Talleres_Registro_General_2026/edit',
-      sheetGid: '0',
-      sheetHeaders: [
-        'Marca temporal',
-        'Dirección de correo electrónico',
-        'Nombre del Participante',
-        'Teléfono / WhatsApp',
-        'Me comprometo a respetar la confidencialidad compartida del grupo (Lo que se habla en el taller, se queda en el taller',
-        'Comprendo y acepto el uso de herramientas tecnológicas y de IA como soporte administrativo y de registro del taller.',
-        'Autorizo el cumplimiento de los acuerdos de convivencia y los estándares éticos del espacio.',
-      ],
-      status: 'connected',
-      lastSyncedAt: new Date().toISOString(),
-      recordsCount: 3,
-      notes: 'Registro general oficial de participantes a talleres ontológicos presenciales y virtuales.',
-      webhookUrl: '/api/integrations/forms-sheets/ingest/talleres_registro',
-    },
-    {
-      id: 'sesiones_individuales',
-      title: 'Sesiones Individuales (Acuerdo Co-creativo)',
-      category: 'Sesiones Individuales',
-      moduleTarget: 'sessions',
-      formUrl: 'https://forms.gle/dfStXtTyb1MW6W5K9',
-      sheetUrl: 'https://docs.google.com/spreadsheets/d/1RBC_Sesiones_Individuales_Acuerdo_2026/edit',
-      sheetGid: '0',
-      sheetHeaders: [
-        'Marca temporal',
-        'Dirección de correo electrónico',
-        'Nombre completo y Apellidos',
-        'Número de contacto / WhatsApp',
-        'Comprendo que el coaching no es terapia, mentoría, consultoría ni asesoría, sino un proceso de asociación creativa que busca maximizar mi potencial personal y profesional.',
-        'Reconozco que los resultados dependen de mi nivel de compromiso, apertura e implementación de las acciones que co-cree durante las sesiones.',
-        'Autorizo el uso de herramientas tecnológicas y sistemas automatizados de apoyo (generación de bitácoras, resúmenes o actas de seguimiento) bajo estricta confidencialidad.',
-        'Comprendo y acepto que ninguna decisión del proceso de coaching, análisis reflexivo profundo o intervención de valor es generada o sustituida por Inteligencia Artificial; la IA se limita exclusivamente a funciones de soporte administrativo, transcripción o gestión documental.',
-        'Entiendo que la información compartida es estrictamente confidencial entre el coach y el participante. Las únicas excepciones aplican bajo riesgo inminente para la vida del participante o de terceros, o por mandato legal explícito',
-        'Para validar digitalmente este acuerdo, escribe tu Nombre Completo y Número de Documento de Identidad, lo cual equivaldrá a tu firma legal y aceptación de los términos aquí expuestos.',
-        'Merged Doc ID - Acuerdo Co-creativo de Trabajo Sesiones',
-        'Merged Doc URL - Acuerdo Co-creativo de Trabajo Sesiones',
-        'Link to merged Doc - Acuerdo Co-creativo de Trabajo Sesiones',
-        'Document Merge Status - Acuerdo Co-creativo de Trabajo Sesiones',
-      ],
-      status: 'connected',
-      lastSyncedAt: new Date().toISOString(),
-      recordsCount: 2,
-      notes: 'Acuerdo legal co-creativo, firma digital con documento de identidad y límites ontológicos de la IA.',
-      webhookUrl: '/api/integrations/forms-sheets/ingest/sesiones_individuales',
-    },
-    {
-      id: 'bitacora_sesiones_b2b',
-      title: 'Bitácora Sesiones B2B',
-      category: 'Bitácora B2B',
-      moduleTarget: 'sessions',
-      formUrl: 'https://forms.gle/APUFto8sGbJt322WA',
-      sheetUrl: 'https://docs.google.com/spreadsheets/d/1RBC_Bitacora_Sesiones_B2B_2026/edit',
-      sheetGid: '0',
-      sheetHeaders: [
-        'Marca temporal',
-        'Dirección de correo electrónico',
-        'Cuál es tu Nombre completo',
-        'Ciudad',
-        '¿Cuál es el desafío, situación o tema central que eliges trabajar en nuestra sesión de hoy?',
-        '¿Qué emoción principal estuvo presente al abordar este tema y qué mensaje sientes que te traía?',
-        '¿Qué ideas, juicios o historias repetitivas sobre ti o sobre esta situación descubriste que te están limitando?',
-        '¿Qué "darse cuenta" (descubrimiento o nueva perspectiva) te llevas de ti mismo tras esta conversación?',
-        'Si miras este proceso como un llamado a encontrar equilibrio, ¿qué parte de ti o de tu entorno necesita mayor atención hoy?',
-        '¿Cuál es el aprendizaje más valioso que te regalas al finalizar este espacio?',
-        '¿Qué acción concreta, alineada con tus compromisos, te llevarás para realizar antes de nuestra próxima sesión?',
-        'Para validar que podemos utilizar esta information para hacer un registro detallado de tu progreso, escribe tu Nombre Completo y Número de Documento de Identidad, lo cual equivaldrá a tu firma legal y aceptación de los términos aquí expuestos.',
-      ],
-      status: 'connected',
-      lastSyncedAt: new Date().toISOString(),
-      recordsCount: 2,
-      notes: 'Bitácora ejecutiva directiva B2B: quiebre, corporalidad emocional, juicios maestros, darse cuenta y acción comprometida.',
-      webhookUrl: '/api/integrations/forms-sheets/ingest/bitacora_sesiones_b2b',
-    },
-    {
-      id: 'bitacora_talleres',
-      title: 'Bitácora Talleres',
-      category: 'Bitácora Talleres',
-      moduleTarget: 'workshops',
-      formUrl: 'https://forms.gle/5Hiuxwq13n3gC3zt6',
-      sheetUrl: 'https://docs.google.com/spreadsheets/d/1RBC_Bitacora_Talleres_2026/edit',
-      sheetGid: '0',
-      sheetHeaders: [
-        'Marca temporal',
-        'Nivel Taller',
-        'Tu Nombre',
-        'Ciudad',
-        'Dirección de correo electrónico',
-        '¿Qué tema, situación o reto personal quieres poner sobre la mesa en este espacio?',
-        '¿Qué emoción predominante traes al espacio y qué te está diciendo?',
-        '¿Qué ideas o "verdades" sobre ti o sobre esta situación te estás repitiendo con más fuerza?',
-        '¿Qué nueva perspectiva o "descubrimiento" te llevas de ti mismo tras esta exploración?',
-        'Si esta situación fuera un mensaje sobre lo que necesitas equilibrar en tu vida, ¿cuál dirías que es?',
-        '¿Cuál es el aprendizaje más valioso que te regalas de este espacio?',
-        '¿Qué acción concreta, sencilla pero retadora, te comprometes a realizar antes de nuestro próximo encuentro?',
-        'Para validar digitalmente la lectura de esta information por nuestro equipo, escribe tu Nombre Completo y Número de Documento de Identidad, lo cual equivaldrá a tu firma legal y aceptación de los términos aquí expuestos.',
-      ],
-      status: 'connected',
-      lastSyncedAt: new Date().toISOString(),
-      recordsCount: 2,
-      notes: 'Bitácora post-taller grupal e individual con nivel ontológico, verdades limitantes y reto transformacional.',
-      webhookUrl: '/api/integrations/forms-sheets/ingest/bitacora_talleres',
-    },
-  ];
+  /**
+   * Base canónica oficial anclada permanentemente en el código fuente.
+   * La aplicación siempre puede volver a esta base original o ser personalizada.
+   */
+  public static readonly DEFAULT_FORMS_SHEETS_PAIRS: FormsSheetsIntegrationPair[] = OFFICIAL_FORMS_SHEETS_BASE_LIST;
 
   public static getFormsSheetsIntegrations(): FormsSheetsIntegrationPair[] {
     const raw = this.load<FormsSheetsIntegrationPair[]>('rbc_forms_sheets_integrations', []);
     if (raw && Array.isArray(raw) && raw.length > 0) {
-      return raw;
+      let changed = false;
+      const merged = this.DEFAULT_FORMS_SHEETS_PAIRS.map((defPair) => {
+        const existing = raw.find((r) => r.id === defPair.id);
+        if (!existing) {
+          changed = true;
+          return defPair;
+        }
+        const isOutdated =
+          existing.title !== defPair.title ||
+          JSON.stringify(existing.sheetHeaders) !== JSON.stringify(defPair.sheetHeaders);
+        if (isOutdated) {
+          changed = true;
+        }
+        return {
+          ...defPair,
+          ...existing,
+          title: defPair.title,
+          formUrl: existing.formUrl || defPair.formUrl,
+          sheetUrl: existing.sheetUrl || defPair.sheetUrl,
+          sheetHeaders: defPair.sheetHeaders,
+          category: defPair.category,
+          notes: existing.notes || defPair.notes,
+        };
+      });
+      if (changed) {
+        this.save('rbc_forms_sheets_integrations', merged);
+      }
+      return merged;
     }
     this.save('rbc_forms_sheets_integrations', this.DEFAULT_FORMS_SHEETS_PAIRS);
     return this.DEFAULT_FORMS_SHEETS_PAIRS;
+  }
+
+  /**
+   * Restablece de manera inmediata la base de datos de Google Forms & Sheets
+   * a la configuración canónica anclada permanentemente en el código fuente.
+   */
+  public static resetFormsSheetsToCodeBase(): FormsSheetsIntegrationPair[] {
+    const basePairs = this.DEFAULT_FORMS_SHEETS_PAIRS.map((pair) => ({
+      ...pair,
+      lastSyncedAt: new Date().toISOString(),
+    }));
+    this.save('rbc_forms_sheets_integrations', basePairs);
+    basePairs.forEach((pair) => {
+      FirestoreSyncService.syncFormsSheetsIntegration(pair).catch(() => {});
+    });
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('rbc-forms-sheets-updated'));
+    }
+    return basePairs;
+  }
+
+  /**
+   * Determina si las configuraciones actuales difieren del código base oficial.
+   */
+  public static isFormsSheetsModifiedFromCodeBase(): boolean {
+    const current = this.getFormsSheetsIntegrations();
+    return isIntegrationListModifiedFromCodeBase(current);
+  }
+
+  public static isSinglePairModifiedFromCodeBase(pair: FormsSheetsIntegrationPair): boolean {
+    return isPairModifiedFromCodeBase(pair);
   }
 
   public static getFormsSheetsIntegration(id: FormsSheetsIntegrationSourceKey): FormsSheetsIntegrationPair | undefined {
@@ -6460,6 +6416,15 @@ Rengifo Basto Consultoría Ontológica`;
     return newEntry;
   }
 
+  public static deleteSesionIndividualAcuerdo(id: string): void {
+    const list = this.getSesionIndividualAcuerdos().filter((item) => item.id !== id);
+    this.save('rbc_sesion_individual_acuerdos', list);
+    this.updateFormsSheetsCount('sesiones_individuales', list.length);
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('rbc-forms-sheets-data-updated'));
+    }
+  }
+
   // 3. Bitácora Sesiones B2B
   public static getBitacorasSesionesB2B(): BitacoraSesionB2BEntry[] {
     const raw = this.load<BitacoraSesionB2BEntry[]>('rbc_bitacoras_sesiones_b2b', []);
@@ -6515,6 +6480,15 @@ Rengifo Basto Consultoría Ontológica`;
       window.dispatchEvent(new CustomEvent('rbc-forms-sheets-data-updated'));
     }
     return newEntry;
+  }
+
+  public static deleteBitacoraSesionB2B(id: string): void {
+    const list = this.getBitacorasSesionesB2B().filter((item) => item.id !== id);
+    this.save('rbc_bitacoras_sesiones_b2b', list);
+    this.updateFormsSheetsCount('bitacora_sesiones_b2b', list.length);
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('rbc-forms-sheets-data-updated'));
+    }
   }
 
   // 4. Bitácora Talleres
@@ -6574,6 +6548,15 @@ Rengifo Basto Consultoría Ontológica`;
       window.dispatchEvent(new CustomEvent('rbc-forms-sheets-data-updated'));
     }
     return newEntry;
+  }
+
+  public static deleteBitacoraTaller(id: string): void {
+    const list = this.getBitacorasTalleres().filter((item) => item.id !== id);
+    this.save('rbc_bitacoras_talleres', list);
+    this.updateFormsSheetsCount('bitacora_talleres', list.length);
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('rbc-forms-sheets-data-updated'));
+    }
   }
 
   private static updateFormsSheetsCount(sourceKey: FormsSheetsIntegrationSourceKey, count: number): void {
@@ -6919,6 +6902,34 @@ Rengifo Basto Consultoría Ontológica`;
     let count = 0;
     const errors: string[] = [];
 
+    // Helper to parse CSV/TSV row respecting quoted fields with commas
+    const parseDelimitedRow = (text: string): string[] => {
+      if (text.includes('\t')) {
+        return text.split('\t').map((c) => c.replace(/^["']|["']$/g, '').trim());
+      }
+      const result: string[] = [];
+      let cur = '';
+      let inQuotes = false;
+      for (let i = 0; i < text.length; i++) {
+        const char = text[i];
+        if (char === '"') {
+          if (inQuotes && text[i + 1] === '"') {
+            cur += '"';
+            i++;
+          } else {
+            inQuotes = !inQuotes;
+          }
+        } else if (char === ',' && !inQuotes) {
+          result.push(cur.trim());
+          cur = '';
+        } else {
+          cur += char;
+        }
+      }
+      result.push(cur.trim());
+      return result;
+    };
+
     // Check if first row is header
     const firstLine = lines[0].toLowerCase();
     const hasHeader =
@@ -6930,9 +6941,7 @@ Rengifo Basto Consultoría Ontológica`;
 
     for (let index = 0; index < dataRows.length; index++) {
       const row = dataRows[index];
-      // Split by tab or comma (handling basic csv)
-      const delimiter = row.includes('\t') ? '\t' : ',';
-      const cols = row.split(delimiter).map((c) => c.replace(/^"|"$/g, '').trim());
+      const cols = parseDelimitedRow(row);
 
       try {
         if (sourceKey === 'talleres_registro') {

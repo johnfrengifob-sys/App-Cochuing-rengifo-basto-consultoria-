@@ -33,6 +33,11 @@ import {
   BitacoraSesionB2BEntry,
   BitacoraTallerEntry,
 } from '../../types';
+import {
+  isPairModifiedFromCodeBase,
+  isIntegrationListModifiedFromCodeBase,
+  getOfficialFormsSheetsBase,
+} from '../../data/officialFormsSheetsBase';
 import { safeCopyToClipboard } from '../../utils/clipboard';
 
 export const AdminFormsSheetsIntegrationPanel: React.FC = () => {
@@ -170,6 +175,24 @@ export const AdminFormsSheetsIntegrationPanel: React.FC = () => {
     }
   };
 
+  const handleResetToCodeBase = () => {
+    const isModified = isIntegrationListModifiedFromCodeBase(integrations);
+    const confirmMsg = isModified
+      ? '¿Deseas restablecer las 4 fuentes de Google Forms & Sheets a la configuración canónica anclada permanentemente en el código fuente? Se restaurarán los enlaces y encabezados base oficiales.'
+      : '¿Deseas forzar la recarga de los 4 pares oficiales desde la base anclada en el código fuente?';
+
+    if (window.confirm(confirmMsg)) {
+      const resetList = OntologicalStore.resetFormsSheetsToCodeBase();
+      setIntegrations(resetList);
+      setSyncFeedback({
+        sourceKey: selectedSource,
+        message: '¡Configuración restablecida con éxito a la base canónica anclada en el código fuente!',
+        success: true,
+      });
+      setTimeout(() => setSyncFeedback(null), 5000);
+    }
+  };
+
   const currentPair = integrations.find((i) => i.id === selectedSource) || integrations[0];
 
   return (
@@ -194,6 +217,24 @@ export const AdminFormsSheetsIntegrationPanel: React.FC = () => {
           </div>
 
           <div className="flex flex-wrap items-center gap-3 shrink-0">
+            <button
+              type="button"
+              onClick={handleResetToCodeBase}
+              className={`px-4 py-2.5 rounded-2xl border text-xs font-bold transition-all shadow-md flex items-center gap-2 cursor-pointer active:scale-98 ${
+                isIntegrationListModifiedFromCodeBase(integrations)
+                  ? 'bg-amber-500/20 border-amber-400/60 text-amber-200 hover:bg-amber-500/30'
+                  : 'bg-neutral-800 hover:bg-neutral-700 border-neutral-700 text-neutral-300'
+              }`}
+              title="Restablecer todos los formularios y sheets a la base anclada en código"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${isIntegrationListModifiedFromCodeBase(integrations) ? 'text-amber-400' : 'text-emerald-400'}`} />
+              <span>
+                {isIntegrationListModifiedFromCodeBase(integrations)
+                  ? 'Restablecer a Base de Código'
+                  : 'Base en Código Anclada'}
+              </span>
+            </button>
+
             <button
               type="button"
               onClick={handleSyncAllWithFirestore}
@@ -232,6 +273,7 @@ export const AdminFormsSheetsIntegrationPanel: React.FC = () => {
         {integrations.map((pair) => {
           const isSelected = selectedSource === pair.id;
           const isSyncing = syncingSource === pair.id;
+          const isModified = isPairModifiedFromCodeBase(pair);
 
           return (
             <div
@@ -245,7 +287,7 @@ export const AdminFormsSheetsIntegrationPanel: React.FC = () => {
             >
               {/* Category tag & status */}
               <div className="space-y-2">
-                <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center justify-between gap-1.5 flex-wrap">
                   <span
                     className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
                       pair.moduleTarget === 'workshops'
@@ -256,10 +298,27 @@ export const AdminFormsSheetsIntegrationPanel: React.FC = () => {
                     {pair.category}
                   </span>
 
-                  <span className="flex items-center gap-1 text-[11px] font-medium text-emerald-600 dark:text-emerald-400">
-                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                    <span>Conectado</span>
-                  </span>
+                  <div className="flex items-center gap-1">
+                    {isModified ? (
+                      <span
+                        className="px-2 py-0.5 rounded-full text-[9px] font-semibold bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/20"
+                        title="Modificado localmente vs la base en código"
+                      >
+                        Personalizado
+                      </span>
+                    ) : (
+                      <span
+                        className="px-2 py-0.5 rounded-full text-[9px] font-semibold bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20 flex items-center gap-0.5"
+                        title="Configuración idéntica al código base oficial"
+                      >
+                        <Check className="w-2.5 h-2.5" /> Base Código
+                      </span>
+                    )}
+
+                    <span className="flex items-center gap-1 text-[11px] font-medium text-emerald-600 dark:text-emerald-400">
+                      <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                    </span>
+                  </div>
                 </div>
 
                 <h3 className="font-bold text-sm text-neutral-900 dark:text-white leading-snug line-clamp-2">
@@ -726,6 +785,38 @@ export const AdminFormsSheetsIntegrationPanel: React.FC = () => {
             </div>
 
             <form onSubmit={handleSaveEdit} className="space-y-4">
+              {/* Code Base Info & Reset in Modal */}
+              <div className="p-3.5 rounded-2xl bg-neutral-50 dark:bg-neutral-900/80 border border-neutral-200 dark:border-neutral-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+                <div className="space-y-0.5">
+                  <span className="font-bold text-neutral-900 dark:text-white flex items-center gap-1.5">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+                    Base canónica del código fuente
+                  </span>
+                  <p className="text-[11px] text-gray-500 dark:text-neutral-400">
+                    {isEditingPair && isPairModifiedFromCodeBase(currentPair)
+                      ? 'Esta configuración difiere de la base en código.'
+                      : 'Esta configuración es idéntica a la base anclada en código.'}
+                  </p>
+                </div>
+                {isEditingPair && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const base = getOfficialFormsSheetsBase(isEditingPair);
+                      if (base) {
+                        setEditFormUrl(base.formUrl);
+                        setEditSheetUrl(base.sheetUrl);
+                        setEditNotes(base.notes || '');
+                      }
+                    }}
+                    className="px-3 py-1.5 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-700 dark:text-amber-300 hover:bg-amber-500/25 text-[11px] font-bold cursor-pointer transition-colors shrink-0"
+                    title="Cargar la URL y notas originales registradas en el código fuente"
+                  >
+                    Restaurar valor del código
+                  </button>
+                )}
+              </div>
+
               <div>
                 <label className="block text-xs font-semibold text-gray-700 dark:text-neutral-300 mb-1">
                   URL de Google Forms

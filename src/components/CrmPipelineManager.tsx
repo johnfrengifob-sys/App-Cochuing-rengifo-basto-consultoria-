@@ -552,15 +552,6 @@ export const CrmPipelineManager: React.FC<CrmPipelineManagerProps> = ({
           <div className="inline-flex items-center gap-1.5">
             <button
               type="button"
-              onClick={onOpenMakeModal}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-gray-200 dark:border-neutral-700 bg-white dark:bg-[#1E1E22] hover:bg-gray-50 dark:hover:bg-neutral-800 text-black dark:text-white text-xs font-semibold transition-all cursor-pointer shadow-2xs"
-            >
-              <Workflow className="w-3.5 h-3.5 text-black dark:text-white" />
-              <span>Make.com & Webhooks</span>
-            </button>
-
-            <button
-              type="button"
               onClick={() => setShowAddProspectModal(true)}
               className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl border border-gray-200 dark:border-neutral-700 bg-white dark:bg-[#1E1E22] hover:bg-gray-50 dark:hover:bg-neutral-800 text-black dark:text-white text-xs font-semibold transition-all cursor-pointer shadow-2xs"
             >
