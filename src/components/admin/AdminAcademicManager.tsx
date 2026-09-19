@@ -95,61 +95,61 @@ export const AdminAcademicManager: React.FC<AdminAcademicManagerProps> = ({
   return (
     <div className="space-y-6">
       {/* Encabezado Principal Unificado */}
-      <div className="p-6 rounded-3xl banner-executive text-white shadow-xl relative overflow-hidden">
-        <div className="absolute right-0 top-0 w-96 h-96 bg-white/5 rounded-full blur-3xl pointer-events-none" />
+      <div className="p-6 sm:p-7 rounded-3xl banner-executive text-black dark:text-white shadow-xs relative overflow-hidden transition-all">
+        <div className="absolute right-0 top-0 w-96 h-96 bg-emerald-500/5 dark:bg-emerald-400/5 rounded-full blur-3xl pointer-events-none" />
         <div className="relative z-10 flex flex-col gap-5">
           <div className="space-y-2 max-w-3xl">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/20 text-neutral-300 text-xs font-semibold backdrop-blur-md">
-              <CalendarCheck2 className="w-3.5 h-3.5 text-emerald-400" />
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-800 dark:text-emerald-300 text-xs font-semibold backdrop-blur-md">
+              <CalendarCheck2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
               <span>Gestión Integral Ontológica</span>
             </div>
-            <h2 className="text-xl md:text-2xl font-bold tracking-tight text-white flex items-center gap-2.5">
+            <h2 className="text-xl md:text-2xl font-bold tracking-tight text-black dark:text-white flex items-center gap-2.5">
               <span>Eventos, Talleres y Sesiones de Consultoría</span>
             </h2>
-            <p className="text-xs md:text-sm text-neutral-300 font-light leading-relaxed">
+            <p className="text-xs md:text-sm text-neutral-600 dark:text-neutral-300 font-light leading-relaxed">
               Consola unificada para crear talleres y eventos en vivo, integrar activadores de seguimiento, vincular formularios y bases de datos en Google Sheets para el seguimiento 1 a 1 de participantes, y administrar los 12 módulos de sesiones de consultoría.
             </p>
           </div>
 
           {/* Métricas Clave */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-4 border-t border-white/10 w-full">
-            <div className="p-3 rounded-2xl bg-white/10 backdrop-blur-md border border-white/10">
-              <span className="text-[10px] text-rose-300 block font-semibold uppercase tracking-wider">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-4 border-t border-black/5 dark:border-white/10 w-full">
+            <div className="p-3.5 rounded-2xl bg-white/60 dark:bg-neutral-900/60 backdrop-blur-md border border-black/5 dark:border-white/10 shadow-2xs">
+              <span className="text-[10px] text-rose-600 dark:text-rose-400 block font-semibold uppercase tracking-wider">
                 Eventos y Talleres
               </span>
               <div className="flex items-baseline gap-2 mt-1">
-                <span className="text-xl font-bold font-mono text-white">{rawEvents.length}</span>
-                <span className="text-[10px] text-neutral-300">({homeEventsCount} en Home)</span>
+                <span className="text-xl font-bold font-mono text-black dark:text-white">{rawEvents.length}</span>
+                <span className="text-[10px] text-neutral-500 dark:text-neutral-400">({homeEventsCount} en Home)</span>
               </div>
             </div>
 
-            <div className="p-3 rounded-2xl bg-white/10 backdrop-blur-md border border-white/10">
-              <span className="text-[10px] text-emerald-300 block font-semibold uppercase tracking-wider">
+            <div className="p-3.5 rounded-2xl bg-white/60 dark:bg-neutral-900/60 backdrop-blur-md border border-black/5 dark:border-white/10 shadow-2xs">
+              <span className="text-[10px] text-emerald-600 dark:text-emerald-400 block font-semibold uppercase tracking-wider">
                 Sesiones Consultoría
               </span>
               <div className="flex items-baseline gap-2 mt-1">
-                <span className="text-xl font-bold font-mono text-white">{programNodes.length}</span>
-                <span className="text-[10px] text-emerald-200">Módulos 1 a 1</span>
+                <span className="text-xl font-bold font-mono text-black dark:text-white">{programNodes.length}</span>
+                <span className="text-[10px] text-emerald-700 dark:text-emerald-400 font-medium">Módulos 1 a 1</span>
               </div>
             </div>
 
-            <div className="p-3 rounded-2xl bg-white/10 backdrop-blur-md border border-white/10">
-              <span className="text-[10px] text-amber-300 block font-semibold uppercase tracking-wider">
+            <div className="p-3.5 rounded-2xl bg-white/60 dark:bg-neutral-900/60 backdrop-blur-md border border-black/5 dark:border-white/10 shadow-2xs">
+              <span className="text-[10px] text-amber-600 dark:text-amber-400 block font-semibold uppercase tracking-wider">
                 Participantes
               </span>
               <div className="flex items-baseline gap-2 mt-1">
-                <span className="text-xl font-bold font-mono text-white">{rawRegistrations.length}</span>
-                <span className="text-[10px] text-amber-200">En Base de Datos</span>
+                <span className="text-xl font-bold font-mono text-black dark:text-white">{rawRegistrations.length}</span>
+                <span className="text-[10px] text-amber-700 dark:text-amber-400 font-medium">En Base de Datos</span>
               </div>
             </div>
 
-            <div className="p-3 rounded-2xl bg-white/10 backdrop-blur-md border border-white/10">
-              <span className="text-[10px] text-cyan-300 block font-semibold uppercase tracking-wider">
+            <div className="p-3.5 rounded-2xl bg-white/60 dark:bg-neutral-900/60 backdrop-blur-md border border-black/5 dark:border-white/10 shadow-2xs">
+              <span className="text-[10px] text-sky-600 dark:text-sky-400 block font-semibold uppercase tracking-wider">
                 Google Sheets & Triggers
               </span>
               <div className="flex items-baseline gap-2 mt-1">
-                <span className="text-sm font-bold text-white">Sincronizado</span>
-                <span className="text-[10px] text-neutral-300">1 a 1</span>
+                <span className="text-sm font-bold text-black dark:text-white">Sincronizado</span>
+                <span className="text-[10px] text-neutral-500 dark:text-neutral-400 font-medium">1 a 1</span>
               </div>
             </div>
           </div>
@@ -157,20 +157,24 @@ export const AdminAcademicManager: React.FC<AdminAcademicManagerProps> = ({
       </div>
 
       {/* NAVEGACIÓN UNIFICADA: TRES MÓDULOS DE GESTIÓN */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 p-1.5 rounded-2xl bg-neutral-100 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 p-1.5 rounded-2xl glass-panel-opal border border-white/60 dark:border-white/10 shadow-2xs">
         {/* BOTÓN 1: EVENTOS Y TALLERES */}
         <button
           type="button"
           onClick={() => setCurrentTab('events')}
           className={`flex items-center justify-center gap-2.5 px-4 py-3 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
             currentTab === 'events'
-              ? 'bg-black text-white dark:bg-white dark:text-black shadow-md'
-              : 'text-neutral-600 dark:text-neutral-400 hover:text-black dark:hover:text-white hover:bg-white/60 dark:hover:bg-neutral-800/60'
+              ? 'bg-black text-white dark:bg-white dark:text-black shadow-xs'
+              : 'text-neutral-600 dark:text-neutral-400 hover:text-black dark:hover:text-white hover:bg-white/80 dark:hover:bg-neutral-800/80'
           }`}
         >
           <Calendar className="w-4 h-4 text-rose-500" />
           <span>Eventos y Talleres</span>
-          <span className="text-[11px] px-2 py-0.5 rounded-full bg-neutral-200 dark:bg-neutral-700 text-neutral-800 dark:text-neutral-200 font-mono">
+          <span className={`text-[11px] px-2 py-0.5 rounded-full font-mono ${
+            currentTab === 'events'
+              ? 'bg-white/20 text-white dark:bg-black/20 dark:text-black'
+              : 'bg-neutral-200/80 dark:bg-neutral-700/80 text-neutral-800 dark:text-neutral-200'
+          }`}>
             {rawEvents.length}
           </span>
         </button>
@@ -181,13 +185,17 @@ export const AdminAcademicManager: React.FC<AdminAcademicManagerProps> = ({
           onClick={() => setCurrentTab('sessions')}
           className={`flex items-center justify-center gap-2.5 px-4 py-3 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
             currentTab === 'sessions'
-              ? 'bg-black text-white dark:bg-white dark:text-black shadow-md'
-              : 'text-neutral-600 dark:text-neutral-400 hover:text-black dark:hover:text-white hover:bg-white/60 dark:hover:bg-neutral-800/60'
+              ? 'bg-black text-white dark:bg-white dark:text-black shadow-xs'
+              : 'text-neutral-600 dark:text-neutral-400 hover:text-black dark:hover:text-white hover:bg-white/80 dark:hover:bg-neutral-800/80'
           }`}
         >
           <BookOpen className="w-4 h-4 text-emerald-500" />
           <span>Sesiones de Consultoría</span>
-          <span className="text-[11px] px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 font-mono">
+          <span className={`text-[11px] px-2 py-0.5 rounded-full font-mono ${
+            currentTab === 'sessions'
+              ? 'bg-white/20 text-white dark:bg-black/20 dark:text-black'
+              : 'bg-emerald-100/80 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300'
+          }`}>
             {programNodes.length}
           </span>
         </button>
@@ -198,13 +206,17 @@ export const AdminAcademicManager: React.FC<AdminAcademicManagerProps> = ({
           onClick={() => setCurrentTab('forms_sheets')}
           className={`flex items-center justify-center gap-2.5 px-4 py-3 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
             currentTab === 'forms_sheets'
-              ? 'bg-black text-white dark:bg-white dark:text-black shadow-md'
-              : 'text-neutral-600 dark:text-neutral-400 hover:text-black dark:hover:text-white hover:bg-white/60 dark:hover:bg-neutral-800/60'
+              ? 'bg-black text-white dark:bg-white dark:text-black shadow-xs'
+              : 'text-neutral-600 dark:text-neutral-400 hover:text-black dark:hover:text-white hover:bg-white/80 dark:hover:bg-neutral-800/80'
           }`}
         >
           <FileSpreadsheet className="w-4 h-4 text-emerald-500" />
           <span>Google Forms & Sheets</span>
-          <span className="text-[11px] px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 font-mono">
+          <span className={`text-[11px] px-2 py-0.5 rounded-full font-mono ${
+            currentTab === 'forms_sheets'
+              ? 'bg-white/20 text-white dark:bg-black/20 dark:text-black'
+              : 'bg-emerald-100/80 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300'
+          }`}>
             4 Recursos
           </span>
         </button>

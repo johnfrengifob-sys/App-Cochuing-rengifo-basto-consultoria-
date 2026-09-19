@@ -198,18 +198,18 @@ export const AdminFormsSheetsIntegrationPanel: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Top Banner */}
-      <div className="p-6 rounded-3xl banner-executive text-white shadow-xl relative overflow-hidden">
-        <div className="absolute right-0 top-0 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="p-6 rounded-3xl banner-executive text-black dark:text-white shadow-xs relative overflow-hidden transition-all">
+        <div className="absolute right-0 top-0 w-96 h-96 bg-emerald-500/5 dark:bg-emerald-400/5 rounded-full blur-3xl pointer-events-none" />
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-2 max-w-2xl">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/20 text-neutral-200 text-xs font-semibold backdrop-blur-md">
-              <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-400" />
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-800 dark:text-emerald-300 text-xs font-semibold backdrop-blur-md">
+              <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
               <span>Consola Maestra de Ingesta Google Workspace</span>
             </div>
-            <h2 className="text-xl md:text-2xl font-bold tracking-tight text-white flex items-center gap-2.5">
+            <h2 className="text-xl md:text-2xl font-bold tracking-tight text-black dark:text-white flex items-center gap-2.5">
               <span>Integración de Formularios y Google Sheets</span>
             </h2>
-            <p className="text-xs md:text-sm text-neutral-300 font-light leading-relaxed">
+            <p className="text-xs md:text-sm text-neutral-600 dark:text-neutral-300 font-light leading-relaxed">
               Administración dinámica de los 4 pares oficiales de Google Forms y Google Sheets para
               Talleres, Sesiones Individuales y Bitácoras B2B. Los datos sincronizados alimentan automáticamente el
               expediente ontológico del cliente y los flujos de creación.
@@ -220,14 +220,14 @@ export const AdminFormsSheetsIntegrationPanel: React.FC = () => {
             <button
               type="button"
               onClick={handleResetToCodeBase}
-              className={`px-4 py-2.5 rounded-2xl border text-xs font-bold transition-all shadow-md flex items-center gap-2 cursor-pointer active:scale-98 ${
+              className={`px-4 py-2.5 rounded-2xl border text-xs font-bold transition-all shadow-xs flex items-center gap-2 cursor-pointer active:scale-98 ${
                 isIntegrationListModifiedFromCodeBase(integrations)
-                  ? 'bg-amber-500/20 border-amber-400/60 text-amber-200 hover:bg-amber-500/30'
-                  : 'bg-neutral-800 hover:bg-neutral-700 border-neutral-700 text-neutral-300'
+                  ? 'bg-amber-500/15 border-amber-400/50 text-amber-800 dark:text-amber-200 hover:bg-amber-500/25'
+                  : 'bg-white/80 dark:bg-neutral-800 hover:bg-white dark:hover:bg-neutral-700 border-gray-200 dark:border-neutral-700 text-neutral-700 dark:text-neutral-200'
               }`}
               title="Restablecer todos los formularios y sheets a la base anclada en código"
             >
-              <RefreshCw className={`w-3.5 h-3.5 ${isIntegrationListModifiedFromCodeBase(integrations) ? 'text-amber-400' : 'text-emerald-400'}`} />
+              <RefreshCw className={`w-3.5 h-3.5 ${isIntegrationListModifiedFromCodeBase(integrations) ? 'text-amber-600 dark:text-amber-400' : 'text-emerald-600 dark:text-emerald-400'}`} />
               <span>
                 {isIntegrationListModifiedFromCodeBase(integrations)
                   ? 'Restablecer a Base de Código'
@@ -239,10 +239,10 @@ export const AdminFormsSheetsIntegrationPanel: React.FC = () => {
               type="button"
               onClick={handleSyncAllWithFirestore}
               disabled={isCloudSyncing}
-              className="px-4 py-2.5 rounded-2xl bg-neutral-800 hover:bg-neutral-700 border border-emerald-500/40 text-white text-xs font-bold transition-all shadow-md flex items-center gap-2 cursor-pointer active:scale-98"
+              className="px-4 py-2.5 rounded-2xl bg-white/80 dark:bg-neutral-800 hover:bg-white dark:hover:bg-neutral-700 border border-emerald-500/30 text-neutral-800 dark:text-white text-xs font-bold transition-all shadow-xs flex items-center gap-2 cursor-pointer active:scale-98"
               title="Sincronizar todos los recursos y tablas con Firebase Firestore"
             >
-              <Database className="w-4 h-4 text-emerald-400" />
+              <Database className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
               <span>{isCloudSyncing ? 'Sincronizando Nube...' : 'Sincronizar Firebase Firestore'}</span>
             </button>
 

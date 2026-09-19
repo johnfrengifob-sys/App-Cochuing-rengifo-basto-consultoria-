@@ -172,9 +172,16 @@ export default function App() {
       OntologicalStore.mergeProgramNodesFromFirestore(remoteNodes);
     });
 
+    const unsubCronograma = FirestoreSyncService.subscribeToCronogramaEvents((remoteEvents) => {
+      OntologicalStore.mergeCronogramaEventsFromFirestore(remoteEvents);
+    });
+
     // Initial sync sweep from Firestore and persistent server database
     FirestoreSyncService.syncAllFromFirestore()
-      .then(({ usersCount, regsCount }) => {
+      .then(({ usersCount, regsCount, workshopsCount, remoteWorkshops }) => {
+        if (workshopsCount > 0 && remoteWorkshops) {
+          OntologicalStore.mergeCronogramaEventsFromFirestore(remoteWorkshops);
+        }
         if (usersCount > 0 || regsCount > 0) {
           refreshUsers();
         }
@@ -341,6 +348,7 @@ export default function App() {
       unsubFormsSheets();
       unsubTalleres();
       unsubProgramNodes();
+      unsubCronograma();
       unsubscribeAuth();
     };
   }, []);

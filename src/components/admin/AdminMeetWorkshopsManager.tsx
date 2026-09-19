@@ -82,14 +82,20 @@ export const AdminMeetWorkshopsManager: React.FC<AdminMeetWorkshopsManagerProps>
   // Safe deletion modal state (avoids window.confirm blocked in iframes)
   const [deleteConfirmEvent, setDeleteConfirmEvent] = useState<{ id: string; title: string } | null>(null);
 
-  const confirmDeleteEvent = () => {
+  const confirmDeleteEvent = async () => {
     if (!deleteConfirmEvent) return;
     const { id, title } = deleteConfirmEvent;
-    OntologicalStore.deleteCronogramaEvent(id);
-    setEvents(OntologicalStore.getCronogramaEvents());
-    showNotification(`Taller "${title}" eliminado.`);
-    setDeleteConfirmEvent(null);
-    if (onRefresh) onRefresh();
+    try {
+      await OntologicalStore.deleteCronogramaEvent(id);
+      setEvents(OntologicalStore.getCronogramaEvents());
+      showNotification(`Taller "${title}" eliminado permanentemente de la base de datos.`);
+    } catch (err) {
+      console.warn('Error al eliminar taller:', err);
+      showNotification(`Error al eliminar el taller "${title}".`);
+    } finally {
+      setDeleteConfirmEvent(null);
+      if (onRefresh) onRefresh();
+    }
   };
   const [participantEventId, setParticipantEventId] = useState(events[0]?.id || '');
 
@@ -240,24 +246,24 @@ export const AdminMeetWorkshopsManager: React.FC<AdminMeetWorkshopsManagerProps>
       )}
 
       {/* SALA VIRTUAL GOOGLE MEET CENTRAL */}
-      <div className="p-6 rounded-3xl banner-executive text-white shadow-xl relative overflow-hidden">
-        <div className="absolute right-0 top-0 w-80 h-80 bg-white/5 rounded-full blur-3xl pointer-events-none" />
+      <div className="p-6 rounded-3xl banner-executive text-black dark:text-white shadow-xs relative overflow-hidden transition-all">
+        <div className="absolute right-0 top-0 w-80 h-80 bg-rose-500/5 dark:bg-rose-400/5 rounded-full blur-3xl pointer-events-none" />
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-2">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/20 text-neutral-300 text-xs font-semibold backdrop-blur-md">
-              <Radio className="w-3.5 h-3.5 animate-pulse text-rose-400" />
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-rose-500/10 border border-rose-500/20 text-rose-800 dark:text-rose-300 text-xs font-semibold backdrop-blur-md">
+              <Radio className="w-3.5 h-3.5 animate-pulse text-rose-600 dark:text-rose-400" />
               <span>Sala Google Meet</span>
             </div>
-            <h3 className="text-xl md:text-2xl font-bold tracking-tight text-white flex items-center gap-2.5">
+            <h3 className="text-xl md:text-2xl font-bold tracking-tight text-black dark:text-white flex items-center gap-2.5">
               <span>Encuentros y Talleres</span>
             </h3>
-            <p className="text-xs md:text-sm text-neutral-300 font-light max-w-2xl leading-relaxed">
+            <p className="text-xs md:text-sm text-neutral-600 dark:text-neutral-300 font-light max-w-2xl leading-relaxed">
               Enlace centralizado de Google Meet configurado para las transmisiones en vivo, talleres de profundización, conversatorios quincenales y sesiones grupales sincrónicas.
             </p>
 
-            <div className="pt-2 flex items-center gap-2 text-xs font-mono text-neutral-300">
-              <LinkIcon className="w-3.5 h-3.5 text-neutral-400 shrink-0" />
-              <span className="truncate max-w-md bg-white/10 px-2.5 py-1 rounded-lg border border-white/10">
+            <div className="pt-2 flex items-center gap-2 text-xs font-mono text-neutral-600 dark:text-neutral-300">
+              <LinkIcon className="w-3.5 h-3.5 text-neutral-500 shrink-0" />
+              <span className="truncate max-w-md bg-white/60 dark:bg-neutral-900/60 px-2.5 py-1 rounded-lg border border-black/5 dark:border-white/10 text-neutral-800 dark:text-neutral-200">
                 {masterMeetUrl}
               </span>
             </div>
@@ -269,11 +275,11 @@ export const AdminMeetWorkshopsManager: React.FC<AdminMeetWorkshopsManagerProps>
               href={masterMeetUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-white text-black hover:bg-neutral-100 text-xs font-bold transition-all shadow-md cursor-pointer group"
+              className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-black text-white hover:bg-neutral-800 dark:bg-white dark:text-black dark:hover:bg-neutral-100 text-xs font-bold transition-all shadow-xs cursor-pointer group"
             >
-              <Video className="w-4 h-4 text-black group-hover:scale-110 transition-transform" />
+              <Video className="w-4 h-4 text-white dark:text-black group-hover:scale-110 transition-transform" />
               <span>Ingresar a la Sala Meet</span>
-              <ExternalLink className="w-3.5 h-3.5 text-neutral-500" />
+              <ExternalLink className="w-3.5 h-3.5 text-white/70 dark:text-neutral-500" />
             </a>
 
             <button

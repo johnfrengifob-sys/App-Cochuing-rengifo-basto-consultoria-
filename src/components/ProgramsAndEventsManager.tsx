@@ -123,16 +123,36 @@ export const ProgramsAndEventsManager: React.FC<ProgramsAndEventsManagerProps> =
 
   // Safe deletion modal state (replaces window.confirm which is blocked in iframes)
   const [eventToDelete, setEventToDelete] = useState<{ id: string; title: string } | null>(null);
+  const [feedbackNotice, setFeedbackNotice] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
-  const confirmDeleteEvent = () => {
-    if (!eventToDelete) return;
-    OntologicalStore.deleteCronogramaEvent(eventToDelete.id);
-    onRefreshEvents();
-    if (editingEventId === eventToDelete.id) {
-      setActiveSubTab('events');
-      setEditingEventId(null);
+  const confirmDeleteEvent = async () => {
+    if (!eventToDelete || isDeleting) return;
+    setIsDeleting(true);
+    const { id, title } = eventToDelete;
+    try {
+      await OntologicalStore.deleteCronogramaEvent(id);
+      setFeedbackNotice({
+        type: 'success',
+        message: `El taller "${title}" ha sido eliminado permanentemente de la base de datos de la app.`,
+      });
+      setTimeout(() => setFeedbackNotice(null), 4500);
+    } catch (err) {
+      console.warn('Error al eliminar taller:', err);
+      setFeedbackNotice({
+        type: 'error',
+        message: `Ocurrió un error al eliminar el taller "${title}".`,
+      });
+      setTimeout(() => setFeedbackNotice(null), 4500);
+    } finally {
+      setIsDeleting(false);
+      onRefreshEvents();
+      if (editingEventId === id) {
+        setActiveSubTab('events');
+        setEditingEventId(null);
+      }
+      setEventToDelete(null);
     }
-    setEventToDelete(null);
   };
 
   // Editor states (for creating or editing an event with the 3 integrated sections)
@@ -344,7 +364,7 @@ export const ProgramsAndEventsManager: React.FC<ProgramsAndEventsManagerProps> =
   // Save Event from Editor
   const handleSaveEditorEvent = () => {
     if (!eventFormData.title?.trim()) {
-      alert('Por favor especifica el nombre del evento o taller.');
+      setFeedbackNotice({ type: 'error', message: 'Por favor especifica el nombre del evento o taller.' });
       setEditorActiveSection('general');
       return;
     }
@@ -378,6 +398,15 @@ export const ProgramsAndEventsManager: React.FC<ProgramsAndEventsManagerProps> =
       window.dispatchEvent(new CustomEvent('rbc-workshops-updated'));
       window.dispatchEvent(new Event('storage'));
     }
+
+    setFeedbackNotice({
+      type: 'success',
+      message: `¡Taller "${payload.title}" guardado exitosamente en la base de datos de la app y sincronizado!`,
+    });
+    setTimeout(() => {
+      setFeedbackNotice(null);
+    }, 6000);
+
     setActiveSubTab('events');
     setEditingEventId(null);
   };
@@ -431,6 +460,28 @@ export const ProgramsAndEventsManager: React.FC<ProgramsAndEventsManagerProps> =
 
   return (
     <div className="space-y-6">
+      {/* Banner de Confirmación y Notificación de Persistencia */}
+      {feedbackNotice && (
+        <div
+          className={`p-3.5 rounded-2xl border text-xs flex items-center justify-between gap-3 shadow-xs transition-all ${
+            feedbackNotice.type === 'success'
+              ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-300 dark:border-emerald-800 text-emerald-900 dark:text-emerald-200'
+              : 'bg-rose-50 dark:bg-rose-950/40 border-rose-300 dark:border-rose-800 text-rose-900 dark:text-rose-200'
+          }`}
+        >
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
+            <span className="font-semibold">{feedbackNotice.message}</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setFeedbackNotice(null)}
+            className="opacity-70 hover:opacity-100 text-xs cursor-pointer px-1.5 py-0.5 rounded-md hover:bg-black/5 dark:hover:bg-white/10"
+          >
+            ✕
+          </button>
+        </div>
+      )}
 
       {/* ========================================================================= */}
       {/* VISTA 1: CATÁLOGO DE EVENTOS Y TALLERES                                    */}
@@ -1003,10 +1054,11 @@ export const ProgramsAndEventsManager: React.FC<ProgramsAndEventsManagerProps> =
               </button>
               <button
                 type="button"
+                disabled={isDeleting}
                 onClick={confirmDeleteEvent}
-                className="px-4 py-2 rounded-xl text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 transition-colors shadow-sm cursor-pointer"
+                className="px-4 py-2 rounded-xl text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 transition-colors shadow-sm cursor-pointer disabled:opacity-50"
               >
-                Sí, eliminar taller
+                {isDeleting ? 'Eliminando...' : 'Sí, eliminar taller'}
               </button>
             </div>
           </div>

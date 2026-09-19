@@ -158,8 +158,118 @@ async function startServer() {
     aiInsights: any[];
     prospects: any[];
     paymentRequests: any[];
+    cronogramaEvents: any[];
+    programNodes: any[];
+    deletedWorkshopIds?: string[];
     lastUpdated: string;
   }
+
+  const SEED_CRONOGRAMA_EVENTS = [
+    {
+      id: 'event-1789824188701',
+      title: 'Raíz & Balance',
+      subtitle: '"El suelo puede temblar a tu paso y sacudirlo todo. Cuando la tormenta emocional pasa, el poder de reconstruir tu futuro depende de dónde pones tus raíces."',
+      category: 'Primer Taller • En Vivo',
+      eventType: 'Taller',
+      date: '2026-10-11T00:00:00.000Z',
+      displayDate: '2026-10-10',
+      time: '9:00 PM - 10:30 PM (GMT-5)',
+      mode: 'Online (Google Meet)',
+      meetUrl: 'https://meet.google.com/nzk-ccya-hsk',
+      description: 'Conversatorio ontológico y vivencial de inicio: Raíz & Balance. Espacio reflexivo para mapear quiebres y enraizamiento.',
+      showOnHome: true,
+      capacityType: 'grupal',
+      capacity: 1000,
+      totalSpots: 1000,
+      spotsLeft: 1000,
+      priceAmount: 0,
+      price: 'Acceso Libre con Pre-Registro',
+      currency: 'COP',
+      launchDate: '2026-09-30',
+      eventDate: '2026-10-11T00:00:00.000Z',
+      facilitator: 'John Fredy Rengifo Basto (Master Coach Ontológico)',
+      featured: false,
+      status: 'upcoming',
+    },
+    {
+      id: 'event-1789824792376',
+      title: 'Taller 1: Raíz (Cuerpo, Emoción y Evolución de las Emociones).',
+      subtitle: 'Espacio de educación emocional y desarrollo basado en autoobservación, conversación reflexiva y diseño de acciones conscientes (No terapia, no diagnóstico clínico)',
+      category: 'Primer Taller • En Vivo',
+      eventType: 'Taller',
+      date: '2026-10-18T00:00:00.000Z',
+      displayDate: '2026-10-17',
+      time: '9:00 am - 10:30 am (GMT-5)',
+      mode: 'Online (Google Meet)',
+      meetUrl: 'https://meet.google.com/nzk-ccya-hsk',
+      description: 'Primer taller vivencial: Deconstrucción somática, decodificación de emociones primarias y soberanía relacional.',
+      showOnHome: false,
+      capacityType: 'grupal',
+      capacity: 1000,
+      totalSpots: 1000,
+      spotsLeft: 1000,
+      priceAmount: 180000,
+      price: 'Acceso Libre con Pre-Registro',
+      currency: 'COP',
+      launchDate: '2026-10-10',
+      eventDate: '2026-10-18T00:00:00.000Z',
+      facilitator: 'John Fredy Rengifo Basto (Master Coach Ontológico)',
+      featured: false,
+      status: 'upcoming',
+    },
+    {
+      id: 'event-1789828629011',
+      title: 'Taller 2: Tallo (Nivel II) - Lenguaje y Juicios.',
+      subtitle: 'Espacio de educación emocional y desarrollo basado en autoobservación, conversación reflexiva y diseño de acciones conscientes. No terapia. No diagnóstico clínico.',
+      category: 'Primer Taller • En Vivo',
+      eventType: 'Taller',
+      date: '2026-11-01T00:00:00.000Z',
+      displayDate: '2026-10-31',
+      time: '9:00 AM - 1:30 PM (GMT-5)',
+      mode: 'Online (Google Meet)',
+      meetUrl: 'https://meet.google.com/nzk-ccya-hsk',
+      description: 'Segundo taller vivencial: Lenguaje, juicios limitantes, actos del habla y diseño de conversaciones de frontera.',
+      showOnHome: false,
+      capacityType: 'grupal',
+      capacity: 1000,
+      totalSpots: 1000,
+      spotsLeft: 1000,
+      priceAmount: 150000,
+      price: '$150,000 COP',
+      currency: 'COP',
+      launchDate: '2026-10-17',
+      eventDate: '2026-11-01T00:00:00.000Z',
+      facilitator: 'John Fredy Rengifo Basto (Master Coach Ontológico)',
+      featured: false,
+      status: 'upcoming',
+    },
+    {
+      id: 'event-1789829005266',
+      title: 'Taller 03 Nivel III: Florecimiento - Acción, Propósito y Liderazgo Coherente',
+      subtitle: 'Espacio de educación emocional y desarrollo basado en autoobservación, conversación reflexiva y diseño de acciones conscientes. No terapia. No diagnóstico clínico.',
+      category: 'Primer Taller • En Vivo',
+      eventType: 'Taller',
+      date: '2026-11-08T00:00:00.000Z',
+      displayDate: '2026-11-07',
+      time: '9:00 AM - 1:30 PM (GMT-5)',
+      mode: 'Online (Google Meet)',
+      meetUrl: 'https://meet.google.com/nzk-ccya-hsk',
+      description: 'Tercer taller vivencial: Cosecha, nuevo observador, manifestación de coherencia y liderazgo directivo.',
+      showOnHome: true,
+      capacityType: 'grupal',
+      capacity: 1000,
+      totalSpots: 1000,
+      spotsLeft: 1000,
+      priceAmount: 150000,
+      price: '$150,000 COP',
+      currency: 'COP',
+      launchDate: '2026-10-31',
+      eventDate: '2026-11-08T00:00:00.000Z',
+      facilitator: 'John Fredy Rengifo Basto (Master Coach Ontológico)',
+      featured: true,
+      status: 'upcoming',
+    },
+  ];
 
   const SEED_USERS = [
     {
@@ -262,6 +372,32 @@ async function startServer() {
         if (!Array.isArray(data.aiInsights)) data.aiInsights = [];
         if (!Array.isArray(data.prospects)) data.prospects = [];
         if (!Array.isArray(data.paymentRequests)) data.paymentRequests = [];
+        if (!Array.isArray(data.programNodes)) data.programNodes = [];
+        if (!Array.isArray(data.deletedWorkshopIds)) data.deletedWorkshopIds = [];
+
+        if (!Array.isArray(data.cronogramaEvents)) {
+          data.cronogramaEvents = SEED_CRONOGRAMA_EVENTS.filter(
+            (e: any) => !data.deletedWorkshopIds.includes(e.id)
+          );
+          modified = true;
+        } else {
+          const beforeFilterCount = data.cronogramaEvents.length;
+          data.cronogramaEvents = data.cronogramaEvents.filter(
+            (e: any) => !data.deletedWorkshopIds.includes(e.id)
+          );
+          if (data.cronogramaEvents.length !== beforeFilterCount) {
+            modified = true;
+          }
+
+          SEED_CRONOGRAMA_EVENTS.forEach((seedEvt) => {
+            if (data.deletedWorkshopIds.includes(seedEvt.id)) return;
+            const exists = data.cronogramaEvents.some((e: any) => e.id === seedEvt.id);
+            if (!exists) {
+              data.cronogramaEvents.push(seedEvt);
+              modified = true;
+            }
+          });
+        }
 
         if (modified) {
           writeServerDatabase(data);
@@ -281,6 +417,9 @@ async function startServer() {
       aiInsights: [],
       prospects: [],
       paymentRequests: [],
+      cronogramaEvents: [...SEED_CRONOGRAMA_EVENTS],
+      programNodes: [],
+      deletedWorkshopIds: [],
       lastUpdated: new Date().toISOString(),
     };
     writeServerDatabase(initial);
@@ -320,6 +459,7 @@ async function startServer() {
       totalUsers: data.users.length,
       totalClients: clientsCount,
       totalEventRegistrations: data.eventRegistrations.length,
+      totalWorkshops: (data.cronogramaEvents || []).length,
       lastUpdated: data.lastUpdated,
       legadoBarberStatus: legadoUser ? 'verificado_y_activo' : 'no_encontrado',
       legadoBarberRecord: legadoUser || null,
@@ -402,6 +542,68 @@ async function startServer() {
             changed = true;
           } else {
             currentDb.forms.push(f);
+            changed = true;
+          }
+        });
+      }
+
+      // Merge deleted workshop IDs
+      if (!Array.isArray(currentDb.deletedWorkshopIds)) currentDb.deletedWorkshopIds = [];
+      if (Array.isArray(clientState.deletedWorkshopIds)) {
+        clientState.deletedWorkshopIds.forEach((id: string) => {
+          if (id && !currentDb.deletedWorkshopIds.includes(id)) {
+            currentDb.deletedWorkshopIds.push(id);
+            changed = true;
+          }
+        });
+      }
+
+      // Purge any workshops from currentDb that have been marked deleted
+      const prevEventsLen = currentDb.cronogramaEvents?.length || 0;
+      if (Array.isArray(currentDb.cronogramaEvents)) {
+        currentDb.cronogramaEvents = currentDb.cronogramaEvents.filter(
+          (e: any) => !currentDb.deletedWorkshopIds.includes(e.id)
+        );
+        if (currentDb.cronogramaEvents.length !== prevEventsLen) {
+          changed = true;
+        }
+      }
+
+      // Merge Cronograma Events (Workshops / Talleres creados)
+      if (Array.isArray(clientState.cronogramaEvents)) {
+        if (!Array.isArray(currentDb.cronogramaEvents)) currentDb.cronogramaEvents = [];
+        clientState.cronogramaEvents.forEach((cEvt: any) => {
+          if (!cEvt || !cEvt.id || currentDb.deletedWorkshopIds.includes(cEvt.id)) return;
+          const idx = currentDb.cronogramaEvents.findIndex((e: any) => e.id === cEvt.id);
+          if (idx >= 0) {
+            currentDb.cronogramaEvents[idx] = {
+              ...currentDb.cronogramaEvents[idx],
+              ...cEvt,
+              updatedAt: new Date().toISOString(),
+            };
+            changed = true;
+          } else {
+            currentDb.cronogramaEvents.unshift({
+              ...cEvt,
+              createdAt: cEvt.createdAt || new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+            });
+            changed = true;
+          }
+        });
+      }
+
+      // Merge Program Nodes (Temarios modulares de talleres)
+      if (Array.isArray(clientState.programNodes)) {
+        if (!Array.isArray(currentDb.programNodes)) currentDb.programNodes = [];
+        clientState.programNodes.forEach((node: any) => {
+          if (!node || node.step === undefined) return;
+          const idx = currentDb.programNodes.findIndex((n: any) => n.step === node.step);
+          if (idx >= 0) {
+            currentDb.programNodes[idx] = { ...currentDb.programNodes[idx], ...node };
+            changed = true;
+          } else {
+            currentDb.programNodes.push(node);
             changed = true;
           }
         });
@@ -550,6 +752,139 @@ async function startServer() {
     } catch (err: any) {
       console.error('[Server DB Registrations Error]:', err);
       res.status(500).json({ error: err.message || 'Error al guardar registro en base de datos' });
+    }
+  });
+
+  // API: Get all Workshops / Cronograma Events from persistent database
+  app.get(['/api/db/workshops', '/api/db/cronograma-events'], (req, res) => {
+    try {
+      const db = readServerDatabase();
+      res.json({
+        success: true,
+        total: (db.cronogramaEvents || []).length,
+        workshops: db.cronogramaEvents || [],
+        events: db.cronogramaEvents || [],
+      });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message || 'Error al obtener talleres de la base de datos' });
+    }
+  });
+
+  // API: Upsert a Workshop / Cronograma Event in persistent database
+  app.post(['/api/db/workshops', '/api/db/cronograma-events'], (req, res) => {
+    try {
+      const workshop = req.body.workshop || req.body.event || req.body;
+      if (!workshop || !workshop.title) {
+        return res.status(400).json({ error: 'Se requiere un título para registrar el taller en la base de datos' });
+      }
+
+      const db = readServerDatabase();
+      if (!Array.isArray(db.cronogramaEvents)) {
+        db.cronogramaEvents = [];
+      }
+
+      const workshopId = String(workshop.id || `event-${Date.now()}`);
+      const existingIdx = db.cronogramaEvents.findIndex((e: any) => e.id === workshopId);
+
+      let savedWorkshop: any;
+      if (existingIdx >= 0) {
+        savedWorkshop = {
+          ...db.cronogramaEvents[existingIdx],
+          ...workshop,
+          id: workshopId,
+          updatedAt: new Date().toISOString(),
+        };
+        db.cronogramaEvents[existingIdx] = savedWorkshop;
+      } else {
+        savedWorkshop = {
+          id: workshopId,
+          title: workshop.title,
+          subtitle: workshop.subtitle || '',
+          category: workshop.category || 'Taller Vivencial',
+          eventType: workshop.eventType || 'Taller / Programa Intensivo',
+          date: workshop.date || new Date(Date.now() + 1000 * 60 * 60 * 24 * 7).toISOString(),
+          displayDate: workshop.displayDate || '',
+          time: workshop.time || '7:00 PM - 8:30 PM (GMT-5)',
+          mode: workshop.mode || 'Online (Google Meet)',
+          meetUrl: workshop.meetUrl || 'https://meet.google.com/rbc-conversatorio-ontologico',
+          description: workshop.description || '',
+          imageUrl: workshop.imageUrl || '',
+          coverImage: workshop.coverImage || workshop.imageUrl || '',
+          showOnHome: workshop.showOnHome !== false,
+          capacityType: workshop.capacityType || 'grupal',
+          capacity: workshop.capacity || workshop.totalSpots || 12,
+          spotsLeft: workshop.spotsLeft !== undefined ? workshop.spotsLeft : (workshop.capacity || 12),
+          totalSpots: workshop.totalSpots || workshop.capacity || 12,
+          priceAmount: workshop.priceAmount || 180000,
+          price: workshop.price || '$180.000 COP',
+          currency: workshop.currency || 'COP',
+          facilitator: workshop.facilitator || 'John Fredy Rengifo Basto (Master Coach Ontológico)',
+          featured: Boolean(workshop.featured),
+          status: workshop.status || 'upcoming',
+          syllabus: Array.isArray(workshop.syllabus) ? workshop.syllabus : [],
+          guidingQuestions: Array.isArray(workshop.guidingQuestions) ? workshop.guidingQuestions : [],
+          supportMaterials: Array.isArray(workshop.supportMaterials) ? workshop.supportMaterials : [],
+          postWorkshopQuestions: Array.isArray(workshop.postWorkshopQuestions) ? workshop.postWorkshopQuestions : [],
+          workbookSubmissions: Array.isArray(workshop.workbookSubmissions) ? workshop.workbookSubmissions : [],
+          createdAt: workshop.createdAt || new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        };
+        db.cronogramaEvents.unshift(savedWorkshop);
+      }
+
+      if (Array.isArray(db.deletedWorkshopIds)) {
+        db.deletedWorkshopIds = db.deletedWorkshopIds.filter((dId: string) => dId !== workshopId);
+      }
+
+      writeServerDatabase(db);
+      console.log(`[Server DB] Taller persistido en app_database.json: ${savedWorkshop.title} (ID: ${savedWorkshop.id})`);
+      res.json({
+        success: true,
+        message: 'Taller guardado exitosamente en la base de datos de la app',
+        workshop: savedWorkshop,
+        totalWorkshops: db.cronogramaEvents.length,
+      });
+    } catch (err: any) {
+      console.error('[Server DB Workshop Error]:', err);
+      res.status(500).json({ error: err.message || 'Error al guardar taller en base de datos' });
+    }
+  });
+
+  // API: Delete a Workshop from persistent database
+  app.delete(['/api/db/workshops/:id', '/api/db/cronograma-events/:id'], (req, res) => {
+    try {
+      const { id } = req.params;
+      const db = readServerDatabase();
+      if (!Array.isArray(db.cronogramaEvents)) db.cronogramaEvents = [];
+      if (!Array.isArray(db.deletedWorkshopIds)) db.deletedWorkshopIds = [];
+
+      const beforeCount = db.cronogramaEvents.length;
+      db.cronogramaEvents = db.cronogramaEvents.filter((e: any) => e.id !== id);
+
+      if (!db.deletedWorkshopIds.includes(id)) {
+        db.deletedWorkshopIds.push(id);
+      }
+
+      // Also remove enrolledWorkshopIds reference if any
+      if (Array.isArray(db.users)) {
+        db.users.forEach((u: any) => {
+          if (Array.isArray(u.enrolledWorkshopIds)) {
+            u.enrolledWorkshopIds = u.enrolledWorkshopIds.filter((wId: string) => wId !== id);
+          }
+        });
+      }
+
+      writeServerDatabase(db);
+      console.log(`[Server DB] Taller ${id} eliminado permanentemente de app_database.json`);
+
+      res.json({
+        success: true,
+        message: `Taller ${id} eliminado permanentemente de la base de datos`,
+        deletedId: id,
+        totalWorkshops: db.cronogramaEvents.length,
+      });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message || 'Error al eliminar taller' });
     }
   });
 

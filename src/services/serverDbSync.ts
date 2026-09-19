@@ -1,4 +1,4 @@
-import { User, EventRegistration, Session, FormSubmission, PostSessionForm } from '../types';
+import { User, EventRegistration, Session, FormSubmission, PostSessionForm, CronogramaEvent, ProgramNodeInfo } from '../types';
 
 export interface ServerDbHealth {
   status: string;
@@ -7,6 +7,7 @@ export interface ServerDbHealth {
   totalUsers: number;
   totalClients: number;
   totalEventRegistrations: number;
+  totalWorkshops?: number;
   lastUpdated: string;
   legadoBarberStatus: string;
   legadoBarberRecord: User | null;
@@ -23,6 +24,9 @@ export interface ServerDbState {
   aiInsights: any[];
   prospects: any[];
   paymentRequests: any[];
+  cronogramaEvents?: CronogramaEvent[];
+  programNodes?: ProgramNodeInfo[];
+  deletedWorkshopIds?: string[];
   lastUpdated: string;
 }
 
@@ -71,6 +75,9 @@ export class ServerDbSyncService {
     sessions?: Session[];
     forms?: FormSubmission[];
     postSessionForms?: PostSessionForm[];
+    cronogramaEvents?: CronogramaEvent[];
+    programNodes?: ProgramNodeInfo[];
+    deletedWorkshopIds?: string[];
   }): Promise<ServerDbState | null> {
     if (this.isSyncing) return null;
     this.isSyncing = true;
@@ -161,6 +168,65 @@ export class ServerDbSyncService {
     } catch (err) {
       console.warn('[ServerDbSync] Error finding user by email:', err);
       return null;
+    }
+  }
+
+  /**
+   * Save a single workshop / cronograma event directly to server DB
+   */
+  static async saveWorkshop(workshop: CronogramaEvent): Promise<CronogramaEvent | null> {
+    try {
+      const res = await fetch('/api/db/workshops', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: JSON.stringify({ workshop }),
+      });
+
+      if (!res.ok) {
+        console.warn('[ServerDbSync] Failed to save workshop to server DB, status:', res.status);
+        return null;
+      }
+      const data = await res.json();
+      return data.workshop || null;
+    } catch (err) {
+      console.warn('[ServerDbSync] Error saving workshop to server DB:', err);
+      return null;
+    }
+  }
+
+  /**
+   * Delete a workshop from server DB
+   */
+  static async deleteWorkshop(workshopId: string): Promise<boolean> {
+    try {
+      const res = await fetch(`/api/db/workshops/${encodeURIComponent(workshopId)}`, {
+        method: 'DELETE',
+        headers: { 'Accept': 'application/json' },
+      });
+      return res.ok;
+    } catch (err) {
+      console.warn('[ServerDbSync] Error deleting workshop from server DB:', err);
+      return false;
+    }
+  }
+
+  /**
+   * Fetch all workshops from server DB
+   */
+  static async fetchWorkshops(): Promise<CronogramaEvent[]> {
+    try {
+      const res = await fetch('/api/db/workshops', {
+        headers: { 'Accept': 'application/json' },
+      });
+      if (!res.ok) return [];
+      const data = await res.json();
+      return Array.isArray(data.workshops) ? data.workshops : (Array.isArray(data.events) ? data.events : []);
+    } catch (err) {
+      console.warn('[ServerDbSync] Error fetching workshops from server DB:', err);
+      return [];
     }
   }
 }

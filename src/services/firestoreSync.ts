@@ -111,9 +111,18 @@ export class FirestoreSyncService {
     }
   }
 
-  // Synchronize or save a cronograma event / workshop to Firestore
+  // Synchronize or save a cronograma event / workshop to Firestore and Server Database
   static async syncCronogramaEvent(event: CronogramaEvent): Promise<void> {
     const collectionPath = 'cronogramaEvents';
+    // Mirror to server persistent database (data/app_database.json)
+    try {
+      ServerDbSyncService.saveWorkshop(event).catch((err) => {
+        console.warn('ServerDbSync workshop notice:', err);
+      });
+    } catch (e) {
+      console.warn('ServerDb saveWorkshop error:', e);
+    }
+
     try {
       const eventRef = doc(db, collectionPath, event.id);
       await setDoc(
@@ -122,33 +131,36 @@ export class FirestoreSyncService {
           id: event.id,
           title: event.title,
           subtitle: event.subtitle || '',
-          category: event.category,
-          eventType: event.eventType || 'Taller',
+          category: event.category || 'Taller Vivencial',
+          eventType: event.eventType || 'Taller / Programa Intensivo',
           date: event.date,
-          displayDate: event.displayDate,
-          time: event.time,
-          mode: event.mode,
-          meetUrl: event.meetUrl || '',
-          description: event.description,
-          imageUrl: event.imageUrl,
-          coverImage: event.coverImage || event.imageUrl,
+          displayDate: event.displayDate || '',
+          time: event.time || '7:00 PM - 8:30 PM (GMT-5)',
+          mode: event.mode || 'Online (Google Meet)',
+          meetUrl: event.meetUrl || 'https://meet.google.com/rbc-conversatorio-ontologico',
+          description: event.description || '',
+          imageUrl: event.imageUrl || '',
+          coverImage: event.coverImage || event.imageUrl || '',
           showOnHome: event.showOnHome !== false,
           capacityType: event.capacityType || 'grupal',
-          capacity: event.capacity || 12,
-          spotsLeft: event.spotsLeft || 12,
-          totalSpots: event.totalSpots || 12,
+          capacity: event.capacity || event.totalSpots || 12,
+          spotsLeft: event.spotsLeft !== undefined ? event.spotsLeft : (event.capacity || 12),
+          totalSpots: event.totalSpots || event.capacity || 12,
           priceAmount: event.priceAmount || 180000,
           price: event.price || '$180.000 COP',
           currency: event.currency || 'COP',
           launchDate: event.launchDate || '',
           eventDate: event.eventDate || '',
-          facilitator: event.facilitator,
+          facilitator: event.facilitator || 'John Fredy Rengifo Basto (Master Coach Ontológico)',
           featured: Boolean(event.featured),
-          status: event.status,
+          status: event.status || 'upcoming',
           syllabus: event.syllabus || [],
           guidingQuestions: event.guidingQuestions || [],
           supportMaterials: event.supportMaterials || [],
           postWorkshopQuestions: event.postWorkshopQuestions || [],
+          workbookSubmissions: event.workbookSubmissions || [],
+          triggersEnabled: event.triggersEnabled !== false,
+          customTriggers: event.customTriggers || null,
           updatedAt: new Date().toISOString(),
         },
         { merge: true }
@@ -158,16 +170,25 @@ export class FirestoreSyncService {
     }
   }
 
-  // Synchronize all workshops to Firestore
+  // Synchronize all workshops to Firestore and Server Database
   static async syncAllCronogramaEvents(events: CronogramaEvent[]): Promise<void> {
     for (const evt of events) {
       await this.syncCronogramaEvent(evt);
     }
   }
 
-  // Delete workshop / cronograma event from Firestore
+  // Delete workshop / cronograma event from Firestore and Server Database
   static async deleteCronogramaEvent(id: string): Promise<void> {
     const collectionPath = 'cronogramaEvents';
+    // Delete from server database
+    try {
+      ServerDbSyncService.deleteWorkshop(id).catch((err) => {
+        console.warn('ServerDb deleteWorkshop notice:', err);
+      });
+    } catch (e) {
+      console.warn('ServerDb deleteWorkshop error:', e);
+    }
+
     try {
       await deleteDoc(doc(db, collectionPath, id));
     } catch (error) {
@@ -696,12 +717,9 @@ export class FirestoreSyncService {
     }
   }
 
-  // Listen to cronograma events / workshops in real-time
+  // Listen to cronograma events / workshops in real-time from Firestore
   static subscribeToCronogramaEvents(onUpdate: (events: CronogramaEvent[]) => void): () => void {
     const collectionPath = 'cronogramaEvents';
-    if (!auth.currentUser) {
-      return () => {};
-    }
     try {
       const q = collection(db, collectionPath);
       return onSnapshot(
@@ -709,7 +727,10 @@ export class FirestoreSyncService {
         (snapshot) => {
           const list: CronogramaEvent[] = [];
           snapshot.forEach((docSnap) => {
-            list.push(docSnap.data() as CronogramaEvent);
+            const data = docSnap.data();
+            if (data && data.id && data.title) {
+              list.push(data as CronogramaEvent);
+            }
           });
           if (list.length > 0) {
             onUpdate(list);
@@ -722,6 +743,26 @@ export class FirestoreSyncService {
     } catch (error) {
       console.warn('Could not subscribe to cronogramaEvents in Firestore:', error);
       return () => {};
+    }
+  }
+
+  // Fetch all workshops / cronograma events from Firestore
+  static async fetchCronogramaEvents(): Promise<CronogramaEvent[]> {
+    const collectionPath = 'cronogramaEvents';
+    try {
+      const q = collection(db, collectionPath);
+      const snapshot = await getDocs(q);
+      const list: CronogramaEvent[] = [];
+      snapshot.forEach((docSnap) => {
+        const data = docSnap.data();
+        if (data && data.id && data.title) {
+          list.push(data as CronogramaEvent);
+        }
+      });
+      return list;
+    } catch (error) {
+      console.warn('Firestore fetchCronogramaEvents notice:', error);
+      return [];
     }
   }
 
@@ -956,14 +997,17 @@ export class FirestoreSyncService {
     tallerRegistrosCount: number;
     formsSheetsCount: number;
     programNodesCount: number;
+    workshopsCount: number;
+    remoteWorkshops: CronogramaEvent[];
   }> {
     try {
-      const [remoteUsers, remoteRegs, remoteTalleres, remoteIntegrations, remoteProgramNodes] = await Promise.all([
+      const [remoteUsers, remoteRegs, remoteTalleres, remoteIntegrations, remoteProgramNodes, remoteWorkshops] = await Promise.all([
         this.fetchUsers(),
         this.fetchEventRegistrations(),
         this.fetchTallerRegistros(),
         this.fetchFormsSheetsIntegrations(),
         this.fetchProgramNodes(),
+        this.fetchCronogramaEvents(),
       ]);
       return {
         usersCount: remoteUsers.length,
@@ -971,10 +1015,20 @@ export class FirestoreSyncService {
         tallerRegistrosCount: remoteTalleres.length,
         formsSheetsCount: remoteIntegrations.length,
         programNodesCount: remoteProgramNodes.length,
+        workshopsCount: remoteWorkshops.length,
+        remoteWorkshops,
       };
     } catch (e) {
       console.warn('syncAllFromFirestore notice:', e);
-      return { usersCount: 0, regsCount: 0, tallerRegistrosCount: 0, formsSheetsCount: 0, programNodesCount: 0 };
+      return {
+        usersCount: 0,
+        regsCount: 0,
+        tallerRegistrosCount: 0,
+        formsSheetsCount: 0,
+        programNodesCount: 0,
+        workshopsCount: 0,
+        remoteWorkshops: [],
+      };
     }
   }
 
@@ -986,6 +1040,7 @@ export class FirestoreSyncService {
     prospects: Prospect[];
     payments: PaymentRequest[];
     eventRegistrations: EventRegistration[];
+    cronogramaEvents?: CronogramaEvent[];
     tallerRegistros?: TallerRegistroEntry[];
     sesionIndividualAcuerdos?: SesionIndividualAcuerdoEntry[];
     bitacorasSesionesB2B?: BitacoraSesionB2BEntry[];
@@ -994,6 +1049,17 @@ export class FirestoreSyncService {
   }): Promise<{ syncedCount: number; errors: number }> {
     let syncedCount = 0;
     let errors = 0;
+
+    if (Array.isArray(params.cronogramaEvents)) {
+      for (const evt of params.cronogramaEvents) {
+        try {
+          await this.syncCronogramaEvent(evt);
+          syncedCount++;
+        } catch {
+          errors++;
+        }
+      }
+    }
 
     for (const u of params.users) {
       try {

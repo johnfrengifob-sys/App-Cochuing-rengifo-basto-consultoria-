@@ -189,18 +189,18 @@ export const AdminAutomationsManager: React.FC<AdminAutomationsManagerProps> = (
       )}
 
       {/* Top Header Card */}
-      <div className="p-6 rounded-3xl banner-executive text-white shadow-xl relative overflow-hidden">
-        <div className="absolute right-0 top-0 w-80 h-80 bg-white/5 rounded-full blur-3xl pointer-events-none" />
+      <div className="p-6 rounded-3xl banner-executive text-black dark:text-white shadow-xs relative overflow-hidden transition-all">
+        <div className="absolute right-0 top-0 w-80 h-80 bg-neutral-500/5 dark:bg-neutral-400/5 rounded-full blur-3xl pointer-events-none" />
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-2">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/20 text-neutral-300 text-xs font-semibold backdrop-blur-md">
-              <Workflow className="w-3.5 h-3.5 text-neutral-300" />
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-neutral-100 dark:bg-white/10 border border-neutral-200 dark:border-white/20 text-neutral-800 dark:text-neutral-200 text-xs font-semibold backdrop-blur-md">
+              <Workflow className="w-3.5 h-3.5 text-neutral-700 dark:text-neutral-300" />
               <span>Arquitectura Make.com & Webhooks Cloud</span>
             </div>
-            <h3 className="text-xl md:text-2xl font-bold tracking-tight text-white flex items-center gap-2.5">
+            <h3 className="text-xl md:text-2xl font-bold tracking-tight text-black dark:text-white flex items-center gap-2.5">
               <span>Centro de Escenarios & Automatizaciones Académicas</span>
             </h3>
-            <p className="text-xs md:text-sm text-neutral-300 font-light max-w-2xl leading-relaxed">
+            <p className="text-xs md:text-sm text-neutral-600 dark:text-neutral-300 font-light max-w-2xl leading-relaxed">
               Configura los puntos de integración y webhooks entre la plataforma, Make.com, Calendly, WhatsApp Business y pasarelas de pago para una experiencia fluida sin intervención manual.
             </p>
           </div>
@@ -209,7 +209,7 @@ export const AdminAutomationsManager: React.FC<AdminAutomationsManagerProps> = (
             <button
               type="button"
               onClick={handleResetDefaults}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 text-white text-xs font-medium transition-all cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-white/80 dark:bg-white/10 hover:bg-white dark:hover:bg-white/20 border border-gray-200 dark:border-white/20 text-neutral-800 dark:text-white text-xs font-medium transition-all cursor-pointer shadow-2xs"
               title="Restablecer valores originales"
             >
               <RotateCcw className="w-3.5 h-3.5" />

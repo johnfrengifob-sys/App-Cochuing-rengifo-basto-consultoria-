@@ -808,6 +808,7 @@ const STORAGE_KEYS = {
   SYSTEM_LINK_BINDINGS: 'rbc_system_link_bindings_v2',
   EXPERIENCES: 'rbc_ontological_experiences_v1',
   DB_PURGED_CLEAN: 'rbc_db_purged_clean_v1',
+  DELETED_WORKSHOP_IDS: 'rbc_deleted_workshop_ids_v2',
 };
 
 export const INITIAL_AUTOMATED_TRIGGERS: AutomatedTriggerConfig[] = [
@@ -2287,6 +2288,27 @@ export class OntologicalStore {
     return INITIAL_QUESTIONNAIRES;
   }
 
+  // --- DELETED WORKSHOP TOMBSTONES ---
+  static getDeletedWorkshopIds(): string[] {
+    const list = this.load<string[]>(STORAGE_KEYS.DELETED_WORKSHOP_IDS, []);
+    return Array.isArray(list) ? list : [];
+  }
+
+  static addDeletedWorkshopId(id: string): void {
+    if (!id) return;
+    const current = this.getDeletedWorkshopIds();
+    if (!current.includes(id)) {
+      current.push(id);
+      this.save(STORAGE_KEYS.DELETED_WORKSHOP_IDS, current);
+    }
+  }
+
+  static removeDeletedWorkshopId(id: string): void {
+    if (!id) return;
+    const current = this.getDeletedWorkshopIds().filter((dId) => dId !== id);
+    this.save(STORAGE_KEYS.DELETED_WORKSHOP_IDS, current);
+  }
+
   static getCronogramaEvents(): CronogramaEvent[] {
     // Limpieza de claves previas de versiones anteriores para iniciar desde cero
     if (typeof window !== 'undefined') {
@@ -2303,14 +2325,20 @@ export class OntologicalStore {
       INITIAL_CRONOGRAMA_EVENTS
     );
 
+    const deletedIds = this.getDeletedWorkshopIds();
+
     if (!Array.isArray(list)) {
-      this.saveCronogramaEvents(INITIAL_CRONOGRAMA_EVENTS);
-      return INITIAL_CRONOGRAMA_EVENTS;
+      const initialFiltered = INITIAL_CRONOGRAMA_EVENTS.filter((e) => !deletedIds.includes(e.id));
+      this.saveCronogramaEvents(initialFiltered);
+      return initialFiltered;
     }
 
+    // Filtrar talleres que hayan sido eliminados
+    const filtered = list.filter((e) => !deletedIds.includes(e.id));
+
     // Asegurar que taller-1-raiz posea el afiche oficial de alta resolución y fechas vigentes
-    let needsResave = false;
-    const sanitized = list.map((evt) => {
+    let needsResave = filtered.length !== list.length;
+    const sanitized = filtered.map((evt) => {
       if (evt.id === 'taller-1-raiz' && (evt.imageUrl?.includes('unsplash') || !evt.imageUrl)) {
         needsResave = true;
         return {
@@ -2333,18 +2361,68 @@ export class OntologicalStore {
   }
 
   static saveCronogramaEvents(events: CronogramaEvent[]): void {
-    this.save(STORAGE_KEYS.CRONOGRAMA_EVENTS, events);
+    const deletedIds = this.getDeletedWorkshopIds();
+    const cleanEvents = events.filter((e) => !deletedIds.includes(e.id));
+    this.save(STORAGE_KEYS.CRONOGRAMA_EVENTS, cleanEvents);
     // Sincronización transparente con Firestore
     try {
-      FirestoreSyncService.syncAllCronogramaEvents(events);
+      FirestoreSyncService.syncAllCronogramaEvents(cleanEvents);
     } catch (e) {
       console.warn('Sync events warning:', e);
     }
+    // Sincronización transparente con la Base de Datos del Servidor (app_database.json)
+    try {
+      ServerDbSyncService.syncWithServer({
+        cronogramaEvents: cleanEvents,
+        deletedWorkshopIds: deletedIds,
+      }).catch((err) => {
+        console.warn('ServerDb sync workshops notice:', err);
+      });
+    } catch (e) {
+      console.warn('ServerDb sync warning:', e);
+    }
     if (typeof window !== 'undefined') {
-      window.dispatchEvent(new CustomEvent('rbc-cronograma-events-updated', { detail: { events } }));
-      window.dispatchEvent(new CustomEvent('rbc-workshops-updated', { detail: { events } }));
+      window.dispatchEvent(new CustomEvent('rbc-cronograma-events-updated', { detail: { events: cleanEvents } }));
+      window.dispatchEvent(new CustomEvent('rbc-workshops-updated', { detail: { events: cleanEvents } }));
       window.dispatchEvent(new Event('storage'));
     }
+  }
+
+  static mergeCronogramaEventsFromFirestore(remoteEvents: CronogramaEvent[]): CronogramaEvent[] {
+    if (!Array.isArray(remoteEvents) || remoteEvents.length === 0) {
+      return this.getCronogramaEvents();
+    }
+    const current = this.getCronogramaEvents();
+    const deletedIds = this.getDeletedWorkshopIds();
+    let hasChanges = false;
+    const merged = current.filter((e) => !deletedIds.includes(e.id));
+
+    remoteEvents.forEach((rEvt) => {
+      if (!rEvt || !rEvt.id || deletedIds.includes(rEvt.id)) return;
+      const idx = merged.findIndex((e) => e.id === rEvt.id);
+      if (idx >= 0) {
+        const existing = merged[idx];
+        const isDifferent = JSON.stringify(existing) !== JSON.stringify({ ...existing, ...rEvt });
+        if (isDifferent) {
+          merged[idx] = { ...existing, ...rEvt };
+          hasChanges = true;
+        }
+      } else {
+        merged.unshift(rEvt);
+        hasChanges = true;
+      }
+    });
+
+    if (hasChanges) {
+      this.save(STORAGE_KEYS.CRONOGRAMA_EVENTS, merged);
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('rbc-cronograma-events-updated', { detail: { events: merged } }));
+        window.dispatchEvent(new CustomEvent('rbc-workshops-updated', { detail: { events: merged } }));
+        window.dispatchEvent(new Event('storage'));
+      }
+    }
+
+    return merged;
   }
 
   static resetCronogramaEventsToDefault(): CronogramaEvent[] {
@@ -2421,6 +2499,15 @@ export class OntologicalStore {
       return e;
     });
     this.saveCronogramaEvents(updated);
+    if (updatedEvent) {
+      this.removeDeletedWorkshopId(id);
+      try {
+        FirestoreSyncService.syncCronogramaEvent(updatedEvent);
+        ServerDbSyncService.saveWorkshop(updatedEvent);
+      } catch (e) {
+        console.warn('updateCronogramaEvent direct sync notice:', e);
+      }
+    }
     return updatedEvent;
   }
 
@@ -2430,6 +2517,7 @@ export class OntologicalStore {
       ...eventData,
       id: 'event-' + Date.now(),
     };
+    this.removeDeletedWorkshopId(newEvent.id);
     if (newEvent.featured) {
       // Un-feature other events
       events.forEach((e) => {
@@ -2438,21 +2526,63 @@ export class OntologicalStore {
     }
     const updated = [newEvent, ...events];
     this.saveCronogramaEvents(updated);
+    // Guaranteed direct dual persistence
+    try {
+      FirestoreSyncService.syncCronogramaEvent(newEvent);
+      ServerDbSyncService.saveWorkshop(newEvent);
+    } catch (e) {
+      console.warn('addCronogramaEvent direct sync notice:', e);
+    }
     return newEvent;
   }
 
-  static deleteCronogramaEvent(id: string): void {
+  static async deleteCronogramaEvent(id: string): Promise<boolean> {
+    if (!id) return false;
+
+    // 1. Guardar ID en registro persistente de eliminados (tombstone)
+    this.addDeletedWorkshopId(id);
+
+    // 2. Remover del estado local inmediato
     const events = this.getCronogramaEvents();
     const updated = events.filter((e) => e.id !== id);
     if (updated.length > 0 && !updated.some((e) => e.featured)) {
       updated[0].featured = true;
     }
-    this.saveCronogramaEvents(updated);
-    try {
-      FirestoreSyncService.deleteCronogramaEvent(id);
-    } catch (e) {
-      console.warn('Firestore delete cronograma notice:', e);
+    this.save(STORAGE_KEYS.CRONOGRAMA_EVENTS, updated);
+
+    // 3. Notificar inmediatamente a la interfaz para respuesta instantánea
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('rbc-cronograma-events-updated', { detail: { events: updated } }));
+      window.dispatchEvent(new CustomEvent('rbc-workshops-updated', { detail: { events: updated } }));
+      window.dispatchEvent(new Event('storage'));
     }
+
+    // 4. Eliminación física en la base de datos persistente del servidor (app_database.json)
+    let serverSuccess = false;
+    try {
+      serverSuccess = await ServerDbSyncService.deleteWorkshop(id);
+    } catch (e) {
+      console.warn('deleteCronogramaEvent server delete notice:', e);
+    }
+
+    // 5. Eliminación física en Firestore
+    try {
+      await FirestoreSyncService.deleteCronogramaEvent(id);
+    } catch (e) {
+      console.warn('deleteCronogramaEvent firestore delete notice:', e);
+    }
+
+    // 6. Sincronizar estado completo de eliminados con el servidor
+    try {
+      await ServerDbSyncService.syncWithServer({
+        cronogramaEvents: updated,
+        deletedWorkshopIds: this.getDeletedWorkshopIds(),
+      });
+    } catch (e) {
+      console.warn('deleteCronogramaEvent syncWithServer notice:', e);
+    }
+
+    return serverSuccess;
   }
 
   // =========================================================================
@@ -3356,6 +3486,9 @@ export class OntologicalStore {
       const currentSessions = this.getSessions();
       const currentForms = this.getForms();
       const currentPostSession = this.getPostSessionForms();
+      const currentWorkshops = this.getCronogramaEvents();
+      const currentProgramNodes = this.getProgramNodes();
+      const currentDeletedWorkshopIds = this.getDeletedWorkshopIds();
 
       const serverState = await ServerDbSyncService.syncWithServer({
         users: currentUsers,
@@ -3363,6 +3496,9 @@ export class OntologicalStore {
         sessions: currentSessions,
         forms: currentForms,
         postSessionForms: currentPostSession,
+        cronogramaEvents: currentWorkshops,
+        programNodes: currentProgramNodes,
+        deletedWorkshopIds: currentDeletedWorkshopIds,
       });
 
       if (serverState) {
@@ -3371,6 +3507,14 @@ export class OntologicalStore {
         }
         if (Array.isArray(serverState.eventRegistrations) && serverState.eventRegistrations.length > 0) {
           this.mergeEventRegistrationsFromFirestore(serverState.eventRegistrations);
+        }
+        if (Array.isArray(serverState.deletedWorkshopIds)) {
+          serverState.deletedWorkshopIds.forEach((id: string) => {
+            this.addDeletedWorkshopId(id);
+          });
+        }
+        if (Array.isArray(serverState.cronogramaEvents) && serverState.cronogramaEvents.length > 0) {
+          this.mergeCronogramaEventsFromFirestore(serverState.cronogramaEvents);
         }
       }
     } catch (e) {
