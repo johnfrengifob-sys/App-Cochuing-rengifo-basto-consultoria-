@@ -2302,7 +2302,29 @@ export class OntologicalStore {
       this.saveCronogramaEvents(INITIAL_CRONOGRAMA_EVENTS);
       return INITIAL_CRONOGRAMA_EVENTS;
     }
-    return list;
+
+    // Asegurar que taller-1-raiz posea el afiche oficial de alta resolución y fechas vigentes
+    let needsResave = false;
+    const sanitized = list.map((evt) => {
+      if (evt.id === 'taller-1-raiz' && (evt.imageUrl?.includes('unsplash') || !evt.imageUrl)) {
+        needsResave = true;
+        return {
+          ...evt,
+          imageUrl: promotionalEventBannerImg,
+          coverImage: promotionalEventBannerImg,
+          date: '2026-09-19T19:00:00.000-05:00',
+          displayDate: 'Sábado, 19 de Septiembre de 2026',
+        };
+      }
+      return evt;
+    });
+
+    if (needsResave) {
+      this.save(STORAGE_KEYS.CRONOGRAMA_EVENTS, sanitized);
+      return sanitized;
+    }
+
+    return sanitized;
   }
 
   static saveCronogramaEvents(events: CronogramaEvent[]): void {

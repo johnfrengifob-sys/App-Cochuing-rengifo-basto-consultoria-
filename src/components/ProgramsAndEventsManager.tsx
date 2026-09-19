@@ -96,19 +96,15 @@ export const ProgramsAndEventsManager: React.FC<ProgramsAndEventsManagerProps> =
     };
   }, []);
 
-  // Active navigation sub-tab
-  const [activeSubTab, setActiveSubTab] = useState<'events' | 'editor' | 'workbooks' | 'participants'>(() => {
-    if (initialSubTab === 'participants') return 'participants';
+  // Active navigation view: 'events' (Catálogo directo) | 'editor' (Crear o editar taller)
+  const [activeSubTab, setActiveSubTab] = useState<'events' | 'editor'>(() => {
     if (initialSubTab === 'editor') return 'editor';
-    if (initialSubTab === 'workbooks') return 'workbooks';
     return 'events';
   });
 
   useEffect(() => {
-    if (initialSubTab === 'participants') setActiveSubTab('participants');
-    else if (initialSubTab === 'editor') setActiveSubTab('editor');
-    else if (initialSubTab === 'workbooks') setActiveSubTab('workbooks');
-    else if (initialSubTab === 'events') setActiveSubTab('events');
+    if (initialSubTab === 'editor') setActiveSubTab('editor');
+    else setActiveSubTab('events');
   }, [initialSubTab]);
 
   // Search and filters
@@ -172,14 +168,6 @@ export const ProgramsAndEventsManager: React.FC<ProgramsAndEventsManagerProps> =
     postWorkshopQuestions: [],
     workbookSubmissions: [],
   });
-
-  // Modal: Manual Participant Registration
-  const [isManualRegModalOpen, setIsManualRegModalOpen] = useState(false);
-  const [regName, setRegName] = useState('');
-  const [regEmail, setRegEmail] = useState('');
-  const [regPhone, setRegPhone] = useState('');
-  const [regEventId, setRegEventId] = useState(safeEvents[0]?.id || '');
-  const [regAttended, setRegAttended] = useState(false);
 
   // Filtered events
   const filteredEvents = safeEvents.filter((evt) => {
@@ -441,90 +429,8 @@ export const ProgramsAndEventsManager: React.FC<ProgramsAndEventsManagerProps> =
     onRefreshEvents();
   };
 
-  // Manual participant registration submit
-  const handleSaveManualRegistration = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!regName.trim() || !regEmail.trim() || !regEventId) return;
-
-    const result = OntologicalStore.registerForEvent({
-      name: regName.trim(),
-      email: regEmail.trim(),
-      phone: regPhone.trim() || '+57 300 000 0000',
-      eventId: regEventId,
-    });
-
-    if (regAttended && result?.registration?.id) {
-      OntologicalStore.updateEventRegistration(result.registration.id, { attendedEvent: true });
-    }
-
-    onRefreshRegistrations?.();
-    onRefreshEvents();
-    setIsManualRegModalOpen(false);
-    setRegName('');
-    setRegEmail('');
-    setRegPhone('');
-  };
-
   return (
     <div className="space-y-6">
-      {/* Sub-navegación superior del Administrador de Talleres y Sesiones */}
-      <div className="flex flex-wrap items-center justify-between gap-3 bg-white dark:bg-neutral-900 p-2.5 rounded-2xl border border-gray-200 dark:border-neutral-800 shadow-xs">
-        <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
-          <button
-            type="button"
-            onClick={() => setActiveSubTab('events')}
-            className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${
-              activeSubTab === 'events'
-                ? 'bg-black text-white dark:bg-white dark:text-black shadow-xs'
-                : 'text-gray-600 dark:text-neutral-400 hover:bg-gray-100 dark:hover:bg-neutral-800'
-            }`}
-          >
-            <Calendar className="w-3.5 h-3.5 text-indigo-500" />
-            <span>Catálogo de Talleres ({safeEvents.length})</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => {
-              if (activeSubTab !== 'editor') {
-                handleOpenCreateEvent();
-              }
-            }}
-            className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${
-              activeSubTab === 'editor'
-                ? 'bg-indigo-600 text-white shadow-xs'
-                : 'text-gray-600 dark:text-neutral-400 hover:bg-gray-100 dark:hover:bg-neutral-800'
-            }`}
-          >
-            <Layers className="w-3.5 h-3.5 text-amber-500" />
-            <span>Estructura del Módulo (3 Secciones)</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setActiveSubTab('participants')}
-            className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${
-              activeSubTab === 'participants'
-                ? 'bg-black text-white dark:bg-white dark:text-black shadow-xs'
-                : 'text-gray-600 dark:text-neutral-400 hover:bg-gray-100 dark:hover:bg-neutral-800'
-            }`}
-          >
-            <Users className="w-3.5 h-3.5 text-emerald-500" />
-            <span>Asistencia & Expedientes ({safeRegistrations.length})</span>
-          </button>
-        </div>
-
-        {activeSubTab === 'events' && (
-          <button
-            type="button"
-            onClick={handleOpenCreateEvent}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold cursor-pointer shadow-xs transition-all shrink-0"
-          >
-            <Plus className="w-3.5 h-3.5" />
-            <span>+ Crear Taller</span>
-          </button>
-        )}
-      </div>
 
       {/* ========================================================================= */}
       {/* VISTA 1: CATÁLOGO DE EVENTOS Y TALLERES                                    */}
@@ -887,8 +793,11 @@ export const ProgramsAndEventsManager: React.FC<ProgramsAndEventsManagerProps> =
                   </span>
                 </div>
                 <h3 className="text-lg font-bold text-black dark:text-white mt-1">
-                  Estructura del Módulo de Eventos y Sesiones
+                  {editingEventId ? 'Editar Taller u Evento' : 'Crear Nuevo Taller u Evento'}
                 </h3>
+                <p className="text-xs text-gray-500 dark:text-neutral-400 font-light mt-0.5">
+                  Configure y distribuya toda la información del evento a lo largo de sus 3 fases esenciales: Datos Generales & Logística, Contenido & Syllabus, y Evaluación con Google Forms/Sheets.
+                </p>
               </div>
 
               <div className="flex items-center gap-2">
@@ -929,10 +838,10 @@ export const ProgramsAndEventsManager: React.FC<ProgramsAndEventsManagerProps> =
                   }`}>
                     1
                   </span>
-                  <span className="text-xs sm:text-sm font-bold">1. Configuración General</span>
+                  <span className="text-xs sm:text-sm font-bold">1. Configuración General & Logística</span>
                 </div>
                 <p className="text-[11px] text-gray-500 dark:text-neutral-400 font-light mt-1.5 leading-relaxed">
-                  Define el nombre, portada, capacidad de participantes y valor de la inversión.
+                  Nombre, fecha y horario, sala Google Meet, portada, capacidad de cupos y valor de inversión.
                 </p>
               </button>
 
@@ -953,10 +862,10 @@ export const ProgramsAndEventsManager: React.FC<ProgramsAndEventsManagerProps> =
                   }`}>
                     2
                   </span>
-                  <span className="text-xs sm:text-sm font-bold">2. Contenido y Temario</span>
+                  <span className="text-xs sm:text-sm font-bold">2. Contenido, Temario & Materiales</span>
                 </div>
                 <p className="text-[11px] text-gray-500 dark:text-neutral-400 font-light mt-1.5 leading-relaxed">
-                  Organiza los bloques temáticos y las estructuras de indagación de la sesión.
+                  Syllabus por bloques temáticos, materiales de trabajo en PDF y preguntas clave de indagación.
                 </p>
               </button>
 
@@ -977,10 +886,10 @@ export const ProgramsAndEventsManager: React.FC<ProgramsAndEventsManagerProps> =
                   }`}>
                     3
                   </span>
-                  <span className="text-xs sm:text-sm font-bold">3. Evaluación y Activadores</span>
+                  <span className="text-xs sm:text-sm font-bold">3. Evaluación, Google Forms/Sheets & Activadores</span>
                 </div>
                 <p className="text-[11px] text-gray-500 dark:text-neutral-400 font-light mt-1.5 leading-relaxed">
-                  Integra los enlaces oficiales de los formularios y hojas de cálculo para que cada respuesta alimente automáticamente el expediente del cliente.
+                  Enlace oficial de Google Forms, Google Sheets para expedientes 1 a 1 y disparadores de recordatorio.
                 </p>
               </button>
             </div>
@@ -1058,392 +967,6 @@ export const ProgramsAndEventsManager: React.FC<ProgramsAndEventsManagerProps> =
                 )}
               </div>
             </div>
-          </div>
-        </div>
-      )}
-
-      {/* ========================================================================= */}
-      {/* VISTA 3: CENTRO DE EVALUACIÓN GOOGLE FORMS & EXPEDIENTES EN SHEETS        */}
-      {/* ========================================================================= */}
-      {activeSubTab === 'workbooks' && (
-        <div className="space-y-6">
-          <div className="bg-white dark:bg-neutral-900 rounded-3xl border border-gray-200 dark:border-neutral-800 p-6 shadow-xs space-y-3">
-            <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400">
-              <Zap className="w-5 h-5" />
-              <h3 className="text-base font-bold text-black dark:text-white">
-                Centro de Evaluación Google Forms & Expedientes en Google Sheets
-              </h3>
-            </div>
-            <p className="text-xs text-gray-500 dark:text-neutral-400 font-light max-w-3xl leading-relaxed">
-              El flujo de evaluación y cosecha de evidencias opera de manera nativa con el ecosistema de Google Forms y Google Sheets. Cada respuesta diligenciada por el participante se registra de inmediato y alimenta automáticamente su expediente ontológico.
-            </p>
-          </div>
-
-          <div className="space-y-4">
-            {safeEvents.map((evt) => {
-              const formsUrl = evt.googleFormsUrl || 'https://forms.gle/5Hiuxwq13n3gC3zt6';
-              const sheetsUrl = evt.googleSheetsUrl || 'https://docs.google.com/spreadsheets/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms/edit';
-
-              return (
-                <div
-                  key={evt.id}
-                  className="bg-white dark:bg-neutral-900 rounded-3xl border border-gray-200 dark:border-neutral-800 p-5 shadow-xs space-y-4"
-                >
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-gray-100 dark:border-neutral-800 pb-4">
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-[10px] font-mono uppercase px-2 py-0.5 rounded-md bg-neutral-100 dark:bg-neutral-800 font-bold text-neutral-600 dark:text-neutral-300">
-                          {evt.eventType || 'Taller'}
-                        </span>
-                        <span className="text-xs text-gray-400">
-                          {evt.displayDate || evt.date?.split('T')[0]}
-                        </span>
-                      </div>
-                      <h4 className="text-sm font-bold text-black dark:text-white mt-1">
-                        {evt.title}
-                      </h4>
-                    </div>
-
-                    <div className="flex flex-wrap items-center gap-2">
-                      <a
-                        href={formsUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold cursor-pointer shadow-xs transition-all"
-                      >
-                        <FileText className="w-3.5 h-3.5" />
-                        <span>Abrir Google Form</span>
-                      </a>
-                      <a
-                        href={sheetsUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold cursor-pointer shadow-xs transition-all"
-                      >
-                        <FileSpreadsheet className="w-3.5 h-3.5" />
-                        <span>Ver Respuestas en Sheets</span>
-                      </a>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          handleOpenEditEvent(evt);
-                          setEditorActiveSection('evaluation');
-                        }}
-                        className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-gray-200 dark:border-neutral-700 text-gray-700 dark:text-neutral-300 hover:bg-gray-100 dark:hover:bg-neutral-800 text-xs font-semibold cursor-pointer transition-all"
-                      >
-                        <Settings className="w-3.5 h-3.5" />
-                        <span>Configurar</span>
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="p-4 rounded-2xl bg-gray-50/70 dark:bg-neutral-800/40 border border-gray-100 dark:border-neutral-800 text-xs space-y-1.5 text-gray-600 dark:text-neutral-300">
-                    <div className="font-semibold text-black dark:text-white flex items-center gap-1.5">
-                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
-                      <span>Sincronización con Expediente del Cliente Activa</span>
-                    </div>
-                    <p className="text-[11px] text-gray-500 dark:text-neutral-400 font-light">
-                      Las respuestas recibidas en el formulario oficial se vinculan automáticamente mediante correo electrónico al expediente ontológico del cliente, registrando quiebres, emociones y compromisos de acción en Firebase.
-                    </p>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* ========================================================================= */}
-      {/* VISTA 4: CONTROL DE ASISTENTES & SALA VIRTUAL GOOGLE MEET                 */}
-      {/* ========================================================================= */}
-      {activeSubTab === 'participants' && (
-        <div className="space-y-6">
-          {/* Sala Google Meet Centralizada */}
-          <div className="bg-white dark:bg-neutral-900 rounded-3xl border border-gray-200 dark:border-neutral-800 p-5 shadow-xs space-y-3">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <div className="flex items-center gap-2">
-                <Video className="w-5 h-5 text-indigo-500" />
-                <div>
-                  <h3 className="text-sm font-bold text-black dark:text-white">
-                    Sala Virtual Centralizada (Google Meet)
-                  </h3>
-                  <p className="text-[11px] text-gray-400 font-light">
-                    Enlace permanente utilizado para las transmisiones oficiales de los talleres.
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={handleCopyMasterMeet}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-gray-200 dark:border-neutral-700 text-xs font-semibold text-gray-700 dark:text-neutral-300 hover:bg-gray-50 dark:hover:bg-neutral-800 cursor-pointer"
-                >
-                  {copiedMeetFeedback ? (
-                    <>
-                      <CheckCheck className="w-3.5 h-3.5 text-emerald-500" />
-                      <span>¡Copiado!</span>
-                    </>
-                  ) : (
-                    <>
-                      <Copy className="w-3.5 h-3.5" />
-                      <span>Copiar Enlace</span>
-                    </>
-                  )}
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setIsEditingMasterMeet(!isEditingMasterMeet)}
-                  className="px-3 py-1.5 rounded-xl bg-gray-100 dark:bg-neutral-800 text-xs font-semibold text-black dark:text-white hover:bg-gray-200 dark:hover:bg-neutral-700 cursor-pointer"
-                >
-                  {isEditingMasterMeet ? 'Cerrar' : 'Editar Sala'}
-                </button>
-              </div>
-            </div>
-
-            {isEditingMasterMeet ? (
-              <form onSubmit={handleSaveMasterMeet} className="flex gap-2 pt-2">
-                <input
-                  type="url"
-                  required
-                  value={tempMasterMeet}
-                  onChange={(e) => setTempMasterMeet(e.target.value)}
-                  className="flex-1 px-3 py-2 text-xs rounded-xl border border-gray-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-black dark:text-white"
-                />
-                <button
-                  type="submit"
-                  className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl cursor-pointer"
-                >
-                  Guardar
-                </button>
-              </form>
-            ) : (
-              <div className="p-2.5 rounded-xl bg-gray-50 dark:bg-neutral-800/40 font-mono text-xs text-indigo-700 dark:text-indigo-400 truncate">
-                {masterMeetUrl}
-              </div>
-            )}
-          </div>
-
-          {/* Tabla de Asistentes Registrados */}
-          <div className="bg-white dark:bg-neutral-900 rounded-3xl border border-gray-200 dark:border-neutral-800 overflow-hidden shadow-xs">
-            <div className="p-5 border-b border-gray-100 dark:border-neutral-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <div>
-                <h3 className="text-sm font-bold text-black dark:text-white">
-                  Participantes Registrados & Base de Datos 1 a 1
-                </h3>
-                <span className="text-xs text-gray-400">
-                  {safeRegistrations.length} participantes para seguimiento individual
-                </span>
-              </div>
-
-              <div className="flex items-center gap-2">
-                {safeEvents.some((e) => e.googleSheetsUrl) && (
-                  <a
-                    href={safeEvents.find((e) => e.googleSheetsUrl)?.googleSheetsUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold cursor-pointer shadow-xs transition-colors"
-                  >
-                    <FileSpreadsheet className="w-3.5 h-3.5" />
-                    <span>Abrir Google Sheets</span>
-                  </a>
-                )}
-
-                <button
-                  type="button"
-                  onClick={() => setIsManualRegModalOpen(true)}
-                  className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold cursor-pointer shadow-xs"
-                >
-                  <UserPlus className="w-3.5 h-3.5" />
-                  <span>Inscribir Participante</span>
-                </button>
-              </div>
-            </div>
-
-            {safeRegistrations.length > 0 ? (
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs">
-                  <thead className="bg-gray-50 dark:bg-neutral-800/50 text-gray-500 uppercase tracking-wider font-semibold border-b border-gray-100 dark:border-neutral-800">
-                    <tr>
-                      <th className="px-5 py-3">Código</th>
-                      <th className="px-5 py-3">Participante</th>
-                      <th className="px-5 py-3">Contacto & Seguimiento 1 a 1</th>
-                      <th className="px-5 py-3">Taller Asignado</th>
-                      <th className="px-5 py-3 text-right">Asistencia</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-100 dark:divide-neutral-800">
-                    {safeRegistrations.map((reg) => {
-                      const eventMatch = safeEvents.find((e) => e.id === reg.eventId);
-                      return (
-                        <tr key={reg.id} className="hover:bg-gray-50/60 dark:hover:bg-neutral-800/40">
-                          <td className="px-5 py-3 font-mono text-gray-500">
-                            {reg.ticketCode || reg.id.slice(0, 8)}
-                          </td>
-                          <td className="px-5 py-3">
-                            <span className="font-bold text-black dark:text-white block">
-                              {reg.name}
-                            </span>
-                          </td>
-                          <td className="px-5 py-3 text-gray-500 dark:text-neutral-400">
-                            <span>{reg.email}</span>
-                            {reg.phone && (
-                              <div className="flex items-center gap-2 mt-0.5">
-                                <span className="text-[10px]">{reg.phone}</span>
-                                <a
-                                  href={`https://wa.me/${reg.phone.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(
-                                    `Hola ${reg.name}, te saludamos de Rengifo Basto Consultoría para darte seguimiento a tu participación en el taller "${eventMatch?.title || 'Ontológico'}".`
-                                  )}`}
-                                  target="_blank"
-                                  rel="noreferrer"
-                                  title="Contactar 1 a 1 por WhatsApp"
-                                  className="text-[10px] text-emerald-600 dark:text-emerald-400 hover:underline font-bold"
-                                >
-                                  WhatsApp 1 a 1
-                                </a>
-                              </div>
-                            )}
-                          </td>
-                          <td className="px-5 py-3 font-medium text-black dark:text-white">
-                            {eventMatch?.title || reg.eventId}
-                          </td>
-                          <td className="px-5 py-3 text-right">
-                            <button
-                              type="button"
-                              onClick={() => {
-                                OntologicalStore.updateEventRegistration(reg.id, { attendedEvent: !reg.attendedEvent });
-                                onRefreshRegistrations?.();
-                              }}
-                              className={`text-[10px] px-2.5 py-1 rounded-full font-semibold cursor-pointer transition-all ${
-                                reg.attendedEvent
-                                  ? 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400'
-                                  : 'bg-gray-100 dark:bg-neutral-800 text-gray-600 dark:text-neutral-400 hover:bg-gray-200'
-                              }`}
-                            >
-                              {reg.attendedEvent ? '✓ Asistió' : 'Pendiente'}
-                            </button>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            ) : (
-              <div className="p-8 text-center text-xs text-gray-400">
-                No hay asistentes registrados aún en este momento.
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* MODAL: REGISTRO MANUAL DE PARTICIPANTE */}
-      {isManualRegModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
-          <div className="w-full max-w-md rounded-2xl bg-white dark:bg-neutral-900 border border-gray-200 dark:border-neutral-800 shadow-2xl p-5 space-y-4">
-            <div className="flex items-center justify-between border-b border-gray-100 dark:border-neutral-800 pb-3">
-              <h4 className="text-sm font-bold text-black dark:text-white">
-                Inscribir Participante Manualmente
-              </h4>
-              <button
-                type="button"
-                onClick={() => setIsManualRegModalOpen(false)}
-                className="text-gray-400 hover:text-black dark:hover:text-white text-xs cursor-pointer"
-              >
-                ✕
-              </button>
-            </div>
-
-            <form onSubmit={handleSaveManualRegistration} className="space-y-3">
-              <div>
-                <label className="block text-[11px] font-semibold text-black dark:text-white mb-1">
-                  Nombre Completo
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={regName}
-                  onChange={(e) => setRegName(e.target.value)}
-                  placeholder="Ej: Camila Rojas"
-                  className="w-full px-3 py-2 text-xs rounded-xl border border-gray-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-black dark:text-white"
-                />
-              </div>
-
-              <div>
-                <label className="block text-[11px] font-semibold text-black dark:text-white mb-1">
-                  Correo Electrónico
-                </label>
-                <input
-                  type="email"
-                  required
-                  value={regEmail}
-                  onChange={(e) => setRegEmail(e.target.value)}
-                  placeholder="correo@ejemplo.com"
-                  className="w-full px-3 py-2 text-xs rounded-xl border border-gray-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-black dark:text-white"
-                />
-              </div>
-
-              <div>
-                <label className="block text-[11px] font-semibold text-black dark:text-white mb-1">
-                  Teléfono / WhatsApp
-                </label>
-                <input
-                  type="text"
-                  value={regPhone}
-                  onChange={(e) => setRegPhone(e.target.value)}
-                  placeholder="+57 300 123 4567"
-                  className="w-full px-3 py-2 text-xs rounded-xl border border-gray-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-black dark:text-white"
-                />
-              </div>
-
-              <div>
-                <label className="block text-[11px] font-semibold text-black dark:text-white mb-1">
-                  Taller o Evento
-                </label>
-                <select
-                  value={regEventId}
-                  onChange={(e) => setRegEventId(e.target.value)}
-                  className="w-full px-3 py-2 text-xs rounded-xl border border-gray-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-black dark:text-white"
-                >
-                  {safeEvents.map((evt) => (
-                    <option key={evt.id} value={evt.id}>
-                      {evt.title} ({evt.displayDate || evt.date?.split('T')[0]})
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="flex items-center gap-2 pt-1">
-                <input
-                  type="checkbox"
-                  id="regAttendedCheck"
-                  checked={regAttended}
-                  onChange={(e) => setRegAttended(e.target.checked)}
-                  className="rounded-sm text-indigo-600 focus:ring-indigo-500 cursor-pointer"
-                />
-                <label htmlFor="regAttendedCheck" className="text-xs text-gray-700 dark:text-neutral-300 cursor-pointer">
-                  Marcar como asistente confirmado
-                </label>
-              </div>
-
-              <div className="flex items-center justify-end gap-2 pt-3 border-t border-gray-100 dark:border-neutral-800">
-                <button
-                  type="button"
-                  onClick={() => setIsManualRegModalOpen(false)}
-                  className="px-3 py-1.5 text-xs text-gray-600 dark:text-neutral-400 hover:bg-gray-100 rounded-lg cursor-pointer"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold cursor-pointer"
-                >
-                  Registrar Asistente
-                </button>
-              </div>
-            </form>
           </div>
         </div>
       )}

@@ -29,10 +29,12 @@ import { FirestoreSyncService } from '../services/firestoreSync';
 import { PDFGenerator } from '../utils/pdfGenerator';
 import { safeCopyToClipboard } from '../utils/clipboard';
 import { PostSessionWorkbookModal } from './PostSessionWorkbookModal';
-import { ParticipantTalleresModule } from './dashboard/ParticipantTalleresModule';
+import { ParticipantTemarioSyllabus } from './dashboard/ParticipantTemarioSyllabus';
+import { TemarioSyllabusItem } from '../data/temarioOntologico';
 import { CURATED_EXPERIENCE_PHOTOS } from '../data/initialExperiences';
 import coachAvatarImg from '../assets/images/regenerated_image_1788287101599.jpg';
 import whiteWavesBg from '../assets/images/white_waves_bg_1788461168119.jpg';
+import { PromotionalEventBanner } from './PromotionalEventBanner';
 
 interface ClientDashboardProps {
   client: User;
@@ -153,28 +155,13 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
     OntologicalStore.getCronogramaEvents()
   );
 
-  // Estados de navegación e interacción modular (todos cerrados por defecto al entrar)
-  const [expandedModules, setExpandedModules] = useState<{
-    talleres: boolean;
-    rutaGrafica: boolean;
-    bitacoras: boolean;
-  }>({
-    talleres: false,    // Módulo 1: Talleres (Inicia cerrado)
-    rutaGrafica: false, // Módulo 2: Ruta Gráfica (Inicia cerrado)
-    bitacoras: false,   // Módulo 3: Bitácoras (Inicia cerrado)
+  // Estado de navegación del Temario Ontológico (Syllabus de lectura)
+  const [selectedTemarioItemId, setSelectedTemarioItemId] = useState<string>(() => {
+    if (client.programProgress && client.programProgress > 1) {
+      return `station-${client.programProgress}`;
+    }
+    return 'workshop-1-raiz';
   });
-
-  const toggleModule = (moduleKey: 'talleres' | 'rutaGrafica' | 'bitacoras') => {
-    setExpandedModules((prev) => ({
-      ...prev,
-      [moduleKey]: !prev[moduleKey],
-    }));
-  };
-
-  const [selectedStationNumber, setSelectedStationNumber] = useState<number>(() =>
-    client.programProgress || 1
-  );
-  const [selectedWorkshopId, setSelectedWorkshopId] = useState<string>('taller-1-raiz');
 
   // Modal para edición/registro de bitácora
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
@@ -358,46 +345,20 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
     return CURATED_EXPERIENCE_PHOTOS[0]; // Raíz somática y presencia
   }, [currentSessionNumber]);
 
-  // Información de la estación seleccionada en el Módulo 2 (Ruta Gráfica)
-  const selectedNodeInfo: ProgramNodeInfo | undefined = useMemo(() => {
-    return (
-      PROGRAM_NODES.find((node) => node.step === selectedStationNumber) ||
-      PROGRAM_NODES[Math.min(selectedStationNumber - 1, PROGRAM_NODES.length - 1)]
-    );
-  }, [selectedStationNumber]);
 
-  const selectedSession: Session = useMemo(() => {
-    const found = sessions.find((s) => s.sessionNumber === selectedStationNumber);
-    if (found) return found;
 
-    return {
-      id: `sess-${activeUser.uid}-${selectedStationNumber}`,
-      sessionNumber: selectedStationNumber,
-      clientId: activeUser.uid,
-      clientName: activeUser.name,
-      date: new Date().toISOString(),
-      status: selectedStationNumber < currentSessionNumber ? 'completed' : 'scheduled',
-      durationMinutes: 60,
-      meetLink: `https://meet.google.com/rbc-${(activeUser.name || 'sesion').toLowerCase().replace(/[^a-z0-9]/g, '')}-s${selectedStationNumber}`,
-      notes: '',
-      keyInsights: [],
-      actionAgreements: [],
-      somaticFocus: '',
-      programNodeStep: selectedStationNumber,
-    };
-  }, [sessions, selectedStationNumber, activeUser, currentSessionNumber]);
+  // Verificación de asistencia a talleres (por objeto o por identificador)
+  const isWorkshopAttended = (wsOrId: CoreWorkshopTrack | string) => {
+    const ws =
+      typeof wsOrId === 'string'
+        ? CORE_WORKSHOPS.find((w) => w.id === wsOrId || w.matchIds.includes(wsOrId))
+        : wsOrId;
 
-  const selectedForm: PostSessionForm | undefined = useMemo(() => {
-    return postForms.find((f) => f.sessionNumber === selectedStationNumber);
-  }, [postForms, selectedStationNumber]);
+    if (!ws) {
+      const idStr = typeof wsOrId === 'string' ? wsOrId : '';
+      return (activeUser.completedWorkshopIds || []).includes(idStr);
+    }
 
-  // Historial condensado de cuestionarios finalizados
-  const pastForms = useMemo(() => {
-    return postForms.slice().sort((a, b) => b.sessionNumber - a.sessionNumber);
-  }, [postForms]);
-
-  // Verificación de asistencia a talleres
-  const isWorkshopAttended = (ws: CoreWorkshopTrack) => {
     const completedIds = activeUser.completedWorkshopIds || [];
     if (
       completedIds.some(
@@ -439,6 +400,30 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
 
     return false;
   };
+
+  // Taller en curso seleccionado para el banner del participante
+  const defaultDashboardWorkshopId = useMemo(() => {
+    if (currentCycle === 1) return 'taller-1-raiz';
+    if (currentCycle === 2) return 'taller-2-tallo';
+    return 'taller-3-florecimiento';
+  }, [currentCycle]);
+
+  const [selectedDashboardWorkshopId, setSelectedDashboardWorkshopId] =
+    useState<string>(defaultDashboardWorkshopId);
+
+  useEffect(() => {
+    setSelectedDashboardWorkshopId(defaultDashboardWorkshopId);
+  }, [defaultDashboardWorkshopId]);
+
+  const selectedWorkshopEvent = useMemo(() => {
+    const found = cronogramaEvents.find((evt) => evt.id === selectedDashboardWorkshopId);
+    if (found) return found;
+    return (
+      cronogramaEvents.find((evt) => evt.id === defaultDashboardWorkshopId) ||
+      cronogramaEvents[0] ||
+      OntologicalStore.getUpcomingEvent()
+    );
+  }, [cronogramaEvents, selectedDashboardWorkshopId, defaultDashboardWorkshopId]);
 
   // Obtención de respuestas y memorias del taller
   const getWorkshopMemoryDetails = (ws: CoreWorkshopTrack) => {
@@ -501,6 +486,25 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
       setDownloadToastMessage('Error al generar el PDF. Intenta nuevamente.');
       setTimeout(() => setDownloadToastMessage(null), 3500);
     }
+  };
+
+  const handleDownloadWorkshopMemoryFromSyllabus = (item: TemarioSyllabusItem) => {
+    const matchingTrack =
+      CORE_WORKSHOPS.find(
+        (w) => w.id === item.workshopId || w.matchIds.includes(item.workshopId || '')
+      ) || CORE_WORKSHOPS[item.cycleNumber - 1];
+    handleDownloadWorkshopMemory(matchingTrack);
+  };
+
+  const isWorkshopAttendedById = (workshopId: string, stageName: string) => {
+    const ws = CORE_WORKSHOPS.find(
+      (w) =>
+        w.id === workshopId ||
+        w.matchIds.includes(workshopId) ||
+        w.stageName.toLowerCase() === stageName.toLowerCase()
+    );
+    if (!ws) return false;
+    return isWorkshopAttended(ws);
   };
 
   const formatHumanDate = (dateStr?: string) => {
@@ -705,7 +709,88 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
         </header>
 
         {/* ========================================================================= */}
-        {/* 2. TU MOMENTO ACTUAL (PRIMERO): FOTOGRAFÍA, PREGUNTA Y PRÓXIMO PASO       */}
+        {/* 2. TALLER ONTOLÓGICO EN CURSO (BANNER OFICIAL CON AFICHE Y ACCESO MEET)     */}
+        {/* ========================================================================= */}
+        <section id="banner-taller-en-curso" className="space-y-3">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 px-1">
+            <div className="flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+              <h2 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-black dark:text-white font-mono">
+                Taller Ontológico en Curso • Espacio Vivencial Grupal
+              </h2>
+            </div>
+
+            {/* Selector de Talleres del Programa: Raíz (Ciclo 1), Tallo (Ciclo 2), Florecimiento (Ciclo 3) */}
+            <div className="flex items-center gap-1.5 p-1 rounded-xl bg-white/60 dark:bg-neutral-900/60 border border-black/10 dark:border-white/10 text-[11px] font-mono self-start sm:self-auto shadow-xs">
+              {[
+                { id: 'taller-1-raiz', cycle: 1, label: 'Raíz (Ciclo 1)' },
+                { id: 'taller-2-tallo', cycle: 2, label: 'Tallo (Ciclo 2)' },
+                { id: 'taller-3-florecimiento', cycle: 3, label: 'Florecimiento (Ciclo 3)' },
+              ].map(({ id, cycle, label }) => {
+                const isSelected = selectedDashboardWorkshopId === id;
+                const isMyCurrentCycle = currentCycle === cycle;
+                const isAccredited = isWorkshopAttended(id);
+
+                return (
+                  <button
+                    key={id}
+                    type="button"
+                    onClick={() => setSelectedDashboardWorkshopId(id)}
+                    className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${
+                      isSelected
+                        ? 'bg-black dark:bg-white text-white dark:text-black font-bold shadow-xs'
+                        : 'text-neutral-600 dark:text-neutral-400 hover:text-black dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/5'
+                    }`}
+                  >
+                    <span>{label}</span>
+                    {isMyCurrentCycle && (
+                      <span
+                        className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0"
+                        title="Tu ciclo actual"
+                      />
+                    )}
+                    {isAccredited && (
+                      <span className="text-[10px] text-emerald-500 font-bold shrink-0" title="Acreditado">
+                        ✓
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <PromotionalEventBanner
+            event={selectedWorkshopEvent}
+            variant="participant"
+            isAttended={isWorkshopAttended(selectedWorkshopEvent.id)}
+            participantCycle={currentCycle}
+            onNavigateToSyllabus={() => {
+              const el = document.getElementById('temario-ontologico-syllabus');
+              if (el) {
+                el.scrollIntoView({ behavior: 'smooth' });
+              }
+              const workshopTabId =
+                selectedWorkshopEvent.id === 'taller-1-raiz'
+                  ? 'workshop-1-raiz'
+                  : selectedWorkshopEvent.id === 'taller-2-tallo'
+                  ? 'workshop-2-tallo'
+                  : 'workshop-3-florecimiento';
+              setSelectedTemarioItemId(workshopTabId);
+            }}
+            onDownloadWorkbookPDF={() => {
+              const matchingCoreWs = CORE_WORKSHOPS.find(
+                (w) => w.id === selectedWorkshopEvent.id || w.matchIds.includes(selectedWorkshopEvent.id)
+              );
+              if (matchingCoreWs) {
+                handleDownloadWorkshopMemory(matchingCoreWs);
+              }
+            }}
+          />
+        </section>
+
+        {/* ========================================================================= */}
+        {/* 3. TU MOMENTO ACTUAL: FOTOGRAFÍA, PREGUNTA Y PRÓXIMO PASO                 */}
         {/* ========================================================================= */}
         <section
           id="tu-momento-actual"
@@ -891,517 +976,30 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
         </section>
 
         {/* ========================================================================= */}
-        {/* 3. MÓDULO: HISTORIAL DE TALLERES ASISTIDOS & CRONOGRAMA (DESPUÉS DE TU MOMENTO ACTUAL) */}
+        {/* 3. TEMARIO ONTOLÓGICO & SYLLABUS DE LECTURA DE INFORMACIÓN                */}
         {/* ========================================================================= */}
-        <ParticipantTalleresModule
-          isExpanded={expandedModules.talleres}
-          onToggle={() => toggleModule('talleres')}
-          accreditedWorkshopsCount={accreditedWorkshopsCount}
-          coreWorkshops={CORE_WORKSHOPS}
-          selectedWorkshopId={selectedWorkshopId}
-          onSelectWorkshopId={setSelectedWorkshopId}
-          isWorkshopAttended={isWorkshopAttended}
-          getWorkshopMemoryDetails={getWorkshopMemoryDetails}
-          onDownloadWorkshopMemory={handleDownloadWorkshopMemory}
-          onCopyPaymentKey={handleCopyPaymentKey}
-          copiedPaymentKey={copiedPaymentKey}
-        />
+        <section id="temario-ontologico-syllabus" className="space-y-4">
+          <ParticipantTemarioSyllabus
+            activeUser={activeUser}
+            sessions={sessions}
+            postForms={postForms}
+            cronogramaEvents={cronogramaEvents}
+            currentSessionNumber={currentSessionNumber}
+            currentCycle={currentCycle}
+            selectedItemId={selectedTemarioItemId}
+            onSelectItem={setSelectedTemarioItemId}
+            onOpenBitacora={handleOpenBitacora}
+            onDownloadSessionPDF={handleDownloadMemory}
+            onDownloadWorkshopPDF={handleDownloadWorkshopMemoryFromSyllabus}
+            onCopyPaymentKey={handleCopyPaymentKey}
+            copiedPaymentKey={copiedPaymentKey}
+            isWorkshopAttended={isWorkshopAttendedById}
+          />
+        </section>
 
-        {/* ========================================================================= */}
-        {/* 4. MÓDULO 2 (CONTINUACIÓN): TU RUTA GRÁFICA & 12 ESTACIONES 1 A 1         */}
-        {/* ========================================================================= */}
-        <div className="rounded-3xl border border-black/10 dark:border-white/15 bg-white/20 dark:bg-neutral-950/30 backdrop-blur-xl overflow-hidden shadow-sm hover:shadow-md transition-all">
-          {/* Botón General Largo de Apertura/Cierre */}
-          <button
-            type="button"
-            onClick={() => toggleModule('rutaGrafica')}
-            className="w-full p-5 sm:p-6 text-left flex items-center justify-between gap-4 cursor-pointer hover:bg-white/30 dark:hover:bg-neutral-900/30 transition-colors select-none group"
-          >
-            <div className="flex items-center gap-4">
-              <div className="w-11 h-11 rounded-2xl bg-emerald-500/10 dark:bg-emerald-500/15 border border-emerald-500/25 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 transition-transform group-hover:scale-105">
-                <Layers className="w-5 h-5" />
-              </div>
-              <div>
-                <div className="flex items-center gap-2 flex-wrap">
-                  <h3 className="text-sm sm:text-base font-bold text-black dark:text-white uppercase tracking-wider font-mono">
-                    Módulo 2: Tu Ruta Gráfica & Progreso Integral
-                  </h3>
-                  <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 font-semibold border border-emerald-500/30">
-                    Estación E{currentSessionNumber.toString().padStart(2, '0')} en Curso
-                  </span>
-                </div>
-                <p className="text-xs text-neutral-600 dark:text-neutral-400 font-light mt-0.5">
-                  12 estaciones individuales en 3 ciclos • Selección rápida, detalle del proceso y cuadernos de trabajo
-                </p>
-              </div>
-            </div>
 
-            <div className="flex items-center gap-3 shrink-0">
-              <span className="text-xs font-medium text-neutral-500 hidden sm:inline">
-                {expandedModules.rutaGrafica ? 'Contraer' : 'Expandir módulo'}
-              </span>
-              <div
-                className={`p-2 rounded-xl bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 transition-transform duration-300 ${
-                  expandedModules.rutaGrafica ? 'rotate-180' : ''
-                }`}
-              >
-                <ChevronDown className="w-4 h-4" />
-              </div>
-            </div>
-          </button>
 
-          {/* Contenido Interior Desplegado */}
-          {expandedModules.rutaGrafica && (
-            <div className="px-5 sm:px-8 pb-6 sm:pb-8 pt-2 space-y-6 border-t border-black/5 dark:border-white/5">
-              {/* Navegación Compacta de Estaciones (12 Botones Sutiles) */}
-              <div className="space-y-3 pt-2">
-                <div className="flex items-center justify-between text-[11px] text-neutral-500 font-mono">
-                  <span>Selecciona una estación para ver su detalle:</span>
-                  <span className="hidden sm:inline">
-                    Ciclo 1: E01-E04 • Ciclo 2: E05-E08 • Ciclo 3: E09-E12
-                  </span>
-                </div>
 
-                <div className="grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-12 gap-1.5 sm:gap-2">
-                  {Array.from({ length: 12 }, (_, i) => i + 1).map((stepNum) => {
-                    const cycleNum = Math.ceil(stepNum / 4);
-                    const isMilestone = stepNum === 4 || stepNum === 8 || stepNum === 12;
-                    const isCompleted = stepNum < currentSessionNumber;
-                    const isCurrent = stepNum === currentSessionNumber;
-                    const isSelected = selectedStationNumber === stepNum;
-                    const cycleAccent = getCycleAccent(cycleNum);
-
-                    return (
-                      <button
-                        key={stepNum}
-                        type="button"
-                        onClick={() => setSelectedStationNumber(stepNum)}
-                        title={`Estación ${stepNum} (Ciclo ${cycleNum})`}
-                        className={`h-12 sm:h-14 p-1.5 sm:p-2 rounded-xl border text-left flex flex-col justify-between transition-all cursor-pointer select-none relative ${
-                          isSelected
-                            ? 'ring-2 ring-black dark:ring-white bg-black text-white dark:bg-white dark:text-black border-black dark:border-white shadow-sm'
-                            : isCurrent
-                            ? 'bg-white/80 dark:bg-neutral-900/80 backdrop-blur-xs border-black dark:border-white text-black dark:text-white font-semibold shadow-2xs'
-                            : isCompleted
-                            ? 'bg-white/50 dark:bg-neutral-900/50 backdrop-blur-xs border-black/15 dark:border-white/15 text-neutral-800 dark:text-neutral-200 hover:border-black/30 dark:hover:border-white/30'
-                            : 'bg-white/25 dark:bg-neutral-900/25 backdrop-blur-xs border-black/10 dark:border-white/10 text-neutral-400 dark:text-neutral-500 hover:bg-white/40 dark:hover:bg-neutral-900/40'
-                        }`}
-                      >
-                        <div className="flex items-center justify-between w-full">
-                          <span className="text-[10px] font-mono font-bold tracking-tight">
-                            E{stepNum.toString().padStart(2, '0')}
-                          </span>
-                          {isCompleted ? (
-                            <CheckCircle2
-                              className={`w-3 h-3 shrink-0 ${
-                                isSelected
-                                  ? 'text-white dark:text-black'
-                                  : 'text-emerald-600 dark:text-emerald-400'
-                              }`}
-                            />
-                          ) : isCurrent ? (
-                            <span
-                              className={`w-2 h-2 rounded-full shrink-0 ${
-                                isSelected
-                                  ? 'bg-white dark:bg-black'
-                                  : 'bg-emerald-500 animate-pulse'
-                              }`}
-                            />
-                          ) : (
-                            <Circle className="w-2.5 h-2.5 shrink-0 opacity-30" />
-                          )}
-                        </div>
-
-                        <div className="text-[9px] font-mono truncate tracking-tight flex items-center justify-between w-full opacity-85">
-                          <span>C{cycleNum}</span>
-                          {isMilestone && (
-                            <span className="text-[9px] font-bold text-amber-500">★</span>
-                          )}
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* INFORMACIÓN DETALLADA: CONTENEDOR CON TRANSPARENCIA ELEGANTE */}
-              <div
-                className="p-5 sm:p-6 rounded-2xl bg-white/30 dark:bg-neutral-900/40 backdrop-blur-md border border-black/10 dark:border-white/10 shadow-sm space-y-4 relative overflow-hidden"
-              >
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-black/10 dark:border-white/10">
-                  <div className="space-y-0.5">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-xs font-bold uppercase tracking-wider font-mono text-black dark:text-white">
-                        Estación {selectedStationNumber} •{' '}
-                        {selectedNodeInfo?.sessionTitle || `Sesión ${selectedStationNumber}`}
-                      </span>
-                      <span className="text-[10px] px-2 py-0.5 rounded-full font-mono uppercase bg-neutral-100/70 dark:bg-neutral-800/70 text-neutral-700 dark:text-neutral-300 border border-black/10 dark:border-white/10">
-                        Ciclo {Math.ceil(selectedStationNumber / 4)}:{' '}
-                        {selectedStationNumber % 4 === 0 ? 'Consolidación' : 'Exploración Libre'}
-                      </span>
-                    </div>
-                    <p className="text-xs text-neutral-600 dark:text-neutral-400 font-light">
-                      {selectedNodeInfo?.objective ||
-                        'Espacio abierto al emergente y transformación del observador.'}
-                    </p>
-                  </div>
-
-                  <div className="shrink-0">
-                    {selectedStationNumber < currentSessionNumber ? (
-                      <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800/60 px-2.5 py-1 rounded-full">
-                        <CheckCircle2 className="w-3 h-3" />
-                        Estación Completada
-                      </span>
-                    ) : selectedStationNumber === currentSessionNumber ? (
-                      <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-black dark:text-white bg-white/60 dark:bg-neutral-800/60 backdrop-blur-xs border border-black/20 dark:border-white/20 px-2.5 py-1 rounded-full">
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                        Estación Activa • Encuentro Actual
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center gap-1 text-[11px] text-neutral-500 font-mono bg-white/20 dark:bg-neutral-800/30 border border-black/5 dark:border-white/5 px-2.5 py-1 rounded-full">
-                        ○ En tu Ruta Próxima
-                      </span>
-                    )}
-                  </div>
-                </div>
-
-                {/* Detalle del Proceso según Estado */}
-                {selectedForm ? (
-                  <div className="space-y-3 text-xs">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <div className="p-3.5 rounded-xl bg-white/25 dark:bg-neutral-950/40 backdrop-blur-xs border border-black/10 dark:border-white/10 space-y-1">
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-500 font-mono block">
-                          Tema Emergente & Quiebre Exploratorio:
-                        </span>
-                        <p className="text-neutral-900 dark:text-neutral-100 font-medium leading-relaxed">
-                          {selectedForm.emergentTopic || selectedForm.masterJudgmentAndNarrative}
-                        </p>
-                      </div>
-
-                      <div className="p-3.5 rounded-xl bg-white/25 dark:bg-neutral-950/40 backdrop-blur-xs border border-black/10 dark:border-white/10 space-y-1">
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-500 font-mono block">
-                          Paso a la Acción & Compromiso Asumido:
-                        </span>
-                        <p className="text-neutral-900 dark:text-neutral-100 font-medium leading-relaxed">
-                          {selectedForm.actionStep ||
-                            selectedForm.agreedActionItems?.[0] ||
-                            selectedForm.coacheeKeyDeclaration ||
-                            'Compromiso reflexivo y presencia consciente.'}
-                        </p>
-                      </div>
-                    </div>
-
-                    {selectedForm.discovery && (
-                      <div className="p-3.5 rounded-xl bg-white/25 dark:bg-neutral-950/40 backdrop-blur-xs border border-black/10 dark:border-white/10 space-y-1">
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-500 font-mono block">
-                          Descubrimiento / Cambio de Perspectiva:
-                        </span>
-                        <p className="text-neutral-800 dark:text-neutral-200 font-light leading-relaxed">
-                          {selectedForm.discovery}
-                        </p>
-                      </div>
-                    )}
-
-                    {selectedForm.cycleHarvest && (
-                      <div className="p-3.5 rounded-xl bg-neutral-950/90 text-white dark:bg-white/90 dark:text-black space-y-1 shadow-2xs border border-amber-500/30 backdrop-blur-xs">
-                        <span className="text-[10px] font-bold uppercase tracking-widest font-mono block text-amber-400 dark:text-amber-600">
-                          ★ Cosecha del Ciclo Registrada:
-                        </span>
-                        <p className="font-light leading-relaxed">
-                          {selectedForm.cycleHarvest}
-                        </p>
-                      </div>
-                    )}
-
-                    {/* Acceso Directo a Descarga de Cuaderno / Memoria */}
-                    <div className="pt-2 flex flex-wrap items-center gap-3">
-                      <button
-                        type="button"
-                        onClick={() => handleDownloadMemory(selectedForm, selectedSession)}
-                        className="px-4 py-2 rounded-xl bg-black text-white dark:bg-white dark:text-black font-semibold text-xs hover:opacity-90 transition-opacity inline-flex items-center gap-2 cursor-pointer shadow-xs"
-                      >
-                        <Download className="w-3.5 h-3.5 text-emerald-400 dark:text-emerald-600" />
-                        <span>Descargar Cuaderno de Trabajo / Memoria (PDF)</span>
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => handleOpenBitacora(selectedSession)}
-                        className="px-3.5 py-2 rounded-xl border border-black/15 dark:border-white/15 bg-white/50 dark:bg-neutral-800/60 backdrop-blur-xs text-xs font-medium hover:bg-white/70 dark:hover:bg-neutral-700 transition-colors inline-flex items-center gap-1.5 cursor-pointer"
-                      >
-                        <FileText className="w-3.5 h-3.5" />
-                        <span>Ver / Editar Bitácora Completa</span>
-                      </button>
-                    </div>
-                  </div>
-                ) : selectedStationNumber === currentSessionNumber ? (
-                  <div className="space-y-3 text-xs">
-                    <p className="text-neutral-700 dark:text-neutral-300 font-light leading-relaxed">
-                      Esta es tu estación activa en el ciclo actual. Al concluir tu sesión 1 a 1 con tu facilitador, podrás registrar la bitácora reflexiva y se generará automáticamente tu cuaderno de trabajo descargable.
-                    </p>
-                    <div className="flex flex-wrap items-center gap-3 pt-1">
-                      <a
-                        href={currentSession.meetLink || 'https://meet.google.com/new'}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="px-4 py-2 rounded-xl bg-black text-white dark:bg-white dark:text-black font-semibold text-xs hover:opacity-90 transition-opacity inline-flex items-center gap-1.5 cursor-pointer shadow-xs"
-                      >
-                        <Video className="w-3.5 h-3.5 text-emerald-400 dark:text-emerald-600" />
-                        <span>Unirme a Sesión por Meet</span>
-                      </a>
-
-                      <button
-                        type="button"
-                        onClick={() => handleOpenBitacora(selectedSession)}
-                        className="px-4 py-2 rounded-xl border border-black/15 dark:border-white/15 bg-white/50 dark:bg-neutral-800/60 backdrop-blur-xs text-xs font-semibold hover:bg-white/70 dark:hover:bg-neutral-700 transition-colors inline-flex items-center gap-1.5 cursor-pointer"
-                      >
-                        <FileText className="w-3.5 h-3.5" />
-                        <span>Registrar Bitácora de la Sesión</span>
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  /* ================================================================ */
-                  /* ESTACIÓN INACTIVA: SOLO INFORMACIÓN DE PAGO                      */
-                  /* ================================================================ */
-                  <div className="space-y-4 text-xs">
-                    <div className="p-4 sm:p-5 rounded-2xl bg-white/20 dark:bg-neutral-950/40 backdrop-blur-xs border border-black/10 dark:border-white/10 space-y-4">
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-black/10 dark:border-white/10">
-                        <div className="flex items-center gap-2">
-                          <span className="w-2.5 h-2.5 rounded-full bg-neutral-400 dark:bg-neutral-500 shrink-0" />
-                          <span className="font-bold text-black dark:text-white uppercase tracking-wider text-[11px] font-mono">
-                            Estación {selectedStationNumber} • Inactiva
-                          </span>
-                        </div>
-                        <span className="text-[11px] font-medium text-neutral-500 dark:text-neutral-400">
-                          Requiere formalización de inversión para su habilitación
-                        </span>
-                      </div>
-
-                      {/* Opciones de Inversión */}
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <div className="p-3.5 rounded-xl border border-black/10 dark:border-white/10 bg-white/30 dark:bg-neutral-900/40 backdrop-blur-xs space-y-1 shadow-2xs">
-                          <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-500 font-mono block">
-                            Inversión por Ciclo (4 Sesiones)
-                          </span>
-                          <div className="text-base font-bold text-black dark:text-white">
-                            $500.000 COP
-                          </div>
-                          <p className="text-[11px] text-neutral-600 dark:text-neutral-400 font-light">
-                            Habilita las 4 estaciones del ciclo formativo con acompañamiento individual y bitácora reflexiva.
-                          </p>
-                        </div>
-
-                        <div className="p-3.5 rounded-xl border border-black/10 dark:border-white/10 bg-white/30 dark:bg-neutral-900/40 backdrop-blur-xs space-y-1 shadow-2xs">
-                          <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-500 font-mono block">
-                            Inversión Integral (12 Sesiones)
-                          </span>
-                          <div className="text-base font-bold text-black dark:text-white">
-                            $1.500.000 COP
-                          </div>
-                          <p className="text-[11px] text-neutral-600 dark:text-neutral-400 font-light">
-                            Proceso completo de 12 semanas integrales (o 2 cuotas quincenales de $750.000 COP).
-                          </p>
-                        </div>
-                      </div>
-
-                      {/* Canales Oficiales de Pago */}
-                      <div className="p-3.5 rounded-xl border border-black/10 dark:border-white/10 bg-white/30 dark:bg-neutral-900/40 backdrop-blur-xs space-y-3 shadow-2xs">
-                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                          <div className="flex items-center gap-2.5">
-                            <Smartphone className="w-4 h-4 text-black dark:text-white shrink-0" />
-                            <div>
-                              <div className="text-xs font-semibold text-black dark:text-white">
-                                {BRE_B_NU_CONFIG.title} ({BRE_B_NU_CONFIG.bank})
-                              </div>
-                              <div className="text-[11px] text-neutral-500 dark:text-neutral-400 font-light">
-                                Llave oficial para transferencias sin costo desde cualquier entidad financiera
-                              </div>
-                            </div>
-                          </div>
-
-                          <div className="flex items-center gap-2">
-                            <span className="px-2.5 py-1 rounded-lg bg-black text-white dark:bg-white dark:text-black font-mono font-bold text-xs">
-                              {BRE_B_NU_CONFIG.llave}
-                            </span>
-                            <button
-                              type="button"
-                              onClick={handleCopyPaymentKey}
-                              className="px-3 py-1.5 rounded-lg border border-black/15 dark:border-white/15 bg-white/50 dark:bg-neutral-800/60 backdrop-blur-xs text-black dark:text-white font-semibold text-[11px] hover:bg-white/70 dark:hover:bg-neutral-700 transition-colors inline-flex items-center gap-1.5 cursor-pointer shadow-2xs"
-                              title="Copiar llave de pago"
-                            >
-                              {copiedPaymentKey ? (
-                                <>
-                                  <Check className="w-3 h-3 text-emerald-500" />
-                                  <span>¡Copiado!</span>
-                                </>
-                              ) : (
-                                <>
-                                  <Copy className="w-3 h-3" />
-                                  <span>Copiar</span>
-                                </>
-                              )}
-                            </button>
-                          </div>
-                        </div>
-
-                        <div className="text-[11px] text-neutral-600 dark:text-neutral-400 font-light">
-                          Entidades compatibles: Nu, Bancolombia, Nequi, Daviplata, Dale, BBVA, Davivienda y Banco de Bogotá.
-                        </div>
-                      </div>
-
-                      {/* Botón de Confirmación / Envío de Comprobante por WhatsApp */}
-                      <div className="pt-1 flex flex-wrap items-center justify-between gap-3">
-                        <span className="text-[11px] text-neutral-500 dark:text-neutral-400 font-light">
-                          Al realizar tu transferencia, reporta el comprobante para habilitar esta estación:
-                        </span>
-                        <a
-                          href={`https://wa.me/${BRE_B_NU_CONFIG.whatsappRaw}?text=${encodeURIComponent(
-                            `Hola Coach John Fredy, adjunto comprobante de pago para habilitar la Estación ${selectedStationNumber} (${selectedNodeInfo?.sessionTitle || '1 a 1'}) del programa Certeza.`
-                          )}`}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="px-4 py-2 rounded-xl bg-black text-white dark:bg-white dark:text-black font-semibold text-xs hover:opacity-90 transition-opacity inline-flex items-center gap-2 cursor-pointer shadow-xs"
-                        >
-                          <MessageCircle className="w-3.5 h-3.5 text-emerald-400 dark:text-emerald-600" />
-                          <span>Validar Comprobante por WhatsApp</span>
-                        </a>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* ========================================================================= */}
-        {/* 5. MÓDULO 3: HISTÓRICO DE BITÁCORAS 1 A 1 (BOTÓN GENERAL EXPANDIBLE)       */}
-        {/* ========================================================================= */}
-        <div className="rounded-3xl border border-black/10 dark:border-white/15 bg-white/20 dark:bg-neutral-950/30 backdrop-blur-xl overflow-hidden shadow-sm hover:shadow-md transition-all">
-          {/* Botón General Largo de Apertura/Cierre */}
-          <button
-            type="button"
-            onClick={() => toggleModule('bitacoras')}
-            className="w-full p-5 sm:p-6 text-left flex items-center justify-between gap-4 cursor-pointer hover:bg-white/30 dark:hover:bg-neutral-900/30 transition-colors select-none group"
-          >
-            <div className="flex items-center gap-4">
-              <div className="w-11 h-11 rounded-2xl bg-indigo-500/10 dark:bg-indigo-500/15 border border-indigo-500/25 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0 transition-transform group-hover:scale-105">
-                <FileText className="w-5 h-5" />
-              </div>
-              <div>
-                <div className="flex items-center gap-2 flex-wrap">
-                  <h3 className="text-sm sm:text-base font-bold text-black dark:text-white uppercase tracking-wider font-mono">
-                    Módulo 3: Histórico de Bitácoras 1 a 1
-                  </h3>
-                  <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-indigo-500/15 text-indigo-700 dark:text-indigo-300 font-semibold border border-indigo-500/30">
-                    {pastForms.length} {pastForms.length === 1 ? 'Bitácora' : 'Bitácoras'} Registradas
-                  </span>
-                </div>
-                <p className="text-xs text-neutral-600 dark:text-neutral-400 font-light mt-0.5">
-                  Archivo documental de todas tus memorias y compromisos individuales sesión por sesión
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-3 shrink-0">
-              <span className="text-xs font-medium text-neutral-500 hidden sm:inline">
-                {expandedModules.bitacoras ? 'Contraer' : 'Ver histórico'}
-              </span>
-              <div
-                className={`p-2 rounded-xl bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 transition-transform duration-300 ${
-                  expandedModules.bitacoras ? 'rotate-180' : ''
-                }`}
-              >
-                <ChevronDown className="w-4 h-4" />
-              </div>
-            </div>
-          </button>
-
-          {/* Contenido Interior Desplegado */}
-          {expandedModules.bitacoras && (
-            <div className="px-5 sm:px-8 pb-6 sm:pb-8 pt-2 space-y-3 border-t border-black/5 dark:border-white/5">
-              {pastForms.length === 0 ? (
-                <p className="text-xs text-neutral-500 font-light italic p-4 rounded-2xl bg-white/25 dark:bg-neutral-900/35 backdrop-blur-xs border border-black/10 dark:border-white/10 mt-2">
-                  Aún no has registrado cuestionarios de bitácora posterior. Tras tu primer encuentro individual aparecerán aquí tus registros y cuadernos descargables.
-                </p>
-              ) : (
-                pastForms.map((item) => {
-                  const cycleNum = Math.ceil(item.sessionNumber / 4);
-                  const isMilestone =
-                    item.sessionNumber === 4 || item.sessionNumber === 8 || item.sessionNumber === 12;
-
-                  return (
-                    <div
-                      key={item.id}
-                      className="p-4 rounded-2xl border border-black/10 dark:border-white/10 bg-white/25 dark:bg-neutral-900/35 backdrop-blur-xs space-y-2 text-xs"
-                    >
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="font-bold text-black dark:text-white">
-                            Sesión {item.sessionNumber}
-                          </span>
-                          <span className="text-neutral-400">•</span>
-                          <span className="text-neutral-600 dark:text-neutral-400">
-                            Ciclo {cycleNum} {isMilestone ? '(★ Cierre de Ciclo)' : ''}
-                          </span>
-                          <span className="text-neutral-400">•</span>
-                          <span className="text-[11px] text-neutral-500 font-mono">
-                            {item.submittedAt
-                              ? new Date(item.submittedAt).toLocaleDateString('es-ES')
-                              : 'Registrado'}
-                          </span>
-                        </div>
-
-                        <button
-                          type="button"
-                          onClick={() => handleDownloadMemory(item)}
-                          className="px-3 py-1.5 rounded-xl border border-black/15 dark:border-white/15 bg-white/50 dark:bg-black/50 backdrop-blur-xs text-xs font-semibold hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors inline-flex items-center gap-1.5 self-start sm:self-auto cursor-pointer shadow-2xs"
-                        >
-                          <Download className="w-3.5 h-3.5 text-indigo-500" />
-                          <span>Descargar PDF</span>
-                        </button>
-                      </div>
-
-                      <div className="space-y-1 text-neutral-700 dark:text-neutral-300 font-light">
-                        <p>
-                          <strong className="font-semibold text-black dark:text-white">
-                            Tema Emergente:
-                          </strong>{' '}
-                          {item.emergentTopic || item.masterJudgmentAndNarrative}
-                        </p>
-                        {item.discovery && (
-                          <p>
-                            <strong className="font-semibold text-black dark:text-white">
-                              Descubrimiento:
-                            </strong>{' '}
-                            {item.discovery}
-                          </p>
-                        )}
-                        {item.actionStep && (
-                          <p>
-                            <strong className="font-semibold text-black dark:text-white">
-                              Acción Acordada:
-                            </strong>{' '}
-                            {item.actionStep}
-                          </p>
-                        )}
-                        {item.cycleHarvest && (
-                          <div className="mt-1.5 p-2.5 rounded-xl bg-white dark:bg-black border border-black/10 dark:border-white/10 text-neutral-900 dark:text-neutral-100 shadow-2xs">
-                            <strong className="font-semibold block text-[11px] text-amber-500">
-                              ★ Cosecha del Ciclo:
-                            </strong>
-                            <span>{item.cycleHarvest}</span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })
-              )}
-            </div>
-          )}
-        </div>
 
         {/* ========================================================================= */}
         {/* 6. ACOMPAÑAMIENTO CERCANO: CONTACTO DIRECTO CON EL FACILITADOR           */}

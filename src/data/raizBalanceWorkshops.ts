@@ -1,4 +1,5 @@
 import { CronogramaEvent, OntologicalProgram } from '../types';
+import promotionalEventBannerImg from '../assets/images/proximo_evento_banner_1788270380574.jpg';
 
 export const INITIAL_CRONOGRAMA_EVENTS: CronogramaEvent[] = [
   // =========================================================================
@@ -10,17 +11,15 @@ export const INITIAL_CRONOGRAMA_EVENTS: CronogramaEvent[] = [
     subtitle: 'Reconocer la raíz: Corporalidad, límites y descodificación de las emociones fundamentales.',
     category: 'Primer Taller • En Vivo',
     eventType: 'Taller / Programa Intensivo',
-    date: '2026-09-12T19:00:00.000-05:00',
-    displayDate: 'Sábado, 12 de Septiembre de 2026',
+    date: '2026-09-19T19:00:00.000-05:00',
+    displayDate: 'Sábado, 19 de Septiembre de 2026',
     time: '7:00 PM - 8:30 PM (GMT-5)',
     mode: 'Online (Google Meet)',
     meetUrl: 'https://meet.google.com/rbc-conversatorio-ontologico',
     description:
       'Primer encuentro vivencial del programa maestro RAÍZ Y BALANCE: Evolución de las Emociones. Reconocer la raíz: Corporalidad, límites y descodificación de las emociones fundamentales a través del mapeo de la transparencia cotidiana, la decodificación somática del miedo y la rabia inspirada en Norberto Levy, y la proclamación del "Basta" como acto fundacional de soberanía relacional.',
-    imageUrl:
-      'https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=1000&auto=format&fit=crop&q=80',
-    coverImage:
-      'https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=1000&auto=format&fit=crop&q=80',
+    imageUrl: promotionalEventBannerImg,
+    coverImage: promotionalEventBannerImg,
     showOnHome: true,
     capacityType: 'grupal',
     capacity: 12,
@@ -30,7 +29,7 @@ export const INITIAL_CRONOGRAMA_EVENTS: CronogramaEvent[] = [
     price: '$180.000 COP',
     currency: 'COP',
     launchDate: '2026-09-05',
-    eventDate: '2026-09-12',
+    eventDate: '2026-09-19',
     facilitator: 'John Fredy Rengifo Basto (Master Coach Ontológico)',
     featured: true,
     status: 'upcoming',
@@ -114,8 +113,8 @@ export const INITIAL_CRONOGRAMA_EVENTS: CronogramaEvent[] = [
     subtitle: 'Transformar desde el lenguaje: Deconstrucción de juicios, actos lingüísticos y rediseño de observadores.',
     category: 'Taller Vivencial',
     eventType: 'Taller / Programa Intensivo',
-    date: '2026-09-19T19:00:00.000-05:00',
-    displayDate: 'Sábado, 19 de Septiembre de 2026',
+    date: '2026-09-26T19:00:00.000-05:00',
+    displayDate: 'Sábado, 26 de Septiembre de 2026',
     time: '7:00 PM - 8:30 PM (GMT-5)',
     mode: 'Online (Google Meet)',
     meetUrl: 'https://meet.google.com/rbc-conversatorio-ontologico',
@@ -134,7 +133,7 @@ export const INITIAL_CRONOGRAMA_EVENTS: CronogramaEvent[] = [
     price: '$180.000 COP',
     currency: 'COP',
     launchDate: '2026-09-13',
-    eventDate: '2026-09-19',
+    eventDate: '2026-09-26',
     facilitator: 'John Fredy Rengifo Basto (Master Coach Ontológico)',
     featured: true,
     status: 'upcoming',
@@ -218,8 +217,8 @@ export const INITIAL_CRONOGRAMA_EVENTS: CronogramaEvent[] = [
     subtitle: 'Encarnar la transformación: Mapa de decisiones conscientes, diseño de futuros y contribución relacional.',
     category: 'Conversatorio de Cierre',
     eventType: 'Taller / Programa Intensivo',
-    date: '2026-09-26T19:00:00.000-05:00',
-    displayDate: 'Sábado, 26 de Septiembre de 2026',
+    date: '2026-10-03T19:00:00.000-05:00',
+    displayDate: 'Sábado, 3 de Octubre de 2026',
     time: '7:00 PM - 8:30 PM (GMT-5)',
     mode: 'Online (Google Meet)',
     meetUrl: 'https://meet.google.com/rbc-conversatorio-ontologico',
@@ -238,7 +237,7 @@ export const INITIAL_CRONOGRAMA_EVENTS: CronogramaEvent[] = [
     price: '$180.000 COP',
     currency: 'COP',
     launchDate: '2026-09-20',
-    eventDate: '2026-09-26',
+    eventDate: '2026-10-03',
     facilitator: 'John Fredy Rengifo Basto (Master Coach Ontológico)',
     featured: true,
     status: 'upcoming',

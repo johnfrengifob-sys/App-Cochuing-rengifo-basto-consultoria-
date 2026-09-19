@@ -25,13 +25,19 @@ import {
   ZoomIn,
   Download,
   Award,
+  BookOpen,
 } from 'lucide-react';
+import promotionalEventBannerImg from '../assets/images/proximo_evento_banner_1788270380574.jpg';
 
 interface PromotionalEventBannerProps {
   event?: CronogramaEvent;
   onRegisterInterest?: (event: CronogramaEvent) => void;
   className?: string;
   variant?: 'landing' | 'compact' | 'participant' | 'full';
+  isAttended?: boolean;
+  participantCycle?: number;
+  onNavigateToSyllabus?: () => void;
+  onDownloadWorkbookPDF?: () => void;
 }
 
 export const PromotionalEventBanner: React.FC<PromotionalEventBannerProps> = ({
@@ -39,6 +45,10 @@ export const PromotionalEventBanner: React.FC<PromotionalEventBannerProps> = ({
   onRegisterInterest,
   className = '',
   variant = 'landing',
+  isAttended = false,
+  participantCycle,
+  onNavigateToSyllabus,
+  onDownloadWorkbookPDF,
 }) => {
   const [event, setEvent] = useState<CronogramaEvent>(() =>
     initialEventProp || OntologicalStore.getUpcomingEvent()
@@ -83,6 +93,14 @@ export const PromotionalEventBanner: React.FC<PromotionalEventBannerProps> = ({
     () => event.meetUrl || 'https://meet.google.com/rbc-conversatorio-ontologico',
     [event.meetUrl]
   );
+
+  // Afiche gráfico oficial de alta resolución
+  const eventImageUrl = useMemo(() => {
+    if (!event.imageUrl || event.imageUrl.includes('unsplash') || event.id === 'taller-1-raiz') {
+      return promotionalEventBannerImg;
+    }
+    return event.imageUrl;
+  }, [event.imageUrl, event.id]);
 
   // Dynamic live countdown calculation
   const [timeLeft, setTimeLeft] = useState(() => {
@@ -194,12 +212,12 @@ export const PromotionalEventBanner: React.FC<PromotionalEventBannerProps> = ({
       <>
         <div
           id="participant-promotional-banner"
-          className={`relative w-full rounded-3xl overflow-hidden border border-white/20 dark:border-white/10 shadow-2xl bg-[#0D0D0E]/80 backdrop-blur-2xl group transition-all duration-300 ${className}`}
+          className={`relative w-full rounded-3xl overflow-hidden border border-white/20 dark:border-white/10 shadow-2xl bg-[#0D0D0E]/90 backdrop-blur-2xl group transition-all duration-300 ${className}`}
         >
           {/* Balanced 2-Zone Grid: Left Workshop Poster Image | Right Counter & Info */}
           <div className="grid grid-cols-1 lg:grid-cols-12 items-stretch">
             {/* 1. PRIMERO LA IMAGEN DEL AFICHE CON CONTADOR NUMÉRICO DIRECTO */}
-            <div className="lg:col-span-5 relative bg-black/40 backdrop-blur-md flex items-center justify-center p-3 sm:p-5 border-b lg:border-b-0 lg:border-r border-white/10">
+            <div className="lg:col-span-5 relative bg-black/50 backdrop-blur-md flex items-center justify-center p-3 sm:p-5 border-b lg:border-b-0 lg:border-r border-white/10">
               <div
                 onClick={() => setShowImageModal(true)}
                 className="relative group/poster cursor-pointer overflow-hidden rounded-2xl w-full h-full min-h-[220px] sm:min-h-[260px] max-h-[340px] flex items-center justify-center shadow-lg border border-white/10 bg-black/40"
@@ -207,7 +225,7 @@ export const PromotionalEventBanner: React.FC<PromotionalEventBannerProps> = ({
               >
                 {/* Complete, Natural Unobscured Image */}
                 <img
-                  src={event.imageUrl}
+                  src={eventImageUrl}
                   alt={event.title}
                   referrerPolicy="no-referrer"
                   className="w-full h-full object-cover sm:object-contain object-center group-hover/poster:scale-[1.02] transition-transform duration-500"
@@ -219,22 +237,35 @@ export const PromotionalEventBanner: React.FC<PromotionalEventBannerProps> = ({
                   <span>Ampliar</span>
                 </div>
 
-                {/* CONTADOR GRÁFICO NUMÉRICO LIMPIO SOBRE LA IMAGEN (Sin recuadros ni contenedores, solo los números) */}
+                {/* CONTADOR GRÁFICO NUMÉRICO LIMPIO SOBRE LA IMAGEN */}
                 {renderImageNumericCountdown()}
               </div>
             </div>
 
             {/* 2. LUEGO LA INFORMACIÓN Y ACCIONES */}
-            <div className="lg:col-span-7 p-6 sm:p-7 md:p-8 flex flex-col justify-between space-y-6 text-left">
+            <div className="lg:col-span-7 p-6 sm:p-7 md:p-8 flex flex-col justify-between space-y-5 text-left">
               {/* Header Badges */}
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/60 backdrop-blur-md border border-white/20 text-emerald-300 text-xs font-semibold tracking-wide">
-                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shrink-0" />
-                  <span>Próximo Taller • {event.displayDate} ({event.time})</span>
-                </span>
-                <span className="px-2.5 py-0.5 rounded-full bg-white/10 backdrop-blur-md border border-white/15 text-[11px] font-medium text-gray-200">
-                  Google Meet
-                </span>
+              <div className="flex items-center justify-between gap-2 flex-wrap">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/60 backdrop-blur-md border border-white/20 text-emerald-300 text-xs font-semibold tracking-wide">
+                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shrink-0" />
+                    <span>Taller en Curso • {event.displayDate} ({event.time})</span>
+                  </span>
+                  <span className="px-2.5 py-0.5 rounded-full bg-white/10 backdrop-blur-md border border-white/15 text-[11px] font-medium text-gray-200">
+                    Google Meet
+                  </span>
+                </div>
+
+                {isAttended ? (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-950/80 border border-emerald-500/40 text-emerald-300 text-xs font-bold font-mono shadow-xs">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                    <span>✓ Acreditado en tu Expediente</span>
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-white/10 border border-white/15 text-neutral-300 text-[11px] font-medium">
+                    <span>Acceso Incluido en tu Programa</span>
+                  </span>
+                )}
               </div>
 
               {/* EXPLICACIÓN E INFORMACIÓN */}
@@ -243,28 +274,28 @@ export const PromotionalEventBanner: React.FC<PromotionalEventBannerProps> = ({
                   {event.title}
                 </h2>
                 <p className="text-xs sm:text-sm font-light text-gray-200 leading-relaxed max-w-xl">
-                  {event.subtitle || 'Espacio interactivo de límites no dichos, mapeo de transparencia y decodificación somática en vivo con John Rengifo.'}
+                  {event.subtitle || 'Espacio interactivo de límites no dichos, mapeo de transparencia y decodificación somática en vivo con John Fredy Rengifo.'}
                 </p>
               </div>
 
               {/* ACTION BAR: Minimalist Meet Button + Actions */}
-              <div className="pt-2 flex flex-wrap items-center gap-3">
+              <div className="pt-2 flex flex-wrap items-center gap-2.5 sm:gap-3">
                 <a
                   href={meetUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 px-5 sm:px-6 py-3 rounded-full bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white font-semibold text-xs sm:text-sm shadow-xl hover:shadow-emerald-600/30 transition-all cursor-pointer whitespace-nowrap active:scale-[0.98] border border-emerald-400/30"
+                  className="inline-flex items-center gap-2 px-5 sm:px-6 py-2.5 rounded-full bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white font-semibold text-xs sm:text-sm shadow-xl hover:shadow-emerald-600/30 transition-all cursor-pointer whitespace-nowrap active:scale-[0.98] border border-emerald-400/30"
                   title="Iniciar e ingresar a la sala de Google Meet"
                 >
                   <Video className="w-4 h-4 text-white shrink-0" />
-                  <span>Iniciar en Google Meet</span>
+                  <span>Unirme por Google Meet</span>
                   <ExternalLink className="w-3.5 h-3.5 text-emerald-200 shrink-0" />
                 </a>
 
                 <button
                   type="button"
                   onClick={handleCopyMeetLink}
-                  className="p-3 rounded-full bg-black/60 hover:bg-black/80 backdrop-blur-md border border-white/20 text-white text-xs transition-colors cursor-pointer shadow-md"
+                  className="p-2.5 rounded-full bg-black/60 hover:bg-black/80 backdrop-blur-md border border-white/20 text-white text-xs transition-colors cursor-pointer shadow-md"
                   title="Copiar enlace de Google Meet"
                 >
                   {copiedMeetNotice ? (
@@ -274,25 +305,49 @@ export const PromotionalEventBanner: React.FC<PromotionalEventBannerProps> = ({
                   )}
                 </button>
 
+                {onNavigateToSyllabus && (
+                  <button
+                    type="button"
+                    onClick={onNavigateToSyllabus}
+                    className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/15 text-white text-xs font-medium transition-colors cursor-pointer"
+                    title="Ver contenidos, distinciones y marco teórico en el temario ontológico"
+                  >
+                    <BookOpen className="w-3.5 h-3.5 text-emerald-400" />
+                    <span>Ver en Temario</span>
+                  </button>
+                )}
+
+                {onDownloadWorkbookPDF && (
+                  <button
+                    type="button"
+                    onClick={onDownloadWorkbookPDF}
+                    className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-amber-500/20 hover:bg-amber-500/30 border border-amber-400/30 text-amber-200 text-xs font-medium transition-colors cursor-pointer"
+                    title="Descargar Cuaderno y Memoria del Taller en PDF"
+                  >
+                    <Download className="w-3.5 h-3.5 text-amber-300" />
+                    <span>Descargar Memoria (PDF)</span>
+                  </button>
+                )}
+
                 <a
                   href={event.googleFormsUrl || 'https://forms.gle/5Hiuxwq13n3gC3zt6'}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-purple-600/90 hover:bg-purple-500 backdrop-blur-md text-white text-xs font-semibold transition-colors cursor-pointer shadow-md"
+                  className="inline-flex items-center gap-1.5 px-3 py-2 rounded-full bg-neutral-800 hover:bg-neutral-700 text-neutral-200 text-xs font-medium transition-colors cursor-pointer border border-neutral-700"
                   title="Formulario Oficial de Evaluación y Cosecha (Google Forms)"
                 >
-                  <ExternalLink className="w-3.5 h-3.5 text-white" />
+                  <ExternalLink className="w-3.5 h-3.5 text-neutral-300" />
                   <span>Evaluación Forms</span>
                 </a>
 
                 <button
                   type="button"
                   onClick={() => setShowImageModal(true)}
-                  className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/15 text-gray-200 hover:text-white text-xs font-medium transition-colors cursor-pointer"
+                  className="inline-flex items-center gap-1.5 px-3 py-2 rounded-full bg-white/5 hover:bg-white/15 border border-white/10 text-gray-300 hover:text-white text-xs font-medium transition-colors cursor-pointer"
                   title="Ver afiche completo en alta resolución"
                 >
                   <Maximize2 className="w-3.5 h-3.5 text-emerald-400" />
-                  <span>Ver afiche completo</span>
+                  <span>Ampliar afiche</span>
                 </button>
 
                 {copiedMeetNotice && (
@@ -347,7 +402,7 @@ export const PromotionalEventBanner: React.FC<PromotionalEventBannerProps> = ({
               {/* Modal Image Display */}
               <div className="flex-1 overflow-auto flex items-center justify-center p-4 bg-black/60">
                 <img
-                  src={event.imageUrl}
+                  src={eventImageUrl}
                   alt={event.title}
                   referrerPolicy="no-referrer"
                   className="max-h-[75vh] w-auto max-w-full object-contain rounded-xl shadow-2xl"
@@ -405,7 +460,7 @@ export const PromotionalEventBanner: React.FC<PromotionalEventBannerProps> = ({
             >
               {/* Unobscured Workshop Poster Image */}
               <img
-                src={event.imageUrl}
+                src={eventImageUrl}
                 alt={event.title}
                 referrerPolicy="no-referrer"
                 className="w-full h-full object-cover sm:object-contain object-center group-hover/poster:scale-[1.02] transition-transform duration-500"
@@ -576,7 +631,7 @@ export const PromotionalEventBanner: React.FC<PromotionalEventBannerProps> = ({
             {/* Modal Image Display */}
             <div className="flex-1 overflow-auto flex items-center justify-center p-4 bg-black/60">
               <img
-                src={event.imageUrl}
+                src={eventImageUrl}
                 alt={event.title}
                 referrerPolicy="no-referrer"
                 className="max-h-[75vh] w-auto max-w-full object-contain rounded-xl shadow-2xl"
