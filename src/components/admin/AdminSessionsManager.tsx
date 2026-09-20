@@ -2187,7 +2187,7 @@ export const AdminSessionsManager: React.FC<AdminSessionsManagerProps> = ({
                   <div className="flex items-center gap-2">
                     <input
                       type="url"
-                      placeholder="https://docs.google.com/spreadsheets/d/1RBC_Bitacora_Sesiones_B2B_Sheets/edit"
+                      placeholder="https://docs.google.com/spreadsheets/d/1Mm3CRZVvKYFak5APwIBmfK-vZAUfnx1zg-eq8WOLbZk/edit?usp=sharing"
                       value={formData.googleSheetsUrl || ''}
                       onChange={(e) => setFormData({ ...formData, googleSheetsUrl: e.target.value })}
                       className="flex-1 px-3.5 py-2 text-xs rounded-xl border border-gray-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-black dark:text-white font-mono placeholder:font-sans"
@@ -2209,14 +2209,14 @@ export const AdminSessionsManager: React.FC<AdminSessionsManagerProps> = ({
                     <span className="text-[10px] text-gray-400 font-medium mr-1">Preajustes oficiales:</span>
                     <button
                       type="button"
-                      onClick={() => setFormData({ ...formData, googleSheetsUrl: 'https://docs.google.com/spreadsheets/d/1RBC_Bitacora_Sesiones_B2B_Sheets/edit' })}
+                      onClick={() => setFormData({ ...formData, googleSheetsUrl: 'https://docs.google.com/spreadsheets/d/1Mm3CRZVvKYFak5APwIBmfK-vZAUfnx1zg-eq8WOLbZk/edit?usp=sharing' })}
                       className="px-2.5 py-1 text-[10px] rounded-lg bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 border border-emerald-200/60 dark:border-emerald-800/40 transition-colors"
                     >
                       Bitácora Sesiones B2B
                     </button>
                     <button
                       type="button"
-                      onClick={() => setFormData({ ...formData, googleSheetsUrl: 'https://docs.google.com/spreadsheets/d/1RBC_Acuerdo_Sesiones_Sheets/edit' })}
+                      onClick={() => setFormData({ ...formData, googleSheetsUrl: 'https://docs.google.com/spreadsheets/d/1PCwxfgI0WdV2eMyEjLY_iYkYv5c4DNh5i43lNDvPT88/edit?usp=sharing' })}
                       className="px-2.5 py-1 text-[10px] rounded-lg bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 border border-indigo-200/60 dark:border-indigo-800/40 transition-colors"
                     >
                       Acuerdo Sesiones

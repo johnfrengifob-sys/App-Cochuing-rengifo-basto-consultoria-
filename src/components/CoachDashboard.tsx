@@ -1,70 +1,4 @@
-import React, { useState, useEffect, lazy, Suspense } from 'react';
-import {
-  User,
-  FormSubmission,
-  AIInsight,
-  Session,
-  Prospect,
-  PaymentStatus,
-  ClientStatus,
-  ProgramNodeInfo,
-  CronogramaEvent,
-  EventRegistration,
-  OntologicalProgram,
-  PaymentRequest,
-} from '../types';
-import { OntologicalStore, DEFAULT_WEBHOOK_URL, PROGRAM_NODES } from '../services/store';
-import { PDFGenerator } from '../utils/pdfGenerator';
-import { LiquidGlassButton } from './LiquidGlassButton';
-import { PulseBadge } from './PulseBadge';
-import { PromotionalEventBanner } from './PromotionalEventBanner';
-import { ClientTrafficStatusBadge } from './ClientTrafficStatusBadge';
-import { ClientDirectoryTable } from './ClientDirectoryTable';
-import { ExecutiveMetricsBar } from './ExecutiveMetricsBar';
-import { FirebaseFirestoreMonitor } from './FirebaseFirestoreMonitor';
-import { SecurityAuditModal } from './SecurityAuditModal';
-import type { AcademicAdminSubTab } from './admin/AdminAcademicManager';
-import { lazyWithRetry } from '../utils/lazyWithRetry';
-
-// Lazy load secondary dashboard modules with automatic retry resilience
-const ClientWorkstationView = lazyWithRetry(() =>
-  import('./ClientWorkstationView').then((m) => ({ default: m.ClientWorkstationView }))
-);
-const GoogleWorkspaceHub = lazyWithRetry(() =>
-  import('./GoogleWorkspaceHub').then((m) => ({ default: m.GoogleWorkspaceHub }))
-);
-const GeminiOntologicalCopilot = lazyWithRetry(() =>
-  import('./GeminiOntologicalCopilot').then((m) => ({ default: m.GeminiOntologicalCopilot }))
-);
-const CrmPipelineManager = lazyWithRetry(() =>
-  import('./CrmPipelineManager').then((m) => ({ default: m.CrmPipelineManager }))
-);
-const PaymentValidationManager = lazyWithRetry(() =>
-  import('./PaymentValidationManager').then((m) => ({ default: m.PaymentValidationManager }))
-);
-const ExecutiveAnalyticsCharts = lazyWithRetry(() =>
-  import('./ExecutiveAnalyticsCharts').then((m) => ({ default: m.ExecutiveAnalyticsCharts }))
-);
-const AdminAcademicManager = lazyWithRetry(() =>
-  import('./admin/AdminAcademicManager').then((m) => ({ default: m.AdminAcademicManager }))
-);
-const AdminSessionsManager = lazyWithRetry(() =>
-  import('./admin/AdminSessionsManager').then((m) => ({ default: m.AdminSessionsManager }))
-);
-const ExperienceEditorManager = lazyWithRetry(() =>
-  import('./admin/ExperienceEditorManager').then((m) => ({ default: m.ExperienceEditorManager }))
-);
-
-function SectionLoadingFallback({ title = 'Cargando Módulo...' }: { title?: string }) {
-  return (
-    <div className="p-8 rounded-2xl glass-panel-opal border border-white/60 dark:border-white/10 flex flex-col items-center justify-center space-y-3 min-h-[300px]">
-      <div className="w-8 h-8 rounded-full border-2 border-emerald-500/20 border-t-emerald-600 animate-spin" />
-      <span className="text-xs font-mono text-neutral-500 dark:text-neutral-400 tracking-wider uppercase animate-pulse">
-        {title}
-      </span>
-    </div>
-  );
-}
+import React, { useState, useEffect, Suspense } from 'react';
 import {
   Users,
   Sparkles,
@@ -108,6 +42,51 @@ import {
   GraduationCap,
   ArrowLeft,
 } from 'lucide-react';
+import {
+  User,
+  FormSubmission,
+  AIInsight,
+  Session,
+  Prospect,
+  PaymentStatus,
+  ClientStatus,
+  ProgramNodeInfo,
+  CronogramaEvent,
+  EventRegistration,
+  OntologicalProgram,
+  PaymentRequest,
+} from '../types';
+import { OntologicalStore, DEFAULT_WEBHOOK_URL, PROGRAM_NODES } from '../services/store';
+import { PDFGenerator } from '../utils/pdfGenerator';
+import { LiquidGlassButton } from './LiquidGlassButton';
+import { PulseBadge } from './PulseBadge';
+import { PromotionalEventBanner } from './PromotionalEventBanner';
+import { ClientTrafficStatusBadge } from './ClientTrafficStatusBadge';
+import { ClientDirectoryTable } from './ClientDirectoryTable';
+import { ExecutiveMetricsBar } from './ExecutiveMetricsBar';
+import { FirebaseFirestoreMonitor } from './FirebaseFirestoreMonitor';
+import { SecurityAuditModal } from './SecurityAuditModal';
+import type { AcademicAdminSubTab } from './admin/AdminAcademicManager';
+import { ClientWorkstationView } from './ClientWorkstationView';
+import { GoogleWorkspaceHub } from './GoogleWorkspaceHub';
+import { GeminiOntologicalCopilot } from './GeminiOntologicalCopilot';
+import { CrmPipelineManager } from './CrmPipelineManager';
+import { PaymentValidationManager } from './PaymentValidationManager';
+import { ExecutiveAnalyticsCharts } from './ExecutiveAnalyticsCharts';
+import { AdminAcademicManager } from './admin/AdminAcademicManager';
+import { AdminSessionsManager } from './admin/AdminSessionsManager';
+import { ExperienceEditorManager } from './admin/ExperienceEditorManager';
+
+function SectionLoadingFallback({ title = 'Cargando Módulo...' }: { title?: string }) {
+  return (
+    <div className="p-8 rounded-2xl glass-panel-opal border border-white/60 dark:border-white/10 flex flex-col items-center justify-center space-y-3 min-h-[300px]">
+      <div className="w-8 h-8 rounded-full border-2 border-emerald-500/20 border-t-emerald-600 animate-spin" />
+      <span className="text-xs font-mono text-neutral-500 dark:text-neutral-400 tracking-wider uppercase animate-pulse">
+        {title}
+      </span>
+    </div>
+  );
+}
 
 interface CoachDashboardProps {
   coach: User;

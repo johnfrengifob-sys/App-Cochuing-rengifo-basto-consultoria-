@@ -42,9 +42,9 @@
       "weeklyFollowupActive": false,
       "weeklyFollowupWeek": 1,
       "lastWeeklyFollowupAt": "2026-03-15T12:00:00.000Z",
-      "nextWeeklyFollowupDueAt": "2026-09-26T19:03:22.150Z",
+      "nextWeeklyFollowupDueAt": "2026-09-27T16:21:41.838Z",
       "trackingEndedReason": "Seguimiento finalizado automáticamente: Inactividad prolongada superior a 30 días en la página.",
-      "trackingEndedAt": "2026-09-19T19:03:22.149Z",
+      "trackingEndedAt": "2026-09-20T16:21:41.838Z",
       "workshopMemories": {},
       "welcomeMessageSentAt": "2026-03-15T12:00:00.000Z",
       "totalInvested": "$1.500.000 COP"
@@ -76,7 +76,7 @@
       "id": "sess-client-legadobarber2026-1",
       "clientId": "client-legadobarber2026",
       "sessionNumber": 1,
-      "date": "2026-09-19T19:04:44.178Z",
+      "date": "2026-09-20T16:23:51.772Z",
       "meetLink": "https://meet.google.com/rbc-clientlegadobarber2026-s1",
       "status": "scheduled",
       "isPaid": true,
@@ -84,18 +84,20 @@
       "ontologicalFocus": "Mapeo de la Transparencia y Quiebres Inconscientes",
       "notes": "Sesión 1: Nivel I • Mapeo de la Transparencia y Quiebres Inconscientes",
       "programNodeStep": 1,
-      "googleSheetsUrl": "https://docs.google.com/spreadsheets/d/1RBC_Bitacora_Sesiones_B2B_Sheets/edit",
+      "googleSheetsUrl": "https://docs.google.com/spreadsheets/d/1Mm3CRZVvKYFak5APwIBmfK-vZAUfnx1zg-eq8WOLbZk/edit?usp=sharing",
       "googleFormsUrl": "https://forms.gle/APUFto8sGbJt322WA",
       "agreementFormUrl": "https://forms.gle/dfStXtTyb1MW6W5K9",
       "bitacoraFormUrl": "https://forms.gle/APUFto8sGbJt322WA",
       "formsIntegrationId": "bitacora_sesiones_b2b",
-      "expedienteSyncStatus": "synced"
+      "expedienteSyncStatus": "synced",
+      "bitacoraSheetUrl": "https://docs.google.com/spreadsheets/d/1Mm3CRZVvKYFak5APwIBmfK-vZAUfnx1zg-eq8WOLbZk/edit?usp=sharing",
+      "agreementSheetUrl": "https://docs.google.com/spreadsheets/d/1PCwxfgI0WdV2eMyEjLY_iYkYv5c4DNh5i43lNDvPT88/edit?usp=sharing"
     },
     {
       "id": "sess-client-legadobarber2026-2",
       "clientId": "client-legadobarber2026",
       "sessionNumber": 2,
-      "date": "2026-10-03T19:04:44.178Z",
+      "date": "2026-10-04T16:23:51.772Z",
       "meetLink": "https://meet.google.com/rbc-clientlegadobarber2026-s2",
       "status": "scheduled",
       "isPaid": true,
@@ -103,18 +105,20 @@
       "ontologicalFocus": "Fronteras, Declaraciones y Límites No Dichos",
       "notes": "Sesión 2: Nivel I • Fronteras, Declaraciones y Límites No Dichos",
       "programNodeStep": 2,
-      "googleSheetsUrl": "https://docs.google.com/spreadsheets/d/1RBC_Bitacora_Sesiones_B2B_Sheets/edit",
+      "googleSheetsUrl": "https://docs.google.com/spreadsheets/d/1Mm3CRZVvKYFak5APwIBmfK-vZAUfnx1zg-eq8WOLbZk/edit?usp=sharing",
       "googleFormsUrl": "https://forms.gle/APUFto8sGbJt322WA",
       "agreementFormUrl": "https://forms.gle/dfStXtTyb1MW6W5K9",
       "bitacoraFormUrl": "https://forms.gle/APUFto8sGbJt322WA",
       "formsIntegrationId": "bitacora_sesiones_b2b",
-      "expedienteSyncStatus": "synced"
+      "expedienteSyncStatus": "synced",
+      "bitacoraSheetUrl": "https://docs.google.com/spreadsheets/d/1Mm3CRZVvKYFak5APwIBmfK-vZAUfnx1zg-eq8WOLbZk/edit?usp=sharing",
+      "agreementSheetUrl": "https://docs.google.com/spreadsheets/d/1PCwxfgI0WdV2eMyEjLY_iYkYv5c4DNh5i43lNDvPT88/edit?usp=sharing"
     },
     {
       "id": "sess-client-legadobarber2026-3",
       "clientId": "client-legadobarber2026",
       "sessionNumber": 3,
-      "date": "2026-10-17T19:04:44.178Z",
+      "date": "2026-10-18T16:23:51.772Z",
       "meetLink": "https://meet.google.com/rbc-clientlegadobarber2026-s3",
       "status": "scheduled",
       "isPaid": true,
@@ -122,18 +126,20 @@
       "ontologicalFocus": "Somatización, Mandatos y Sabiduría de las Emociones",
       "notes": "Sesión 3: Nivel II • Somatización, Mandatos y Sabiduría de las Emociones",
       "programNodeStep": 3,
-      "googleSheetsUrl": "https://docs.google.com/spreadsheets/d/1RBC_Bitacora_Sesiones_B2B_Sheets/edit",
+      "googleSheetsUrl": "https://docs.google.com/spreadsheets/d/1Mm3CRZVvKYFak5APwIBmfK-vZAUfnx1zg-eq8WOLbZk/edit?usp=sharing",
       "googleFormsUrl": "https://forms.gle/APUFto8sGbJt322WA",
       "agreementFormUrl": "https://forms.gle/dfStXtTyb1MW6W5K9",
       "bitacoraFormUrl": "https://forms.gle/APUFto8sGbJt322WA",
       "formsIntegrationId": "bitacora_sesiones_b2b",
-      "expedienteSyncStatus": "synced"
+      "expedienteSyncStatus": "synced",
+      "bitacoraSheetUrl": "https://docs.google.com/spreadsheets/d/1Mm3CRZVvKYFak5APwIBmfK-vZAUfnx1zg-eq8WOLbZk/edit?usp=sharing",
+      "agreementSheetUrl": "https://docs.google.com/spreadsheets/d/1PCwxfgI0WdV2eMyEjLY_iYkYv5c4DNh5i43lNDvPT88/edit?usp=sharing"
     },
     {
       "id": "sess-client-legadobarber2026-4",
       "clientId": "client-legadobarber2026",
       "sessionNumber": 4,
-      "date": "2026-10-31T19:04:44.178Z",
+      "date": "2026-11-01T16:23:51.772Z",
       "meetLink": "https://meet.google.com/rbc-clientlegadobarber2026-s4",
       "status": "scheduled",
       "isPaid": true,
@@ -141,18 +147,20 @@
       "ontologicalFocus": "Reencuadre de Juicios, Reclamos y Promesas",
       "notes": "Sesión 4: Nivel II • Reencuadre de Juicios, Reclamos y Promesas",
       "programNodeStep": 4,
-      "googleSheetsUrl": "https://docs.google.com/spreadsheets/d/1RBC_Bitacora_Sesiones_B2B_Sheets/edit",
+      "googleSheetsUrl": "https://docs.google.com/spreadsheets/d/1Mm3CRZVvKYFak5APwIBmfK-vZAUfnx1zg-eq8WOLbZk/edit?usp=sharing",
       "googleFormsUrl": "https://forms.gle/APUFto8sGbJt322WA",
       "agreementFormUrl": "https://forms.gle/dfStXtTyb1MW6W5K9",
       "bitacoraFormUrl": "https://forms.gle/APUFto8sGbJt322WA",
       "formsIntegrationId": "bitacora_sesiones_b2b",
-      "expedienteSyncStatus": "synced"
+      "expedienteSyncStatus": "synced",
+      "bitacoraSheetUrl": "https://docs.google.com/spreadsheets/d/1Mm3CRZVvKYFak5APwIBmfK-vZAUfnx1zg-eq8WOLbZk/edit?usp=sharing",
+      "agreementSheetUrl": "https://docs.google.com/spreadsheets/d/1PCwxfgI0WdV2eMyEjLY_iYkYv5c4DNh5i43lNDvPT88/edit?usp=sharing"
     },
     {
       "id": "sess-client-legadobarber2026-5",
       "clientId": "client-legadobarber2026",
       "sessionNumber": 5,
-      "date": "2026-11-14T19:04:44.178Z",
+      "date": "2026-11-15T16:23:51.772Z",
       "meetLink": "https://meet.google.com/rbc-clientlegadobarber2026-s5",
       "status": "scheduled",
       "isPaid": true,
@@ -160,18 +168,20 @@
       "ontologicalFocus": "Diseño de Conversaciones de Futuro y Posibilidad",
       "notes": "Sesión 5: Nivel III • Diseño de Conversaciones de Futuro y Posibilidad",
       "programNodeStep": 5,
-      "googleSheetsUrl": "https://docs.google.com/spreadsheets/d/1RBC_Bitacora_Sesiones_B2B_Sheets/edit",
+      "googleSheetsUrl": "https://docs.google.com/spreadsheets/d/1Mm3CRZVvKYFak5APwIBmfK-vZAUfnx1zg-eq8WOLbZk/edit?usp=sharing",
       "googleFormsUrl": "https://forms.gle/APUFto8sGbJt322WA",
       "agreementFormUrl": "https://forms.gle/dfStXtTyb1MW6W5K9",
       "bitacoraFormUrl": "https://forms.gle/APUFto8sGbJt322WA",
       "formsIntegrationId": "bitacora_sesiones_b2b",
-      "expedienteSyncStatus": "synced"
+      "expedienteSyncStatus": "synced",
+      "bitacoraSheetUrl": "https://docs.google.com/spreadsheets/d/1Mm3CRZVvKYFak5APwIBmfK-vZAUfnx1zg-eq8WOLbZk/edit?usp=sharing",
+      "agreementSheetUrl": "https://docs.google.com/spreadsheets/d/1PCwxfgI0WdV2eMyEjLY_iYkYv5c4DNh5i43lNDvPT88/edit?usp=sharing"
     },
     {
       "id": "sess-client-legadobarber2026-6",
       "clientId": "client-legadobarber2026",
       "sessionNumber": 6,
-      "date": "2026-11-28T19:04:44.178Z",
+      "date": "2026-11-29T16:23:51.772Z",
       "meetLink": "https://meet.google.com/rbc-clientlegadobarber2026-s6",
       "status": "scheduled",
       "isPaid": true,
@@ -179,18 +189,20 @@
       "ontologicalFocus": "Integración Ontológica y Compromisos Innegociables",
       "notes": "Sesión 6: Nivel III • Integración Ontológica y Compromisos Innegociables",
       "programNodeStep": 6,
-      "googleSheetsUrl": "https://docs.google.com/spreadsheets/d/1RBC_Bitacora_Sesiones_B2B_Sheets/edit",
+      "googleSheetsUrl": "https://docs.google.com/spreadsheets/d/1Mm3CRZVvKYFak5APwIBmfK-vZAUfnx1zg-eq8WOLbZk/edit?usp=sharing",
       "googleFormsUrl": "https://forms.gle/APUFto8sGbJt322WA",
       "agreementFormUrl": "https://forms.gle/dfStXtTyb1MW6W5K9",
       "bitacoraFormUrl": "https://forms.gle/APUFto8sGbJt322WA",
       "formsIntegrationId": "bitacora_sesiones_b2b",
-      "expedienteSyncStatus": "synced"
+      "expedienteSyncStatus": "synced",
+      "bitacoraSheetUrl": "https://docs.google.com/spreadsheets/d/1Mm3CRZVvKYFak5APwIBmfK-vZAUfnx1zg-eq8WOLbZk/edit?usp=sharing",
+      "agreementSheetUrl": "https://docs.google.com/spreadsheets/d/1PCwxfgI0WdV2eMyEjLY_iYkYv5c4DNh5i43lNDvPT88/edit?usp=sharing"
     },
     {
       "id": "sess-client-legadobarber2026-7",
       "clientId": "client-legadobarber2026",
       "sessionNumber": 7,
-      "date": "2026-12-12T19:04:44.178Z",
+      "date": "2026-12-13T16:23:51.772Z",
       "meetLink": "https://meet.google.com/rbc-clientlegadobarber2026-s7",
       "status": "scheduled",
       "isPaid": true,
@@ -198,18 +210,20 @@
       "ontologicalFocus": "El Arte de la Escucha Comprometida y el Silencio Fecundo",
       "notes": "Sesión 7: Nivel II • El Arte de la Escucha Comprometida y el Silencio Fecundo",
       "programNodeStep": 7,
-      "googleSheetsUrl": "https://docs.google.com/spreadsheets/d/1RBC_Bitacora_Sesiones_B2B_Sheets/edit",
+      "googleSheetsUrl": "https://docs.google.com/spreadsheets/d/1Mm3CRZVvKYFak5APwIBmfK-vZAUfnx1zg-eq8WOLbZk/edit?usp=sharing",
       "googleFormsUrl": "https://forms.gle/APUFto8sGbJt322WA",
       "agreementFormUrl": "https://forms.gle/dfStXtTyb1MW6W5K9",
       "bitacoraFormUrl": "https://forms.gle/APUFto8sGbJt322WA",
       "formsIntegrationId": "bitacora_sesiones_b2b",
-      "expedienteSyncStatus": "synced"
+      "expedienteSyncStatus": "synced",
+      "bitacoraSheetUrl": "https://docs.google.com/spreadsheets/d/1Mm3CRZVvKYFak5APwIBmfK-vZAUfnx1zg-eq8WOLbZk/edit?usp=sharing",
+      "agreementSheetUrl": "https://docs.google.com/spreadsheets/d/1PCwxfgI0WdV2eMyEjLY_iYkYv5c4DNh5i43lNDvPT88/edit?usp=sharing"
     },
     {
       "id": "sess-client-legadobarber2026-8",
       "clientId": "client-legadobarber2026",
       "sessionNumber": 8,
-      "date": "2026-12-26T19:04:44.178Z",
+      "date": "2026-12-27T16:23:51.772Z",
       "meetLink": "https://meet.google.com/rbc-clientlegadobarber2026-s8",
       "status": "scheduled",
       "isPaid": true,
@@ -217,18 +231,20 @@
       "ontologicalFocus": "Gestión Adaptativa de la Culpa, Miedo e Ira Directiva",
       "notes": "Sesión 8: Nivel II • Gestión Adaptativa de la Culpa, Miedo e Ira Directiva",
       "programNodeStep": 8,
-      "googleSheetsUrl": "https://docs.google.com/spreadsheets/d/1RBC_Bitacora_Sesiones_B2B_Sheets/edit",
+      "googleSheetsUrl": "https://docs.google.com/spreadsheets/d/1Mm3CRZVvKYFak5APwIBmfK-vZAUfnx1zg-eq8WOLbZk/edit?usp=sharing",
       "googleFormsUrl": "https://forms.gle/APUFto8sGbJt322WA",
       "agreementFormUrl": "https://forms.gle/dfStXtTyb1MW6W5K9",
       "bitacoraFormUrl": "https://forms.gle/APUFto8sGbJt322WA",
       "formsIntegrationId": "bitacora_sesiones_b2b",
-      "expedienteSyncStatus": "synced"
+      "expedienteSyncStatus": "synced",
+      "bitacoraSheetUrl": "https://docs.google.com/spreadsheets/d/1Mm3CRZVvKYFak5APwIBmfK-vZAUfnx1zg-eq8WOLbZk/edit?usp=sharing",
+      "agreementSheetUrl": "https://docs.google.com/spreadsheets/d/1PCwxfgI0WdV2eMyEjLY_iYkYv5c4DNh5i43lNDvPT88/edit?usp=sharing"
     },
     {
       "id": "sess-client-legadobarber2026-9",
       "clientId": "client-legadobarber2026",
       "sessionNumber": 9,
-      "date": "2027-01-09T19:04:44.178Z",
+      "date": "2027-01-10T16:23:51.772Z",
       "meetLink": "https://meet.google.com/rbc-clientlegadobarber2026-s9",
       "status": "scheduled",
       "isPaid": true,
@@ -236,18 +252,20 @@
       "ontologicalFocus": "Soberanía Relacional y Reconfiguración de Vínculos de Confianza",
       "notes": "Sesión 9: Nivel III • Soberanía Relacional y Reconfiguración de Vínculos de Confianza",
       "programNodeStep": 9,
-      "googleSheetsUrl": "https://docs.google.com/spreadsheets/d/1RBC_Bitacora_Sesiones_B2B_Sheets/edit",
+      "googleSheetsUrl": "https://docs.google.com/spreadsheets/d/1Mm3CRZVvKYFak5APwIBmfK-vZAUfnx1zg-eq8WOLbZk/edit?usp=sharing",
       "googleFormsUrl": "https://forms.gle/APUFto8sGbJt322WA",
       "agreementFormUrl": "https://forms.gle/dfStXtTyb1MW6W5K9",
       "bitacoraFormUrl": "https://forms.gle/APUFto8sGbJt322WA",
       "formsIntegrationId": "bitacora_sesiones_b2b",
-      "expedienteSyncStatus": "synced"
+      "expedienteSyncStatus": "synced",
+      "bitacoraSheetUrl": "https://docs.google.com/spreadsheets/d/1Mm3CRZVvKYFak5APwIBmfK-vZAUfnx1zg-eq8WOLbZk/edit?usp=sharing",
+      "agreementSheetUrl": "https://docs.google.com/spreadsheets/d/1PCwxfgI0WdV2eMyEjLY_iYkYv5c4DNh5i43lNDvPT88/edit?usp=sharing"
     },
     {
       "id": "sess-client-legadobarber2026-10",
       "clientId": "client-legadobarber2026",
       "sessionNumber": 10,
-      "date": "2027-01-23T19:04:44.178Z",
+      "date": "2027-01-24T16:23:51.772Z",
       "meetLink": "https://meet.google.com/rbc-clientlegadobarber2026-s10",
       "status": "scheduled",
       "isPaid": true,
@@ -255,18 +273,20 @@
       "ontologicalFocus": "Presencia Ejecutiva, Autoridad Serena y Arraigo Corporal",
       "notes": "Sesión 10: Nivel III • Presencia Ejecutiva, Autoridad Serena y Arraigo Corporal",
       "programNodeStep": 10,
-      "googleSheetsUrl": "https://docs.google.com/spreadsheets/d/1RBC_Bitacora_Sesiones_B2B_Sheets/edit",
+      "googleSheetsUrl": "https://docs.google.com/spreadsheets/d/1Mm3CRZVvKYFak5APwIBmfK-vZAUfnx1zg-eq8WOLbZk/edit?usp=sharing",
       "googleFormsUrl": "https://forms.gle/APUFto8sGbJt322WA",
       "agreementFormUrl": "https://forms.gle/dfStXtTyb1MW6W5K9",
       "bitacoraFormUrl": "https://forms.gle/APUFto8sGbJt322WA",
       "formsIntegrationId": "bitacora_sesiones_b2b",
-      "expedienteSyncStatus": "synced"
+      "expedienteSyncStatus": "synced",
+      "bitacoraSheetUrl": "https://docs.google.com/spreadsheets/d/1Mm3CRZVvKYFak5APwIBmfK-vZAUfnx1zg-eq8WOLbZk/edit?usp=sharing",
+      "agreementSheetUrl": "https://docs.google.com/spreadsheets/d/1PCwxfgI0WdV2eMyEjLY_iYkYv5c4DNh5i43lNDvPT88/edit?usp=sharing"
     },
     {
       "id": "sess-client-legadobarber2026-11",
       "clientId": "client-legadobarber2026",
       "sessionNumber": 11,
-      "date": "2027-02-06T19:04:44.178Z",
+      "date": "2027-02-07T16:23:51.772Z",
       "meetLink": "https://meet.google.com/rbc-clientlegadobarber2026-s11",
       "status": "scheduled",
       "isPaid": true,
@@ -274,18 +294,20 @@
       "ontologicalFocus": "Diseño de Conversaciones de Futuro y Nuevas Posibilidades",
       "notes": "Sesión 11: Nivel III • Diseño de Conversaciones de Futuro y Nuevas Posibilidades",
       "programNodeStep": 11,
-      "googleSheetsUrl": "https://docs.google.com/spreadsheets/d/1RBC_Bitacora_Sesiones_B2B_Sheets/edit",
+      "googleSheetsUrl": "https://docs.google.com/spreadsheets/d/1Mm3CRZVvKYFak5APwIBmfK-vZAUfnx1zg-eq8WOLbZk/edit?usp=sharing",
       "googleFormsUrl": "https://forms.gle/APUFto8sGbJt322WA",
       "agreementFormUrl": "https://forms.gle/dfStXtTyb1MW6W5K9",
       "bitacoraFormUrl": "https://forms.gle/APUFto8sGbJt322WA",
       "formsIntegrationId": "bitacora_sesiones_b2b",
-      "expedienteSyncStatus": "synced"
+      "expedienteSyncStatus": "synced",
+      "bitacoraSheetUrl": "https://docs.google.com/spreadsheets/d/1Mm3CRZVvKYFak5APwIBmfK-vZAUfnx1zg-eq8WOLbZk/edit?usp=sharing",
+      "agreementSheetUrl": "https://docs.google.com/spreadsheets/d/1PCwxfgI0WdV2eMyEjLY_iYkYv5c4DNh5i43lNDvPT88/edit?usp=sharing"
     },
     {
       "id": "sess-client-legadobarber2026-12",
       "clientId": "client-legadobarber2026",
       "sessionNumber": 12,
-      "date": "2027-02-20T19:04:44.178Z",
+      "date": "2027-02-21T16:23:51.772Z",
       "meetLink": "https://meet.google.com/rbc-clientlegadobarber2026-s12",
       "status": "scheduled",
       "isPaid": true,
@@ -293,12 +315,14 @@
       "ontologicalFocus": "Consolidación del Nuevo Observador, Carta de Innegociables y Cierre",
       "notes": "Sesión 12: Nivel III • Consolidación del Nuevo Observador, Carta de Innegociables y Cierre",
       "programNodeStep": 12,
-      "googleSheetsUrl": "https://docs.google.com/spreadsheets/d/1RBC_Bitacora_Sesiones_B2B_Sheets/edit",
+      "googleSheetsUrl": "https://docs.google.com/spreadsheets/d/1Mm3CRZVvKYFak5APwIBmfK-vZAUfnx1zg-eq8WOLbZk/edit?usp=sharing",
       "googleFormsUrl": "https://forms.gle/APUFto8sGbJt322WA",
       "agreementFormUrl": "https://forms.gle/dfStXtTyb1MW6W5K9",
       "bitacoraFormUrl": "https://forms.gle/APUFto8sGbJt322WA",
       "formsIntegrationId": "bitacora_sesiones_b2b",
-      "expedienteSyncStatus": "synced"
+      "expedienteSyncStatus": "synced",
+      "bitacoraSheetUrl": "https://docs.google.com/spreadsheets/d/1Mm3CRZVvKYFak5APwIBmfK-vZAUfnx1zg-eq8WOLbZk/edit?usp=sharing",
+      "agreementSheetUrl": "https://docs.google.com/spreadsheets/d/1PCwxfgI0WdV2eMyEjLY_iYkYv5c4DNh5i43lNDvPT88/edit?usp=sharing"
     }
   ],
   "forms": [],
@@ -375,7 +399,7 @@
       ],
       "workbookSubmissions": [],
       "googleFormsUrl": "https://forms.gle/5Hiuxwq13n3gC3zt6",
-      "googleSheetsUrl": "https://docs.google.com/spreadsheets/d/1RBC_Bitacora_Talleres_Sheets/edit",
+      "googleSheetsUrl": "https://docs.google.com/spreadsheets/d/1DyKs4OsJDTTOa8SMSvOQdWcttrmRKJ8_vxnJH9rV5UA/edit?usp=sharing",
       "googleDriveFolderUrl": "https://drive.google.com/drive/folders/rbc-taller-materiales",
       "triggersEnabled": true,
       "customTriggers": {
@@ -390,7 +414,7 @@
       "eventDate": "2026-10-11T00:00:00.000Z",
       "id": "event-1789824188701",
       "createdAt": "2026-09-19T13:41:44.765Z",
-      "updatedAt": "2026-09-20T14:54:49.071Z"
+      "updatedAt": "2026-09-20T16:32:46.490Z"
     },
     {
       "title": "Taller 1: Raíz (Cuerpo, Emoción y Evolución de las Emociones).",
@@ -480,7 +504,7 @@
       ],
       "workbookSubmissions": [],
       "googleFormsUrl": "https://forms.gle/5Hiuxwq13n3gC3zt6",
-      "googleSheetsUrl": "https://docs.google.com/spreadsheets/d/1RBC_Bitacora_Talleres_Sheets/edit",
+      "googleSheetsUrl": "https://docs.google.com/spreadsheets/d/1DyKs4OsJDTTOa8SMSvOQdWcttrmRKJ8_vxnJH9rV5UA/edit?usp=sharing",
       "googleDriveFolderUrl": "https://drive.google.com/drive/folders/rbc-taller-materiales",
       "triggersEnabled": true,
       "customTriggers": {
@@ -495,7 +519,7 @@
       "eventDate": "2026-10-18T00:00:00.000Z",
       "id": "event-1789824792376",
       "createdAt": "2026-09-19T13:41:44.765Z",
-      "updatedAt": "2026-09-20T14:54:49.071Z",
+      "updatedAt": "2026-09-20T16:32:46.490Z",
       "currency": "COP"
     },
     {
@@ -579,7 +603,7 @@
       ],
       "workbookSubmissions": [],
       "googleFormsUrl": "https://forms.gle/5Hiuxwq13n3gC3zt6",
-      "googleSheetsUrl": "https://docs.google.com/spreadsheets/d/1RBC_Bitacora_Talleres_Sheets/edit",
+      "googleSheetsUrl": "https://docs.google.com/spreadsheets/d/1DyKs4OsJDTTOa8SMSvOQdWcttrmRKJ8_vxnJH9rV5UA/edit?usp=sharing",
       "googleDriveFolderUrl": "https://drive.google.com/drive/folders/rbc-taller-materiales",
       "triggersEnabled": true,
       "customTriggers": {
@@ -594,7 +618,7 @@
       "eventDate": "2026-11-01T00:00:00.000Z",
       "id": "event-1789828629011",
       "createdAt": "2026-09-19T14:37:11.465Z",
-      "updatedAt": "2026-09-20T14:54:49.071Z",
+      "updatedAt": "2026-09-20T16:32:46.490Z",
       "currency": "COP"
     },
     {
@@ -680,10 +704,10 @@
       ],
       "workbookSubmissions": [],
       "createdAt": "2026-09-19T14:43:27.250Z",
-      "updatedAt": "2026-09-20T14:54:49.071Z",
+      "updatedAt": "2026-09-20T16:42:10.412Z",
       "launchDate": "2026-10-31",
       "googleFormsUrl": "https://forms.gle/5Hiuxwq13n3gC3zt6",
-      "googleSheetsUrl": "https://docs.google.com/spreadsheets/d/1RBC_Bitacora_Talleres_Sheets/edit",
+      "googleSheetsUrl": "https://docs.google.com/spreadsheets/d/1DyKs4OsJDTTOa8SMSvOQdWcttrmRKJ8_vxnJH9rV5UA/edit?usp=sharing",
       "googleDriveFolderUrl": "https://drive.google.com/drive/folders/rbc-taller-materiales",
       "triggersEnabled": true,
       "customTriggers": {
@@ -817,7 +841,7 @@
           ]
         }
       ],
-      "googleSheetsUrl": "https://docs.google.com/spreadsheets/d/1RBC_Bitacora_Sesiones_B2B_Sheets/edit",
+      "googleSheetsUrl": "https://docs.google.com/spreadsheets/d/1Mm3CRZVvKYFak5APwIBmfK-vZAUfnx1zg-eq8WOLbZk/edit?usp=sharing",
       "googleFormsUrl": "https://forms.gle/APUFto8sGbJt322WA"
     },
     {
@@ -938,7 +962,7 @@
           ]
         }
       ],
-      "googleSheetsUrl": "https://docs.google.com/spreadsheets/d/1RBC_Bitacora_Sesiones_B2B_Sheets/edit",
+      "googleSheetsUrl": "https://docs.google.com/spreadsheets/d/1Mm3CRZVvKYFak5APwIBmfK-vZAUfnx1zg-eq8WOLbZk/edit?usp=sharing",
       "googleFormsUrl": "https://forms.gle/APUFto8sGbJt322WA"
     },
     {
@@ -1054,7 +1078,7 @@
           ]
         }
       ],
-      "googleSheetsUrl": "https://docs.google.com/spreadsheets/d/1RBC_Bitacora_Sesiones_B2B_Sheets/edit",
+      "googleSheetsUrl": "https://docs.google.com/spreadsheets/d/1Mm3CRZVvKYFak5APwIBmfK-vZAUfnx1zg-eq8WOLbZk/edit?usp=sharing",
       "googleFormsUrl": "https://forms.gle/APUFto8sGbJt322WA"
     },
     {
@@ -1170,7 +1194,7 @@
           ]
         }
       ],
-      "googleSheetsUrl": "https://docs.google.com/spreadsheets/d/1RBC_Bitacora_Sesiones_B2B_Sheets/edit",
+      "googleSheetsUrl": "https://docs.google.com/spreadsheets/d/1Mm3CRZVvKYFak5APwIBmfK-vZAUfnx1zg-eq8WOLbZk/edit?usp=sharing",
       "googleFormsUrl": "https://forms.gle/APUFto8sGbJt322WA"
     },
     {
@@ -1286,7 +1310,7 @@
           ]
         }
       ],
-      "googleSheetsUrl": "https://docs.google.com/spreadsheets/d/1RBC_Bitacora_Sesiones_B2B_Sheets/edit",
+      "googleSheetsUrl": "https://docs.google.com/spreadsheets/d/1Mm3CRZVvKYFak5APwIBmfK-vZAUfnx1zg-eq8WOLbZk/edit?usp=sharing",
       "googleFormsUrl": "https://forms.gle/APUFto8sGbJt322WA"
     },
     {
@@ -1402,7 +1426,7 @@
           ]
         }
       ],
-      "googleSheetsUrl": "https://docs.google.com/spreadsheets/d/1RBC_Bitacora_Sesiones_B2B_Sheets/edit",
+      "googleSheetsUrl": "https://docs.google.com/spreadsheets/d/1Mm3CRZVvKYFak5APwIBmfK-vZAUfnx1zg-eq8WOLbZk/edit?usp=sharing",
       "googleFormsUrl": "https://forms.gle/APUFto8sGbJt322WA"
     },
     {
@@ -1430,7 +1454,7 @@
         "frequency": "Diaria (2 interacciones clave)"
       },
       "roadmapSteps": [],
-      "googleSheetsUrl": "https://docs.google.com/spreadsheets/d/1RBC_Bitacora_Sesiones_B2B_Sheets/edit",
+      "googleSheetsUrl": "https://docs.google.com/spreadsheets/d/1Mm3CRZVvKYFak5APwIBmfK-vZAUfnx1zg-eq8WOLbZk/edit?usp=sharing",
       "googleFormsUrl": "https://forms.gle/APUFto8sGbJt322WA"
     },
     {
@@ -1458,7 +1482,7 @@
         "frequency": "Ante cada episodio de tensión"
       },
       "roadmapSteps": [],
-      "googleSheetsUrl": "https://docs.google.com/spreadsheets/d/1RBC_Bitacora_Sesiones_B2B_Sheets/edit",
+      "googleSheetsUrl": "https://docs.google.com/spreadsheets/d/1Mm3CRZVvKYFak5APwIBmfK-vZAUfnx1zg-eq8WOLbZk/edit?usp=sharing",
       "googleFormsUrl": "https://forms.gle/APUFto8sGbJt322WA"
     },
     {
@@ -1486,7 +1510,7 @@
         "frequency": "Diaria en acuerdos de trabajo"
       },
       "roadmapSteps": [],
-      "googleSheetsUrl": "https://docs.google.com/spreadsheets/d/1RBC_Bitacora_Sesiones_B2B_Sheets/edit",
+      "googleSheetsUrl": "https://docs.google.com/spreadsheets/d/1Mm3CRZVvKYFak5APwIBmfK-vZAUfnx1zg-eq8WOLbZk/edit?usp=sharing",
       "googleFormsUrl": "https://forms.gle/APUFto8sGbJt322WA"
     },
     {
@@ -1514,7 +1538,7 @@
         "frequency": "Antes de cada reunión directiva"
       },
       "roadmapSteps": [],
-      "googleSheetsUrl": "https://docs.google.com/spreadsheets/d/1RBC_Bitacora_Sesiones_B2B_Sheets/edit",
+      "googleSheetsUrl": "https://docs.google.com/spreadsheets/d/1Mm3CRZVvKYFak5APwIBmfK-vZAUfnx1zg-eq8WOLbZk/edit?usp=sharing",
       "googleFormsUrl": "https://forms.gle/APUFto8sGbJt322WA"
     },
     {
@@ -1542,7 +1566,7 @@
         "frequency": "Diaria (al iniciar la jornada)"
       },
       "roadmapSteps": [],
-      "googleSheetsUrl": "https://docs.google.com/spreadsheets/d/1RBC_Bitacora_Sesiones_B2B_Sheets/edit",
+      "googleSheetsUrl": "https://docs.google.com/spreadsheets/d/1Mm3CRZVvKYFak5APwIBmfK-vZAUfnx1zg-eq8WOLbZk/edit?usp=sharing",
       "googleFormsUrl": "https://forms.gle/APUFto8sGbJt322WA"
     },
     {
@@ -1570,11 +1594,11 @@
         "frequency": "Diaria (al anochecer)"
       },
       "roadmapSteps": [],
-      "googleSheetsUrl": "https://docs.google.com/spreadsheets/d/1RBC_Bitacora_Sesiones_B2B_Sheets/edit",
+      "googleSheetsUrl": "https://docs.google.com/spreadsheets/d/1Mm3CRZVvKYFak5APwIBmfK-vZAUfnx1zg-eq8WOLbZk/edit?usp=sharing",
       "googleFormsUrl": "https://forms.gle/APUFto8sGbJt322WA"
     }
   ],
-  "lastUpdated": "2026-09-20T15:01:20.790Z",
+  "lastUpdated": "2026-09-20T16:42:10.412Z",
   "deletedWorkshopIds": [
     "taller-1-raiz",
     "taller-2-tallo",
@@ -1584,103 +1608,128 @@
     {
       "id": "talleres_registro",
       "title": "ACUERDO TALLERES",
-      "category": "Taller Grupal",
-      "moduleTarget": "talleres",
+      "category": "Talleres",
+      "moduleTarget": "workshops",
       "formUrl": "https://forms.gle/H5gLF1KBzPnKsBWq7",
-      "sheetUrl": "https://docs.google.com/spreadsheets/d/1RBC_Talleres_Acuerdos_Sheets/edit",
+      "sheetUrl": "https://docs.google.com/spreadsheets/d/1e2nOINJkZCHBoz0nTA40BmHsH5wfYn4l9yBkZ-zKRl4/edit?usp=sharing",
       "sheetGid": "0",
       "sheetHeaders": [
         "Marca temporal",
         "Dirección de correo electrónico",
-        "1. Nombres y Apellidos Completos",
-        "2. Número de WhatsApp / Teléfono móvil",
-        "3. Aceptación del Acuerdo de Confidencialidad y Uso Responsable",
-        "4. Declaración de Participación Voluntaria y Ética Grupal",
-        "5. Consentimiento para el uso de herramientas tecnológicas e Inteligencia Artificial",
-        "6. Firma Digital / Validación de Identidad"
+        "Nombre del Participante",
+        "Teléfono / WhatsApp",
+        "Me comprometo a respetar la confidencialidad compartida del grupo (Lo que se habla en el taller, se queda en el taller",
+        "Comprendo y acepto el uso de herramientas tecnológicas y de IA como soporte administrativo y de registro del taller.",
+        "Autorizo el cumplimiento de los acuerdos de convivencia y los estándares éticos del espacio."
       ],
       "status": "connected",
-      "lastSyncedAt": "2026-09-20T15:01:20.789Z",
+      "lastSyncedAt": "2026-09-20T16:40:53.288Z",
       "recordsCount": 3,
-      "notes": "Base de datos Acuerdos Talleres Sheets. Sincronizada con el panel de Google Forms & Sheets."
+      "notes": "Base de datos Acuerdos Talleres Sheets: registro oficial, aceptación de confidencialidad compartida de grupo, herramientas tecnológicas/IA y estándares éticos.",
+      "officialDatabaseName": "Base de datos Acuerdos Talleres Sheets",
+      "defaultGid": "0",
+      "isCodeBaseAnchor": true,
+      "webhookUrl": "/api/integrations/forms-sheets/ingest/talleres_registro",
+      "updatedAt": "2026-09-20T16:42:09.884Z"
     },
     {
       "id": "sesiones_individuales",
       "title": "ACUERDO SESIONES INDIVIDUALES",
-      "category": "Sesión Individual 1 a 1",
-      "moduleTarget": "sesiones",
+      "category": "Sesiones Individuales",
+      "moduleTarget": "sessions",
       "formUrl": "https://forms.gle/dfStXtTyb1MW6W5K9",
-      "sheetUrl": "https://docs.google.com/spreadsheets/d/1RBC_Sesiones_Individuales_Acuerdo_B2B_Sheets/edit",
+      "sheetUrl": "https://docs.google.com/spreadsheets/d/1PCwxfgI0WdV2eMyEjLY_iYkYv5c4DNh5i43lNDvPT88/edit?usp=sharing",
       "sheetGid": "0",
       "sheetHeaders": [
         "Marca temporal",
         "Dirección de correo electrónico",
-        "Nombre Completo del Participante",
-        "Número de Cédula o Identificación Oficial",
-        "Nombre de la Organización / Empresa",
-        "Aceptación de Términos del Acuerdo Co-creativo de Coaching Ontológico",
-        "Reconocimiento de la Naturaleza no Terapéutica del Proceso",
-        "Consentimiento de Tratamiento de Datos y Grabación con Fines de Aprendizaje",
-        "Firma Digital del Coachee"
+        "Nombre completo y Apellidos",
+        "Número de contacto / WhatsApp",
+        "Comprendo que el coaching no es terapia, mentoría, consultoría ni asesoría, sino un proceso de asociación creativa que busca maximizar mi potencial personal y profesional.",
+        "Reconozco que los resultados dependen de mi nivel de compromiso, apertura e implementación de las acciones que co-cree durante las sesiones.",
+        "Autorizo el uso de herramientas tecnológicas y sistemas automatizados de apoyo (generación de bitácoras, resúmenes o actas de seguimiento) bajo estricta confidencialidad.",
+        "Comprendo y acepto que ninguna decisión del proceso de coaching, análisis reflexivo profundo o intervención de valor es generada o sustitida por Inteligencia Artificial; la IA se limita exclusivamente a funciones de soporte administrativo, transcripción o gestión documental.",
+        "Entiendo que la información compartida es estrictamente confidencial entre el coach y el participante. Las únicas excepciones aplican bajo riesgo inminente para la vida del participante o de terceros, o por mandato legal explícito",
+        "Para validar digitalmente este acuerdo, escribe tu Nombre Completo y Número de Documento de Identidad, lo cual equivaldrá a tu firma legal y aceptación de los términos aquí expuestos.",
+        "Merged Doc ID - Acuerdo Co-creativo de Trabajo Sesiones",
+        "Merged Doc URL - Acuerdo Co-creativo de Trabajo Sesiones",
+        "Link to merged Doc - Acuerdo Co-creativo de Trabajo Sesiones",
+        "Document Merge Status - Acuerdo Co-creativo de Trabajo Sesiones"
       ],
       "status": "connected",
-      "lastSyncedAt": "2026-09-20T15:01:20.790Z",
-      "recordsCount": 3,
-      "notes": "Base de datos acuerdos sesiones B2B Sheets. Sincronizada con el panel de Google Forms & Sheets."
+      "lastSyncedAt": "2026-09-20T16:41:17.041Z",
+      "recordsCount": 2,
+      "notes": "Base de datos acuerdos sesiones B2B Sheets: acuerdo co-creativo legal, firma digital con documento de identidad, límites de IA y estado del documento combinado.",
+      "officialDatabaseName": "Base de datos acuerdos sesiones B2B Sheets",
+      "defaultGid": "0",
+      "isCodeBaseAnchor": true,
+      "webhookUrl": "/api/integrations/forms-sheets/ingest/sesiones_individuales",
+      "updatedAt": "2026-09-20T16:42:09.884Z"
     },
     {
       "id": "bitacora_sesiones_b2b",
       "title": "Bitacora Sesiones B2B",
-      "category": "Bitácora Sesión 1 a 1",
-      "moduleTarget": "sesiones",
+      "category": "Bitácora B2B",
+      "moduleTarget": "sessions",
       "formUrl": "https://forms.gle/APUFto8sGbJt322WA",
-      "sheetUrl": "https://docs.google.com/spreadsheets/d/1RBC_Bitacora_Sesiones_B2B_Sheets/edit",
+      "sheetUrl": "https://docs.google.com/spreadsheets/d/1Mm3CRZVvKYFak5APwIBmfK-vZAUfnx1zg-eq8WOLbZk/edit?usp=sharing",
       "sheetGid": "0",
       "sheetHeaders": [
         "Marca temporal",
         "Dirección de correo electrónico",
-        "Nombre Completo del Coachee",
-        "Número de Sesión Diligenciada",
-        "¿Cuál es el quiebre central o situación desafiante que exploramos hoy?",
-        "¿Qué emoción o estado de ánimo predominó durante la conversación?",
-        "¿Qué juicios o creencias limitantes identificaste en tu narrativa?",
-        "¿Cuál fue el darse cuenta o giro ontológico más significativo?",
-        "¿Qué acciones retadoras o nuevos compromisos asumes a partir de este encuentro?",
-        "Equilibrio de Vida y Bienestar Personal (1 a 10)",
-        "Observaciones adicionales para tu bitácora de proceso"
+        "Cuál es tu Nombre completo",
+        "Ciudad",
+        "¿Cuál es el desafío, situación o tema central que eliges trabajar en nuestra sesión de hoy?",
+        "¿Qué emoción principal estuvo presente al abordar este tema y qué mensaje sientes que te traía? ",
+        "¿Qué ideas, juicios o historias repetitivas sobre ti o sobre esta situación descubriste que te están limitando? ",
+        "¿Qué \"darse cuenta\" (descubrimiento o nueva perspectiva) te llevas de ti mismo tras esta conversación? ",
+        "Si miras este proceso como un llamado a encontrar equilibrio, ¿qué parte de ti o de tu entorno necesita mayor atención hoy? ",
+        "¿Cuál es el aprendizaje más valioso que te regalas al finalizar este espacio? ",
+        "¿Qué acción concreta, alineada con tus compromisos, te llevarás para realizar antes de nuestra próxima sesión? ",
+        "Para validar que podemos utilizar esta information para hacer un registro detallado de tu progreso, escribe tu Nombre Completo y Número de Documento de Identidad, lo cual equivaldrá a tu firma legal y aceptación de los términos aquí expuestos."
       ],
       "status": "connected",
-      "lastSyncedAt": "2026-09-20T15:01:20.790Z",
-      "recordsCount": 4,
-      "notes": "Base de datos bitácoras sesiones B2B Sheets. Sincronizada con el panel de Google Forms & Sheets."
+      "lastSyncedAt": "2026-09-20T16:41:46.486Z",
+      "recordsCount": 2,
+      "notes": "Base de datos bitácoras sesiones B2B Sheets: quiebre directivo, emoción presente, juicios limitantes, darse cuenta, equilibrio y compromisos de acción.",
+      "officialDatabaseName": "Base de datos bitácoras sesiones B2B Sheets",
+      "defaultGid": "0",
+      "isCodeBaseAnchor": true,
+      "webhookUrl": "/api/integrations/forms-sheets/ingest/bitacora_sesiones_b2b",
+      "updatedAt": "2026-09-20T16:42:09.884Z"
     },
     {
       "id": "bitacora_talleres",
       "title": "Bitacora Talleres",
-      "category": "Bitácora de Taller",
-      "moduleTarget": "talleres",
+      "category": "Bitácora Talleres",
+      "moduleTarget": "workshops",
       "formUrl": "https://forms.gle/5Hiuxwq13n3gC3zt6",
-      "sheetUrl": "https://docs.google.com/spreadsheets/d/1RBC_Bitacora_Talleres_Sheets/edit",
+      "sheetUrl": "https://docs.google.com/spreadsheets/d/1DyKs4OsJDTTOa8SMSvOQdWcttrmRKJ8_vxnJH9rV5UA/edit?usp=sharing",
       "sheetGid": "0",
       "sheetHeaders": [
         "Marca temporal",
+        "Nivel Taller ",
+        "Tu Nombre",
+        "Ciudad ",
         "Dirección de correo electrónico",
-        "Nombre Completo del Participante",
-        "Taller o Encuentro Ontológico Asistido",
-        "Nivel del Taller",
-        "¿Cuál fue el reto personal o quiebre principal abordado en este taller?",
-        "¿Qué emoción predominante reconoces en tu corporalidad hoy?",
-        "¿Qué verdades que considerabas absolutas se abrieron a cuestionamiento?",
-        "¿Cuál es el nuevo observador que emerge para ti a partir de este espacio?",
-        "Mensaje de equilibrio de vida y soberanía personal",
-        "¿Cuál fue el aprendizaje más valioso de la dinámica grupal?",
-        "Acción concreta de transformación que ejecutarás en las próximas 48 horas",
-        "Firma Digital y Número de Cédula / Documento de Identidad"
+        "¿Qué tema, situación o reto personal quieres poner sobre la mesa en este espacio?",
+        "¿Qué emoción predominante traes al espacio y qué te está diciendo?",
+        "¿Qué ideas o \"verdades\" sobre ti o sobre esta situación te estás repitiendo con más fuerza?",
+        "¿Qué nueva perspectiva o \"descubrimiento\" te llevas de ti mismo tras esta exploración?",
+        "Si esta situación fuera un mensaje sobre lo que necesitas equilibrar en tu vida, ¿cuál dirías que es?",
+        "¿Cuál es el aprendizaje más valioso que te regalas de este espacio?",
+        "¿Qué acción concreta, sencilla pero retadora, te comprometes a realizar antes de nuestro próximo encuentro?",
+        "Para validar digitalmente la lectura de esta information por nuestro equipo, escribe tu Nombre Completo y Número de Documento de Identidad, lo cual equivaldrá a tu firma legal y aceptación de los términos aquí expuestos."
       ],
       "status": "connected",
       "lastSyncedAt": "2026-09-20T15:01:20.790Z",
-      "recordsCount": 4,
-      "notes": "Base de datos bitácoras talleres Sheets. Sincronizada con el panel de Google Forms & Sheets."
+      "recordsCount": 2,
+      "notes": "Base de datos bitácoras talleres Sheets: nivel del taller, reto personal, emoción predominante, verdades limitantes, nueva perspectiva, equilibrio y reto transformacional.",
+      "officialDatabaseName": "Base de datos bitácoras talleres Sheets",
+      "defaultGid": "0",
+      "isCodeBaseAnchor": true,
+      "webhookUrl": "/api/integrations/forms-sheets/ingest/bitacora_talleres",
+      "updatedAt": "2026-09-20T16:42:09.884Z"
     }
   ]
 }

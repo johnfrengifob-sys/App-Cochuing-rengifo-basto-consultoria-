@@ -29,7 +29,6 @@ import {
   Settings,
   AlertCircle,
   HelpCircle,
-  Trophy,
   BookOpen,
   Film,
 } from 'lucide-react';
@@ -40,7 +39,6 @@ import {
   SessionAutomationsConfig,
   SessionConversationalGuide,
   SessionCycleReviewAxes,
-  SessionProgramClosingAxes,
   FormsSheetsIntegrationSourceKey,
 } from '../../types';
 import { OntologicalStore } from '../../services/store';
@@ -72,7 +70,6 @@ export const ConsultoriaSessionCreationModal: React.FC<ConsultoriaSessionCreatio
 
   // 1. Configuración General y Logística
   const normalizeInitialType = (t?: ConsultoriaSessionType): ConsultoriaSessionType => {
-    if (t === 'cierre_programa') return 'cierre_programa';
     if (t === 'cierre_ciclo' || t === 'recopilacion_cycle') return 'cierre_ciclo';
     return 'sesion';
   };
@@ -119,12 +116,9 @@ export const ConsultoriaSessionCreationModal: React.FC<ConsultoriaSessionCreatio
     '¿Qué te gustaría trabajar el día de hoy? / ¿Cuál es el quiebre o tema que trae tu atención en este momento?';
   const defaultOpeningQuestionRecopilacion =
     'Sesión de Cierre de Ciclo: Revisión del estado actual, aprendizajes consolidados y alineación del propósito del proceso.';
-  const defaultOpeningQuestionCierrePrograma =
-    'Sesión de Cierre de Programa: Consolidación integral de la transformación del observador ontológico, balance de autonomía e impacto.';
 
   const [openingQuestion, setOpeningQuestion] = useState<string>(() => {
     if (initialSession?.openingQuestion) return initialSession.openingQuestion;
-    if (initialSession?.sessionType === 'cierre_programa') return defaultOpeningQuestionCierrePrograma;
     if (initialSession?.sessionType === 'cierre_ciclo' || initialSession?.sessionType === 'recopilacion_cycle')
       return defaultOpeningQuestionRecopilacion;
     return defaultOpeningQuestionNormal;
@@ -157,22 +151,6 @@ export const ConsultoriaSessionCreationModal: React.FC<ConsultoriaSessionCreatio
     nextLegRedesign:
       initialSession?.cycleReviewAxes?.nextLegRedesign ||
       'Rediseño del siguiente tramo: Ajuste de acuerdos co-creativos y renovación del ciclo de mentoría.',
-  });
-
-  // Ejes Fundamentales para Opción 3 (Cierre de Programa)
-  const [programClosingAxes, setProgramClosingAxes] = useState<SessionProgramClosingAxes>({
-    observerTransformation:
-      initialSession?.programClosingAxes?.observerTransformation ||
-      'Evolución ontológica del observador: Integración de la transformación en cuerpo, lenguaje y emocionalidad a lo largo del programa.',
-    transcendedBreakdowns:
-      initialSession?.programClosingAxes?.transcendedBreakdowns ||
-      'Quiebres trascendidos y distinciones incorporadas: Quiebre inicial superado y competencias ontológicas consolidadas.',
-    autonomyManifesto:
-      initialSession?.programClosingAxes?.autonomyManifesto ||
-      'Manifiesto de autonomía y prácticas sostenibles: Acuerdos auto-declarados para sostener el nuevo observador a largo plazo.',
-    closingDeclaration:
-      initialSession?.programClosingAxes?.closingDeclaration ||
-      'Declaración formal de cierre y co-creación del legado: Cierre de la relación de acompañamiento con gratitud y balance de logros.',
   });
 
   // 3. Conectividad y Panel de Automatizaciones
@@ -236,17 +214,9 @@ export const ConsultoriaSessionCreationModal: React.FC<ConsultoriaSessionCreatio
         (s) => s.clientId === clientId
       );
       const nextNumber = clientSessions.length + 1;
-      const isClosingProgram = nextNumber >= 12;
       const isCycleClose = nextNumber % 4 === 0;
 
-      if (isClosingProgram) {
-        setSessionType('cierre_programa');
-        setOpeningQuestion(defaultOpeningQuestionCierrePrograma);
-        setTitle(`Sesión #${nextNumber}: Cierre de Programa y Graduación Ontológica`);
-        setSessionGoal(
-          'Consolidación integral de la transformación ontológica, balance de competencias y declaración de finalización del programa.'
-        );
-      } else if (isCycleClose) {
+      if (isCycleClose) {
         setSessionType('cierre_ciclo');
         setOpeningQuestion(defaultOpeningQuestionRecopilacion);
         setTitle(`Sesión #${nextNumber}: Cierre de Ciclo y Revisión de Avance`);
@@ -265,21 +235,7 @@ export const ConsultoriaSessionCreationModal: React.FC<ConsultoriaSessionCreatio
   // Manejar cambio dinámico del tipo de sesión
   const handleSessionTypeChange = (type: ConsultoriaSessionType) => {
     setSessionType(type);
-    if (type === 'cierre_programa') {
-      setOpeningQuestion(defaultOpeningQuestionCierrePrograma);
-      setTitle((prev) => {
-        if (!prev.includes('Cierre de Programa')) {
-          return prev.replace(
-            /Consultoría Ontológica 1 a 1|Cierre de Ciclo.*|Recopilación.*|Graduación.*/gi,
-            'Cierre de Programa y Graduación'
-          );
-        }
-        return prev;
-      });
-      setSessionGoal(
-        'Consolidación integral de la transformación ontológica, balance de competencias y declaración de finalización del programa.'
-      );
-    } else if (type === 'cierre_ciclo' || type === 'recopilacion_cycle') {
+    if (type === 'cierre_ciclo' || type === 'recopilacion_cycle') {
       setOpeningQuestion(defaultOpeningQuestionRecopilacion);
       setTitle((prev) => {
         if (!prev.includes('Cierre de Ciclo')) {
@@ -373,8 +329,7 @@ export const ConsultoriaSessionCreationModal: React.FC<ConsultoriaSessionCreatio
         sessionType === 'cierre_ciclo' || sessionType === 'recopilacion_cycle'
           ? cycleReviewAxes
           : undefined,
-      programClosingAxes:
-        sessionType === 'cierre_programa' ? programClosingAxes : undefined,
+      programClosingAxes: undefined,
       automationsConfig,
       googleFormsUrl: finalFormUrl,
       googleSheetsUrl: finalSheetUrl,
@@ -389,9 +344,7 @@ export const ConsultoriaSessionCreationModal: React.FC<ConsultoriaSessionCreatio
       notes: `Sesión de Consultoría Ontológica 1 a 1 con ${
         client?.displayName || client?.name || 'Coachee'
       }. Tipo: ${
-        sessionType === 'cierre_programa'
-          ? 'Cierre de programa'
-          : sessionType === 'cierre_ciclo' || sessionType === 'recopilacion_cycle'
+        sessionType === 'cierre_ciclo' || sessionType === 'recopilacion_cycle'
           ? 'Cierre de ciclo'
           : 'Sesión'
       }. Google Forms: ${finalFormUrl}. Google Sheets: ${finalSheetUrl}.`,
@@ -430,9 +383,7 @@ export const ConsultoriaSessionCreationModal: React.FC<ConsultoriaSessionCreatio
                   Módulo de Consultoría 1 a 1
                 </span>
                 <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200/60 dark:border-indigo-800/40">
-                  {sessionType === 'cierre_programa'
-                    ? 'Cierre de programa'
-                    : sessionType === 'cierre_ciclo' || sessionType === 'recopilacion_cycle'
+                  {sessionType === 'cierre_ciclo' || sessionType === 'recopilacion_cycle'
                     ? 'Cierre de ciclo'
                     : 'Sesión'}
                 </span>
@@ -477,19 +428,19 @@ export const ConsultoriaSessionCreationModal: React.FC<ConsultoriaSessionCreatio
               </span>
             </div>
 
-            {/* 1.1 Selector con tres opciones */}
+            {/* 1.1 Selector con dos opciones */}
             <div className="space-y-2">
               <label className="text-xs font-bold text-gray-800 dark:text-neutral-200 flex items-center justify-between">
                 <span className="flex items-center gap-1.5">
                   <Sliders className="w-3.5 h-3.5 text-emerald-600" />
-                  <span>Nivel Formativo / Tipo de Sesión: Selector con tres opciones *</span>
+                  <span>Nivel Formativo / Tipo de Sesión: Selector de dos opciones *</span>
                 </span>
                 <span className="text-[11px] text-gray-500 font-normal">
-                  Sesión • Cierre de ciclo • Cierre de programa
+                  Sesión • Cierre de ciclo
                 </span>
               </label>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 {/* Opción 1: Sesión */}
                 <button
                   type="button"
@@ -539,32 +490,6 @@ export const ConsultoriaSessionCreationModal: React.FC<ConsultoriaSessionCreatio
                   </div>
                   <p className="text-[11px] text-gray-500 dark:text-neutral-400 leading-relaxed">
                     Balance y medición de evolución cada 4 sesiones: aprendizajes consolidados y rediseño de acuerdos.
-                  </p>
-                </button>
-
-                {/* Opción 3: Cierre de programa */}
-                <button
-                  type="button"
-                  onClick={() => handleSessionTypeChange('cierre_programa')}
-                  className={`p-3.5 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between relative ${
-                    sessionType === 'cierre_programa'
-                      ? 'border-purple-500 bg-white dark:bg-neutral-800 ring-2 ring-purple-500/20 shadow-sm'
-                      : 'border-gray-200 dark:border-neutral-800 bg-gray-100/50 dark:bg-neutral-900/50 hover:border-gray-300 dark:hover:border-neutral-700'
-                  }`}
-                >
-                  <div className="flex items-center justify-between mb-1.5">
-                    <span className="text-xs font-bold text-black dark:text-white flex items-center gap-1.5">
-                      <Trophy className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />
-                      <span>Cierre de programa</span>
-                    </span>
-                    {sessionType === 'cierre_programa' ? (
-                      <CheckCircle2 className="w-4 h-4 text-purple-600 shrink-0" />
-                    ) : (
-                      <span className="w-3.5 h-3.5 rounded-full border border-gray-300 dark:border-neutral-600" />
-                    )}
-                  </div>
-                  <p className="text-[11px] text-gray-500 dark:text-neutral-400 leading-relaxed">
-                    Consolidación total de la transformación del observador, manifiesto de autonomía y declaración formal.
                   </p>
                 </button>
               </div>
@@ -703,9 +628,7 @@ export const ConsultoriaSessionCreationModal: React.FC<ConsultoriaSessionCreatio
                 </span>
                 <h3 className="text-sm font-bold text-black dark:text-white tracking-tight">
                   Dinámica y Contenido (
-                  {sessionType === 'cierre_programa'
-                    ? 'Opción 3: Cierre de programa'
-                    : sessionType === 'cierre_ciclo' || sessionType === 'recopilacion_cycle'
+                  {sessionType === 'cierre_ciclo' || sessionType === 'recopilacion_cycle'
                     ? 'Opción 2: Cierre de ciclo'
                     : 'Opción 1: Sesión'}
                   )
@@ -988,161 +911,6 @@ export const ConsultoriaSessionCreationModal: React.FC<ConsultoriaSessionCreatio
                         }
                         className="w-full text-xs p-2 rounded-lg border border-gray-200 dark:border-neutral-700 bg-gray-50 dark:bg-neutral-900 text-black dark:text-white focus:ring-1 focus:ring-indigo-500"
                         placeholder="Nuevos compromisos, frecuencia y renovación del ciclo..."
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* OPCIÓN 3: CIERRE DE PROGRAMA */}
-            {sessionType === 'cierre_programa' && (
-              <div className="space-y-4 animate-fade-in">
-                {/* Banner de Graduación y Cierre de Programa */}
-                <div className="p-3.5 rounded-xl bg-purple-50/70 dark:bg-purple-950/40 border border-purple-200/80 dark:border-purple-800/50 flex items-start gap-3">
-                  <Trophy className="w-4 h-4 text-purple-600 dark:text-purple-400 shrink-0 mt-0.5" />
-                  <div>
-                    <h4 className="text-xs font-bold text-purple-900 dark:text-purple-200">
-                      Naturaleza del Cierre de Programa (Graduación Ontológica)
-                    </h4>
-                    <p className="text-[11px] text-purple-800/80 dark:text-purple-300/80 leading-relaxed mt-0.5">
-                      Espacio de culminación y graduación del programa: balance holístico de la autonomía ontológica, integración de quiebres trascendidos y co-creación de la declaración formal de finalización del proceso.
-                    </p>
-                  </div>
-                </div>
-
-                {/* Preguntas y Declaración de Graduación Extraídas desde Google Sheets */}
-                <div className="p-3.5 rounded-xl bg-purple-50/70 dark:bg-purple-950/40 border border-purple-200/80 dark:border-purple-800/50 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                  <div className="flex items-start gap-2.5">
-                    <FileSpreadsheet className="w-4 h-4 text-purple-600 dark:text-purple-400 shrink-0 mt-0.5" />
-                    <div>
-                      <h4 className="text-xs font-bold text-purple-950 dark:text-purple-200 flex items-center gap-1.5">
-                        <span>Preguntas y Declaración de Cierre Extraídas desde Google Sheets</span>
-                        <span className="text-[10px] font-mono px-2 py-0.2 rounded-full bg-purple-100 dark:bg-purple-900/60 text-purple-800 dark:text-purple-200 font-bold">
-                          Sincronizado
-                        </span>
-                      </h4>
-                      <p className="text-[11px] text-purple-800/80 dark:text-purple-300/80 leading-relaxed mt-0.5">
-                        La formulación ontológica de cierre, balance holístico de autonomía y quiebres trascendidos se extraen directamente desde la Hoja de Google Sheets vinculada. No se configuran manualmente.
-                      </p>
-                    </div>
-                  </div>
-                  <a
-                    href={finalSheetUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white dark:bg-neutral-800 border border-purple-200 dark:border-neutral-700 text-[11px] font-semibold text-purple-700 dark:text-purple-300 hover:bg-purple-50 dark:hover:bg-neutral-700 shrink-0 transition-colors shadow-2xs cursor-pointer"
-                  >
-                    <span>Ver en Google Sheets</span>
-                    <ExternalLink className="w-3 h-3 opacity-70" />
-                  </a>
-                </div>
-
-                {/* Los 4 Ejes Fundamentales de Cierre de Programa */}
-                <div className="space-y-2.5 pt-1">
-                  <h4 className="text-xs font-bold uppercase tracking-wider text-purple-700 dark:text-purple-300 flex items-center gap-1.5">
-                    <Award className="w-3.5 h-3.5 text-purple-600" />
-                    <span>4 Ejes Fundamentales de Cierre de Programa</span>
-                  </h4>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {/* Eje 1: Consolidación de la Transformación del Observador */}
-                    <div className="p-3.5 rounded-xl bg-white dark:bg-neutral-800 border border-purple-100 dark:border-purple-900/40 space-y-1.5">
-                      <div className="flex items-center gap-1.5 text-purple-700 dark:text-purple-300 font-bold text-xs">
-                        <span className="w-4 h-4 rounded-full bg-purple-100 dark:bg-purple-900/60 text-purple-700 dark:text-purple-300 text-[10px] flex items-center justify-center font-mono">
-                          1
-                        </span>
-                        <span>Transformación del Observador</span>
-                      </div>
-                      <p className="text-[11px] text-gray-500 dark:text-neutral-400">
-                        ¿Cómo ha mutado el observador en cuerpo, lenguaje y emocionalidad a lo largo del programa?
-                      </p>
-                      <textarea
-                        rows={2}
-                        value={programClosingAxes.observerTransformation || ''}
-                        onChange={(e) =>
-                          setProgramClosingAxes((prev) => ({
-                            ...prev,
-                            observerTransformation: e.target.value,
-                          }))
-                        }
-                        className="w-full text-xs p-2 rounded-lg border border-gray-200 dark:border-neutral-700 bg-gray-50 dark:bg-neutral-900 text-black dark:text-white focus:ring-1 focus:ring-purple-500"
-                        placeholder="Consolidación de la nueva ontología del coachee..."
-                      />
-                    </div>
-
-                    {/* Eje 2: Competencias & Quiebres Trascendidos */}
-                    <div className="p-3.5 rounded-xl bg-white dark:bg-neutral-800 border border-purple-100 dark:border-purple-900/40 space-y-1.5">
-                      <div className="flex items-center gap-1.5 text-purple-700 dark:text-purple-300 font-bold text-xs">
-                        <span className="w-4 h-4 rounded-full bg-purple-100 dark:bg-purple-900/60 text-purple-700 dark:text-purple-300 text-[10px] flex items-center justify-center font-mono">
-                          2
-                        </span>
-                        <span>Quiebres Trascendidos</span>
-                      </div>
-                      <p className="text-[11px] text-gray-500 dark:text-neutral-400">
-                        ¿Qué quiebres iniciales quedaron trascendidos y qué distinciones operan de forma habitual?
-                      </p>
-                      <textarea
-                        rows={2}
-                        value={programClosingAxes.transcendedBreakdowns || ''}
-                        onChange={(e) =>
-                          setProgramClosingAxes((prev) => ({
-                            ...prev,
-                            transcendedBreakdowns: e.target.value,
-                          }))
-                        }
-                        className="w-full text-xs p-2 rounded-lg border border-gray-200 dark:border-neutral-700 bg-gray-50 dark:bg-neutral-900 text-black dark:text-white focus:ring-1 focus:ring-purple-500"
-                        placeholder="Quiebres resueltos y distinciones ontológicas instaladas..."
-                      />
-                    </div>
-
-                    {/* Eje 3: Manifiesto de Autonomía & Prácticas Sostenidas */}
-                    <div className="p-3.5 rounded-xl bg-white dark:bg-neutral-800 border border-purple-100 dark:border-purple-900/40 space-y-1.5">
-                      <div className="flex items-center gap-1.5 text-purple-700 dark:text-purple-300 font-bold text-xs">
-                        <span className="w-4 h-4 rounded-full bg-purple-100 dark:bg-purple-900/60 text-purple-700 dark:text-purple-300 text-[10px] flex items-center justify-center font-mono">
-                          3
-                        </span>
-                        <span>Manifiesto de Autonomía</span>
-                      </div>
-                      <p className="text-[11px] text-gray-500 dark:text-neutral-400">
-                        ¿Cuáles son las prácticas, hábitos y declaraciones que el coachee sostendrá autónomamente?
-                      </p>
-                      <textarea
-                        rows={2}
-                        value={programClosingAxes.autonomyManifesto || ''}
-                        onChange={(e) =>
-                          setProgramClosingAxes((prev) => ({
-                            ...prev,
-                            autonomyManifesto: e.target.value,
-                          }))
-                        }
-                        className="w-full text-xs p-2 rounded-lg border border-gray-200 dark:border-neutral-700 bg-gray-50 dark:bg-neutral-900 text-black dark:text-white focus:ring-1 focus:ring-purple-500"
-                        placeholder="Declaración de autonomía y prácticas sostenidas a futuro..."
-                      />
-                    </div>
-
-                    {/* Eje 4: Cierre Co-creativo & Declaración de Finalización */}
-                    <div className="p-3.5 rounded-xl bg-white dark:bg-neutral-800 border border-purple-100 dark:border-purple-900/40 space-y-1.5">
-                      <div className="flex items-center gap-1.5 text-purple-700 dark:text-purple-300 font-bold text-xs">
-                        <span className="w-4 h-4 rounded-full bg-purple-100 dark:bg-purple-900/60 text-purple-700 dark:text-purple-300 text-[10px] flex items-center justify-center font-mono">
-                          4
-                        </span>
-                        <span>Declaración de Finalización</span>
-                      </div>
-                      <p className="text-[11px] text-gray-500 dark:text-neutral-400">
-                        Declaración formal de culminación, reconocimiento ontológico mutuo y celebración del legado.
-                      </p>
-                      <textarea
-                        rows={2}
-                        value={programClosingAxes.closingDeclaration || ''}
-                        onChange={(e) =>
-                          setProgramClosingAxes((prev) => ({
-                            ...prev,
-                            closingDeclaration: e.target.value,
-                          }))
-                        }
-                        className="w-full text-xs p-2 rounded-lg border border-gray-200 dark:border-neutral-700 bg-gray-50 dark:bg-neutral-900 text-black dark:text-white focus:ring-1 focus:ring-purple-500"
-                        placeholder="Palabras de cierre, gratitud mutua y declaración de finalización..."
                       />
                     </div>
                   </div>

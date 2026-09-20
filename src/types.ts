@@ -180,7 +180,9 @@ export interface Session {
   googleSheetsUrl?: string;
   formsIntegrationId?: string;
   agreementFormUrl?: string;
+  agreementSheetUrl?: string;
   bitacoraFormUrl?: string;
+  bitacoraSheetUrl?: string;
   guideUrl?: string; // Enlace a la guía de trabajo / documento (Drive, Notion, PDF, etc.)
   guideTitle?: string; // Título o nombre de la guía
   videoUrl?: string; // Enlace al video de la sesión (YouTube, Loom, Vimeo, Drive, Zoom)

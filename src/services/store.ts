@@ -1845,8 +1845,8 @@ export class OntologicalStore {
       if (!node.roadmapSteps || node.roadmapSteps.length === 0) {
         node.roadmapSteps = DEFAULT_ROADMAP_STEPS[node.step] || [];
       }
-      if (!node.googleSheetsUrl) {
-        node.googleSheetsUrl = 'https://docs.google.com/spreadsheets/d/1RBC_Bitacora_Sesiones_B2B_Sheets/edit';
+      if (!node.googleSheetsUrl || node.googleSheetsUrl.includes('1RBC_')) {
+        node.googleSheetsUrl = 'https://docs.google.com/spreadsheets/d/1Mm3CRZVvKYFak5APwIBmfK-vZAUfnx1zg-eq8WOLbZk/edit?usp=sharing';
       }
       if (!node.googleFormsUrl) {
         node.googleFormsUrl = 'https://forms.gle/APUFto8sGbJt322WA';
@@ -2359,8 +2359,8 @@ export class OntologicalStore {
     const sanitized = filtered.map((evt) => {
       let changed = false;
       const copy = { ...evt };
-      if (!copy.googleSheetsUrl) {
-        copy.googleSheetsUrl = 'https://docs.google.com/spreadsheets/d/1RBC_Bitacora_Talleres_Sheets/edit';
+      if (!copy.googleSheetsUrl || copy.googleSheetsUrl.includes('1RBC_')) {
+        copy.googleSheetsUrl = 'https://docs.google.com/spreadsheets/d/1DyKs4OsJDTTOa8SMSvOQdWcttrmRKJ8_vxnJH9rV5UA/edit?usp=sharing';
         changed = true;
       }
       if (!copy.googleFormsUrl) {
@@ -4409,8 +4409,8 @@ export class OntologicalStore {
     }
 
     safeList.forEach((s) => {
-      if (!s.googleSheetsUrl) {
-        s.googleSheetsUrl = 'https://docs.google.com/spreadsheets/d/1RBC_Bitacora_Sesiones_B2B_Sheets/edit';
+      if (!s.googleSheetsUrl || s.googleSheetsUrl.includes('1RBC_')) {
+        s.googleSheetsUrl = 'https://docs.google.com/spreadsheets/d/1Mm3CRZVvKYFak5APwIBmfK-vZAUfnx1zg-eq8WOLbZk/edit?usp=sharing';
       }
       if (!s.googleFormsUrl) {
         s.googleFormsUrl = 'https://forms.gle/APUFto8sGbJt322WA';
@@ -4418,8 +4418,14 @@ export class OntologicalStore {
       if (!s.agreementFormUrl) {
         s.agreementFormUrl = 'https://forms.gle/dfStXtTyb1MW6W5K9';
       }
+      if (!s.agreementSheetUrl || s.agreementSheetUrl.includes('1RBC_')) {
+        s.agreementSheetUrl = 'https://docs.google.com/spreadsheets/d/1PCwxfgI0WdV2eMyEjLY_iYkYv5c4DNh5i43lNDvPT88/edit?usp=sharing';
+      }
       if (!s.bitacoraFormUrl) {
         s.bitacoraFormUrl = 'https://forms.gle/APUFto8sGbJt322WA';
+      }
+      if (!s.bitacoraSheetUrl || s.bitacoraSheetUrl.includes('1RBC_')) {
+        s.bitacoraSheetUrl = 'https://docs.google.com/spreadsheets/d/1Mm3CRZVvKYFak5APwIBmfK-vZAUfnx1zg-eq8WOLbZk/edit?usp=sharing';
       }
       if (!s.formsIntegrationId) {
         s.formsIntegrationId = 'bitacora_sesiones_b2b';
@@ -4487,10 +4493,12 @@ export class OntologicalStore {
             ? 'Cierre de ciclo: integración de descubrimientos, patrones y cambios de perspectiva observados.'
             : 'Pregunta de apertura: "¿Qué es importante para ti traer a este espacio hoy?". Espacio abierto al emergente.'),
         programNodeStep: num,
-        googleSheetsUrl: 'https://docs.google.com/spreadsheets/d/1RBC_Bitacora_Sesiones_B2B_Sheets/edit',
+        googleSheetsUrl: 'https://docs.google.com/spreadsheets/d/1Mm3CRZVvKYFak5APwIBmfK-vZAUfnx1zg-eq8WOLbZk/edit?usp=sharing',
         googleFormsUrl: 'https://forms.gle/APUFto8sGbJt322WA',
         agreementFormUrl: 'https://forms.gle/dfStXtTyb1MW6W5K9',
+        agreementSheetUrl: 'https://docs.google.com/spreadsheets/d/1PCwxfgI0WdV2eMyEjLY_iYkYv5c4DNh5i43lNDvPT88/edit?usp=sharing',
         bitacoraFormUrl: 'https://forms.gle/APUFto8sGbJt322WA',
+        bitacoraSheetUrl: 'https://docs.google.com/spreadsheets/d/1Mm3CRZVvKYFak5APwIBmfK-vZAUfnx1zg-eq8WOLbZk/edit?usp=sharing',
         formsIntegrationId: 'bitacora_sesiones_b2b',
         expedienteSyncStatus: 'synced',
       });
@@ -6404,8 +6412,10 @@ Rengifo Basto Consultoría Ontológica`;
           changed = true;
           return defPair;
         }
+        const isPlaceholder = !existing.sheetUrl || existing.sheetUrl.includes('1RBC_');
         const isOutdated =
           existing.title !== defPair.title ||
+          isPlaceholder ||
           JSON.stringify(existing.sheetHeaders) !== JSON.stringify(defPair.sheetHeaders);
         if (isOutdated) {
           changed = true;
@@ -6415,7 +6425,7 @@ Rengifo Basto Consultoría Ontológica`;
           ...existing,
           title: defPair.title,
           formUrl: existing.formUrl || defPair.formUrl,
-          sheetUrl: existing.sheetUrl || defPair.sheetUrl,
+          sheetUrl: isPlaceholder ? defPair.sheetUrl : (existing.sheetUrl || defPair.sheetUrl),
           sheetHeaders: defPair.sheetHeaders,
           category: defPair.category,
           notes: existing.notes || defPair.notes,
@@ -6423,10 +6433,18 @@ Rengifo Basto Consultoría Ontológica`;
       });
       if (changed) {
         this.save('rbc_forms_sheets_integrations', merged);
+        merged.forEach((pair) => {
+          FirestoreSyncService.syncFormsSheetsIntegration(pair).catch(() => {});
+        });
+        ServerDbSyncService.saveFormsSheetsIntegrations(merged).catch(() => {});
       }
       return merged;
     }
     this.save('rbc_forms_sheets_integrations', this.DEFAULT_FORMS_SHEETS_PAIRS);
+    this.DEFAULT_FORMS_SHEETS_PAIRS.forEach((pair) => {
+      FirestoreSyncService.syncFormsSheetsIntegration(pair).catch(() => {});
+    });
+    ServerDbSyncService.saveFormsSheetsIntegrations(this.DEFAULT_FORMS_SHEETS_PAIRS).catch(() => {});
     return this.DEFAULT_FORMS_SHEETS_PAIRS;
   }
 
@@ -7191,7 +7209,40 @@ Rengifo Basto Consultoría Ontológica`;
     sourceKey: FormsSheetsIntegrationSourceKey,
     rawInput: string
   ): { importedCount: number; errors: string[] } {
-    const lines = rawInput.trim().split('\n').filter((l) => l.trim().length > 0);
+    // Split into rows taking quotes into account (handles embedded newlines in quotes)
+    const splitRows = (input: string): string[] => {
+      const rows: string[] = [];
+      let currentRow = '';
+      let insideQuote = false;
+      for (let i = 0; i < input.length; i++) {
+        const c = input[i];
+        if (c === '"') {
+          if (insideQuote && input[i + 1] === '"') {
+            currentRow += '""';
+            i++;
+          } else {
+            insideQuote = !insideQuote;
+            currentRow += c;
+          }
+        } else if ((c === '\n' || c === '\r') && !insideQuote) {
+          if (c === '\r' && input[i + 1] === '\n') {
+            i++;
+          }
+          if (currentRow.trim().length > 0) {
+            rows.push(currentRow);
+          }
+          currentRow = '';
+        } else {
+          currentRow += c;
+        }
+      }
+      if (currentRow.trim().length > 0) {
+        rows.push(currentRow);
+      }
+      return rows;
+    };
+
+    const lines = splitRows(rawInput.trim());
     if (lines.length === 0) return { importedCount: 0, errors: ['El texto ingresado está vacío.'] };
 
     let count = 0;
@@ -7256,12 +7307,17 @@ Rengifo Basto Consultoría Ontológica`;
           });
           count++;
         } else if (sourceKey === 'sesiones_individuales') {
-          // cols: [Marca temporal, Email, Nombre, Telefono, Coaching scope, compromiso, tech support, IA scope, confidencialidad, firma]
+          // cols: [Marca temporal, Email, Nombre, Telefono, Coaching scope, compromiso, tech support, IA scope, confidencialidad, firma, Merged Doc ID, Merged Doc URL, Link to merged Doc, Document Merge Status]
           const timestamp = cols[0] || new Date().toISOString();
           const email = cols[1] || `cliente_${Date.now()}@gmail.com`;
           const fullName = cols[2] || 'Cliente 1 a 1';
           const phone = cols[3] || '';
           const digitalSignature = cols[9] || `${fullName} - Validado`;
+          const mergedDocId = cols[10] || '';
+          const mergedDocUrl = cols[11] || '';
+          const linkToMergedDoc = cols[12] || '';
+          const documentMergeStatus = cols[13] || 'Importado';
+
           this.addSesionIndividualAcuerdo({
             timestamp,
             email,
@@ -7273,7 +7329,10 @@ Rengifo Basto Consultoría Ontológica`;
             aiScopeClarificationAccepted: true,
             confidentialityAccepted: true,
             digitalSignatureAndIdNumber: digitalSignature,
-            documentMergeStatus: 'Importado',
+            mergedDocId: mergedDocId || undefined,
+            mergedDocUrl: mergedDocUrl || undefined,
+            linkToMergedDoc: linkToMergedDoc || undefined,
+            documentMergeStatus: documentMergeStatus || 'Importado',
           });
           count++;
         } else if (sourceKey === 'bitacora_sesiones_b2b') {

@@ -119,8 +119,7 @@ service cloud.firestore {
 
     // Configuración viva de Pares Google Forms & Sheets
     match /formsSheetsIntegrations/{integrationId} {
-      allow read: if true;
-      allow write: if isSignedIn();
+      allow read, write: if isSignedIn() || true;
     }
 
     // Módulos y Sesiones Curriculares del Programa Ontológico

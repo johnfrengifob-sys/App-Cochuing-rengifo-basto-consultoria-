@@ -385,7 +385,7 @@ export const EventContentSyllabusSection: React.FC<EventContentSyllabusSectionPr
             </div>
 
             <a
-              href={event.googleSheetsUrl || 'https://docs.google.com/spreadsheets/d/1RBC_Bitacora_Talleres_Sheets/edit'}
+              href={event.googleSheetsUrl || 'https://docs.google.com/spreadsheets/d/1DyKs4OsJDTTOa8SMSvOQdWcttrmRKJ8_vxnJH9rV5UA/edit?usp=sharing'}
               target="_blank"
               rel="noreferrer"
               className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-white dark:bg-neutral-800 border border-emerald-300 dark:border-emerald-700/60 hover:bg-emerald-50 dark:hover:bg-neutral-700 text-emerald-800 dark:text-emerald-200 text-xs font-bold shadow-2xs transition-colors shrink-0 cursor-pointer"

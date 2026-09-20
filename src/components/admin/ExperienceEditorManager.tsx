@@ -487,7 +487,7 @@ export const ExperienceEditorManager: React.FC<ExperienceEditorManagerProps> = (
                   </p>
                 </div>
                 <a
-                  href="https://docs.google.com/spreadsheets/d/1RBC_Bitacora_Talleres_Sheets/edit"
+                  href="https://docs.google.com/spreadsheets/d/1DyKs4OsJDTTOa8SMSvOQdWcttrmRKJ8_vxnJH9rV5UA/edit?usp=sharing"
                   target="_blank"
                   rel="noreferrer"
                   className="px-3.5 py-1.5 rounded-xl border border-emerald-500/80 hover:bg-emerald-500 hover:text-white font-semibold text-[11px] transition-colors flex items-center gap-1.5 shrink-0 text-emerald-700 dark:text-emerald-400"
