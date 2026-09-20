@@ -1,11 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import {
+  CalendarCheck2,
   Calendar,
   BookOpen,
-  CalendarCheck2,
   FileSpreadsheet,
-  UserCheck,
-  Zap,
 } from 'lucide-react';
 import { OntologicalStore } from '../../services/store';
 import {
@@ -17,20 +15,12 @@ import { ProgramsAndEventsManager } from '../ProgramsAndEventsManager';
 import { AdminSessionsManager } from './AdminSessionsManager';
 import { AdminFormsSheetsIntegrationPanel } from './AdminFormsSheetsIntegrationPanel';
 
-function SubPanelFallback({ title = 'Cargando Sub-Panel...' }: { title?: string }) {
-  return (
-    <div className="p-10 rounded-2xl glass-panel-opal border border-white/60 dark:border-white/10 flex flex-col items-center justify-center space-y-3 min-h-[260px]">
-      <div className="w-7 h-7 rounded-full border-2 border-emerald-500/20 border-t-emerald-600 animate-spin" />
-      <span className="text-xs font-mono text-neutral-500 dark:text-neutral-400 tracking-wider uppercase animate-pulse">
-        {title}
-      </span>
-    </div>
-  );
-}
-
 export type AcademicAdminSubTab =
   | 'events'
   | 'sessions'
+  | 'forms_sheets'
+  | 'integrations'
+  | 'sheets'
   | 'automations'
   | 'triggers'
   | 'activadores'
@@ -63,7 +53,7 @@ export const AdminAcademicManager: React.FC<AdminAcademicManagerProps> = ({
 }) => {
   const [currentTab, setCurrentTab] = useState<'events' | 'sessions' | 'forms_sheets'>(() => {
     if (initialSubTab === 'sessions') return 'sessions';
-    if (initialSubTab === 'forms_sheets' || initialSubTab === 'integrations' || initialSubTab === 'sheets') return 'forms_sheets';
+    if (initialSubTab === 'forms_sheets' || initialSubTab === 'sheets' || initialSubTab === 'integrations') return 'forms_sheets';
     return 'events';
   });
 
@@ -72,7 +62,7 @@ export const AdminAcademicManager: React.FC<AdminAcademicManagerProps> = ({
   useEffect(() => {
     if (initialSubTab === 'sessions') {
       setCurrentTab('sessions');
-    } else if (initialSubTab === 'forms_sheets' || initialSubTab === 'integrations' || initialSubTab === 'sheets') {
+    } else if (initialSubTab === 'forms_sheets' || initialSubTab === 'sheets' || initialSubTab === 'integrations') {
       setCurrentTab('forms_sheets');
     } else {
       setCurrentTab('events');
@@ -94,21 +84,23 @@ export const AdminAcademicManager: React.FC<AdminAcademicManagerProps> = ({
 
   return (
     <div className="space-y-6">
-      {/* Encabezado Principal Unificado */}
+      {/* Encabezado Principal de Eventos, Talleres, Sesiones & Google Forms/Sheets */}
       <div className="p-6 sm:p-7 rounded-3xl banner-executive text-black dark:text-white shadow-xs relative overflow-hidden transition-all">
         <div className="absolute right-0 top-0 w-96 h-96 bg-emerald-500/5 dark:bg-emerald-400/5 rounded-full blur-3xl pointer-events-none" />
         <div className="relative z-10 flex flex-col gap-5">
-          <div className="space-y-2 max-w-3xl">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-800 dark:text-emerald-300 text-xs font-semibold backdrop-blur-md">
-              <CalendarCheck2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-              <span>Gestión Integral Ontológica</span>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="space-y-2 max-w-3xl">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-800 dark:text-emerald-300 text-xs font-semibold backdrop-blur-md">
+                <CalendarCheck2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                <span>Gestión Integral: Eventos, Sesiones & Google Workspace</span>
+              </div>
+              <h2 className="text-xl md:text-2xl font-bold tracking-tight text-black dark:text-white flex items-center gap-2.5">
+                <span>Eventos, Talleres y Sesiones</span>
+              </h2>
+              <p className="text-xs md:text-sm text-neutral-600 dark:text-neutral-300 font-light leading-relaxed">
+                Consola para gestionar talleres ontológicos en vivo, catálogo formativo de sesiones organizadas por niveles y sincronización con Google Forms & Sheets.
+              </p>
             </div>
-            <h2 className="text-xl md:text-2xl font-bold tracking-tight text-black dark:text-white flex items-center gap-2.5">
-              <span>Eventos, Talleres y Sesiones de Consultoría</span>
-            </h2>
-            <p className="text-xs md:text-sm text-neutral-600 dark:text-neutral-300 font-light leading-relaxed">
-              Consola unificada para crear talleres y eventos en vivo, integrar activadores de seguimiento, vincular formularios y bases de datos en Google Sheets para el seguimiento 1 a 1 de participantes, y administrar los 12 módulos de sesiones de consultoría.
-            </p>
           </div>
 
           {/* Métricas Clave */}
@@ -125,11 +117,11 @@ export const AdminAcademicManager: React.FC<AdminAcademicManagerProps> = ({
 
             <div className="p-3.5 rounded-2xl bg-white/60 dark:bg-neutral-900/60 backdrop-blur-md border border-black/5 dark:border-white/10 shadow-2xs">
               <span className="text-[10px] text-emerald-600 dark:text-emerald-400 block font-semibold uppercase tracking-wider">
-                Sesiones Consultoría
+                Sesiones
               </span>
               <div className="flex items-baseline gap-2 mt-1">
                 <span className="text-xl font-bold font-mono text-black dark:text-white">{programNodes.length}</span>
-                <span className="text-[10px] text-emerald-700 dark:text-emerald-400 font-medium">Módulos 1 a 1</span>
+                <span className="text-[10px] text-emerald-700 dark:text-emerald-400 font-medium">Sesiones Creadas</span>
               </div>
             </div>
 
@@ -145,18 +137,18 @@ export const AdminAcademicManager: React.FC<AdminAcademicManagerProps> = ({
 
             <div className="p-3.5 rounded-2xl bg-white/60 dark:bg-neutral-900/60 backdrop-blur-md border border-black/5 dark:border-white/10 shadow-2xs">
               <span className="text-[10px] text-sky-600 dark:text-sky-400 block font-semibold uppercase tracking-wider">
-                Google Sheets & Triggers
+                Google Forms & Sheets
               </span>
               <div className="flex items-baseline gap-2 mt-1">
-                <span className="text-sm font-bold text-black dark:text-white">Sincronizado</span>
-                <span className="text-[10px] text-neutral-500 dark:text-neutral-400 font-medium">1 a 1</span>
+                <span className="text-sm font-bold text-black dark:text-white">4 Enlaces</span>
+                <span className="text-[10px] text-emerald-700 dark:text-emerald-400 font-medium">Sincronizado</span>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* NAVEGACIÓN UNIFICADA: TRES MÓDULOS DE GESTIÓN */}
+      {/* NAVEGACIÓN: EVENTOS Y TALLERES | SESIONES | GOOGLE FORMS & SHEETS */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 p-1.5 rounded-2xl glass-panel-opal border border-white/60 dark:border-white/10 shadow-2xs">
         {/* BOTÓN 1: EVENTOS Y TALLERES */}
         <button
@@ -179,7 +171,7 @@ export const AdminAcademicManager: React.FC<AdminAcademicManagerProps> = ({
           </span>
         </button>
 
-        {/* BOTÓN 2: SESIONES DE CONSULTORÍA (12 MÓDULOS) */}
+        {/* BOTÓN 2: SESIONES */}
         <button
           type="button"
           onClick={() => setCurrentTab('sessions')}
@@ -190,17 +182,17 @@ export const AdminAcademicManager: React.FC<AdminAcademicManagerProps> = ({
           }`}
         >
           <BookOpen className="w-4 h-4 text-emerald-500" />
-          <span>Sesiones de Consultoría</span>
+          <span>Sesiones</span>
           <span className={`text-[11px] px-2 py-0.5 rounded-full font-mono ${
             currentTab === 'sessions'
               ? 'bg-white/20 text-white dark:bg-black/20 dark:text-black'
               : 'bg-emerald-100/80 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300'
           }`}>
-            {programNodes.length}
+            {programNodes.length} Sesiones
           </span>
         </button>
 
-        {/* BOTÓN 3: GOOGLE FORMS & SHEETS (4 FUENTES) */}
+        {/* BOTÓN 3: GOOGLE FORMS & SHEETS */}
         <button
           type="button"
           onClick={() => setCurrentTab('forms_sheets')}
@@ -217,7 +209,7 @@ export const AdminAcademicManager: React.FC<AdminAcademicManagerProps> = ({
               ? 'bg-white/20 text-white dark:bg-black/20 dark:text-black'
               : 'bg-emerald-100/80 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300'
           }`}>
-            4 Recursos
+            4 Fuentes
           </span>
         </button>
       </div>

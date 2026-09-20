@@ -224,11 +224,6 @@ export const AdminFormsSheetsIntegrationPanel: React.FC = () => {
             <h2 className="text-xl md:text-2xl font-bold tracking-tight text-black dark:text-white flex items-center gap-2.5">
               <span>Integración de Formularios y Google Sheets</span>
             </h2>
-            <p className="text-xs md:text-sm text-neutral-600 dark:text-neutral-300 font-light leading-relaxed">
-              Administración dinámica de los 4 pares oficiales de Google Forms y Google Sheets para
-              Talleres, Sesiones Individuales y Bitácoras B2B. Los datos sincronizados alimentan automáticamente el
-              expediente ontológico del cliente y los flujos de creación.
-            </p>
           </div>
 
           <div className="flex flex-wrap items-center gap-3 shrink-0">

@@ -380,7 +380,7 @@ export const ConsultoriaSessionCreationModal: React.FC<ConsultoriaSessionCreatio
             <div>
               <div className="flex flex-wrap items-center gap-2 mb-1">
                 <span className="text-[11px] font-mono uppercase tracking-wider font-bold px-2.5 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-200 border border-emerald-200 dark:border-emerald-700/50">
-                  Módulo de Consultoría 1 a 1
+                  Generador de Sesiones • Consultoría 1 a 1
                 </span>
                 <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200/60 dark:border-indigo-800/40">
                   {sessionType === 'cierre_ciclo' || sessionType === 'recopilacion_cycle'
@@ -389,7 +389,7 @@ export const ConsultoriaSessionCreationModal: React.FC<ConsultoriaSessionCreatio
                 </span>
               </div>
               <h2 className="text-base sm:text-xl font-bold text-black dark:text-white">
-                {initialSession ? 'Editar Sesión de Consultoría' : 'Módulo de Creación de Sesiones de Consultoría'}
+                {initialSession ? 'Editar Sesión en Generador' : 'Generador de Sesiones de Consultoría'}
               </h2>
               <p className="text-xs text-gray-600 dark:text-neutral-400 mt-0.5">
                 Acuerdo Co-creativo, dinámica no direccional, conectividad Google Meet y sincronización en Google Sheets.
