@@ -513,11 +513,22 @@ export interface CronogramaEvent {
   postWorkshopQuestions?: PostWorkshopQuestion[];
   workbookSubmissions?: WorkshopWorkbookSubmission[];
   // Integraciones unificadas: Formularios, Google Sheets (Base de Datos & Seguimiento 1 a 1), Activadores Personalizables y Recursos
+  formsIntegrationId?: string;
   googleFormsUrl?: string;
   googleSheetsUrl?: string;
   googleDriveFolderUrl?: string;
   triggersEnabled?: boolean;
   triggerNotificationTemplate?: string;
+  immediateConfirmation?: boolean;
+  scheduledReminders?: boolean;
+  agreementFormUrl?: string;
+  agreementSheetUrl?: string;
+  bitacoraFormUrl?: string;
+  bitacoraSheetUrl?: string;
+  guideUrl?: string;
+  guideTitle?: string;
+  videoUrl?: string;
+  videoTitle?: string;
   customTriggers?: {
     welcomeImmediate?: boolean;
     welcomeMessage?: string;

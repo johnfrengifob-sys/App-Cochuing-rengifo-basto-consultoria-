@@ -58,6 +58,7 @@ import {
   Session,
   User,
   FormsSheetsIntegrationSourceKey,
+  CronogramaEvent,
 } from '../../types';
 import { OntologicalStore } from '../../services/store';
 import { FirestoreSyncService } from '../../services/firestoreSync';
@@ -69,6 +70,7 @@ import {
 } from '../../data/officialFormsSheetsBase';
 import { safeCopyToClipboard } from '../../utils/clipboard';
 import { ConsultoriaSessionCreationModal } from './ConsultoriaSessionCreationModal';
+import { EventEvaluationAndTriggersSection } from './events/EventEvaluationAndTriggersSection';
 
 interface AdminSessionsManagerProps {
   onSelectClientForFicha?: (clientId: string) => void;
@@ -360,6 +362,56 @@ export const AdminSessionsManager: React.FC<AdminSessionsManagerProps> = ({
     showNotification(`Módulo ${formData.step}: "${formData.sessionTitle}" guardado correctamente.`);
   };
 
+  // Adaptador de eventos para EventEvaluationAndTriggersSection en el Módulo de Sesión
+  const nodeEventData: Partial<CronogramaEvent> = useMemo(() => {
+    if (!formData) return {};
+    return {
+      id: `modulo-sesion-${formData.step}`,
+      title: formData.sessionTitle || `Módulo ${formData.step}`,
+      googleFormsUrl: formData.googleFormsUrl,
+      googleSheetsUrl: formData.googleSheetsUrl,
+      formsIntegrationId:
+        (formData as any).formsIntegrationId ||
+        (formData.googleFormsUrl?.includes('APUFto8sGbJt322WA')
+          ? 'bitacora_sesiones_b2b'
+          : 'sesiones_individuales'),
+      agreementFormUrl: (formData as any).agreementFormUrl,
+      agreementSheetUrl: (formData as any).agreementSheetUrl,
+      bitacoraFormUrl: (formData as any).bitacoraFormUrl || formData.googleFormsUrl,
+      bitacoraSheetUrl: (formData as any).bitacoraSheetUrl || formData.googleSheetsUrl,
+      guideUrl: formData.guideUrl,
+      guideTitle: formData.guideTitle,
+      videoUrl: formData.videoUrl,
+      videoTitle: formData.videoTitle,
+      triggersEnabled: formData.triggersEnabled ?? true,
+      immediateConfirmation: (formData as any).immediateConfirmation ?? true,
+      scheduledReminders: (formData as any).scheduledReminders ?? true,
+    };
+  }, [formData]);
+
+  const handleNodeEventChange = (updates: Partial<CronogramaEvent>) => {
+    if (!formData) return;
+    setFormData((prev) => {
+      if (!prev) return prev;
+      const updated: any = { ...prev };
+      if (updates.googleFormsUrl !== undefined) updated.googleFormsUrl = updates.googleFormsUrl;
+      if (updates.googleSheetsUrl !== undefined) updated.googleSheetsUrl = updates.googleSheetsUrl;
+      if (updates.formsIntegrationId !== undefined) updated.formsIntegrationId = updates.formsIntegrationId;
+      if (updates.agreementFormUrl !== undefined) updated.agreementFormUrl = updates.agreementFormUrl;
+      if (updates.agreementSheetUrl !== undefined) updated.agreementSheetUrl = updates.agreementSheetUrl;
+      if (updates.bitacoraFormUrl !== undefined) updated.bitacoraFormUrl = updates.bitacoraFormUrl;
+      if (updates.bitacoraSheetUrl !== undefined) updated.bitacoraSheetUrl = updates.bitacoraSheetUrl;
+      if (updates.guideUrl !== undefined) updated.guideUrl = updates.guideUrl;
+      if (updates.guideTitle !== undefined) updated.guideTitle = updates.guideTitle;
+      if (updates.videoUrl !== undefined) updated.videoUrl = updates.videoUrl;
+      if (updates.videoTitle !== undefined) updated.videoTitle = updates.videoTitle;
+      if (updates.triggersEnabled !== undefined) updated.triggersEnabled = updates.triggersEnabled;
+      if (updates.immediateConfirmation !== undefined) updated.immediateConfirmation = updates.immediateConfirmation;
+      if (updates.scheduledReminders !== undefined) updated.scheduledReminders = updates.scheduledReminders;
+      return updated as ProgramNodeInfo;
+    });
+  };
+
   // Duplicar módulo
   const handleDuplicate = (step: number, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -567,69 +619,92 @@ export const AdminSessionsManager: React.FC<AdminSessionsManagerProps> = ({
       {/* ========================================================================= */}
       {viewMode === 'catalog' && (
         <div className="space-y-4">
-          {/* Barra de Herramientas: Buscador, Filtro por Niveles y Acciones */}
-          <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3 bg-white dark:bg-neutral-900 p-3.5 rounded-2xl border border-gray-200 dark:border-neutral-800 shadow-xs">
-            <div className="relative flex-1">
-              <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+          {/* Barra de Herramientas Rediseñada: Buscador, Filtro por Niveles y Acciones */}
+          <div className="bg-white/90 dark:bg-neutral-900/90 backdrop-blur-md p-3.5 sm:p-4 rounded-2xl border border-gray-200/80 dark:border-neutral-800 shadow-xs flex flex-col xl:flex-row items-stretch xl:items-center justify-between gap-3.5">
+            {/* Buscador Rápido con Icono y Botón de Limpiar */}
+            <div className="relative flex-1 min-w-[260px]">
+              <Search className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Buscar sesión por título, objetivo, quiebre ontológico o número..."
-                className="w-full pl-9 pr-3 py-2 text-xs rounded-xl border border-gray-200 dark:border-neutral-700 bg-gray-50/60 dark:bg-neutral-800/60 text-black dark:text-white focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
+                className="w-full pl-10 pr-9 py-2.5 text-xs rounded-xl border border-gray-200/80 dark:border-neutral-700 bg-gray-50/70 dark:bg-neutral-800/60 text-black dark:text-white placeholder:text-gray-400 dark:placeholder:text-neutral-500 focus:outline-hidden focus:ring-2 focus:ring-black dark:focus:ring-white transition-all"
               />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-md text-gray-400 hover:text-black dark:hover:text-white hover:bg-gray-200/60 dark:hover:bg-neutral-700 transition-colors cursor-pointer"
+                  title="Limpiar búsqueda"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              )}
             </div>
 
-            {/* Buscador de niveles y Acciones */}
-            <div className="flex flex-wrap items-center justify-between sm:justify-end gap-2 shrink-0">
-              <div className="flex items-center gap-1.5">
-                <span className="text-[11px] font-semibold text-gray-400 mr-1 flex items-center gap-1">
-                  <Filter className="w-3.5 h-3.5" />
-                  Nivel:
-                </span>
+            {/* Controles de Filtros y Acciones */}
+            <div className="flex flex-wrap sm:flex-nowrap items-center justify-between sm:justify-end gap-3 shrink-0">
+              {/* Segmented Control para Filtro de Niveles */}
+              <div className="inline-flex items-center gap-1 p-1 bg-gray-100/90 dark:bg-neutral-800/80 rounded-xl border border-gray-200/60 dark:border-neutral-700/60 overflow-x-auto">
                 {(['all', 'Nivel I', 'Nivel II', 'Nivel III'] as const).map((lvl) => {
                   const label = lvl === 'all' ? 'Todos' : lvl;
                   const active = levelFilter === lvl;
+                  const count = lvl === 'all'
+                    ? nodes.length
+                    : nodes.filter((n) => n.level === lvl).length;
                   return (
                     <button
                       key={lvl}
                       type="button"
                       onClick={() => setLevelFilter(lvl)}
-                      className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${
                         active
-                          ? 'bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 shadow-xs'
-                          : 'bg-gray-100 dark:bg-neutral-800 text-gray-600 dark:text-neutral-300 hover:bg-gray-200 dark:hover:bg-neutral-700'
+                          ? 'bg-white dark:bg-neutral-900 text-black dark:text-white shadow-2xs'
+                          : 'text-neutral-600 dark:text-neutral-400 hover:text-black dark:hover:text-white'
                       }`}
                     >
-                      {label}
+                      <span>{label}</span>
+                      <span
+                        className={`text-[10px] font-mono px-1.5 py-0.2 rounded-full ${
+                          active
+                            ? 'bg-neutral-100 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-200 font-bold'
+                            : 'bg-neutral-200/60 dark:bg-neutral-700/60 text-neutral-600 dark:text-neutral-400'
+                        }`}
+                      >
+                        {count}
+                      </span>
                     </button>
                   );
                 })}
               </div>
 
-              <div className="h-4 w-px bg-gray-200 dark:bg-neutral-700 hidden sm:block mx-1" />
+              <div className="h-5 w-px bg-gray-200 dark:bg-neutral-800 hidden sm:block" />
 
-              <div className="flex items-center gap-2">
+              {/* Botonera de Acciones Principales */}
+              <div className="flex items-center gap-2 w-full sm:w-auto">
                 <button
                   type="button"
                   onClick={() => {
                     setSelectedConsultoriaSession(null);
                     setIsConsultoriaModalOpen(true);
                   }}
-                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-xs cursor-pointer transition-all"
+                  className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-neutral-950 dark:bg-white text-white dark:text-neutral-950 hover:bg-neutral-800 dark:hover:bg-neutral-100 text-xs font-bold shadow-xs cursor-pointer transition-all active:scale-[0.98]"
                   title="Abrir el Generador de Sesiones"
                 >
-                  <Plus className="w-3.5 h-3.5" />
+                  <span className="w-5 h-5 rounded-lg bg-emerald-500/20 dark:bg-emerald-500/30 text-emerald-400 dark:text-emerald-700 flex items-center justify-center shrink-0">
+                    <Plus className="w-3.5 h-3.5" />
+                  </span>
                   <span>Nueva Sesión</span>
                 </button>
 
                 <button
                   type="button"
                   onClick={handleOpenLevelEditor}
-                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-xs cursor-pointer transition-all"
+                  className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-3.5 py-2 rounded-xl bg-white dark:bg-neutral-900 border border-gray-200/90 dark:border-neutral-700 hover:bg-gray-50 dark:hover:bg-neutral-800 text-gray-800 dark:text-neutral-200 text-xs font-bold shadow-2xs cursor-pointer transition-all active:scale-[0.98]"
                   title="Configurar y editar títulos, focos y preguntas ontológicas por nivel"
                 >
-                  <Layers className="w-3.5 h-3.5" />
+                  <Layers className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400 shrink-0" />
                   <span>Editor de Niveles</span>
                 </button>
               </div>
@@ -769,12 +844,12 @@ export const AdminSessionsManager: React.FC<AdminSessionsManagerProps> = ({
 
                     {/* Botonera de Acciones de la Tarjeta */}
                     <div className="pt-3 border-t border-gray-100 dark:border-neutral-800 flex items-center justify-between gap-2">
-                      <div className="flex items-center gap-1">
+                      <div className="flex items-center gap-1.5">
                         <button
                           type="button"
                           onClick={(e) => handleDuplicate(node.step, e)}
                           title="Duplicar Módulo"
-                          className="p-1.5 rounded-lg text-gray-400 hover:text-black dark:hover:text-white hover:bg-gray-100 dark:hover:bg-neutral-800 cursor-pointer"
+                          className="p-1.5 rounded-lg text-gray-400 hover:text-black dark:hover:text-white hover:bg-gray-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
                         >
                           <Copy className="w-3.5 h-3.5" />
                         </button>
@@ -782,29 +857,29 @@ export const AdminSessionsManager: React.FC<AdminSessionsManagerProps> = ({
                           type="button"
                           onClick={(e) => handleDelete(node.step, e)}
                           title="Eliminar Módulo"
-                          className="p-1.5 rounded-lg text-gray-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 cursor-pointer"
+                          className="p-1.5 rounded-lg text-gray-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors cursor-pointer"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
                       </div>
 
-                      <div className="flex items-center gap-1.5">
+                      <div className="flex items-center gap-2">
                         <button
                           type="button"
                           onClick={() => handleOpenEditor(node.step, 'integrations')}
-                          className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl border border-gray-200 dark:border-neutral-700 text-[11px] font-semibold text-gray-700 dark:text-neutral-300 hover:bg-gray-50 dark:hover:bg-neutral-800 cursor-pointer"
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-gray-200 dark:border-neutral-700 text-[11px] font-semibold text-gray-700 dark:text-neutral-300 hover:bg-gray-50 dark:hover:bg-neutral-800 hover:border-gray-300 dark:hover:border-neutral-600 transition-all cursor-pointer shadow-2xs"
                           title="Gestionar Google Forms & Sheets del módulo"
                         >
-                          <FileSpreadsheet className="w-3 h-3 text-emerald-600" />
+                          <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
                           <span>Forms & Sheets</span>
                         </button>
 
                         <button
                           type="button"
                           onClick={() => handleOpenEditor(node.step, 'general')}
-                          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-black dark:bg-white text-white dark:text-black hover:bg-neutral-800 dark:hover:bg-neutral-200 text-[11px] font-bold shadow-xs cursor-pointer transition-all"
+                          className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-neutral-950 dark:bg-white text-white dark:text-neutral-950 hover:bg-neutral-800 dark:hover:bg-neutral-100 text-[11px] font-bold shadow-xs cursor-pointer transition-all active:scale-[0.98]"
                         >
-                          <Edit3 className="w-3 h-3" />
+                          <Edit3 className="w-3.5 h-3.5" />
                           <span>Editar Módulo</span>
                         </button>
                       </div>
@@ -907,10 +982,10 @@ export const AdminSessionsManager: React.FC<AdminSessionsManagerProps> = ({
               >
                 <div className="flex items-center gap-2">
                   <Zap className="w-4 h-4 text-amber-500" />
-                  <span className="text-xs font-bold">2. Google Forms & Integraciones</span>
+                  <span className="text-xs font-bold">2. Automatizaciones & Evaluación • Ecosistema Google Forms & Sheets</span>
                 </div>
                 <p className="text-[11px] text-gray-500 dark:text-neutral-400 font-light mt-1 truncate">
-                  Google Forms, Sheets y Triggers
+                  Ecosistema Google Forms, Sheets en vivo, confirmaciones inmediatas y recordatorios
                 </p>
               </button>
             </div>
@@ -993,23 +1068,6 @@ export const AdminSessionsManager: React.FC<AdminSessionsManagerProps> = ({
                 </div>
 
                 <div>
-                  <div className="flex items-center justify-between mb-1">
-                    <label className="block text-[11px] font-semibold text-black dark:text-white">
-                      Pregunta Clave de Entrada
-                    </label>
-                    <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">
-                      Sincronizada vía Google Sheets
-                    </span>
-                  </div>
-                  <div className="p-3 rounded-xl border border-dashed border-emerald-200 dark:border-emerald-800 bg-emerald-50/50 dark:bg-emerald-950/20 text-xs text-gray-700 dark:text-neutral-300 italic flex items-center justify-between gap-2">
-                    <span>"{formData.keyQuestion || '¿Qué conversación o resultado decisivo estás listo para consolidar?'}"</span>
-                    <span className="text-[10px] font-mono font-bold text-emerald-700 dark:text-emerald-400 shrink-0 bg-emerald-100 dark:bg-emerald-900/60 px-2 py-0.5 rounded">
-                      Google Sheets
-                    </span>
-                  </div>
-                </div>
-
-                <div>
                   <label className="block text-[11px] font-semibold text-black dark:text-white mb-1">
                     Consigna / Prompt de Trabajo para el Participante
                   </label>
@@ -1021,472 +1079,21 @@ export const AdminSessionsManager: React.FC<AdminSessionsManagerProps> = ({
                     className="w-full px-3 py-2 text-xs rounded-xl border border-gray-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-black dark:text-white"
                   />
                 </div>
-
-                {/* Práctica Vivencial */}
-                <div className="p-4 rounded-2xl border border-gray-200 dark:border-neutral-800 bg-gray-50/50 dark:bg-neutral-800/30 space-y-3">
-                  <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400">
-                    <Sparkles className="w-4 h-4" />
-                    <h5 className="text-xs font-bold">Práctica Vivencial entre Sesiones</h5>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div>
-                      <label className="block text-[11px] font-semibold text-black dark:text-white mb-1">
-                        Título de la Práctica
-                      </label>
-                      <input
-                        type="text"
-                        value={formData.dailyMicroPractice?.title || ''}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            dailyMicroPractice: {
-                              ...(formData.dailyMicroPractice || {
-                                title: '',
-                                description: '',
-                                frequency: '',
-                              }),
-                              title: e.target.value,
-                            },
-                          })
-                        }
-                        placeholder="Ej: Pausa Estratégica y Foco Diario"
-                        className="w-full px-3 py-2 text-xs rounded-xl border border-gray-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-black dark:text-white"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-[11px] font-semibold text-black dark:text-white mb-1">
-                        Frecuencia Recomendada
-                      </label>
-                      <input
-                        type="text"
-                        value={formData.dailyMicroPractice?.frequency || ''}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            dailyMicroPractice: {
-                              ...(formData.dailyMicroPractice || {
-                                title: '',
-                                description: '',
-                                frequency: '',
-                              }),
-                              frequency: e.target.value,
-                            },
-                          })
-                        }
-                        placeholder="Ej: Diaria (2 veces al día)"
-                        className="w-full px-3 py-2 text-xs rounded-xl border border-gray-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-black dark:text-white"
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-[11px] font-semibold text-black dark:text-white mb-1">
-                      Instrucciones Detalladas de la Práctica
-                    </label>
-                    <textarea
-                      rows={3}
-                      value={formData.dailyMicroPractice?.description || ''}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          dailyMicroPractice: {
-                            ...(formData.dailyMicroPractice || {
-                              title: '',
-                              description: '',
-                              frequency: '',
-                            }),
-                            description: e.target.value,
-                          },
-                        })
-                      }
-                      placeholder="Describe los pasos para que el participante ejecute la práctica en su cotidianidad..."
-                      className="w-full px-3 py-2 text-xs rounded-xl border border-gray-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-black dark:text-white"
-                    />
-                  </div>
-                </div>
               </div>
             )}
 
             {/* ------------------------------------------------------------- */}
-            {/* PESTAÑA 3: GOOGLE FORMS, SHEETS & INTEGRACIONES               */}
+            {/* PESTAÑA 2: AUTOMATIZACIONES & EVALUACIÓN • GOOGLE FORMS & SHEETS */}
             {/* ------------------------------------------------------------- */}
             {editorTab === 'integrations' && (
               <div className="space-y-6">
-                <div className="bg-amber-50/60 dark:bg-amber-950/20 border border-amber-200/80 dark:border-amber-900/40 rounded-2xl p-4">
-                  <div className="flex items-center gap-2">
-                    <Zap className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
-                    <h4 className="text-xs font-bold text-amber-900 dark:text-amber-200">
-                      Gestión Integrada del Módulo de Consultoría
-                    </h4>
-                  </div>
-                  <p className="text-[11px] text-amber-800/80 dark:text-amber-300/80 font-light mt-1">
-                    Enlaza directamente los formularios de diagnóstico, carpetas de Google Drive, automatizaciones de seguimiento y herramientas vivenciales de este paso formativo.
-                  </p>
-                </div>
-
-                {/* 1. Google Forms */}
-                <div className="p-4 rounded-2xl border border-gray-200 dark:border-neutral-800 bg-gray-50/50 dark:bg-neutral-800/30 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className="p-1.5 rounded-lg bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400">
-                        <FileText className="w-3.5 h-3.5" />
-                      </div>
-                      <span className="text-xs font-bold text-black dark:text-white">
-                        Formulario de Google Forms Vinculado
-                      </span>
-                    </div>
-                    {formData.googleFormsUrl && (
-                      <a
-                        href={formData.googleFormsUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="inline-flex items-center gap-1 text-[11px] font-semibold text-indigo-600 dark:text-indigo-400 hover:underline"
-                      >
-                        <span>Abrir Formulario</span>
-                        <ExternalLink className="w-3 h-3" />
-                      </a>
-                    )}
-                  </div>
-
-                  <p className="text-[11px] text-gray-500 dark:text-neutral-400 font-light">
-                    Pega el enlace de Google Forms para que el coachee complete su acuerdo co-creativo, bitácora o evaluación previa/posterior.
-                  </p>
-
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="url"
-                      placeholder="https://forms.gle/qYd64L1q521hD6Vj9"
-                      value={formData.googleFormsUrl || ''}
-                      onChange={(e) => setFormData({ ...formData, googleFormsUrl: e.target.value })}
-                      className="flex-1 px-3.5 py-2 text-xs rounded-xl border border-gray-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-black dark:text-white font-mono placeholder:font-sans"
-                    />
-                    {formData.googleFormsUrl && (
-                      <button
-                        type="button"
-                        onClick={() => setFormData({ ...formData, googleFormsUrl: '' })}
-                        className="px-2.5 py-2 text-xs text-gray-400 hover:text-rose-600 cursor-pointer"
-                        title="Limpiar enlace"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    )}
-                  </div>
-
-                  {/* Preajustes rápidos oficiales de Google Forms */}
-                  <div className="flex flex-wrap items-center gap-1.5 pt-1">
-                    <span className="text-[10px] text-gray-400 font-medium mr-1">Preajustes oficiales:</span>
-                    <button
-                      type="button"
-                      onClick={() => setFormData({ ...formData, googleFormsUrl: 'https://forms.gle/qYd64L1q521hD6Vj9' })}
-                      className="px-2.5 py-1 text-[10px] rounded-lg bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 border border-indigo-200/60 dark:border-indigo-800/40 transition-colors"
-                    >
-                      Acuerdo Co-creativo Sesiones
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setFormData({ ...formData, googleFormsUrl: 'https://forms.gle/4N1x2K3z7g9fQ5wR8' })}
-                      className="px-2.5 py-1 text-[10px] rounded-lg bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 border border-indigo-200/60 dark:border-indigo-800/40 transition-colors"
-                    >
-                      Bitácora Sesiones B2B
-                    </button>
-                  </div>
-                </div>
-
-                {/* 2. Google Sheets */}
-                <div className="p-4 rounded-2xl border border-gray-200 dark:border-neutral-800 bg-gray-50/50 dark:bg-neutral-800/30 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className="p-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400">
-                        <FileSpreadsheet className="w-3.5 h-3.5" />
-                      </div>
-                      <span className="text-xs font-bold text-black dark:text-white">
-                        Hoja de Google Sheets Vinculada
-                      </span>
-                    </div>
-                    {formData.googleSheetsUrl && (
-                      <a
-                        href={formData.googleSheetsUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 hover:underline"
-                      >
-                        <span>Abrir Hoja</span>
-                        <ExternalLink className="w-3 h-3" />
-                      </a>
-                    )}
-                  </div>
-
-                  <p className="text-[11px] text-gray-500 dark:text-neutral-400 font-light">
-                    Planilla de cálculo donde se almacenan las respuestas, acuerdos o bitácoras asociadas a este módulo.
-                  </p>
-
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="url"
-                      placeholder="https://docs.google.com/spreadsheets/d/1Mm3CRZVvKYFak5APwIBmfK-vZAUfnx1zg-eq8WOLbZk/edit?usp=sharing"
-                      value={formData.googleSheetsUrl || ''}
-                      onChange={(e) => setFormData({ ...formData, googleSheetsUrl: e.target.value })}
-                      className="flex-1 px-3.5 py-2 text-xs rounded-xl border border-gray-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-black dark:text-white font-mono placeholder:font-sans"
-                    />
-                    {formData.googleSheetsUrl && (
-                      <button
-                        type="button"
-                        onClick={() => setFormData({ ...formData, googleSheetsUrl: '' })}
-                        className="px-2.5 py-2 text-xs text-gray-400 hover:text-rose-600 cursor-pointer"
-                        title="Limpiar enlace"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    )}
-                  </div>
-
-                  {/* Preajustes rápidos oficiales de Google Sheets */}
-                  <div className="flex flex-wrap items-center gap-1.5 pt-1">
-                    <span className="text-[10px] text-gray-400 font-medium mr-1">Preajustes oficiales:</span>
-                    <button
-                      type="button"
-                      onClick={() => setFormData({ ...formData, googleSheetsUrl: 'https://docs.google.com/spreadsheets/d/1Mm3CRZVvKYFak5APwIBmfK-vZAUfnx1zg-eq8WOLbZk/edit?usp=sharing' })}
-                      className="px-2.5 py-1 text-[10px] rounded-lg bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 border border-emerald-200/60 dark:border-emerald-800/40 transition-colors"
-                    >
-                      Bitácora Sesiones B2B
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setFormData({ ...formData, googleSheetsUrl: 'https://docs.google.com/spreadsheets/d/1PCwxfgI0WdV2eMyEjLY_iYkYv5c4DNh5i43lNDvPT88/edit?usp=sharing' })}
-                      className="px-2.5 py-1 text-[10px] rounded-lg bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 border border-indigo-200/60 dark:border-indigo-800/40 transition-colors"
-                    >
-                      Acuerdo Sesiones
-                    </button>
-                  </div>
-                </div>
-
-                {/* 3. Estado de Integración con Firebase Firestore */}
-                <div className="p-3.5 rounded-2xl border border-emerald-200/60 dark:border-emerald-900/40 bg-emerald-50/40 dark:bg-emerald-950/20 flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    <div className="p-1.5 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 shrink-0">
-                      <Database className="w-4 h-4" />
-                    </div>
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-bold text-emerald-950 dark:text-emerald-200">
-                          Base de Datos Integrada en Firebase Firestore
-                        </span>
-                        <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300 font-semibold">
-                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                          Colección programNodes
-                        </span>
-                      </div>
-                      <p className="text-[11px] text-emerald-800/70 dark:text-emerald-300/70 truncate font-light mt-0.5">
-                        Al guardar, este módulo, sus Google Forms y Google Sheets se respaldan en la nube automáticamente.
-                      </p>
-                    </div>
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={async () => {
-                      if (!formData) return;
-                      await FirestoreSyncService.syncProgramNode(formData);
-                      showNotification(`Módulo ${formData.step} sincronizado directamente en Firebase.`);
-                    }}
-                    className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-[11px] font-bold shrink-0 transition-colors shadow-sm"
-                  >
-                    Sincronizar Nube
-                  </button>
-                </div>
-
-                {/* Enlaces a Guía de Trabajo y Video del Módulo */}
-                <div className="p-4 rounded-2xl border border-amber-200/80 dark:border-amber-800/60 bg-amber-50/40 dark:bg-amber-950/20 space-y-3.5">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className="p-1.5 rounded-lg bg-amber-100 dark:bg-amber-900/60 text-amber-700 dark:text-amber-300">
-                        <BookOpen className="w-3.5 h-3.5" />
-                      </div>
-                      <span className="text-xs font-bold text-black dark:text-white">
-                        Recursos Didácticos: Guía de Trabajo y Video
-                      </span>
-                    </div>
-                    <span className="text-[10px] font-semibold text-amber-700 dark:text-amber-300">
-                      Material del Módulo
-                    </span>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                    {/* Guía */}
-                    <div className="space-y-1.5 p-3 rounded-xl bg-white dark:bg-neutral-800/80 border border-amber-200/70 dark:border-amber-800/50">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold text-gray-800 dark:text-neutral-200 flex items-center gap-1">
-                          <BookOpen className="w-3 h-3 text-amber-500" />
-                          <span>Guía de Trabajo (Enlace)</span>
-                        </span>
-                        {formData.guideUrl && (
-                          <a
-                            href={formData.guideUrl}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="inline-flex items-center gap-0.5 text-[10px] text-amber-700 dark:text-amber-300 font-bold hover:underline"
-                          >
-                            <span>Abrir</span>
-                            <ExternalLink className="w-2.5 h-2.5" />
-                          </a>
-                        )}
-                      </div>
-                      <input
-                        type="url"
-                        placeholder="https://docs.google.com/... o Notion / PDF"
-                        value={formData.guideUrl || ''}
-                        onChange={(e) => setFormData({ ...formData, guideUrl: e.target.value })}
-                        className="w-full px-3 py-1.5 text-xs rounded-lg border border-gray-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-black dark:text-white font-mono placeholder:font-sans"
-                      />
-                    </div>
-
-                    {/* Video */}
-                    <div className="space-y-1.5 p-3 rounded-xl bg-white dark:bg-neutral-800/80 border border-rose-200/70 dark:border-rose-800/50">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold text-gray-800 dark:text-neutral-200 flex items-center gap-1">
-                          <Film className="w-3 h-3 text-rose-500" />
-                          <span>Video / Masterclass (Enlace)</span>
-                        </span>
-                        {formData.videoUrl && (
-                          <a
-                            href={formData.videoUrl}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="inline-flex items-center gap-0.5 text-[10px] text-rose-700 dark:text-rose-300 font-bold hover:underline"
-                          >
-                            <span>Reproducir</span>
-                            <ExternalLink className="w-2.5 h-2.5" />
-                          </a>
-                        )}
-                      </div>
-                      <input
-                        type="url"
-                        placeholder="https://youtube.com/... o Loom / Vimeo"
-                        value={formData.videoUrl || ''}
-                        onChange={(e) => setFormData({ ...formData, videoUrl: e.target.value })}
-                        className="w-full px-3 py-1.5 text-xs rounded-lg border border-gray-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-black dark:text-white font-mono placeholder:font-sans"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* 2. Google Drive y Carpeta Compartida */}
-                <div className="p-4 rounded-2xl border border-gray-200 dark:border-neutral-800 bg-gray-50/50 dark:bg-neutral-800/30 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className="p-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400">
-                        <HardDrive className="w-3.5 h-3.5" />
-                      </div>
-                      <span className="text-xs font-bold text-black dark:text-white">
-                        Google Drive: Carpeta de Materiales & Grabaciones
-                      </span>
-                    </div>
-                    {formData.googleDriveFolderUrl && (
-                      <a
-                        href={formData.googleDriveFolderUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 hover:underline"
-                      >
-                        <span>Ver en Drive</span>
-                        <ExternalLink className="w-3 h-3" />
-                      </a>
-                    )}
-                  </div>
-
-                  <input
-                    type="url"
-                    placeholder="https://drive.google.com/drive/folders/..."
-                    value={formData.googleDriveFolderUrl || ''}
-                    onChange={(e) => setFormData({ ...formData, googleDriveFolderUrl: e.target.value })}
-                    className="w-full px-3.5 py-2 text-xs rounded-xl border border-gray-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-black dark:text-white font-mono placeholder:font-sans"
-                  />
-                </div>
-
-                {/* 3. Activadores Automáticos de Seguimiento */}
-                <div className="p-4 rounded-2xl border border-gray-200 dark:border-neutral-800 bg-gray-50/50 dark:bg-neutral-800/30 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className="p-1.5 rounded-lg bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400">
-                        <Zap className="w-3.5 h-3.5" />
-                      </div>
-                      <span className="text-xs font-bold text-black dark:text-white">
-                        Activadores de Seguimiento Automático
-                      </span>
-                    </div>
-                    <label className="relative inline-flex items-center cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={formData.triggersEnabled ?? true}
-                        onChange={(e) => setFormData({ ...formData, triggersEnabled: e.target.checked })}
-                        className="sr-only peer"
-                      />
-                      <div className="w-9 h-5 bg-gray-200 peer-focus:outline-hidden rounded-full peer dark:bg-neutral-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-600" />
-                    </label>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1 text-[11px] text-gray-600 dark:text-neutral-400 font-light">
-                    <div className="p-2.5 rounded-xl bg-white dark:bg-neutral-800 border border-gray-100 dark:border-neutral-700">
-                      <span className="font-semibold text-black dark:text-white block mb-0.5">Recordatorio 24h</span>
-                      Alerta automática de la sesión por WhatsApp y correo.
-                    </div>
-                    <div className="p-2.5 rounded-xl bg-white dark:bg-neutral-800 border border-gray-100 dark:border-neutral-700">
-                      <span className="font-semibold text-black dark:text-white block mb-0.5">Alerta Inactividad</span>
-                      Disparo a los 7 y 14 días si no hay avance en el cuaderno.
-                    </div>
-                    <div className="p-2.5 rounded-xl bg-white dark:bg-neutral-800 border border-gray-100 dark:border-neutral-700">
-                      <span className="font-semibold text-black dark:text-white block mb-0.5">Entrega de Cuaderno</span>
-                      Notificación al coach y confirmación de generación de PDF.
-                    </div>
-                  </div>
-                </div>
-
-                {/* 4. Herramientas de Experiencia (Lienzo B&W) */}
-                <div className="p-4 rounded-2xl border border-gray-200 dark:border-neutral-800 bg-gray-50/50 dark:bg-neutral-800/30 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className="p-1.5 rounded-lg bg-neutral-900 text-white dark:bg-white dark:text-black">
-                        <Sparkles className="w-3.5 h-3.5" />
-                      </div>
-                      <span className="text-xs font-bold text-black dark:text-white">
-                        Herramienta Vivencial Asignada (Lienzo B&W)
-                      </span>
-                    </div>
-                    <label className="relative inline-flex items-center cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={formData.experienceToolEnabled ?? true}
-                        onChange={(e) => setFormData({ ...formData, experienceToolEnabled: e.target.checked })}
-                        className="sr-only peer"
-                      />
-                      <div className="w-9 h-5 bg-gray-200 peer-focus:outline-hidden rounded-full peer dark:bg-neutral-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-neutral-900 dark:peer-checked:bg-white" />
-                    </label>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                    {[
-                      { id: 'somatic_wheel', title: 'Rueda de Coherencia Somática', desc: 'Matriz corporal de 4 disposiciones y respiración' },
-                      { id: 'conversational_matrix', title: 'Matriz de Actos Lingüísticos', desc: 'Afirmaciones, juicios, promesas y pedidos' },
-                      { id: 'breakdown_canvas', title: 'Lienzo de Declaración de Quiebre', desc: 'Desarticulación del relato limitante' },
-                    ].map((tool) => (
-                      <button
-                        key={tool.id}
-                        type="button"
-                        onClick={() => setFormData({ ...formData, experienceCanvasType: tool.id })}
-                        className={`p-3 rounded-xl border text-left cursor-pointer transition-all ${
-                          (formData.experienceCanvasType || 'somatic_wheel') === tool.id
-                            ? 'border-black dark:border-white bg-black/5 dark:bg-white/5 font-semibold text-black dark:text-white'
-                            : 'border-gray-200 dark:border-neutral-700 hover:bg-gray-100 dark:hover:bg-neutral-800 text-gray-600 dark:text-neutral-400'
-                        }`}
-                      >
-                        <span className="text-xs block font-bold">{tool.title}</span>
-                        <span className="text-[10px] text-gray-500 font-light mt-0.5 block">{tool.desc}</span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
+                <EventEvaluationAndTriggersSection
+                  event={nodeEventData}
+                  onChange={handleNodeEventChange}
+                  entityType="sesion"
+                  badgeText="2. Automatizaciones & Evaluación • Ecosistema Google Forms & Sheets"
+                  customTitle="Flujo de Automatizaciones y Evaluación para Módulo de Sesión"
+                />
               </div>
             )}
 
@@ -1510,7 +1117,7 @@ export const AdminSessionsManager: React.FC<AdminSessionsManagerProps> = ({
                     onClick={() => setEditorTab('integrations')}
                     className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-black dark:bg-white text-white dark:text-black hover:bg-neutral-800 dark:hover:bg-neutral-200 text-xs font-bold shadow-xs cursor-pointer transition-all"
                   >
-                    <span>Siguiente: Google Forms & Integraciones</span>
+                    <span>Siguiente: Automatizaciones & Evaluación (Paso 2)</span>
                     <ArrowRight className="w-3.5 h-3.5" />
                   </button>
                 ) : (

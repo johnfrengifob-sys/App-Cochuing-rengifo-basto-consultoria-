@@ -46,6 +46,7 @@ import {
   FileSpreadsheet,
   Zap,
   Settings,
+  X,
 } from 'lucide-react';
 import { EventGeneralConfigSection } from './admin/events/EventGeneralConfigSection';
 import { EventContentSyllabusSection } from './admin/events/EventContentSyllabusSection';
@@ -155,7 +156,7 @@ export const ProgramsAndEventsManager: React.FC<ProgramsAndEventsManagerProps> =
     }
   };
 
-  // Editor states (for creating or editing an event with the 3 integrated sections)
+  // Editor states (for creating or editing an event with the integrated sections)
   const [editingEventId, setEditingEventId] = useState<string | null>(null);
   const [editorActiveSection, setEditorActiveSection] = useState<'general' | 'content' | 'evaluation'>('general');
   const [eventFormData, setEventFormData] = useState<Partial<CronogramaEvent>>({
@@ -492,37 +493,49 @@ export const ProgramsAndEventsManager: React.FC<ProgramsAndEventsManagerProps> =
           <PromotionalEventBanner variant="participant" />
 
           {/* Barra de Búsqueda, Filtros y Botón Crear Taller / Evento */}
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-white dark:bg-neutral-900 p-3.5 rounded-2xl border border-gray-200 dark:border-neutral-800 shadow-xs">
-            <div className="relative flex-1">
-              <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+          <div className="bg-white/90 dark:bg-neutral-900/90 backdrop-blur-md p-3.5 sm:p-4 rounded-2xl border border-gray-200/80 dark:border-neutral-800 shadow-xs flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3.5">
+            <div className="relative flex-1 min-w-[240px]">
+              <Search className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Buscar por título, facilitador, tipo..."
-                className="w-full pl-9 pr-3 py-2 text-xs rounded-xl border border-gray-200 dark:border-neutral-700 bg-gray-50/60 dark:bg-neutral-800/60 text-black dark:text-white focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
+                className="w-full pl-10 pr-9 py-2.5 text-xs rounded-xl border border-gray-200/80 dark:border-neutral-700 bg-gray-50/70 dark:bg-neutral-800/60 text-black dark:text-white placeholder:text-gray-400 dark:placeholder:text-neutral-500 focus:outline-hidden focus:ring-2 focus:ring-black dark:focus:ring-white transition-all"
               />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-md text-gray-400 hover:text-black dark:hover:text-white hover:bg-gray-200/60 dark:hover:bg-neutral-700 transition-colors cursor-pointer"
+                  title="Limpiar búsqueda"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              )}
             </div>
 
-            <div className="flex items-center gap-2 shrink-0">
+            <div className="flex flex-wrap sm:flex-nowrap items-center gap-2.5 shrink-0">
               {/* Filtro Visibilidad */}
               <select
                 value={filterVisibility}
                 onChange={(e) => setFilterVisibility(e.target.value as any)}
-                className="px-3 py-2 text-xs rounded-xl border border-gray-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-black dark:text-white cursor-pointer"
+                className="px-3.5 py-2.5 text-xs rounded-xl border border-gray-200/80 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-black dark:text-white font-medium cursor-pointer shadow-2xs hover:border-gray-300 dark:hover:border-neutral-600 transition-colors"
               >
-                <option value="all">Todas las visibilidades</option>
-                <option value="home">Destacados en Home</option>
-                <option value="internal">Solo Internos / Privados</option>
+                <option value="all">Todas las visibilidades ({cronogramaEvents.length})</option>
+                <option value="home">Destacados en Home ({cronogramaEvents.filter(e => e.showOnHome !== false).length})</option>
+                <option value="internal">Solo Internos / Privados ({cronogramaEvents.filter(e => e.showOnHome === false).length})</option>
               </select>
 
               <button
                 type="button"
                 onClick={handleOpenCreateEvent}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-black dark:bg-white text-white dark:text-black hover:bg-neutral-800 dark:hover:bg-neutral-200 text-xs font-bold cursor-pointer shadow-xs transition-all"
+                className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-neutral-950 dark:bg-white text-white dark:text-neutral-950 hover:bg-neutral-800 dark:hover:bg-neutral-100 text-xs font-bold cursor-pointer shadow-xs transition-all active:scale-[0.98]"
               >
-                <Plus className="w-4 h-4" />
-                <span>+ Crear Taller / Evento</span>
+                <span className="w-5 h-5 rounded-lg bg-emerald-500/20 dark:bg-emerald-500/30 text-emerald-400 dark:text-emerald-700 flex items-center justify-center shrink-0">
+                  <Plus className="w-3.5 h-3.5" />
+                </span>
+                <span>Crear Taller / Evento</span>
               </button>
             </div>
           </div>
@@ -737,11 +750,11 @@ export const ProgramsAndEventsManager: React.FC<ProgramsAndEventsManagerProps> =
                               handleOpenEditEvent(evt);
                               setEditorActiveSection('evaluation');
                             }}
-                            title="Configurar integración de Google Forms y Sheets"
+                            title="Configurar integración de Google Forms, Sheets y Automatizaciones"
                             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold cursor-pointer transition-all shadow-xs"
                           >
                             <Zap className="w-3.5 h-3.5" />
-                            <span>Vincular Evaluación</span>
+                            <span>Vincular Automatizaciones</span>
                           </button>
                         )}
                       </div>
@@ -847,7 +860,7 @@ export const ProgramsAndEventsManager: React.FC<ProgramsAndEventsManagerProps> =
                   {editingEventId ? 'Editar Taller u Evento' : 'Crear Nuevo Taller u Evento'}
                 </h3>
                 <p className="text-xs text-gray-500 dark:text-neutral-400 font-light mt-0.5">
-                  Configure y distribuya toda la información del evento a lo largo de sus 3 fases esenciales: Datos Generales & Logística, Contenido & Syllabus, y Evaluación con Google Forms/Sheets.
+                  Configure y distribuya la información del evento a lo largo de sus 3 fases: Datos Generales, Contenido & Syllabus, y Automatizaciones & Evaluación oficial.
                 </p>
               </div>
 
@@ -870,7 +883,7 @@ export const ProgramsAndEventsManager: React.FC<ProgramsAndEventsManagerProps> =
               </div>
             </div>
 
-            {/* Stepper de navegación de las 3 Secciones Requeridas */}
+            {/* Stepper de navegación de las 3 Secciones */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               <button
                 type="button"
@@ -925,22 +938,22 @@ export const ProgramsAndEventsManager: React.FC<ProgramsAndEventsManagerProps> =
                 onClick={() => setEditorActiveSection('evaluation')}
                 className={`p-4 rounded-2xl border text-left transition-all cursor-pointer ${
                   editorActiveSection === 'evaluation'
-                    ? 'border-emerald-600 bg-emerald-50/60 dark:bg-emerald-950/30 text-emerald-900 dark:text-emerald-200 shadow-xs'
+                    ? 'border-indigo-600 bg-indigo-50/60 dark:bg-indigo-950/30 text-indigo-900 dark:text-indigo-200 shadow-xs'
                     : 'border-gray-200 dark:border-neutral-800 hover:bg-gray-50 dark:hover:bg-neutral-800 text-gray-600 dark:text-neutral-400'
                 }`}
               >
                 <div className="flex items-center gap-2.5">
                   <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${
                     editorActiveSection === 'evaluation'
-                      ? 'bg-emerald-600 text-white'
+                      ? 'bg-indigo-600 text-white'
                       : 'bg-gray-200 dark:bg-neutral-800 text-gray-700 dark:text-neutral-300'
                   }`}>
                     3
                   </span>
-                  <span className="text-xs sm:text-sm font-bold">3. Evaluación, Google Forms/Sheets & Activadores</span>
+                  <span className="text-xs sm:text-sm font-bold">3. Automatizaciones & Evaluación</span>
                 </div>
                 <p className="text-[11px] text-gray-500 dark:text-neutral-400 font-light mt-1.5 leading-relaxed">
-                  Enlace oficial de Google Forms, Google Sheets para expedientes 1 a 1 y disparadores de recordatorio.
+                  Google Forms, Google Sheets, confirmaciones automáticas, recordatorios y cosecha de quiebres al expediente.
                 </p>
               </button>
             </div>
@@ -966,6 +979,7 @@ export const ProgramsAndEventsManager: React.FC<ProgramsAndEventsManagerProps> =
               <EventEvaluationAndTriggersSection
                 event={eventFormData}
                 onChange={(updates) => setEventFormData((prev) => ({ ...prev, ...updates }))}
+                entityType="taller"
               />
             )}
 
@@ -974,8 +988,8 @@ export const ProgramsAndEventsManager: React.FC<ProgramsAndEventsManagerProps> =
               <button
                 type="button"
                 onClick={() => {
-                  if (editorActiveSection === 'content') setEditorActiveSection('general');
-                  else if (editorActiveSection === 'evaluation') setEditorActiveSection('content');
+                  if (editorActiveSection === 'evaluation') setEditorActiveSection('content');
+                  else if (editorActiveSection === 'content') setEditorActiveSection('general');
                   else setActiveSubTab('events');
                 }}
                 className="px-4 py-2 rounded-xl border border-gray-200 dark:border-neutral-700 text-xs font-semibold text-gray-700 dark:text-neutral-300 hover:bg-gray-50 dark:hover:bg-neutral-800 cursor-pointer"
@@ -999,9 +1013,9 @@ export const ProgramsAndEventsManager: React.FC<ProgramsAndEventsManagerProps> =
                   <button
                     type="button"
                     onClick={() => setEditorActiveSection('evaluation')}
-                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-md cursor-pointer transition-all"
+                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-md cursor-pointer transition-all"
                   >
-                    <span>Siguiente: Evaluación y Activadores</span>
+                    <span>Siguiente: Automatizaciones & Activadores</span>
                     <ArrowRight className="w-4 h-4" />
                   </button>
                 )}
@@ -1010,7 +1024,7 @@ export const ProgramsAndEventsManager: React.FC<ProgramsAndEventsManagerProps> =
                   <button
                     type="button"
                     onClick={handleSaveEditorEvent}
-                    className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-md cursor-pointer transition-all"
+                    className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-md cursor-pointer transition-all"
                   >
                     <Check className="w-4 h-4" />
                     <span>Finalizar y Guardar Taller</span>

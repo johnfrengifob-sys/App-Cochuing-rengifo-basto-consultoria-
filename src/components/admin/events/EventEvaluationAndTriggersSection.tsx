@@ -48,6 +48,9 @@ import { FirestoreSyncService } from '../../../services/firestoreSync';
 interface EventEvaluationAndTriggersSectionProps {
   event: Partial<CronogramaEvent>;
   onChange: (updates: Partial<CronogramaEvent>) => void;
+  entityType?: 'taller' | 'sesion';
+  customTitle?: string;
+  badgeText?: string;
 }
 
 const OFFICIAL_GOOGLE_FORMS = [
@@ -123,6 +126,9 @@ const OFFICIAL_GOOGLE_SHEETS = [
 export const EventEvaluationAndTriggersSection: React.FC<EventEvaluationAndTriggersSectionProps> = ({
   event,
   onChange,
+  entityType = 'taller',
+  customTitle,
+  badgeText,
 }) => {
   const [copiedLink, setCopiedLink] = useState<string | null>(null);
   const [previewForm, setPreviewForm] = useState(false);
@@ -151,7 +157,10 @@ export const EventEvaluationAndTriggersSection: React.FC<EventEvaluationAndTrigg
   const [bitacorasB2B, setBitacorasB2B] = useState<BitacoraSesionB2BEntry[]>(() =>
     OntologicalStore.getBitacorasSesionesB2B()
   );
-  const [activeDatabaseTab, setActiveDatabaseTab] = useState<FormsSheetsIntegrationSourceKey>('talleres_registro');
+  const [activeDatabaseTab, setActiveDatabaseTab] = useState<FormsSheetsIntegrationSourceKey>(() => {
+    if (event.formsIntegrationId) return event.formsIntegrationId as FormsSheetsIntegrationSourceKey;
+    return entityType === 'sesion' ? 'bitacora_sesiones_b2b' : 'talleres_registro';
+  });
   const [showImportModal, setShowImportModal] = useState(false);
   const [importCsvText, setImportCsvText] = useState('');
   const [importFeedback, setImportFeedback] = useState<{ importedCount: number; errors: string[] } | null>(null);
@@ -303,13 +312,13 @@ export const EventEvaluationAndTriggersSection: React.FC<EventEvaluationAndTrigg
           <div className="space-y-1.5">
             <div className="flex items-center gap-2 text-emerald-400 font-bold text-xs uppercase tracking-wider">
               <Zap className="w-4 h-4 text-amber-400" />
-              <span>3. Evaluación y Activadores • Ecosistema Google Forms & Sheets</span>
+              <span>{badgeText || '3. Automatizaciones & Evaluación • Ecosistema Google Forms & Sheets'}</span>
             </div>
             <h3 className="text-xl font-bold text-white">
-              Flujo de Evaluación Oficial y Alimentación del Expediente del Cliente
+              {customTitle || (entityType === 'sesion' ? 'Flujo de Automatizaciones y Evaluación para Sesión Individual' : 'Flujo de Evaluación Oficial y Alimentación del Expediente del Cliente')}
             </h3>
             <p className="text-xs text-neutral-300 font-light max-w-3xl leading-relaxed">
-              La gestión del contenido evaluativo y la cosecha de quiebres se realiza exclusivamente a través de los enlaces oficiales de <strong>Google Forms</strong> y <strong>Google Sheets</strong>. Cada respuesta diligenciada alimenta en tiempo real el expediente del coachee en la plataforma y en Firebase Firestore.
+              La gestión del contenido evaluativo, acuerdos co-creativos y cosecha de quiebres se realiza exclusivamente a través de los enlaces oficiales de <strong>Google Forms</strong> y <strong>Google Sheets</strong>. Cada respuesta diligenciada alimenta en tiempo real el expediente del coachee en la plataforma y en Firebase Firestore.
             </p>
           </div>
 

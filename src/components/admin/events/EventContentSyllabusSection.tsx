@@ -1,20 +1,17 @@
 import React, { useState } from 'react';
 import {
   BookOpen,
-  HelpCircle,
   FolderPlus,
   Plus,
   Trash2,
   Edit2,
   Check,
   FileText,
-  FileSpreadsheet,
   Video,
   Presentation,
   Link as LinkIcon,
   Upload,
   ExternalLink,
-  Sparkles,
   Clock,
   ChevronDown,
   ChevronUp,
@@ -31,20 +28,11 @@ interface EventContentSyllabusSectionProps {
   onChange: (updates: Partial<CronogramaEvent>) => void;
 }
 
-const PRESET_GUIDING_QUESTIONS = [
-  '¿En qué áreas de tu vida estás diciendo "Sí" por complacencia cuando tu cuerpo y tu energía reclaman un "Basta"?',
-  '¿Cuál es el costo somático, emocional y relacional de intentar controlarlo todo por desconfianza en el entorno?',
-  '¿Cómo cambiaría tu serenidad y autoridad si comunicaras tus límites con calma y sin justificaciones?',
-  '¿Qué juicio maestro sobre ti mismo se activa cuando sientes que no cumples con las expectativas del entorno?',
-  '¿De qué te está protegiendo la autoexigencia implacable y a qué le teme tu vulnerabilidad?',
-];
-
 export const EventContentSyllabusSection: React.FC<EventContentSyllabusSectionProps> = ({
   event,
   onChange,
 }) => {
   const syllabus = event.syllabus || [];
-  const guidingQuestions = event.guidingQuestions || [];
   const supportMaterials = event.supportMaterials || [];
 
   // Form states for new items
@@ -344,98 +332,12 @@ export const EventContentSyllabusSection: React.FC<EventContentSyllabusSectionPr
         </form>
       </div>
 
-      {/* SUB-SECCIÓN 2: PREGUNTAS GUÍA (EXTRAÍDAS DESDE GOOGLE SHEETS) */}
-      <div className="space-y-4 pt-2 border-t border-gray-100 dark:border-neutral-800">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="w-6 h-6 rounded-lg bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-xs font-bold">
-              B
-            </span>
-            <h4 className="text-sm font-bold text-black dark:text-white">
-              Preguntas Guía de Indagación y Conversación Ontológica
-            </h4>
-          </div>
-          <span className="text-[11px] px-2.5 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 font-semibold flex items-center gap-1.5">
-            <FileSpreadsheet className="w-3.5 h-3.5" />
-            <span>Extraídas vía Google Sheets</span>
-          </span>
-        </div>
-
-        {/* Panel de sincronización automatizada desde Google Sheets */}
-        <div className="p-4 rounded-2xl bg-emerald-50/50 dark:bg-emerald-950/20 border border-emerald-200/80 dark:border-emerald-800/40 space-y-3">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div className="flex items-start gap-2.5">
-              <div className="w-8 h-8 rounded-xl bg-emerald-100 dark:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300 flex items-center justify-center shrink-0 mt-0.5">
-                <FileSpreadsheet className="w-4 h-4" />
-              </div>
-              <div className="space-y-0.5">
-                <div className="flex items-center gap-2">
-                  <h5 className="text-xs font-bold text-black dark:text-white">
-                    Sincronización de Preguntas con Google Sheets
-                  </h5>
-                  <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.2 rounded-md bg-emerald-100 dark:bg-emerald-900/80 text-emerald-800 dark:text-emerald-200">
-                    <Check className="w-3 h-3" />
-                    Flujo Automatizado
-                  </span>
-                </div>
-                <p className="text-[11px] text-gray-600 dark:text-neutral-300 leading-relaxed max-w-2xl">
-                  Las preguntas detonantes, de apertura e indagación ontológica para este taller se extraen y sincronizan directamente desde la Hoja de Google Sheets del taller (Bitácora de Talleres / Acuerdos). No se configuran manualmente en este editor.
-                </p>
-              </div>
-            </div>
-
-            <a
-              href={event.googleSheetsUrl || 'https://docs.google.com/spreadsheets/d/1DyKs4OsJDTTOa8SMSvOQdWcttrmRKJ8_vxnJH9rV5UA/edit?usp=sharing'}
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-white dark:bg-neutral-800 border border-emerald-300 dark:border-emerald-700/60 hover:bg-emerald-50 dark:hover:bg-neutral-700 text-emerald-800 dark:text-emerald-200 text-xs font-bold shadow-2xs transition-colors shrink-0 cursor-pointer"
-            >
-              <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-              <span>Abrir Hoja de Preguntas</span>
-              <ExternalLink className="w-3 h-3 opacity-60" />
-            </a>
-          </div>
-
-          {/* Vista previa de preguntas sincronizadas (Solo Lectura) */}
-          {guidingQuestions.length > 0 ? (
-            <div className="pt-2 border-t border-emerald-200/50 dark:border-emerald-800/30 space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="text-[11px] font-bold text-emerald-900 dark:text-emerald-200 flex items-center gap-1.5">
-                  <Sparkles className="w-3 h-3 text-emerald-600" />
-                  <span>Preguntas extraídas actualmente ({guidingQuestions.length}):</span>
-                </span>
-                <span className="text-[10px] text-gray-400 font-mono">Modo solo lectura</span>
-              </div>
-              <div className="space-y-1.5">
-                {guidingQuestions.map((q, idx) => (
-                  <div
-                    key={idx}
-                    className="p-2.5 rounded-xl border border-emerald-200/60 dark:border-neutral-800 bg-white dark:bg-neutral-900 flex items-start gap-2 text-xs"
-                  >
-                    <span className="font-mono text-emerald-600 dark:text-emerald-400 font-bold shrink-0 mt-0.5">
-                      Q{idx + 1}.
-                    </span>
-                    <p className="text-black dark:text-neutral-200 font-medium italic">
-                      "{q}"
-                    </p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          ) : (
-            <div className="pt-2 border-t border-emerald-200/50 dark:border-emerald-800/30 text-[11px] text-emerald-800/80 dark:text-emerald-300/80 italic">
-              Las preguntas registradas en el archivo de Google Sheets se cargarán automáticamente durante la sesión y en la bitácora del participante.
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* SUB-SECCIÓN 3: MATERIALES DE APOYO (SUMINISTROS) */}
+      {/* SUB-SECCIÓN B: MATERIALES DE APOYO (SUMINISTROS) */}
       <div className="space-y-4 pt-2 border-t border-gray-100 dark:border-neutral-800">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className="w-6 h-6 rounded-lg bg-blue-100 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center text-xs font-bold">
-              C
+              B
             </span>
             <h4 className="text-sm font-bold text-black dark:text-white">
               Materiales de Apoyo (Suministros)

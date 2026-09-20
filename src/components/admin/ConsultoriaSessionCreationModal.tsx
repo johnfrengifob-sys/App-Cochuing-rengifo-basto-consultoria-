@@ -31,6 +31,7 @@ import {
   HelpCircle,
   BookOpen,
   Film,
+  ArrowRight,
 } from 'lucide-react';
 import {
   Session,
@@ -40,6 +41,7 @@ import {
   SessionConversationalGuide,
   SessionCycleReviewAxes,
   FormsSheetsIntegrationSourceKey,
+  CronogramaEvent,
 } from '../../types';
 import { OntologicalStore } from '../../services/store';
 import { FirestoreSyncService } from '../../services/firestoreSync';
@@ -48,6 +50,7 @@ import {
   OFFICIAL_FORMS_SHEETS_BASE_LIST,
 } from '../../data/officialFormsSheetsBase';
 import { safeCopyToClipboard } from '../../utils/clipboard';
+import { EventEvaluationAndTriggersSection } from './events/EventEvaluationAndTriggersSection';
 
 interface ConsultoriaSessionCreationModalProps {
   isOpen: boolean;
@@ -207,6 +210,9 @@ export const ConsultoriaSessionCreationModal: React.FC<ConsultoriaSessionCreatio
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
   const [saveSuccess, setSaveSuccess] = useState<boolean>(false);
 
+  // Stepper de navegación de las 3 fases (Replicado de Creación de Talleres)
+  const [activeSection, setActiveSection] = useState<'general' | 'content' | 'evaluation' | 'all'>('general');
+
   // Sincronizar dinámicamente el título y tipo sugerido cuando cambia el coachee
   useEffect(() => {
     if (!initialSession && clientId) {
@@ -273,18 +279,14 @@ export const ConsultoriaSessionCreationModal: React.FC<ConsultoriaSessionCreatio
   // Enlaces calculados de Google Forms & Sheets según la selección
   const activeBaseRecord = OFFICIAL_FORMS_SHEETS_BASE_MAP[formsPresetKey];
   const finalFormUrl =
-    formsPresetKey === 'bitacora_sesiones_b2b'
-      ? OFFICIAL_FORMS_SHEETS_BASE_MAP.bitacora_sesiones_b2b.formUrl
-      : formsPresetKey === 'sesiones_individuales'
-      ? OFFICIAL_FORMS_SHEETS_BASE_MAP.sesiones_individuales.formUrl
-      : customFormUrl || activeBaseRecord.formUrl;
+    customFormUrl ||
+    activeBaseRecord?.formUrl ||
+    OFFICIAL_FORMS_SHEETS_BASE_MAP.bitacora_sesiones_b2b.formUrl;
 
   const finalSheetUrl =
-    formsPresetKey === 'bitacora_sesiones_b2b'
-      ? OFFICIAL_FORMS_SHEETS_BASE_MAP.bitacora_sesiones_b2b.sheetUrl
-      : formsPresetKey === 'sesiones_individuales'
-      ? OFFICIAL_FORMS_SHEETS_BASE_MAP.sesiones_individuales.sheetUrl
-      : customSheetUrl || activeBaseRecord.sheetUrl;
+    customSheetUrl ||
+    activeBaseRecord?.sheetUrl ||
+    OFFICIAL_FORMS_SHEETS_BASE_MAP.bitacora_sesiones_b2b.sheetUrl;
 
   const agreementFormUrl = attachAgreement
     ? OFFICIAL_FORMS_SHEETS_BASE_MAP.sesiones_individuales.formUrl
@@ -292,6 +294,51 @@ export const ConsultoriaSessionCreationModal: React.FC<ConsultoriaSessionCreatio
   const bitacoraFormUrl = attachBitacora
     ? OFFICIAL_FORMS_SHEETS_BASE_MAP.bitacora_sesiones_b2b.formUrl
     : undefined;
+
+  const sessionEventData: Partial<CronogramaEvent> = {
+    id: initialSession?.id,
+    title: title || 'Sesión de Consultoría Ontológica 1 a 1',
+    googleFormsUrl: finalFormUrl,
+    googleSheetsUrl: finalSheetUrl,
+    formsIntegrationId: formsPresetKey,
+    meetUrl: meetLink,
+    triggersEnabled: automationsConfig.immediateConfirmation || automationsConfig.scheduledReminders,
+    customTriggers: {
+      welcomeImmediate: automationsConfig.immediateConfirmation,
+      welcomeMessage: `¡Hola! Tu sesión de consultoría ontológica "${title}" ha sido programada. Sala Google Meet: ${meetLink}`,
+      reminder24h: automationsConfig.scheduledReminders,
+      reminderMessage: `Recordatorio: Tu sesión de consultoría está programada para el ${scheduledDate} a las ${scheduledTime}. Sala Google Meet: ${meetLink}`,
+      postSurveyDispatched: true,
+      postSurveyMessage: `Tu sesión de consultoría ha culminado. Por favor diligencia tu Bitácora B2B para consolidar tus descubrimientos y compromisos: ${finalFormUrl}`,
+      customWebhookUrl: '',
+    },
+  };
+
+  const handleSessionTriggersChange = (updates: Partial<CronogramaEvent>) => {
+    if (updates.googleFormsUrl !== undefined) {
+      setCustomFormUrl(updates.googleFormsUrl);
+    }
+    if (updates.googleSheetsUrl !== undefined) {
+      setCustomSheetUrl(updates.googleSheetsUrl);
+    }
+    if (updates.formsIntegrationId !== undefined) {
+      setFormsPresetKey(updates.formsIntegrationId as FormsSheetsIntegrationSourceKey);
+      const preset = OFFICIAL_FORMS_SHEETS_BASE_MAP[updates.formsIntegrationId as FormsSheetsIntegrationSourceKey];
+      if (preset) {
+        setCustomFormUrl(preset.formUrl);
+        setCustomSheetUrl(preset.sheetUrl);
+      }
+    }
+    if (updates.meetUrl !== undefined) {
+      setMeetLink(updates.meetUrl);
+    }
+    if (updates.customTriggers !== undefined) {
+      setAutomationsConfig({
+        immediateConfirmation: updates.customTriggers.welcomeImmediate ?? true,
+        scheduledReminders: updates.customTriggers.reminder24h ?? true,
+      });
+    }
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -407,12 +454,113 @@ export const ConsultoriaSessionCreationModal: React.FC<ConsultoriaSessionCreatio
           </button>
         </div>
 
-        {/* Contenedor con Scroll de las 4 Secciones Principales */}
-        <form onSubmit={handleSubmit} className="overflow-y-auto p-5 sm:p-7 space-y-7 flex-1 text-xs">
+        {/* Contenedor con Scroll de las 3 Fases Principales */}
+        <form onSubmit={handleSubmit} className="overflow-y-auto p-5 sm:p-7 space-y-6 flex-1 text-xs">
+          {/* Stepper de navegación de las 3 Secciones (Idéntico a Creación de Talleres) */}
+          <div className="bg-white dark:bg-neutral-900/90 rounded-2xl border border-gray-200 dark:border-neutral-800 p-3.5 space-y-3 shadow-2xs">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-gray-500 dark:text-neutral-400 flex items-center gap-1.5">
+                <Zap className="w-3.5 h-3.5 text-amber-500" />
+                <span>Fases de Creación de la Sesión</span>
+              </span>
+              <button
+                type="button"
+                onClick={() => setActiveSection(activeSection === 'all' ? 'general' : 'all')}
+                className="text-[10px] font-semibold px-2.5 py-1 rounded-lg border border-gray-200 dark:border-neutral-700 hover:bg-gray-100 dark:hover:bg-neutral-800 text-gray-600 dark:text-neutral-300 transition-colors cursor-pointer"
+              >
+                {activeSection === 'all' ? 'Modo Pestañas' : 'Ver Todas las Secciones'}
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-2.5">
+              {/* Opción 1 */}
+              <button
+                type="button"
+                onClick={() => setActiveSection('general')}
+                className={`p-3.5 rounded-2xl border text-left transition-all cursor-pointer ${
+                  activeSection === 'general'
+                    ? 'border-emerald-600 bg-emerald-50/60 dark:bg-emerald-950/30 text-emerald-900 dark:text-emerald-200 ring-2 ring-emerald-500/20 shadow-xs'
+                    : 'border-gray-200 dark:border-neutral-800 hover:bg-gray-50 dark:hover:bg-neutral-800 text-gray-600 dark:text-neutral-400'
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[11px] font-bold shrink-0 ${
+                    activeSection === 'general'
+                      ? 'bg-emerald-600 text-white'
+                      : 'bg-gray-200 dark:bg-neutral-800 text-gray-700 dark:text-neutral-300'
+                  }`}>
+                    1
+                  </span>
+                  <span className="text-xs font-bold text-black dark:text-white">
+                    1. Configuración General & Logística
+                  </span>
+                </div>
+                <p className="text-[10px] text-gray-500 dark:text-neutral-400 font-light mt-1 leading-relaxed">
+                  Coachee, fecha y hora, duración, sala Google Meet y tipo (Sesión / Cierre de ciclo).
+                </p>
+              </button>
+
+              {/* Opción 2 */}
+              <button
+                type="button"
+                onClick={() => setActiveSection('content')}
+                className={`p-3.5 rounded-2xl border text-left transition-all cursor-pointer ${
+                  activeSection === 'content'
+                    ? 'border-indigo-600 bg-indigo-50/60 dark:bg-indigo-950/30 text-indigo-900 dark:text-indigo-200 ring-2 ring-indigo-500/20 shadow-xs'
+                    : 'border-gray-200 dark:border-neutral-800 hover:bg-gray-50 dark:hover:bg-neutral-800 text-gray-600 dark:text-neutral-400'
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[11px] font-bold shrink-0 ${
+                    activeSection === 'content'
+                      ? 'bg-indigo-600 text-white'
+                      : 'bg-gray-200 dark:bg-neutral-800 text-gray-700 dark:text-neutral-300'
+                  }`}>
+                    2
+                  </span>
+                  <span className="text-xs font-bold text-black dark:text-white">
+                    2. Dinámica, Contenido & Materiales
+                  </span>
+                </div>
+                <p className="text-[10px] text-gray-500 dark:text-neutral-400 font-light mt-1 leading-relaxed">
+                  Guía conversacional, ejes somáticos/emocionales, cuaderno y video de apoyo.
+                </p>
+              </button>
+
+              {/* Opción 3 */}
+              <button
+                type="button"
+                onClick={() => setActiveSection('evaluation')}
+                className={`p-3.5 rounded-2xl border text-left transition-all cursor-pointer ${
+                  activeSection === 'evaluation'
+                    ? 'border-emerald-600 bg-emerald-50/60 dark:bg-emerald-950/30 text-emerald-900 dark:text-emerald-200 ring-2 ring-emerald-500/20 shadow-xs'
+                    : 'border-gray-200 dark:border-neutral-800 hover:bg-gray-50 dark:hover:bg-neutral-800 text-gray-600 dark:text-neutral-400'
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[11px] font-bold shrink-0 ${
+                    activeSection === 'evaluation'
+                      ? 'bg-emerald-600 text-white'
+                      : 'bg-gray-200 dark:bg-neutral-800 text-gray-700 dark:text-neutral-300'
+                  }`}>
+                    3
+                  </span>
+                  <span className="text-xs font-bold text-black dark:text-white">
+                    3. Automatizaciones & Evaluación
+                  </span>
+                </div>
+                <p className="text-[10px] text-gray-500 dark:text-neutral-400 font-light mt-1 leading-relaxed">
+                  Google Forms & Sheets oficiales, confirmaciones, recordatorios e ingesta de expedientes.
+                </p>
+              </button>
+            </div>
+          </div>
+
           {/* ========================================================================= */}
           {/* SECCIÓN 1: CONFIGURACIÓN GENERAL Y LOGÍSTICA                               */}
           {/* ========================================================================= */}
-          <section className="space-y-4 rounded-2xl p-4 sm:p-5 bg-gray-50/70 dark:bg-neutral-900/50 border border-gray-200/80 dark:border-neutral-800">
+          {(activeSection === 'general' || activeSection === 'all') && (
+          <section className="space-y-4 rounded-2xl p-4 sm:p-5 bg-gray-50/70 dark:bg-neutral-900/50 border border-gray-200/80 dark:border-neutral-800 animate-fade-in">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-gray-200/60 dark:border-neutral-800/80 pb-3">
               <div className="flex items-center gap-2">
                 <span className="w-6 h-6 rounded-lg bg-emerald-600 text-white flex items-center justify-center font-bold text-xs shadow-xs">
@@ -616,16 +764,32 @@ export const ConsultoriaSessionCreationModal: React.FC<ConsultoriaSessionCreatio
               </div>
             </div>
           </section>
+          )}
+
+          {activeSection === 'general' && (
+            <div className="flex justify-end pt-1">
+              <button
+                type="button"
+                onClick={() => setActiveSection('content')}
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md shadow-emerald-600/20 cursor-pointer transition-all"
+              >
+                <span>Continuar a Dinámica & Materiales (Paso 2)</span>
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            </div>
+          )}
 
           {/* ========================================================================= */}
           {/* SECCIÓN 2: DINÁMICA Y CONTENIDO SEGÚN EL TIPO DE SESIÓN (NO DIRECCIONAL)   */}
           {/* ========================================================================= */}
-          <section className="space-y-4 rounded-2xl p-4 sm:p-5 bg-gray-50/70 dark:bg-neutral-900/50 border border-gray-200/80 dark:border-neutral-800">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-gray-200/60 dark:border-neutral-800/80 pb-3">
-              <div className="flex items-center gap-2">
-                <span className="w-6 h-6 rounded-lg bg-indigo-600 text-white flex items-center justify-center font-bold text-xs shadow-xs">
-                  2
-                </span>
+          {(activeSection === 'content' || activeSection === 'all') && (
+            <>
+              <section className="space-y-4 rounded-2xl p-4 sm:p-5 bg-gray-50/70 dark:bg-neutral-900/50 border border-gray-200/80 dark:border-neutral-800 animate-fade-in">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-gray-200/60 dark:border-neutral-800/80 pb-3">
+                  <div className="flex items-center gap-2">
+                    <span className="w-6 h-6 rounded-lg bg-indigo-600 text-white flex items-center justify-center font-bold text-xs shadow-xs">
+                      2
+                    </span>
                 <h3 className="text-sm font-bold text-black dark:text-white tracking-tight">
                   Dinámica y Contenido (
                   {sessionType === 'cierre_ciclo' || sessionType === 'recopilacion_cycle'
@@ -653,33 +817,6 @@ export const ConsultoriaSessionCreationModal: React.FC<ConsultoriaSessionCreatio
                       Espacio completamente no direccional sin temas fijos ni preguntas rígidas, centrado en el quiebre actual del coachee y su autoobservación en el presente.
                     </p>
                   </div>
-                </div>
-
-                {/* Preguntas de Indagación Extraídas desde Google Sheets */}
-                <div className="p-3.5 rounded-xl bg-emerald-50/60 dark:bg-emerald-950/30 border border-emerald-200/80 dark:border-emerald-800/50 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                  <div className="flex items-start gap-2.5">
-                    <FileSpreadsheet className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
-                    <div>
-                      <h4 className="text-xs font-bold text-emerald-950 dark:text-emerald-200 flex items-center gap-1.5">
-                        <span>Preguntas e Indagación Extraídas desde Google Sheets</span>
-                        <span className="text-[10px] font-mono px-2 py-0.2 rounded-full bg-emerald-100 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-200 font-bold">
-                          Sincronizado
-                        </span>
-                      </h4>
-                      <p className="text-[11px] text-emerald-800/80 dark:text-emerald-300/80 leading-relaxed mt-0.5">
-                        Las preguntas detonantes y de indagación ontológica para esta sesión se extraen y sincronizan directamente desde el archivo de Google Sheets vinculado (Bitácora de Sesiones / Acuerdos). No se configuran manualmente.
-                      </p>
-                    </div>
-                  </div>
-                  <a
-                    href={finalSheetUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white dark:bg-neutral-800 border border-emerald-200 dark:border-neutral-700 text-[11px] font-semibold text-emerald-700 dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-neutral-700 shrink-0 transition-colors shadow-2xs cursor-pointer"
-                  >
-                    <span>Ver en Google Sheets</span>
-                    <ExternalLink className="w-3 h-3 opacity-70" />
-                  </a>
                 </div>
 
                 {/* Estructura de Guía Conversacional (3 Pasos Fundamentales) */}
@@ -777,33 +914,6 @@ export const ConsultoriaSessionCreationModal: React.FC<ConsultoriaSessionCreatio
                       Sesión estructurada de cierre y evaluación periódica del proceso de acompañamiento. Propósito: Revisar el estado actual del cliente, medir la evolución respecto al punto de partida y alinear el propósito del proceso.
                     </p>
                   </div>
-                </div>
-
-                {/* Preguntas de Balance Extraídas desde Google Sheets */}
-                <div className="p-3.5 rounded-xl bg-indigo-50/70 dark:bg-indigo-950/40 border border-indigo-200/80 dark:border-indigo-800/50 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                  <div className="flex items-start gap-2.5">
-                    <FileSpreadsheet className="w-4 h-4 text-indigo-600 dark:text-indigo-400 shrink-0 mt-0.5" />
-                    <div>
-                      <h4 className="text-xs font-bold text-indigo-950 dark:text-indigo-200 flex items-center gap-1.5">
-                        <span>Preguntas y Marco de Balance Extraídos desde Google Sheets</span>
-                        <span className="text-[10px] font-mono px-2 py-0.2 rounded-full bg-indigo-100 dark:bg-indigo-900/60 text-indigo-800 dark:text-indigo-200 font-bold">
-                          Sincronizado
-                        </span>
-                      </h4>
-                      <p className="text-[11px] text-indigo-800/80 dark:text-indigo-300/80 leading-relaxed mt-0.5">
-                        Las preguntas de apertura, balance de ciclo y medición del avance se extraen de forma automatizada desde el archivo de Google Sheets vinculado (Bitácora de Sesiones). No se configuran manualmente.
-                      </p>
-                    </div>
-                  </div>
-                  <a
-                    href={finalSheetUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white dark:bg-neutral-800 border border-indigo-200 dark:border-neutral-700 text-[11px] font-semibold text-indigo-700 dark:text-indigo-300 hover:bg-indigo-50 dark:hover:bg-neutral-700 shrink-0 transition-colors shadow-2xs cursor-pointer"
-                  >
-                    <span>Ver en Google Sheets</span>
-                    <ExternalLink className="w-3 h-3 opacity-70" />
-                  </a>
                 </div>
 
                 {/* Los 4 Ejes de Cierre y Revisión */}
@@ -920,457 +1030,13 @@ export const ConsultoriaSessionCreationModal: React.FC<ConsultoriaSessionCreatio
           </section>
 
           {/* ========================================================================= */}
-          {/* SECCIÓN 3: CONECTIVIDAD Y PANEL DE AUTOMATIZACIONES (ZONA DE EDICIÓN)     */}
+          {/* MATERIAL DE APOYO Y MULTIMEDIA: GUÍA DE TRABAJO Y VIDEO (PARTE DE FASE 2) */}
           {/* ========================================================================= */}
-          <section className="space-y-4 rounded-2xl p-4 sm:p-5 bg-gray-50/70 dark:bg-neutral-900/50 border border-gray-200/80 dark:border-neutral-800">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-gray-200/60 dark:border-neutral-800/80 pb-3">
-              <div className="flex items-center gap-2">
-                <span className="w-6 h-6 rounded-lg bg-teal-600 text-white flex items-center justify-center font-bold text-xs shadow-xs">
-                  3
-                </span>
-                <h3 className="text-sm font-bold text-black dark:text-white tracking-tight">
-                  Conectividad y Panel de Automatizaciones
-                </h3>
-              </div>
-              <span className="text-[11px] text-teal-700 dark:text-teal-400 font-semibold flex items-center gap-1">
-                <Video className="w-3.5 h-3.5" />
-                <span>Google Meet & Activadores Inmediatos</span>
-              </span>
-            </div>
-
-            {/* 3.1 Enlace de Sala Virtual (Google Meet) */}
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <label className="text-xs font-bold text-gray-800 dark:text-neutral-200 flex items-center gap-1.5">
-                  <Video className="w-4 h-4 text-emerald-600" />
-                  <span>Enlace de Sala Virtual (Google Meet) *</span>
-                </label>
-
-                <button
-                  type="button"
-                  onClick={() => setMeetLink(generateMeetLink())}
-                  className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 hover:underline cursor-pointer"
-                >
-                  <RefreshCw className="w-3 h-3" />
-                  <span>Generar Enlace Seguro</span>
-                </button>
-              </div>
-
-              {/* Campo editable y botones de acción rápida */}
-              <div className="flex flex-col sm:flex-row items-stretch gap-2">
-                <div className="relative flex-1">
-                  <input
-                    type="url"
-                    value={meetLink}
-                    onChange={(e) => setMeetLink(e.target.value)}
-                    placeholder="https://meet.google.com/xyz-abcd-efg"
-                    className="w-full p-2.5 rounded-xl border border-gray-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-black dark:text-white font-mono text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-hidden"
-                    required
-                  />
-                </div>
-
-                {/* Botón Acción Rápida: Iniciar en Google Meet */}
-                <a
-                  href={meetLink}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-xs transition-colors shrink-0"
-                  title="Abrir sala de Google Meet en una nueva pestaña"
-                >
-                  <Video className="w-4 h-4" />
-                  <span>Iniciar en Google Meet</span>
-                  <ExternalLink className="w-3 h-3 opacity-80" />
-                </a>
-
-                {/* Botón Acción Rápida: Copiar Enlace */}
-                <button
-                  type="button"
-                  onClick={() => handleCopy(meetLink, 'meet_link')}
-                  className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-xl border border-gray-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 hover:bg-gray-100 dark:hover:bg-neutral-700 text-gray-700 dark:text-neutral-200 font-semibold text-xs shrink-0 cursor-pointer transition-colors"
-                  title="Copiar enlace de Google Meet al portapapeles"
-                >
-                  {copiedKey === 'meet_link' ? (
-                    <>
-                      <Check className="w-4 h-4 text-emerald-600" />
-                      <span className="text-emerald-600 font-bold">Copiado</span>
-                    </>
-                  ) : (
-                    <>
-                      <Copy className="w-4 h-4" />
-                      <span>Copiar Enlace</span>
-                    </>
-                  )}
-                </button>
-              </div>
-            </div>
-
-            {/* 3.2 Panel de Activadores y Automatizaciones (Edición Rápida con Toggles) */}
-            <div className="p-4 rounded-xl bg-white dark:bg-neutral-800/90 border border-gray-200 dark:border-neutral-700/80 space-y-3.5">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-gray-100 dark:border-neutral-700/60 pb-2.5">
-                <div className="flex items-center gap-2">
-                  <Zap className="w-4 h-4 text-amber-500" />
-                  <h4 className="text-xs font-bold text-black dark:text-white uppercase tracking-wider">
-                    Panel de Activadores y Automatizaciones (Edición Rápida)
-                  </h4>
-                </div>
-
-                {/* Botón "Editar Automatizaciones" */}
-                {onOpenAutomationsPanel ? (
-                  <button
-                    type="button"
-                    onClick={onOpenAutomationsPanel}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 dark:bg-neutral-700 dark:hover:bg-neutral-600 text-gray-800 dark:text-neutral-100 font-semibold text-[11px] transition-colors cursor-pointer"
-                  >
-                    <Settings className="w-3.5 h-3.5 text-gray-500 dark:text-neutral-300" />
-                    <span>Editar Automatizaciones</span>
-                    <ExternalLink className="w-2.5 h-2.5 opacity-70" />
-                  </button>
-                ) : (
-                  <a
-                    href="#automatizaciones"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      alert(
-                        'Motor de Activadores RBC: Las reglas de envío en Google Sheets y los webhooks están operativos y sincronizados con Make/Webhook.'
-                      );
-                    }}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 dark:bg-neutral-700 dark:hover:bg-neutral-600 text-gray-800 dark:text-neutral-100 font-semibold text-[11px] transition-colors cursor-pointer"
-                  >
-                    <Settings className="w-3.5 h-3.5 text-gray-500 dark:text-neutral-300" />
-                    <span>Editar Automatizaciones</span>
-                  </a>
-                )}
-              </div>
-
-              {/* Toggles de Activadores Integrados */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {/* Activador 1 (Inmediato) */}
-                <div
-                  onClick={() =>
-                    setAutomationsConfig((prev) => ({
-                      ...prev,
-                      immediateConfirmation: !prev.immediateConfirmation,
-                    }))
-                  }
-                  className={`p-3 rounded-xl border flex items-start justify-between gap-3 cursor-pointer transition-all ${
-                    automationsConfig.immediateConfirmation
-                      ? 'border-emerald-500/80 bg-emerald-50/50 dark:bg-emerald-950/20'
-                      : 'border-gray-200 dark:border-neutral-700 bg-gray-50/50 dark:bg-neutral-900/40 opacity-70'
-                  }`}
-                >
-                  <div className="space-y-0.5">
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-100 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-200">
-                        Activador 1 (Inmediato)
-                      </span>
-                    </div>
-                    <p className="text-xs font-bold text-gray-900 dark:text-neutral-100">
-                      Confirmación de Agendamiento
-                    </p>
-                    <p className="text-[11px] text-gray-500 dark:text-neutral-400">
-                      Envío automático del enlace de Google Meet y los acuerdos previos al guardar.
-                    </p>
-                  </div>
-
-                  {/* Switch Toggle */}
-                  <div
-                    className={`w-10 h-5 rounded-full transition-colors relative shrink-0 mt-1 ${
-                      automationsConfig.immediateConfirmation
-                        ? 'bg-emerald-600'
-                        : 'bg-gray-300 dark:bg-neutral-600'
-                    }`}
-                  >
-                    <div
-                      className={`w-4 h-4 rounded-full bg-white transition-transform absolute top-0.5 ${
-                        automationsConfig.immediateConfirmation
-                          ? 'transform translate-x-5'
-                          : 'transform translate-x-0.5'
-                      }`}
-                    />
-                  </div>
-                </div>
-
-                {/* Activador 2 (Programado) */}
-                <div
-                  onClick={() =>
-                    setAutomationsConfig((prev) => ({
-                      ...prev,
-                      scheduledReminders: !prev.scheduledReminders,
-                    }))
-                  }
-                  className={`p-3 rounded-xl border flex items-start justify-between gap-3 cursor-pointer transition-all ${
-                    automationsConfig.scheduledReminders
-                      ? 'border-indigo-500/80 bg-indigo-50/50 dark:bg-indigo-950/20'
-                      : 'border-gray-200 dark:border-neutral-700 bg-gray-50/50 dark:bg-neutral-900/40 opacity-70'
-                  }`}
-                >
-                  <div className="space-y-0.5">
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-indigo-100 dark:bg-indigo-900/60 text-indigo-800 dark:text-indigo-200">
-                        Activador 2 (Programado)
-                      </span>
-                    </div>
-                    <p className="text-xs font-bold text-gray-900 dark:text-neutral-100">
-                      Recordatorios Automáticos
-                    </p>
-                    <p className="text-[11px] text-gray-500 dark:text-neutral-400">
-                      Recordatorios enviados al coachee antes del encuentro (24h y 1h previa).
-                    </p>
-                  </div>
-
-                  {/* Switch Toggle */}
-                  <div
-                    className={`w-10 h-5 rounded-full transition-colors relative shrink-0 mt-1 ${
-                      automationsConfig.scheduledReminders
-                        ? 'bg-indigo-600'
-                        : 'bg-gray-300 dark:bg-neutral-600'
-                    }`}
-                  >
-                    <div
-                      className={`w-4 h-4 rounded-full bg-white transition-transform absolute top-0.5 ${
-                        automationsConfig.scheduledReminders
-                          ? 'transform translate-x-5'
-                          : 'transform translate-x-0.5'
-                      }`}
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </section>
-
-          {/* ========================================================================= */}
-          {/* SECCIÓN 4: EVALUACIÓN, GOOGLE FORMS / SHEETS Y EXPEDIENTE                  */}
-          {/* ========================================================================= */}
-          <section className="space-y-4 rounded-2xl p-4 sm:p-5 bg-gray-50/70 dark:bg-neutral-900/50 border border-gray-200/80 dark:border-neutral-800">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-gray-200/60 dark:border-neutral-800/80 pb-3">
-              <div className="flex items-center gap-2">
-                <span className="w-6 h-6 rounded-lg bg-indigo-600 text-white flex items-center justify-center font-bold text-xs shadow-xs">
-                  4
-                </span>
-                <h3 className="text-sm font-bold text-black dark:text-white tracking-tight">
-                  Evaluación, Google Forms / Sheets y Expediente Ontológico
-                </h3>
-              </div>
-              <span className="text-[11px] text-indigo-700 dark:text-indigo-400 font-semibold flex items-center gap-1">
-                <FileSpreadsheet className="w-3.5 h-3.5" />
-                <span>Expediente en Tiempo Real</span>
-              </span>
-            </div>
-
-            {/* Selector de Base Oficial Integrada */}
-            <div className="space-y-2">
-              <label className="text-xs font-bold text-gray-800 dark:text-neutral-200 flex items-center gap-1.5">
-                <FileText className="w-3.5 h-3.5 text-indigo-500" />
-                <span>Formulario de Registro y Notas (Google Forms) Vinculado *</span>
-              </label>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {/* Opción Bitácora B2B */}
-                <div
-                  onClick={() => setFormsPresetKey('bitacora_sesiones_b2b')}
-                  className={`p-3 rounded-xl border cursor-pointer transition-all flex flex-col justify-between ${
-                    formsPresetKey === 'bitacora_sesiones_b2b'
-                      ? 'border-emerald-500 bg-emerald-50/40 dark:bg-emerald-950/20 ring-2 ring-emerald-500/20 shadow-xs'
-                      : 'border-gray-200 dark:border-neutral-800 bg-white dark:bg-neutral-800 hover:border-gray-300'
-                  }`}
-                >
-                  <div>
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-100 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-200">
-                        {OFFICIAL_FORMS_SHEETS_BASE_MAP.bitacora_sesiones_b2b.title}
-                      </span>
-                      {formsPresetKey === 'bitacora_sesiones_b2b' && (
-                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                      )}
-                    </div>
-                    <p className="text-xs font-bold text-black dark:text-white">
-                      Bitácora de Sesiones B2B
-                    </p>
-                    <p className="text-[11px] text-gray-500 dark:text-neutral-400 mt-0.5 line-clamp-2">
-                      Captura el quiebre, emoción, juicios limitantes, darse cuenta y compromisos de acción post-sesión.
-                    </p>
-                  </div>
-
-                  <div className="flex items-center gap-2 pt-2 mt-2 border-t border-gray-100 dark:border-neutral-700/60">
-                    <a
-                      href={OFFICIAL_FORMS_SHEETS_BASE_MAP.bitacora_sesiones_b2b.formUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                      onClick={(e) => e.stopPropagation()}
-                      className="inline-flex items-center gap-1 text-[10px] font-semibold text-indigo-600 dark:text-indigo-400 hover:underline"
-                    >
-                      <FileText className="w-3 h-3" />
-                      <span>Abrir Form</span>
-                      <ExternalLink className="w-2.5 h-2.5" />
-                    </a>
-                    <span className="text-gray-300 dark:text-neutral-700">•</span>
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleCopy(
-                          OFFICIAL_FORMS_SHEETS_BASE_MAP.bitacora_sesiones_b2b.formUrl,
-                          'form_bitacora'
-                        );
-                      }}
-                      className="inline-flex items-center gap-1 text-[10px] font-semibold text-gray-600 dark:text-neutral-400 hover:text-black dark:hover:text-white cursor-pointer"
-                    >
-                      {copiedKey === 'form_bitacora' ? (
-                        <Check className="w-3 h-3 text-emerald-600" />
-                      ) : (
-                        <Copy className="w-3 h-3" />
-                      )}
-                      <span>Copiar Form</span>
-                    </button>
-                  </div>
-                </div>
-
-                {/* Opción Acuerdo Sesiones Individuales */}
-                <div
-                  onClick={() => setFormsPresetKey('sesiones_individuales')}
-                  className={`p-3 rounded-xl border cursor-pointer transition-all flex flex-col justify-between ${
-                    formsPresetKey === 'sesiones_individuales'
-                      ? 'border-indigo-500 bg-indigo-50/40 dark:bg-indigo-950/20 ring-2 ring-indigo-500/20 shadow-xs'
-                      : 'border-gray-200 dark:border-neutral-800 bg-white dark:bg-neutral-800 hover:border-gray-300'
-                  }`}
-                >
-                  <div>
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-indigo-100 dark:bg-indigo-900/60 text-indigo-800 dark:text-indigo-200">
-                        {OFFICIAL_FORMS_SHEETS_BASE_MAP.sesiones_individuales.title}
-                      </span>
-                      {formsPresetKey === 'sesiones_individuales' && (
-                        <CheckCircle2 className="w-3.5 h-3.5 text-indigo-600" />
-                      )}
-                    </div>
-                    <p className="text-xs font-bold text-black dark:text-white">
-                      Acuerdo Co-creativo Sesiones Individuales
-                    </p>
-                    <p className="text-[11px] text-gray-500 dark:text-neutral-400 mt-0.5 line-clamp-2">
-                      Firma del acuerdo ético, confidencialidad, límites de IA y aceptación co-creativa.
-                    </p>
-                  </div>
-
-                  <div className="flex items-center gap-2 pt-2 mt-2 border-t border-gray-100 dark:border-neutral-700/60">
-                    <a
-                      href={OFFICIAL_FORMS_SHEETS_BASE_MAP.sesiones_individuales.formUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                      onClick={(e) => e.stopPropagation()}
-                      className="inline-flex items-center gap-1 text-[10px] font-semibold text-indigo-600 dark:text-indigo-400 hover:underline"
-                    >
-                      <FileText className="w-3 h-3" />
-                      <span>Abrir Form</span>
-                      <ExternalLink className="w-2.5 h-2.5" />
-                    </a>
-                    <span className="text-gray-300 dark:text-neutral-700">•</span>
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleCopy(
-                          OFFICIAL_FORMS_SHEETS_BASE_MAP.sesiones_individuales.formUrl,
-                          'form_acuerdo'
-                        );
-                      }}
-                      className="inline-flex items-center gap-1 text-[10px] font-semibold text-gray-600 dark:text-neutral-400 hover:text-black dark:hover:text-white cursor-pointer"
-                    >
-                      {copiedKey === 'form_acuerdo' ? (
-                        <Check className="w-3 h-3 text-emerald-600" />
-                      ) : (
-                        <Copy className="w-3 h-3" />
-                      )}
-                      <span>Copiar Form</span>
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Hoja de Cálculo de Seguimiento (Google Sheets) Conectada */}
-            <div className="p-4 rounded-xl bg-white dark:bg-neutral-800/90 border border-emerald-200 dark:border-emerald-800/50 space-y-3">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                <div className="flex items-center gap-2">
-                  <div className="w-7 h-7 rounded-lg bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 flex items-center justify-center font-bold">
-                    <FileSpreadsheet className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <h4 className="text-xs font-bold text-black dark:text-white">
-                      Hoja de Cálculo de Seguimiento (Google Sheets) Conectada
-                    </h4>
-                    <p className="text-[11px] text-gray-500 dark:text-neutral-400">
-                      Alimenta automáticamente el expediente ontológico del coachee tras finalizar cada sesión.
-                    </p>
-                  </div>
-                </div>
-
-                {/* Botón de Acceso a Google Sheets */}
-                <a
-                  href={finalSheetUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/60 dark:hover:bg-emerald-900/60 border border-emerald-300 dark:border-emerald-700/60 text-emerald-800 dark:text-emerald-200 font-bold text-xs transition-colors shrink-0"
-                >
-                  <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600" />
-                  <span>Abrir Expediente en Google Sheets</span>
-                  <ExternalLink className="w-3 h-3 opacity-70" />
-                </a>
-              </div>
-
-              {/* URL de Hoja de Cálculo con botón Copiar */}
-              <div className="flex items-center gap-2">
-                <input
-                  type="text"
-                  readOnly
-                  value={finalSheetUrl}
-                  className="w-full p-2 rounded-xl border border-gray-200 dark:border-neutral-700 bg-gray-50 dark:bg-neutral-900 text-gray-700 dark:text-neutral-300 font-mono text-[11px]"
-                />
-                <button
-                  type="button"
-                  onClick={() => handleCopy(finalSheetUrl, 'sheet_url')}
-                  className="p-2 rounded-xl border border-gray-200 dark:border-neutral-700 bg-gray-50 dark:bg-neutral-800 hover:bg-gray-100 text-gray-700 dark:text-neutral-300 shrink-0 cursor-pointer"
-                  title="Copiar URL de Google Sheets"
-                >
-                  {copiedKey === 'sheet_url' ? (
-                    <Check className="w-4 h-4 text-emerald-600" />
-                  ) : (
-                    <Copy className="w-4 h-4" />
-                  )}
-                </button>
-              </div>
-
-              {/* Casillas de Verificación de Formularios para el Coachee */}
-              <div className="pt-2 border-t border-gray-100 dark:border-neutral-700/60 flex flex-col sm:flex-row items-start sm:items-center gap-4 text-xs">
-                <label className="flex items-center gap-2 cursor-pointer text-gray-700 dark:text-neutral-300">
-                  <input
-                    type="checkbox"
-                    checked={attachAgreement}
-                    onChange={(e) => setAttachAgreement(e.target.checked)}
-                    className="w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 cursor-pointer"
-                  />
-                  <span>Vincular Acuerdo Previo ({OFFICIAL_FORMS_SHEETS_BASE_MAP.sesiones_individuales.title})</span>
-                </label>
-
-                <label className="flex items-center gap-2 cursor-pointer text-gray-700 dark:text-neutral-300">
-                  <input
-                    type="checkbox"
-                    checked={attachBitacora}
-                    onChange={(e) => setAttachBitacora(e.target.checked)}
-                    className="w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 cursor-pointer"
-                  />
-                  <span>Vincular Bitácora Post-Sesión ({OFFICIAL_FORMS_SHEETS_BASE_MAP.bitacora_sesiones_b2b.title})</span>
-                </label>
-              </div>
-            </div>
-          </section>
-
-          {/* 5. MATERIAL DE APOYO Y MULTIMEDIA: GUÍA DE TRABAJO Y VIDEO */}
-          <section className="space-y-4 rounded-2xl p-4 sm:p-5 bg-gradient-to-br from-amber-50/50 via-white to-rose-50/40 dark:from-neutral-900/90 dark:via-neutral-900/60 dark:to-rose-950/20 border border-amber-200/80 dark:border-amber-800/50 shadow-xs">
+          <section className="space-y-4 rounded-2xl p-4 sm:p-5 bg-gradient-to-br from-amber-50/50 via-white to-rose-50/40 dark:from-neutral-900/90 dark:via-neutral-900/60 dark:to-rose-950/20 border border-amber-200/80 dark:border-amber-800/50 shadow-xs animate-fade-in">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-amber-200/60 dark:border-amber-800/60 pb-3">
               <div className="flex items-center gap-2">
                 <span className="w-6 h-6 rounded-lg bg-amber-600 text-white flex items-center justify-center font-bold text-xs shadow-xs">
-                  5
+                  2.B
                 </span>
                 <h3 className="text-sm font-bold text-black dark:text-white tracking-tight">
                   Material de Acompañamiento: Guía de Trabajo y Video
@@ -1584,6 +1250,59 @@ export const ConsultoriaSessionCreationModal: React.FC<ConsultoriaSessionCreatio
               </div>
             </div>
           </section>
+
+          {activeSection === 'content' && (
+            <div className="flex items-center justify-between pt-1">
+              <button
+                type="button"
+                onClick={() => setActiveSection('general')}
+                className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl border border-gray-200 dark:border-neutral-700 hover:bg-gray-100 dark:hover:bg-neutral-800 text-gray-700 dark:text-neutral-300 font-semibold text-xs cursor-pointer transition-all"
+              >
+                <span>← Volver a Configuración General</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveSection('evaluation')}
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-md shadow-indigo-600/20 cursor-pointer transition-all"
+              >
+                <span>Continuar a Automatizaciones & Evaluación (Paso 3)</span>
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            </div>
+          )}
+        </>
+      )}
+
+      {/* ========================================================================= */}
+      {/* SECCIÓN 3: AUTOMATIZACIONES & EVALUACIÓN • ECOSISTEMA GOOGLE FORMS & SHEETS (PASO 3) */}
+      {/* ========================================================================= */}
+      {(activeSection === 'evaluation' || activeSection === 'all') && (
+        <div className="space-y-4 animate-fade-in">
+          <EventEvaluationAndTriggersSection
+            event={sessionEventData}
+            onChange={handleSessionTriggersChange}
+            entityType="sesion"
+            badgeText="3. Automatizaciones & Evaluación • Ecosistema Google Forms & Sheets"
+            customTitle="Flujo de Automatizaciones y Evaluación para Sesión Individual"
+          />
+
+          {activeSection === 'evaluation' && (
+            <div className="flex items-center justify-between pt-1">
+              <button
+                type="button"
+                onClick={() => setActiveSection('content')}
+                className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl border border-gray-200 dark:border-neutral-700 hover:bg-gray-100 dark:hover:bg-neutral-800 text-gray-700 dark:text-neutral-300 font-semibold text-xs cursor-pointer transition-all"
+              >
+                <span>← Volver a Dinámica & Materiales</span>
+              </button>
+              <span className="text-[11px] text-emerald-700 dark:text-emerald-400 font-medium flex items-center gap-1">
+                <CheckCircle2 className="w-3.5 h-3.5" />
+                <span>Ecosistema Google Forms & Sheets configurado para la sesión</span>
+              </span>
+            </div>
+          )}
+        </div>
+      )}
 
           {/* Pie del Formulario y Botón de Creación */}
           <div className="pt-4 border-t border-gray-100 dark:border-neutral-800 flex flex-col sm:flex-row items-center justify-between gap-3 shrink-0">
