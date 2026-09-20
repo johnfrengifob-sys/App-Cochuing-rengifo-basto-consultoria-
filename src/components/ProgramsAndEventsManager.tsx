@@ -916,7 +916,7 @@ export const ProgramsAndEventsManager: React.FC<ProgramsAndEventsManagerProps> =
                   <span className="text-xs sm:text-sm font-bold">2. Contenido, Temario & Materiales</span>
                 </div>
                 <p className="text-[11px] text-gray-500 dark:text-neutral-400 font-light mt-1.5 leading-relaxed">
-                  Syllabus por bloques temáticos, materiales de trabajo en PDF y preguntas clave de indagación.
+                  Syllabus por bloques temáticos, materiales en PDF y preguntas ontológicas sincronizadas vía Google Sheets.
                 </p>
               </button>
 

@@ -262,17 +262,18 @@ export const AdminTemariosManager: React.FC<AdminTemariosManagerProps> = ({ onRe
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1">
-              <label className="font-semibold text-gray-700 dark:text-neutral-300 flex items-center gap-1.5">
-                <Compass className="w-3.5 h-3.5 text-indigo-500" />
-                <span>Pregunta Clave Ontológica *</span>
-              </label>
-              <textarea
-                rows={2}
-                required
-                value={formData.keyQuestion}
-                onChange={(e) => setFormData({ ...formData, keyQuestion: e.target.value })}
-                className="w-full p-2.5 rounded-xl bg-gray-50 dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 text-black dark:text-white"
-              />
+              <div className="flex items-center justify-between">
+                <label className="font-semibold text-gray-700 dark:text-neutral-300 flex items-center gap-1.5 text-xs">
+                  <Compass className="w-3.5 h-3.5 text-indigo-500" />
+                  <span>Pregunta Clave Ontológica</span>
+                </label>
+                <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold">
+                  Vía Google Sheets
+                </span>
+              </div>
+              <div className="p-2.5 rounded-xl bg-gray-50 dark:bg-neutral-800 border border-dashed border-emerald-300 dark:border-emerald-800/60 text-black dark:text-white text-xs italic">
+                {formData.keyQuestion || 'Pregunta extraída y sincronizada desde la Hoja de Cálculo en Google Sheets.'}
+              </div>
             </div>
 
             <div className="space-y-1">

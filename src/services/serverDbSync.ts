@@ -1,4 +1,4 @@
-import { User, EventRegistration, Session, FormSubmission, PostSessionForm, CronogramaEvent, ProgramNodeInfo } from '../types';
+import { User, EventRegistration, Session, FormSubmission, PostSessionForm, CronogramaEvent, ProgramNodeInfo, FormsSheetsIntegrationPair } from '../types';
 
 export interface ServerDbHealth {
   status: string;
@@ -26,6 +26,7 @@ export interface ServerDbState {
   paymentRequests: any[];
   cronogramaEvents?: CronogramaEvent[];
   programNodes?: ProgramNodeInfo[];
+  formsSheetsIntegrations?: FormsSheetsIntegrationPair[];
   deletedWorkshopIds?: string[];
   lastUpdated: string;
 }
@@ -77,6 +78,7 @@ export class ServerDbSyncService {
     postSessionForms?: PostSessionForm[];
     cronogramaEvents?: CronogramaEvent[];
     programNodes?: ProgramNodeInfo[];
+    formsSheetsIntegrations?: FormsSheetsIntegrationPair[];
     deletedWorkshopIds?: string[];
   }): Promise<ServerDbState | null> {
     if (this.isSyncing) return null;
@@ -227,6 +229,43 @@ export class ServerDbSyncService {
     } catch (err) {
       console.warn('[ServerDbSync] Error fetching workshops from server DB:', err);
       return [];
+    }
+  }
+
+  /**
+   * Fetch Google Forms & Sheets integrations from server DB
+   */
+  static async fetchFormsSheetsIntegrations(): Promise<FormsSheetsIntegrationPair[]> {
+    try {
+      const res = await fetch('/api/db/forms-sheets-integrations', {
+        headers: { 'Accept': 'application/json' },
+      });
+      if (!res.ok) return [];
+      const data = await res.json();
+      return Array.isArray(data.integrations) ? data.integrations : [];
+    } catch (err) {
+      console.warn('[ServerDbSync] Error fetching forms-sheets integrations from server DB:', err);
+      return [];
+    }
+  }
+
+  /**
+   * Save Google Forms & Sheets integrations to server DB and propagate
+   */
+  static async saveFormsSheetsIntegrations(integrations: FormsSheetsIntegrationPair[]): Promise<boolean> {
+    try {
+      const res = await fetch('/api/db/forms-sheets-integrations', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: JSON.stringify({ integrations }),
+      });
+      return res.ok;
+    } catch (err) {
+      console.warn('[ServerDbSync] Error saving forms-sheets integrations to server DB:', err);
+      return false;
     }
   }
 }

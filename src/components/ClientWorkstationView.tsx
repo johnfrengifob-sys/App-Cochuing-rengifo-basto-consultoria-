@@ -982,7 +982,31 @@ export const ClientWorkstationView: React.FC<ClientWorkstationViewProps> = ({
                       <Calendar className="w-3 h-3 text-indigo-500 shrink-0" />
                       <span className="font-medium">{formatDate(sess.date)}</span>
                     </div>
-                    {sess.ontologicalFocus && (
+                    {sess.sessionType && (
+                      <div className="flex items-center gap-1.5 pt-0.5">
+                        <span
+                          className={`text-[9px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider ${
+                            sess.sessionType === 'cierre_programa'
+                              ? 'bg-purple-100 dark:bg-purple-900/60 text-purple-800 dark:text-purple-200'
+                              : sess.sessionType === 'cierre_ciclo' || sess.sessionType === 'recopilacion_cycle'
+                              ? 'bg-indigo-100 dark:bg-indigo-900/60 text-indigo-800 dark:text-indigo-200'
+                              : 'bg-emerald-100 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-200'
+                          }`}
+                        >
+                          {sess.sessionType === 'cierre_programa'
+                            ? 'Cierre de programa'
+                            : sess.sessionType === 'cierre_ciclo' || sess.sessionType === 'recopilacion_cycle'
+                            ? 'Cierre de ciclo'
+                            : 'Sesión'}
+                        </span>
+                      </div>
+                    )}
+                    {sess.openingQuestion && (
+                      <p className="text-[10px] text-gray-500 dark:text-neutral-400 italic line-clamp-2 bg-gray-50/80 dark:bg-neutral-800/60 p-1.5 rounded-lg border border-gray-100 dark:border-neutral-800">
+                        &ldquo;{sess.openingQuestion}&rdquo;
+                      </p>
+                    )}
+                    {sess.ontologicalFocus && !sess.openingQuestion && (
                       <p className="text-[10px] text-gray-400 dark:text-neutral-500 italic line-clamp-1">
                         &ldquo;{sess.ontologicalFocus}&rdquo;
                       </p>

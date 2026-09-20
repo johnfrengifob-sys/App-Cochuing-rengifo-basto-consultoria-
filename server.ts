@@ -160,9 +160,114 @@ async function startServer() {
     paymentRequests: any[];
     cronogramaEvents: any[];
     programNodes: any[];
+    formsSheetsIntegrations?: any[];
     deletedWorkshopIds?: string[];
     lastUpdated: string;
   }
+
+  const SEED_FORMS_SHEETS_INTEGRATIONS = [
+    {
+      id: 'talleres_registro',
+      title: 'ACUERDO TALLERES',
+      category: 'Taller Grupal',
+      moduleTarget: 'talleres',
+      formUrl: 'https://forms.gle/H5gLF1KBzPnKsBWq7',
+      sheetUrl: 'https://docs.google.com/spreadsheets/d/1RBC_Talleres_Acuerdos_Sheets/edit',
+      sheetGid: '0',
+      sheetHeaders: [
+        'Marca temporal',
+        'Dirección de correo electrónico',
+        '1. Nombres y Apellidos Completos',
+        '2. Número de WhatsApp / Teléfono móvil',
+        '3. Aceptación del Acuerdo de Confidencialidad y Uso Responsable',
+        '4. Declaración de Participación Voluntaria y Ética Grupal',
+        '5. Consentimiento para el uso de herramientas tecnológicas e Inteligencia Artificial',
+        '6. Firma Digital / Validación de Identidad'
+      ],
+      status: 'connected',
+      lastSyncedAt: new Date().toISOString(),
+      recordsCount: 3,
+      notes: 'Base de datos Acuerdos Talleres Sheets. Sincronizada con el panel de Google Forms & Sheets.'
+    },
+    {
+      id: 'sesiones_individuales',
+      title: 'ACUERDO SESIONES INDIVIDUALES',
+      category: 'Sesión Individual 1 a 1',
+      moduleTarget: 'sesiones',
+      formUrl: 'https://forms.gle/dfStXtTyb1MW6W5K9',
+      sheetUrl: 'https://docs.google.com/spreadsheets/d/1RBC_Sesiones_Individuales_Acuerdo_B2B_Sheets/edit',
+      sheetGid: '0',
+      sheetHeaders: [
+        'Marca temporal',
+        'Dirección de correo electrónico',
+        'Nombre Completo del Participante',
+        'Número de Cédula o Identificación Oficial',
+        'Nombre de la Organización / Empresa',
+        'Aceptación de Términos del Acuerdo Co-creativo de Coaching Ontológico',
+        'Reconocimiento de la Naturaleza no Terapéutica del Proceso',
+        'Consentimiento de Tratamiento de Datos y Grabación con Fines de Aprendizaje',
+        'Firma Digital del Coachee'
+      ],
+      status: 'connected',
+      lastSyncedAt: new Date().toISOString(),
+      recordsCount: 3,
+      notes: 'Base de datos acuerdos sesiones B2B Sheets. Sincronizada con el panel de Google Forms & Sheets.'
+    },
+    {
+      id: 'bitacora_sesiones_b2b',
+      title: 'Bitacora Sesiones B2B',
+      category: 'Bitácora Sesión 1 a 1',
+      moduleTarget: 'sesiones',
+      formUrl: 'https://forms.gle/APUFto8sGbJt322WA',
+      sheetUrl: 'https://docs.google.com/spreadsheets/d/1RBC_Bitacora_Sesiones_B2B_Sheets/edit',
+      sheetGid: '0',
+      sheetHeaders: [
+        'Marca temporal',
+        'Dirección de correo electrónico',
+        'Nombre Completo del Coachee',
+        'Número de Sesión Diligenciada',
+        '¿Cuál es el quiebre central o situación desafiante que exploramos hoy?',
+        '¿Qué emoción o estado de ánimo predominó durante la conversación?',
+        '¿Qué juicios o creencias limitantes identificaste en tu narrativa?',
+        '¿Cuál fue el darse cuenta o giro ontológico más significativo?',
+        '¿Qué acciones retadoras o nuevos compromisos asumes a partir de este encuentro?',
+        'Equilibrio de Vida y Bienestar Personal (1 a 10)',
+        'Observaciones adicionales para tu bitácora de proceso'
+      ],
+      status: 'connected',
+      lastSyncedAt: new Date().toISOString(),
+      recordsCount: 4,
+      notes: 'Base de datos bitácoras sesiones B2B Sheets. Sincronizada con el panel de Google Forms & Sheets.'
+    },
+    {
+      id: 'bitacora_talleres',
+      title: 'Bitacora Talleres',
+      category: 'Bitácora de Taller',
+      moduleTarget: 'talleres',
+      formUrl: 'https://forms.gle/5Hiuxwq13n3gC3zt6',
+      sheetUrl: 'https://docs.google.com/spreadsheets/d/1RBC_Bitacora_Talleres_Sheets/edit',
+      sheetGid: '0',
+      sheetHeaders: [
+        'Marca temporal',
+        'Dirección de correo electrónico',
+        'Nombre Completo del Participante',
+        'Taller o Encuentro Ontológico Asistido',
+        'Nivel del Taller',
+        '¿Cuál fue el reto personal o quiebre principal abordado en este taller?',
+        '¿Qué emoción predominante reconoces en tu corporalidad hoy?',
+        '¿Qué verdades que considerabas absolutas se abrieron a cuestionamiento?',
+        '¿Cuál es el nuevo observador que emerge para ti a partir de este espacio?',
+        'Mensaje de equilibrio de vida y soberanía personal',
+        '¿Cuál fue el aprendizaje más valioso de la dinámica grupal?',
+        'Acción concreta de transformación que ejecutarás en las próximas 48 horas',
+        'Firma Digital y Número de Cédula / Documento de Identidad'
+      ],
+      status: 'connected',
+      lastSyncedAt: new Date().toISOString(),
+      recordsCount: 4,
+      notes: 'Base de datos bitácoras talleres Sheets. Sincronizada con el panel de Google Forms & Sheets.'
+    }
+  ];
 
   const SEED_CRONOGRAMA_EVENTS = [
     {
@@ -190,6 +295,8 @@ async function startServer() {
       facilitator: 'John Fredy Rengifo Basto (Master Coach Ontológico)',
       featured: false,
       status: 'upcoming',
+      googleFormsUrl: 'https://forms.gle/5Hiuxwq13n3gC3zt6',
+      googleSheetsUrl: 'https://docs.google.com/spreadsheets/d/1RBC_Bitacora_Talleres_Sheets/edit',
     },
     {
       id: 'event-1789824792376',
@@ -216,6 +323,8 @@ async function startServer() {
       facilitator: 'John Fredy Rengifo Basto (Master Coach Ontológico)',
       featured: false,
       status: 'upcoming',
+      googleFormsUrl: 'https://forms.gle/5Hiuxwq13n3gC3zt6',
+      googleSheetsUrl: 'https://docs.google.com/spreadsheets/d/1RBC_Bitacora_Talleres_Sheets/edit',
     },
     {
       id: 'event-1789828629011',
@@ -242,6 +351,8 @@ async function startServer() {
       facilitator: 'John Fredy Rengifo Basto (Master Coach Ontológico)',
       featured: false,
       status: 'upcoming',
+      googleFormsUrl: 'https://forms.gle/5Hiuxwq13n3gC3zt6',
+      googleSheetsUrl: 'https://docs.google.com/spreadsheets/d/1RBC_Bitacora_Talleres_Sheets/edit',
     },
     {
       id: 'event-1789829005266',
@@ -268,6 +379,8 @@ async function startServer() {
       facilitator: 'John Fredy Rengifo Basto (Master Coach Ontológico)',
       featured: true,
       status: 'upcoming',
+      googleFormsUrl: 'https://forms.gle/5Hiuxwq13n3gC3zt6',
+      googleSheetsUrl: 'https://docs.google.com/spreadsheets/d/1RBC_Bitacora_Talleres_Sheets/edit',
     },
   ];
 
@@ -375,6 +488,19 @@ async function startServer() {
         if (!Array.isArray(data.programNodes)) data.programNodes = [];
         if (!Array.isArray(data.deletedWorkshopIds)) data.deletedWorkshopIds = [];
 
+        if (!Array.isArray(data.formsSheetsIntegrations)) {
+          data.formsSheetsIntegrations = [...SEED_FORMS_SHEETS_INTEGRATIONS];
+          modified = true;
+        } else {
+          SEED_FORMS_SHEETS_INTEGRATIONS.forEach((seedPair) => {
+            const exists = data.formsSheetsIntegrations.some((p: any) => p.id === seedPair.id);
+            if (!exists) {
+              data.formsSheetsIntegrations.push(seedPair);
+              modified = true;
+            }
+          });
+        }
+
         if (!Array.isArray(data.cronogramaEvents)) {
           data.cronogramaEvents = SEED_CRONOGRAMA_EVENTS.filter(
             (e: any) => !data.deletedWorkshopIds.includes(e.id)
@@ -419,6 +545,7 @@ async function startServer() {
       paymentRequests: [],
       cronogramaEvents: [...SEED_CRONOGRAMA_EVENTS],
       programNodes: [],
+      formsSheetsIntegrations: [...SEED_FORMS_SHEETS_INTEGRATIONS],
       deletedWorkshopIds: [],
       lastUpdated: new Date().toISOString(),
     };
@@ -604,6 +731,29 @@ async function startServer() {
             changed = true;
           } else {
             currentDb.programNodes.push(node);
+            changed = true;
+          }
+        });
+      }
+
+      // Merge Forms & Sheets Integrations
+      if (Array.isArray(clientState.formsSheetsIntegrations)) {
+        if (!Array.isArray(currentDb.formsSheetsIntegrations)) currentDb.formsSheetsIntegrations = [];
+        clientState.formsSheetsIntegrations.forEach((pair: any) => {
+          if (!pair || !pair.id) return;
+          const idx = currentDb.formsSheetsIntegrations.findIndex((p: any) => p.id === pair.id);
+          if (idx >= 0) {
+            currentDb.formsSheetsIntegrations[idx] = {
+              ...currentDb.formsSheetsIntegrations[idx],
+              ...pair,
+              updatedAt: new Date().toISOString(),
+            };
+            changed = true;
+          } else {
+            currentDb.formsSheetsIntegrations.push({
+              ...pair,
+              updatedAt: new Date().toISOString(),
+            });
             changed = true;
           }
         });
@@ -885,6 +1035,80 @@ async function startServer() {
       });
     } catch (err: any) {
       res.status(500).json({ error: err.message || 'Error al eliminar taller' });
+    }
+  });
+
+  // API: Get Google Forms & Sheets integrations from persistent database
+  app.get('/api/db/forms-sheets-integrations', (req, res) => {
+    try {
+      const db = readServerDatabase();
+      res.json({
+        success: true,
+        integrations: db.formsSheetsIntegrations || [],
+      });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message || 'Error al obtener integraciones' });
+    }
+  });
+
+  // API: Save / Update Google Forms & Sheets integrations in persistent database
+  app.post('/api/db/forms-sheets-integrations', (req, res) => {
+    try {
+      const db = readServerDatabase();
+      if (!Array.isArray(db.formsSheetsIntegrations)) db.formsSheetsIntegrations = [];
+
+      const { integrations } = req.body;
+      if (Array.isArray(integrations)) {
+        integrations.forEach((incomingPair: any) => {
+          if (!incomingPair || !incomingPair.id) return;
+          const idx = db.formsSheetsIntegrations!.findIndex((p: any) => p.id === incomingPair.id);
+          if (idx >= 0) {
+            db.formsSheetsIntegrations![idx] = {
+              ...db.formsSheetsIntegrations![idx],
+              ...incomingPair,
+              updatedAt: new Date().toISOString(),
+            };
+          } else {
+            db.formsSheetsIntegrations!.push({
+              ...incomingPair,
+              updatedAt: new Date().toISOString(),
+            });
+          }
+        });
+
+        // Also update any existing sessions with the official active bitacora & acuerdo URLs
+        const bitacoraPair = db.formsSheetsIntegrations.find((p: any) => p.id === 'bitacora_sesiones_b2b');
+        const acuerdoPair = db.formsSheetsIntegrations.find((p: any) => p.id === 'sesiones_individuales');
+        if (bitacoraPair && Array.isArray(db.sessions)) {
+          db.sessions = db.sessions.map((s: any) => ({
+            ...s,
+            googleSheetsUrl: bitacoraPair.sheetUrl || s.googleSheetsUrl,
+            googleFormsUrl: bitacoraPair.formUrl || s.googleFormsUrl,
+            bitacoraFormUrl: bitacoraPair.formUrl || s.bitacoraFormUrl,
+            agreementFormUrl: (acuerdoPair && acuerdoPair.formUrl) || s.agreementFormUrl,
+          }));
+        }
+
+        // Also update any existing workshops with the official active bitacora & acuerdo URLs
+        const tallerBitacora = db.formsSheetsIntegrations.find((p: any) => p.id === 'bitacora_talleres');
+        if (tallerBitacora && Array.isArray(db.cronogramaEvents)) {
+          db.cronogramaEvents = db.cronogramaEvents.map((evt: any) => ({
+            ...evt,
+            googleSheetsUrl: tallerBitacora.sheetUrl || evt.googleSheetsUrl,
+            googleFormsUrl: tallerBitacora.formUrl || evt.googleFormsUrl,
+          }));
+        }
+
+        writeServerDatabase(db);
+      }
+
+      res.json({
+        success: true,
+        message: 'Integraciones de Google Sheets y Formularios guardadas y propagadas en la base de datos',
+        integrations: db.formsSheetsIntegrations,
+      });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message || 'Error al guardar integraciones' });
     }
   });
 

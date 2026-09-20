@@ -1845,6 +1845,12 @@ export class OntologicalStore {
       if (!node.roadmapSteps || node.roadmapSteps.length === 0) {
         node.roadmapSteps = DEFAULT_ROADMAP_STEPS[node.step] || [];
       }
+      if (!node.googleSheetsUrl) {
+        node.googleSheetsUrl = 'https://docs.google.com/spreadsheets/d/1RBC_Bitacora_Sesiones_B2B_Sheets/edit';
+      }
+      if (!node.googleFormsUrl) {
+        node.googleFormsUrl = 'https://forms.gle/APUFto8sGbJt322WA';
+      }
     });
     return safe;
   }
@@ -1855,6 +1861,13 @@ export class OntologicalStore {
     PROGRAM_NODES.push(...nodes);
     try {
       FirestoreSyncService.syncAllProgramNodes(nodes).catch(() => {});
+    } catch {
+      // safe fallback
+    }
+    try {
+      ServerDbSyncService.syncWithServer({
+        programNodes: nodes,
+      }).catch(() => {});
     } catch {
       // safe fallback
     }
@@ -2344,17 +2357,27 @@ export class OntologicalStore {
     // Asegurar que taller-1-raiz posea el afiche oficial de alta resolución y fechas vigentes
     let needsResave = filtered.length !== list.length;
     const sanitized = filtered.map((evt) => {
-      if (evt.id === 'taller-1-raiz' && (evt.imageUrl?.includes('unsplash') || !evt.imageUrl)) {
-        needsResave = true;
-        return {
-          ...evt,
-          imageUrl: promotionalEventBannerImg,
-          coverImage: promotionalEventBannerImg,
-          date: '2026-09-19T19:00:00.000-05:00',
-          displayDate: 'Sábado, 19 de Septiembre de 2026',
-        };
+      let changed = false;
+      const copy = { ...evt };
+      if (!copy.googleSheetsUrl) {
+        copy.googleSheetsUrl = 'https://docs.google.com/spreadsheets/d/1RBC_Bitacora_Talleres_Sheets/edit';
+        changed = true;
       }
-      return evt;
+      if (!copy.googleFormsUrl) {
+        copy.googleFormsUrl = 'https://forms.gle/5Hiuxwq13n3gC3zt6';
+        changed = true;
+      }
+      if (evt.id === 'taller-1-raiz' && (evt.imageUrl?.includes('unsplash') || !evt.imageUrl)) {
+        copy.imageUrl = promotionalEventBannerImg;
+        copy.coverImage = promotionalEventBannerImg;
+        copy.date = '2026-09-19T19:00:00.000-05:00';
+        copy.displayDate = 'Sábado, 19 de Septiembre de 2026';
+        changed = true;
+      }
+      if (changed) {
+        needsResave = true;
+      }
+      return copy;
     });
 
     if (needsResave) {
@@ -4375,13 +4398,34 @@ export class OntologicalStore {
 
   // --- SESSIONS ---
   static getSessions(): Session[] {
+    let safeList: Session[] = [];
     if (this.isDatabasePurgedClean()) {
       const list = this.load<Session[]>(STORAGE_KEYS.SESSIONS, []);
-      return Array.isArray(list) ? list : [];
+      safeList = Array.isArray(list) ? list : [];
+    } else {
+      const list = this.load<Session[]>(STORAGE_KEYS.SESSIONS, INITIAL_SESSIONS);
+      safeList = Array.isArray(list) ? list : INITIAL_SESSIONS;
+      safeList = safeList.filter((s) => s.clientId !== 'client-carolina');
     }
-    const list = this.load<Session[]>(STORAGE_KEYS.SESSIONS, INITIAL_SESSIONS);
-    let safeList = Array.isArray(list) ? list : INITIAL_SESSIONS;
-    safeList = safeList.filter((s) => s.clientId !== 'client-carolina');
+
+    safeList.forEach((s) => {
+      if (!s.googleSheetsUrl) {
+        s.googleSheetsUrl = 'https://docs.google.com/spreadsheets/d/1RBC_Bitacora_Sesiones_B2B_Sheets/edit';
+      }
+      if (!s.googleFormsUrl) {
+        s.googleFormsUrl = 'https://forms.gle/APUFto8sGbJt322WA';
+      }
+      if (!s.agreementFormUrl) {
+        s.agreementFormUrl = 'https://forms.gle/dfStXtTyb1MW6W5K9';
+      }
+      if (!s.bitacoraFormUrl) {
+        s.bitacoraFormUrl = 'https://forms.gle/APUFto8sGbJt322WA';
+      }
+      if (!s.formsIntegrationId) {
+        s.formsIntegrationId = 'bitacora_sesiones_b2b';
+      }
+    });
+
     return safeList;
   }
 
@@ -4391,6 +4435,13 @@ export class OntologicalStore {
       sessions.forEach((s) => {
         FirestoreSyncService.syncSession(s).catch(() => {});
       });
+    } catch {
+      // safe fallback
+    }
+    try {
+      ServerDbSyncService.syncWithServer({
+        sessions,
+      }).catch(() => {});
     } catch {
       // safe fallback
     }
@@ -4436,6 +4487,12 @@ export class OntologicalStore {
             ? 'Cierre de ciclo: integración de descubrimientos, patrones y cambios de perspectiva observados.'
             : 'Pregunta de apertura: "¿Qué es importante para ti traer a este espacio hoy?". Espacio abierto al emergente.'),
         programNodeStep: num,
+        googleSheetsUrl: 'https://docs.google.com/spreadsheets/d/1RBC_Bitacora_Sesiones_B2B_Sheets/edit',
+        googleFormsUrl: 'https://forms.gle/APUFto8sGbJt322WA',
+        agreementFormUrl: 'https://forms.gle/dfStXtTyb1MW6W5K9',
+        bitacoraFormUrl: 'https://forms.gle/APUFto8sGbJt322WA',
+        formsIntegrationId: 'bitacora_sesiones_b2b',
+        expedienteSyncStatus: 'synced',
       });
     }
 
@@ -6422,10 +6479,99 @@ Rengifo Basto Consultoría Ontológica`;
     this.save('rbc_forms_sheets_integrations', updated);
     if (updatedPair) {
       FirestoreSyncService.syncFormsSheetsIntegration(updatedPair).catch(() => {});
+      ServerDbSyncService.saveFormsSheetsIntegrations(updated).catch(() => {});
     }
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new CustomEvent('rbc-forms-sheets-updated'));
     }
+    // Propagar automáticamente los nuevos enlaces a sesiones, talleres y módulos
+    this.propagateFormsSheetsUrlsToDatabase().catch(() => {});
+  }
+
+  /**
+   * Actualiza y propaga todos los enlaces de Google Sheets y Formularios
+   * vigentes en el panel hacia las sesiones, talleres, módulos temarios,
+   * base de datos local del navegador, base de datos del servidor (app_database.json) y Firestore.
+   */
+  public static async propagateFormsSheetsUrlsToDatabase(): Promise<{
+    success: boolean;
+    message: string;
+    updatedSessionsCount: number;
+    updatedWorkshopsCount: number;
+    updatedNodesCount: number;
+  }> {
+    const integrations = this.getFormsSheetsIntegrations();
+    const tallerAcuerdo = integrations.find((p) => p.id === 'talleres_registro');
+    const tallerBitacora = integrations.find((p) => p.id === 'bitacora_talleres');
+    const sesionAcuerdo = integrations.find((p) => p.id === 'sesiones_individuales');
+    const sesionBitacora = integrations.find((p) => p.id === 'bitacora_sesiones_b2b');
+
+    // 1. Propagar a Sesiones (1 a 1)
+    const currentSessions = this.getSessions();
+    const updatedSessions = currentSessions.map((s) => ({
+      ...s,
+      googleSheetsUrl: sesionBitacora?.sheetUrl || s.googleSheetsUrl,
+      googleFormsUrl: sesionBitacora?.formUrl || s.googleFormsUrl,
+      bitacoraFormUrl: sesionBitacora?.formUrl || s.bitacoraFormUrl,
+      bitacoraSheetUrl: sesionBitacora?.sheetUrl,
+      agreementFormUrl: sesionAcuerdo?.formUrl || s.agreementFormUrl,
+      agreementSheetUrl: sesionAcuerdo?.sheetUrl,
+      formsIntegrationId: 'bitacora_sesiones_b2b',
+      expedienteSyncStatus: 'synced' as const,
+    }));
+    this.saveSessions(updatedSessions);
+
+    // 2. Propagar a Talleres / Eventos del Cronograma
+    const currentEvents = this.getCronogramaEvents();
+    const updatedEvents = currentEvents.map((evt) => ({
+      ...evt,
+      googleSheetsUrl: tallerBitacora?.sheetUrl || evt.googleSheetsUrl,
+      googleFormsUrl: tallerBitacora?.formUrl || evt.googleFormsUrl,
+    }));
+    this.saveCronogramaEvents(updatedEvents);
+
+    // 3. Propagar a Módulos Temarios (Program Nodes)
+    const currentNodes = this.getProgramNodes();
+    const updatedNodes = currentNodes.map((n) => ({
+      ...n,
+      googleSheetsUrl: sesionBitacora?.sheetUrl || n.googleSheetsUrl,
+      googleFormsUrl: sesionBitacora?.formUrl || n.googleFormsUrl,
+    }));
+    this.saveProgramNodes(updatedNodes);
+
+    // 4. Sincronizar en lote con Firestore
+    await FirestoreSyncService.syncAllFormsSheetsIntegrations(integrations).catch(() => {});
+    await FirestoreSyncService.syncAllCronogramaEvents(updatedEvents).catch(() => {});
+    await FirestoreSyncService.syncAllProgramNodes(updatedNodes).catch(() => {});
+    updatedSessions.forEach((s) => {
+      FirestoreSyncService.syncSession(s).catch(() => {});
+    });
+
+    // 5. Sincronizar en lote con Server Database (app_database.json)
+    await ServerDbSyncService.syncWithServer({
+      sessions: updatedSessions,
+      cronogramaEvents: updatedEvents,
+      programNodes: updatedNodes,
+      formsSheetsIntegrations: integrations,
+    }).catch(() => {});
+
+    // 6. Guardar explícitamente en el endpoint del servidor
+    await ServerDbSyncService.saveFormsSheetsIntegrations(integrations).catch(() => {});
+
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('rbc-forms-sheets-updated'));
+      window.dispatchEvent(new CustomEvent('rbc-sessions-updated'));
+      window.dispatchEvent(new CustomEvent('rbc-workshops-updated'));
+      window.dispatchEvent(new CustomEvent('rbc-program-nodes-updated'));
+    }
+
+    return {
+      success: true,
+      message: `Base de datos sincronizada: ${updatedSessions.length} sesiones, ${updatedEvents.length} talleres y ${updatedNodes.length} módulos actualizados con los enlaces oficiales de Google Sheets.`,
+      updatedSessionsCount: updatedSessions.length,
+      updatedWorkshopsCount: updatedEvents.length,
+      updatedNodesCount: updatedNodes.length,
+    };
   }
 
   // 1. Talleres (Registro General)

@@ -356,6 +356,11 @@ export class FirestoreSyncService {
           isPaid: Boolean(session.isPaid),
           durationMinutes: session.durationMinutes || 60,
           ontologicalFocus: session.ontologicalFocus || '',
+          title: session.title || '',
+          guideUrl: session.guideUrl || '',
+          guideTitle: session.guideTitle || '',
+          videoUrl: session.videoUrl || '',
+          videoTitle: session.videoTitle || '',
         },
         { merge: true }
       );

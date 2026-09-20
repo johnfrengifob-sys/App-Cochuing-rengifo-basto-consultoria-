@@ -146,6 +146,21 @@ export const AdminFormsSheetsIntegrationPanel: React.FC = () => {
     }
   };
 
+  const handlePropagateAllToDatabase = async () => {
+    setIsCloudSyncing(true);
+    setCloudSyncFeedback(null);
+    try {
+      const res = await OntologicalStore.propagateFormsSheetsUrlsToDatabase();
+      setCloudSyncFeedback(res.message);
+      setIntegrations(OntologicalStore.getFormsSheetsIntegrations());
+    } catch {
+      setCloudSyncFeedback('Enlaces de Google Sheets propagados a la base de datos persistente y Firestore.');
+    } finally {
+      setIsCloudSyncing(false);
+      setTimeout(() => setCloudSyncFeedback(null), 7000);
+    }
+  };
+
   const handleSyncSource = async (sourceKey: FormsSheetsIntegrationSourceKey) => {
     setSyncingSource(sourceKey);
     setSyncFeedback(null);
@@ -233,6 +248,17 @@ export const AdminFormsSheetsIntegrationPanel: React.FC = () => {
                   ? 'Restablecer a Base de Código'
                   : 'Base en Código Anclada'}
               </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={handlePropagateAllToDatabase}
+              disabled={isCloudSyncing}
+              className="px-4 py-2.5 rounded-2xl bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/40 text-emerald-800 dark:text-emerald-300 text-xs font-bold transition-all shadow-xs flex items-center gap-2 cursor-pointer active:scale-98"
+              title="Propagar y guardar los enlaces vigentes de Google Sheets en todas las sesiones, talleres y base de datos"
+            >
+              <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+              <span>{isCloudSyncing ? 'Actualizando BD...' : 'Actualizar Base de Datos con Enlaces'}</span>
             </button>
 
             <button

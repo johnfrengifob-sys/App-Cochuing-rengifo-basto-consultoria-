@@ -13,6 +13,7 @@ import {
   Image as ImageIcon,
   Compass,
   FileText,
+  FileSpreadsheet,
   Clock,
   ArrowRight,
   RefreshCw,
@@ -469,12 +470,61 @@ export const ExperienceEditorManager: React.FC<ExperienceEditorManagerProps> = (
               </div>
             </div>
 
+            {/* Preguntas Guía para el Facilitador (Extraídas desde Google Sheets) */}
+            <div className="bg-white dark:bg-black border border-black dark:border-white p-6 rounded-3xl space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-black/10 dark:border-white/10">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-sm font-bold tracking-tight uppercase font-mono">
+                      2. Preguntas Guía y Reflexión Ontológica
+                    </h3>
+                    <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 font-semibold border border-emerald-300 dark:border-emerald-800">
+                      Vía Google Sheets
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-neutral-500 font-light mt-0.5">
+                    Las preguntas clave se extraen y sincronizan directamente desde la hoja de Google Sheets vinculada. No requieren edición manual.
+                  </p>
+                </div>
+                <a
+                  href="https://docs.google.com/spreadsheets/d/1RBC_Bitacora_Talleres_Sheets/edit"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="px-3.5 py-1.5 rounded-xl border border-emerald-500/80 hover:bg-emerald-500 hover:text-white font-semibold text-[11px] transition-colors flex items-center gap-1.5 shrink-0 text-emerald-700 dark:text-emerald-400"
+                >
+                  <FileSpreadsheet className="w-3.5 h-3.5" />
+                  <span>Abrir en Google Sheets</span>
+                  <ExternalLink className="w-3 h-3 opacity-70" />
+                </a>
+              </div>
+
+              {/* Lista en modo lectura si existen preguntas extraídas */}
+              {(currentExp.guidingQuestions && currentExp.guidingQuestions.length > 0) ? (
+                <div className="space-y-2">
+                  {currentExp.guidingQuestions.map((q, idx) => (
+                    <div key={idx} className="flex items-start gap-2.5 p-3 rounded-xl border border-black/10 dark:border-white/10 bg-neutral-50/50 dark:bg-neutral-900/50">
+                      <span className="text-[11px] font-mono font-bold text-emerald-600 dark:text-emerald-400 w-6 shrink-0 mt-0.5">
+                        0{idx + 1}.
+                      </span>
+                      <p className="text-xs italic text-black dark:text-white leading-relaxed">
+                        "{q}"
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="p-4 rounded-xl border border-dashed border-emerald-300 dark:border-emerald-800/60 bg-emerald-50/30 dark:bg-emerald-950/20 text-xs text-neutral-600 dark:text-neutral-300 italic text-center">
+                  Las preguntas ontológicas se importan dinámicamente desde el archivo de Google Sheets al ejecutar la experiencia.
+                </div>
+              )}
+            </div>
+
             {/* Módulos Universales Apilables */}
             <div className="bg-white dark:bg-black border border-black dark:border-white p-6 rounded-3xl space-y-5">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-black/10 dark:border-white/10">
                 <div>
                   <h3 className="text-sm font-bold tracking-tight uppercase font-mono">
-                    2. Módulos Universales (Bloques Apilables)
+                    3. Módulos Universales (Bloques Apilables)
                   </h3>
                   <p className="text-[11px] text-neutral-500 font-light">
                     Apila Bloques de Bienvenida, Indagación y Acción para crear nuevos formatos.

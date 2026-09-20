@@ -122,6 +122,38 @@ export interface Prospect {
 
 export type SessionStatus = 'scheduled' | 'completed' | 'cancelled' | 'Completada' | 'in_progress';
 
+export type ConsultoriaSessionType =
+  | 'sesion'
+  | 'cierre_ciclo'
+  | 'cierre_programa'
+  | 'normal_exploration'
+  | 'recopilacion_cycle';
+
+export interface SessionAutomationsConfig {
+  immediateConfirmation: boolean; // Activador 1 (Inmediato): Confirmación de agendamiento y envío automático del enlace
+  scheduledReminders: boolean; // Activador 2 (Programado): Recordatorios automáticos al cliente antes del encuentro
+}
+
+export interface SessionConversationalGuide {
+  somaticEmotionalExploration?: string;
+  judgmentsAffirmationsInquiry?: string;
+  consciousActionCoCreation?: string;
+}
+
+export interface SessionCycleReviewAxes {
+  currentState?: string;
+  progressEvaluation?: string;
+  destinationAndPurpose?: string;
+  nextLegRedesign?: string;
+}
+
+export interface SessionProgramClosingAxes {
+  observerTransformation?: string;
+  transcendedBreakdowns?: string;
+  autonomyManifesto?: string;
+  closingDeclaration?: string;
+}
+
 export interface Session {
   id: string;
   clientId: string;
@@ -149,6 +181,22 @@ export interface Session {
   formsIntegrationId?: string;
   agreementFormUrl?: string;
   bitacoraFormUrl?: string;
+  guideUrl?: string; // Enlace a la guía de trabajo / documento (Drive, Notion, PDF, etc.)
+  guideTitle?: string; // Título o nombre de la guía
+  videoUrl?: string; // Enlace al video de la sesión (YouTube, Loom, Vimeo, Drive, Zoom)
+  videoTitle?: string; // Título o tema del video
+
+  // Módulo de Creación de Sesiones de Consultoría (1 a 1)
+  sessionType?: ConsultoriaSessionType; // 'sesion' | 'cierre_ciclo' | 'cierre_programa'
+  spaceName?: string; // 'Sesiones de Consultoría Ontológica 1 a 1.'
+  facilitatorCoach?: string; // 'John Fredy Rengifo Basto (Master Coach Ontológico).'
+  modalityNotice?: string; // 'Individual (Acuerdo Co-creativo).'
+  openingQuestion?: string; // Pregunta de apertura según tipo de sesión
+  conversationalGuide?: SessionConversationalGuide;
+  cycleReviewAxes?: SessionCycleReviewAxes;
+  programClosingAxes?: SessionProgramClosingAxes;
+  automationsConfig?: SessionAutomationsConfig;
+  expedienteSyncStatus?: 'synced' | 'pending' | 'draft';
 }
 
 export interface PostSessionForm {
@@ -264,6 +312,10 @@ export interface ProgramNodeInfo {
   googleFormsUrl?: string;
   googleSheetsUrl?: string;
   googleDriveFolderUrl?: string;
+  guideUrl?: string;
+  guideTitle?: string;
+  videoUrl?: string;
+  videoTitle?: string;
   triggersEnabled?: boolean;
   triggerReminderDays?: number;
   experienceToolEnabled?: boolean;
