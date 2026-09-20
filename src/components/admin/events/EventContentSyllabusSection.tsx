@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import {
   BookOpen,
-  HelpCircle,
   FolderPlus,
   Plus,
   Trash2,
@@ -13,7 +12,6 @@ import {
   Link as LinkIcon,
   Upload,
   ExternalLink,
-  Sparkles,
   Clock,
   ChevronDown,
   ChevronUp,
@@ -30,20 +28,11 @@ interface EventContentSyllabusSectionProps {
   onChange: (updates: Partial<CronogramaEvent>) => void;
 }
 
-const PRESET_GUIDING_QUESTIONS = [
-  '¿En qué áreas de tu vida estás diciendo "Sí" por complacencia cuando tu cuerpo y tu energía reclaman un "Basta"?',
-  '¿Cuál es el costo somático, emocional y relacional de intentar controlarlo todo por desconfianza en el entorno?',
-  '¿Cómo cambiaría tu serenidad y autoridad si comunicaras tus límites con calma y sin justificaciones?',
-  '¿Qué juicio maestro sobre ti mismo se activa cuando sientes que no cumples con las expectativas del entorno?',
-  '¿De qué te está protegiendo la autoexigencia implacable y a qué le teme tu vulnerabilidad?',
-];
-
 export const EventContentSyllabusSection: React.FC<EventContentSyllabusSectionProps> = ({
   event,
   onChange,
 }) => {
   const syllabus = event.syllabus || [];
-  const guidingQuestions = event.guidingQuestions || [];
   const supportMaterials = event.supportMaterials || [];
 
   // Form states for new items
@@ -51,8 +40,6 @@ export const EventContentSyllabusSection: React.FC<EventContentSyllabusSectionPr
   const [newBlockDuration, setNewBlockDuration] = useState('30 min');
   const [newBlockDesc, setNewBlockDesc] = useState('');
   const [editingBlockId, setEditingBlockId] = useState<string | null>(null);
-
-  const [newQuestionText, setNewQuestionText] = useState('');
 
   const [newMatTitle, setNewMatTitle] = useState('');
   const [newMatType, setNewMatType] = useState<SupportMaterialType>('pdf');
@@ -117,24 +104,6 @@ export const EventContentSyllabusSection: React.FC<EventContentSyllabusSectionPr
     const [moved] = reordered.splice(index, 1);
     reordered.splice(targetIndex, 0, moved);
     onChange({ syllabus: reordered });
-  };
-
-  // --- GUIDING QUESTIONS HANDLERS ---
-  const handleAddQuestion = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newQuestionText.trim()) return;
-    onChange({ guidingQuestions: [...guidingQuestions, newQuestionText.trim()] });
-    setNewQuestionText('');
-  };
-
-  const handleAddPresetQuestion = (q: string) => {
-    if (guidingQuestions.includes(q)) return;
-    onChange({ guidingQuestions: [...guidingQuestions, q] });
-  };
-
-  const handleDeleteQuestion = (index: number) => {
-    const updated = guidingQuestions.filter((_, idx) => idx !== index);
-    onChange({ guidingQuestions: updated });
   };
 
   // --- SUPPORT MATERIALS HANDLERS ---
@@ -363,103 +332,12 @@ export const EventContentSyllabusSection: React.FC<EventContentSyllabusSectionPr
         </form>
       </div>
 
-      {/* SUB-SECCIÓN 2: PREGUNTAS GUÍA */}
-      <div className="space-y-4 pt-2 border-t border-gray-100 dark:border-neutral-800">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="w-6 h-6 rounded-lg bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-xs font-bold">
-              B
-            </span>
-            <h4 className="text-sm font-bold text-black dark:text-white">
-              Preguntas Guía de Indagación
-            </h4>
-            <span className="text-xs text-gray-400 font-mono">
-              ({guidingQuestions.length} {guidingQuestions.length === 1 ? 'pregunta' : 'preguntas'})
-            </span>
-          </div>
-        </div>
-
-        <p className="text-xs text-gray-500 dark:text-neutral-400 font-light">
-          Preguntas clave que el facilitador planteará y que guiarán la conversación durante la sesión.
-        </p>
-
-        {/* Lista de preguntas */}
-        {guidingQuestions.length > 0 ? (
-          <div className="space-y-2">
-            {guidingQuestions.map((q, idx) => (
-              <div
-                key={idx}
-                className="p-3 rounded-xl border border-gray-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 flex items-start justify-between gap-3 text-xs"
-              >
-                <div className="flex items-start gap-2.5">
-                  <span className="font-mono text-emerald-600 dark:text-emerald-400 font-bold shrink-0">
-                    Q{idx + 1}.
-                  </span>
-                  <p className="text-black dark:text-neutral-200 font-medium italic">
-                    "{q}"
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => handleDeleteQuestion(idx)}
-                  className="p-1 text-gray-400 hover:text-rose-600 rounded-md cursor-pointer shrink-0"
-                >
-                  <Trash2 className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="p-4 rounded-xl border border-dashed border-gray-200 dark:border-neutral-800 text-center text-xs text-gray-400">
-            Aún no has agregado preguntas guía.
-          </div>
-        )}
-
-        {/* Formulario para añadir pregunta guía */}
-        <form onSubmit={handleAddQuestion} className="flex gap-2">
-          <input
-            type="text"
-            value={newQuestionText}
-            onChange={(e) => setNewQuestionText(e.target.value)}
-            placeholder="Escribe una pregunta clave para la sesión..."
-            className="flex-1 px-3.5 py-2.5 text-xs rounded-xl border border-gray-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-black dark:text-white focus:outline-hidden focus:ring-2 focus:ring-emerald-500"
-          />
-          <button
-            type="submit"
-            className="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold cursor-pointer shadow-xs shrink-0"
-          >
-            Añadir Pregunta
-          </button>
-        </form>
-
-        {/* Sugerencias rápidas ontológicas */}
-        <div>
-          <span className="text-[11px] font-semibold text-gray-500 dark:text-neutral-400 flex items-center gap-1 mb-1.5">
-            <Sparkles className="w-3 h-3 text-emerald-500" />
-            <span>Sugerencias ontológicas recomendadas:</span>
-          </span>
-          <div className="flex flex-wrap gap-1.5">
-            {PRESET_GUIDING_QUESTIONS.map((pq, index) => (
-              <button
-                key={index}
-                type="button"
-                onClick={() => handleAddPresetQuestion(pq)}
-                className="text-[11px] px-2.5 py-1 rounded-lg border border-gray-200 dark:border-neutral-800 hover:border-emerald-500 dark:hover:border-emerald-500 text-gray-600 dark:text-neutral-300 bg-white dark:bg-neutral-900 cursor-pointer truncate max-w-sm text-left transition-all"
-                title={pq}
-              >
-                + {pq}
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* SUB-SECCIÓN 3: MATERIALES DE APOYO (SUMINISTROS) */}
+      {/* SUB-SECCIÓN 2: MATERIALES DE APOYO (SUMINISTROS) */}
       <div className="space-y-4 pt-2 border-t border-gray-100 dark:border-neutral-800">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className="w-6 h-6 rounded-lg bg-blue-100 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center text-xs font-bold">
-              C
+              B
             </span>
             <h4 className="text-sm font-bold text-black dark:text-white">
               Materiales de Apoyo (Suministros)

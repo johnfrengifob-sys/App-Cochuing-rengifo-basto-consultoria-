@@ -469,58 +469,12 @@ export const ExperienceEditorManager: React.FC<ExperienceEditorManagerProps> = (
               </div>
             </div>
 
-            {/* Preguntas Guía para el Facilitador */}
-            <div className="bg-white dark:bg-black border border-black dark:border-white p-6 rounded-3xl space-y-4">
-              <div className="flex items-center justify-between pb-3 border-b border-black/10 dark:border-white/10">
-                <div>
-                  <h3 className="text-sm font-bold tracking-tight uppercase font-mono">
-                    2. Preguntas Guía para el Facilitador
-                  </h3>
-                  <p className="text-[11px] text-neutral-500 font-light">
-                    Indagaciones clave para destrabar quiebres y abrir la corporalidad.
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={handleAddGuidingQuestion}
-                  className="px-3 py-1.5 rounded-xl border border-black dark:border-white hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black font-semibold text-[11px] transition-colors flex items-center gap-1.5 cursor-pointer"
-                >
-                  <Plus className="w-3.5 h-3.5" />
-                  <span>Añadir Pregunta</span>
-                </button>
-              </div>
-
-              <div className="space-y-2.5">
-                {(currentExp.guidingQuestions || []).map((q, idx) => (
-                  <div key={idx} className="flex items-start gap-2">
-                    <span className="text-[11px] font-mono font-bold mt-2 text-neutral-400 w-5">
-                      0{idx + 1}.
-                    </span>
-                    <input
-                      type="text"
-                      value={q}
-                      onChange={(e) => handleUpdateGuidingQuestion(idx, e.target.value)}
-                      className="flex-1 px-3.5 py-2 rounded-xl border border-black dark:border-white bg-transparent text-xs text-black dark:text-white focus:outline-none"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => handleDeleteGuidingQuestion(idx)}
-                      className="p-2 rounded-xl text-neutral-400 hover:text-black dark:hover:text-white transition-colors cursor-pointer"
-                      title="Eliminar pregunta"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </div>
-
             {/* Módulos Universales Apilables */}
             <div className="bg-white dark:bg-black border border-black dark:border-white p-6 rounded-3xl space-y-5">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-black/10 dark:border-white/10">
                 <div>
                   <h3 className="text-sm font-bold tracking-tight uppercase font-mono">
-                    3. Módulos Universales (Bloques Apilables)
+                    2. Módulos Universales (Bloques Apilables)
                   </h3>
                   <p className="text-[11px] text-neutral-500 font-light">
                     Apila Bloques de Bienvenida, Indagación y Acción para crear nuevos formatos.
