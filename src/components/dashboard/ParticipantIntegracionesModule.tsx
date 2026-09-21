@@ -220,15 +220,13 @@ export const ParticipantIntegracionesModule: React.FC<ParticipantIntegracionesMo
                     <span>Diligenciar en Forms</span>
                   </a>
 
-                  <a
-                    href={record.sheetUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="px-3.5 py-2 rounded-xl border border-emerald-500/30 bg-emerald-50/50 dark:bg-emerald-950/30 text-emerald-800 dark:text-emerald-300 text-xs font-semibold hover:bg-emerald-100/50 dark:hover:bg-emerald-900/40 transition-colors inline-flex items-center gap-1.5 cursor-pointer shadow-2xs"
+                  <div
+                    className="px-3.5 py-2 rounded-xl border border-emerald-500/30 bg-emerald-50/50 dark:bg-emerald-950/30 text-emerald-800 dark:text-emerald-300 text-xs font-semibold inline-flex items-center gap-1.5 select-none"
+                    title="Tu información individual se consulta y resguarda exclusivamente en este panel"
                   >
-                    <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-                    <span>Ver Hoja en Sheets</span>
-                  </a>
+                    <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                    <span>Expediente Individual Privado</span>
+                  </div>
                 </div>
               </div>
             );

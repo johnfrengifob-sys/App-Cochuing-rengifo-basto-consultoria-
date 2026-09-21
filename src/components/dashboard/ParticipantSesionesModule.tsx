@@ -7,15 +7,6 @@ import {
   Download,
   CheckCircle2,
   Sparkles,
-  ExternalLink,
-  FileSpreadsheet,
-  ShieldCheck,
-  Brain,
-  ChevronDown,
-  Layers,
-  Award,
-  Circle,
-  ArrowRight,
 } from 'lucide-react';
 import { Session, PostSessionForm, User } from '../../types';
 import { PROGRAM_NODES } from '../../services/store';
@@ -40,7 +31,6 @@ export const ParticipantSesionesModule: React.FC<ParticipantSesionesModuleProps>
   activeUser,
   onOpenBitacora,
   onDownloadSessionPDF,
-  onGoToIntegrations,
 }) => {
   // Filtro de ciclo: 0 = Todos, 1 = Ciclo 1 (S1-S4), 2 = Ciclo 2 (S5-S8), 3 = Ciclo 3 (S9-S12)
   const [selectedCycleFilter, setSelectedCycleFilter] = useState<number>(0);
@@ -148,7 +138,7 @@ export const ParticipantSesionesModule: React.FC<ParticipantSesionesModuleProps>
                 </span>
               </div>
               <p className="text-xs text-neutral-600 dark:text-neutral-400 font-light mt-0.5">
-                Ruta integral de 12 encuentros reflexivos individuales sincronizados con Google Meet, Formularios y Hojas de Cálculo.
+                Ruta integral de 12 encuentros reflexivos individuales de acompañamiento ontológico.
               </p>
             </div>
           </div>
@@ -202,17 +192,6 @@ export const ParticipantSesionesModule: React.FC<ParticipantSesionesModuleProps>
               );
             })}
           </div>
-
-          {onGoToIntegrations && (
-            <button
-              type="button"
-              onClick={onGoToIntegrations}
-              className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline inline-flex items-center gap-1.5 cursor-pointer font-medium"
-            >
-              <FileSpreadsheet className="w-3.5 h-3.5" />
-              <span>Ver Base de Datos en Google Sheets</span>
-            </button>
-          )}
         </div>
       </div>
 
@@ -317,48 +296,6 @@ export const ParticipantSesionesModule: React.FC<ParticipantSesionesModuleProps>
                 <p className="text-neutral-800 dark:text-neutral-200 font-medium italic">
                   «{session.openingQuestion || '¿Qué es importante para ti traer a este espacio hoy?'}»
                 </p>
-              </div>
-
-              {/* Acuerdos & Bitácora en Google Workspace (Forms + Sheets) */}
-              <div className="pt-1 flex items-center justify-between gap-2 border-t border-black/5 dark:border-white/5 flex-wrap text-[11px]">
-                <div className="flex items-center gap-2">
-                  <a
-                    href={session.agreementFormUrl || OFFICIAL_FORMS_SHEETS_BASE_MAP.sesiones_individuales.formUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-neutral-600 dark:text-neutral-400 hover:text-black dark:hover:text-white inline-flex items-center gap-1 font-mono transition-colors"
-                    title="Ver Formulario de Acuerdo en Google Forms"
-                  >
-                    <ShieldCheck className="w-3 h-3 text-emerald-500" />
-                    <span>Acuerdo 1 a 1 (Forms)</span>
-                    <ExternalLink className="w-2.5 h-2.5 opacity-60" />
-                  </a>
-
-                  <span className="text-neutral-300 dark:text-neutral-700">•</span>
-
-                  <a
-                    href={session.bitacoraFormUrl || OFFICIAL_FORMS_SHEETS_BASE_MAP.bitacora_sesiones_b2b.formUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-neutral-600 dark:text-neutral-400 hover:text-black dark:hover:text-white inline-flex items-center gap-1 font-mono transition-colors"
-                    title="Ver Formulario de Bitácora B2B en Google Forms"
-                  >
-                    <Brain className="w-3 h-3 text-indigo-500" />
-                    <span>Bitácora B2B (Forms)</span>
-                    <ExternalLink className="w-2.5 h-2.5 opacity-60" />
-                  </a>
-                </div>
-
-                <a
-                  href={session.bitacoraSheetUrl || OFFICIAL_FORMS_SHEETS_BASE_MAP.bitacora_sesiones_b2b.sheetUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="text-emerald-700 dark:text-emerald-400 hover:underline inline-flex items-center gap-1 font-mono transition-colors text-[10px]"
-                  title="Ver Hoja de Respuestas en Google Sheets"
-                >
-                  <FileSpreadsheet className="w-3 h-3 text-emerald-500" />
-                  <span>Google Sheets</span>
-                </a>
               </div>
 
               {/* Síntesis si la sesión tiene PostForm completado */}
