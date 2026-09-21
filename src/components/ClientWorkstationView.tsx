@@ -919,11 +919,11 @@ export const ClientWorkstationView: React.FC<ClientWorkstationViewProps> = ({
                 Ruta del Programa (12 Semanas)
               </span>
               <div className="text-xs font-semibold text-black dark:text-white mt-0.5">
-                Nodo Actual: Sesión {currentStep} de 6 — {currentNodeInfo.sessionTitle}
+                Nodo Actual: Sesión {currentStep} de 12 — {currentNodeInfo.sessionTitle}
               </div>
             </div>
 
-            {currentStep < 6 && (
+            {currentStep < 12 && (
               <button
                 type="button"
                 onClick={handleAdvanceStep}
@@ -934,7 +934,7 @@ export const ClientWorkstationView: React.FC<ClientWorkstationViewProps> = ({
             )}
           </div>
 
-          <div className="grid grid-cols-6 gap-2">
+          <div className="grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-12 gap-1.5">
             {PROGRAM_NODES.map((node) => {
               const isDone = node.step < currentStep;
               const isCurrent = node.step === currentStep;

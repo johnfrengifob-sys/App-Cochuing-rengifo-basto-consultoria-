@@ -72,6 +72,28 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
     'resumen' | 'talleres' | 'sesiones' | 'integraciones' | 'temario'
   >('resumen');
 
+  // Estado para los botones desplegables del menú
+  const [openDropdown, setOpenDropdown] = useState<'talleres' | 'sesiones' | 'mobile' | null>(null);
+
+  // Cerrar menús al hacer click afuera o presionar Escape
+  useEffect(() => {
+    const handleGlobalClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (target && !target.closest('.client-nav-dropdown-container')) {
+        setOpenDropdown(null);
+      }
+    };
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setOpenDropdown(null);
+    };
+    document.addEventListener('click', handleGlobalClick);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('click', handleGlobalClick);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, []);
+
   // Estados de datos sincronizados con Store y Firestore
   const [sessions, setSessions] = useState<Session[]>(() =>
     OntologicalStore.getSessionsForClient(client.uid)
@@ -352,6 +374,55 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
   useEffect(() => {
     setSelectedDashboardWorkshopId(defaultDashboardWorkshopId);
   }, [defaultDashboardWorkshopId]);
+
+  // Estación del programa actual (1 a 12)
+  const currentNodeInfo: ProgramNodeInfo = useMemo(() => {
+    return (
+      PROGRAM_NODES.find((n) => n.step === currentSessionNumber) ||
+      PROGRAM_NODES[0]
+    );
+  }, [currentSessionNumber]);
+
+  // Taller Troncal correspondiente al Ciclo en curso
+  const currentCycleWorkshop: CoreWorkshopTrack = useMemo(() => {
+    if (currentCycle === 1) return CORE_WORKSHOPS[0];
+    if (currentCycle === 2) return CORE_WORKSHOPS[1];
+    return CORE_WORKSHOPS[2];
+  }, [currentCycle]);
+
+  // Estado de acreditación del taller troncal
+  const isCurrentCycleWorkshopAttended = useMemo(() => {
+    return isWorkshopAttended(currentCycleWorkshop);
+  }, [currentCycleWorkshop, activeUser, cronogramaEvents]);
+
+  // Generador de enlace de Google Calendar para la sesión actual
+  const currentSessionGCalUrl = useMemo(() => {
+    try {
+      const startDate = new Date(currentSession.date);
+      if (isNaN(startDate.getTime())) {
+        return OntologicalStore.getCalendarUrl();
+      }
+      const endDate = new Date(startDate.getTime() + (currentSession.durationMinutes || 60) * 60000);
+      const pad = (n: number) => (n < 10 ? '0' + n : String(n));
+      const toGCalIso = (d: Date) =>
+        String(d.getUTCFullYear()) +
+        pad(d.getUTCMonth() + 1) +
+        pad(d.getUTCDate()) +
+        'T' +
+        pad(d.getUTCHours()) +
+        pad(d.getUTCMinutes()) +
+        '00Z';
+
+      const title = encodeURIComponent(`Sesión Ontológica RBC #${currentSessionNumber}: ${activeUser.name}`);
+      const details = encodeURIComponent(
+        `Sesión ${currentSessionNumber} de 12 • Programa RBC\nTema: ${currentNodeInfo.sessionTitle}\nFoco: ${currentNodeInfo.objective}\nEnlace Google Meet: ${currentSession.meetLink || 'https://meet.google.com/rbc-sesion'}\n\nCoordinado desde Plataforma RBC.`
+      );
+      const location = encodeURIComponent(currentSession.meetLink || 'Google Meet');
+      return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${toGCalIso(startDate)}/${toGCalIso(endDate)}&details=${details}&location=${location}`;
+    } catch {
+      return OntologicalStore.getCalendarUrl();
+    }
+  }, [currentSession, currentSessionNumber, activeUser.name, currentNodeInfo]);
 
   const selectedWorkshopEvent = useMemo(() => {
     const found = cronogramaEvents.find((evt) => evt.id === selectedDashboardWorkshopId);
@@ -640,70 +711,257 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
           </div>
 
           {/* ========================================================================= */}
-          {/* BARRA DE NAVEGACIÓN PRINCIPAL: PANELES DE TALLERES, SESIONES E INTEGRACIONES */}
+          {/* BARRA DE NAVEGACIÓN PRINCIPAL: MENÚ CON BOTONES DESPLEGABLES              */}
           {/* ========================================================================= */}
-          <nav aria-label="Secciones del Panel de Clientes" className="pt-2 border-t border-black/5 dark:border-white/5">
-            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
-              {[
-                {
-                  id: 'resumen',
-                  label: 'Resumen & Momento Actual',
-                  icon: Sparkles,
-                  badge: null,
-                },
-                {
-                  id: 'talleres',
-                  label: 'Paneles de Talleres Ontológicos',
-                  icon: BookOpen,
-                  badge: `${accreditedWorkshopsCount}/3`,
-                },
-                {
-                  id: 'sesiones',
-                  label: 'Paneles de Sesiones 1 a 1',
-                  icon: Calendar,
-                  badge: `${completedSessionsCount}/12`,
-                },
-                {
-                  id: 'integraciones',
-                  label: 'Formularios & Google Sheets',
-                  icon: FileSpreadsheet,
-                  badge: '4 Conectadas',
-                },
-                {
-                  id: 'temario',
-                  label: 'Temario & Syllabus',
-                  icon: BookMarked,
-                  badge: '12 Estaciones',
-                },
-              ].map(({ id, label, icon: Icon, badge }) => {
-                const isSelected = dashboardTab === id;
-                return (
-                  <button
-                    key={id}
-                    type="button"
-                    onClick={() => setDashboardTab(id as any)}
-                    className={`px-3.5 py-2.5 rounded-2xl text-xs font-mono font-medium transition-all flex items-center gap-2 shrink-0 cursor-pointer ${
-                      isSelected
-                        ? 'bg-black text-white dark:bg-white dark:text-black font-bold shadow-sm'
-                        : 'text-neutral-600 dark:text-neutral-400 hover:text-black dark:hover:text-white hover:bg-white/40 dark:hover:bg-neutral-900/40 border border-transparent'
+          <nav aria-label="Secciones del Panel de Clientes" className="pt-2.5 border-t border-black/5 dark:border-white/5 client-nav-dropdown-container">
+            {/* Vista Desktop / Tablet: Botones Desplegables Organizados para Mayor Claridad */}
+            <div className="hidden sm:flex items-center gap-2">
+              {/* Botón 1: Resumen General (Acceso Directo) */}
+              <button
+                type="button"
+                onClick={() => {
+                  setDashboardTab('resumen');
+                  setOpenDropdown(null);
+                }}
+                className={`px-4 py-2.5 rounded-2xl text-xs font-mono font-medium transition-all flex items-center gap-2 cursor-pointer ${
+                  dashboardTab === 'resumen'
+                    ? 'bg-black text-white dark:bg-white dark:text-black font-bold shadow-xs'
+                    : 'text-neutral-700 dark:text-neutral-300 hover:text-black dark:hover:text-white hover:bg-white/50 dark:hover:bg-neutral-900/50 border border-black/5 dark:border-white/5'
+                }`}
+              >
+                <Sparkles className="w-4 h-4 shrink-0 text-amber-500" />
+                <span>Resumen General</span>
+              </button>
+
+              {/* Botón Desplegable 2: Talleres & Formación Ontológica */}
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setOpenDropdown(openDropdown === 'talleres' ? null : 'talleres')}
+                  className={`px-4 py-2.5 rounded-2xl text-xs font-mono font-medium transition-all flex items-center gap-2 cursor-pointer border ${
+                    dashboardTab === 'talleres' || dashboardTab === 'temario'
+                      ? 'bg-black/90 text-white dark:bg-white dark:text-black font-bold border-transparent shadow-xs'
+                      : 'text-neutral-700 dark:text-neutral-300 hover:text-black dark:hover:text-white hover:bg-white/50 dark:hover:bg-neutral-900/50 border-black/5 dark:border-white/5'
+                  }`}
+                  aria-expanded={openDropdown === 'talleres'}
+                >
+                  <BookOpen className="w-4 h-4 shrink-0 text-indigo-500" />
+                  <span>Talleres & Temario</span>
+                  <span className="text-[9px] font-mono px-2 py-0.5 rounded-full bg-black/10 dark:bg-white/10">
+                    {accreditedWorkshopsCount}/3
+                  </span>
+                  <ChevronDown
+                    className={`w-3.5 h-3.5 transition-transform duration-200 ${
+                      openDropdown === 'talleres' ? 'rotate-180' : ''
                     }`}
-                  >
-                    <Icon className="w-4 h-4 shrink-0" />
-                    <span>{label}</span>
-                    {badge && (
-                      <span
-                        className={`text-[9px] px-2 py-0.2 rounded-full font-mono ${
-                          isSelected
-                            ? 'bg-white/20 text-white dark:bg-black/20 dark:text-black'
-                            : 'bg-black/5 dark:bg-white/10 text-neutral-600 dark:text-neutral-400'
-                        }`}
-                      >
-                        {badge}
-                      </span>
-                    )}
-                  </button>
-                );
-              })}
+                  />
+                </button>
+
+                {openDropdown === 'talleres' && (
+                  <div className="absolute top-full left-0 mt-2 w-80 rounded-2xl border border-black/10 dark:border-white/15 bg-white/95 dark:bg-neutral-900/95 backdrop-blur-2xl shadow-xl z-50 p-2 space-y-1">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setDashboardTab('talleres');
+                        setOpenDropdown(null);
+                      }}
+                      className={`w-full p-3 rounded-xl text-left transition-colors flex items-start gap-3 cursor-pointer ${
+                        dashboardTab === 'talleres'
+                          ? 'bg-black/5 dark:bg-white/10 text-black dark:text-white font-bold'
+                          : 'hover:bg-black/5 dark:hover:bg-white/5 text-neutral-700 dark:text-neutral-300'
+                      }`}
+                    >
+                      <div className="w-8 h-8 rounded-lg bg-amber-500/15 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0 mt-0.5">
+                        <BookOpen className="w-4 h-4" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-bold font-mono">Paneles de Talleres</span>
+                          <span className="text-[10px] font-mono font-semibold text-amber-600 dark:text-amber-400">
+                            {accreditedWorkshopsCount}/3 Acreditados
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-neutral-500 dark:text-neutral-400 leading-tight mt-0.5">
+                          Raíz, Tallo y Florecimiento • Salas Meet, formularios y memorias PDF.
+                        </p>
+                      </div>
+                      {dashboardTab === 'talleres' && <Check className="w-4 h-4 text-black dark:text-white shrink-0 mt-1" />}
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setDashboardTab('temario');
+                        setOpenDropdown(null);
+                      }}
+                      className={`w-full p-3 rounded-xl text-left transition-colors flex items-start gap-3 cursor-pointer ${
+                        dashboardTab === 'temario'
+                          ? 'bg-black/5 dark:bg-white/10 text-black dark:text-white font-bold'
+                          : 'hover:bg-black/5 dark:hover:bg-white/5 text-neutral-700 dark:text-neutral-300'
+                      }`}
+                    >
+                      <div className="w-8 h-8 rounded-lg bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0 mt-0.5">
+                        <BookMarked className="w-4 h-4" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-bold font-mono">Temario & Syllabus</span>
+                          <span className="text-[10px] font-mono text-neutral-500 dark:text-neutral-400">
+                            12 Estaciones
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-neutral-500 dark:text-neutral-400 leading-tight mt-0.5">
+                          Ejes temáticos, distinciones y micro-prácticas somáticas del programa.
+                        </p>
+                      </div>
+                      {dashboardTab === 'temario' && <Check className="w-4 h-4 text-black dark:text-white shrink-0 mt-1" />}
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* Botón Desplegable 3: Acompañamiento 1 a 1 & Expediente Oficial */}
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setOpenDropdown(openDropdown === 'sesiones' ? null : 'sesiones')}
+                  className={`px-4 py-2.5 rounded-2xl text-xs font-mono font-medium transition-all flex items-center gap-2 cursor-pointer border ${
+                    dashboardTab === 'sesiones' || dashboardTab === 'integraciones'
+                      ? 'bg-black/90 text-white dark:bg-white dark:text-black font-bold border-transparent shadow-xs'
+                      : 'text-neutral-700 dark:text-neutral-300 hover:text-black dark:hover:text-white hover:bg-white/50 dark:hover:bg-neutral-900/50 border-black/5 dark:border-white/5'
+                  }`}
+                  aria-expanded={openDropdown === 'sesiones'}
+                >
+                  <Calendar className="w-4 h-4 shrink-0 text-emerald-500" />
+                  <span>Sesiones & Expedientes</span>
+                  <span className="text-[9px] font-mono px-2 py-0.5 rounded-full bg-black/10 dark:bg-white/10">
+                    {completedSessionsCount}/12
+                  </span>
+                  <ChevronDown
+                    className={`w-3.5 h-3.5 transition-transform duration-200 ${
+                      openDropdown === 'sesiones' ? 'rotate-180' : ''
+                    }`}
+                  />
+                </button>
+
+                {openDropdown === 'sesiones' && (
+                  <div className="absolute top-full left-0 mt-2 w-80 rounded-2xl border border-black/10 dark:border-white/15 bg-white/95 dark:bg-neutral-900/95 backdrop-blur-2xl shadow-xl z-50 p-2 space-y-1">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setDashboardTab('sesiones');
+                        setOpenDropdown(null);
+                      }}
+                      className={`w-full p-3 rounded-xl text-left transition-colors flex items-start gap-3 cursor-pointer ${
+                        dashboardTab === 'sesiones'
+                          ? 'bg-black/5 dark:bg-white/10 text-black dark:text-white font-bold'
+                          : 'hover:bg-black/5 dark:hover:bg-white/5 text-neutral-700 dark:text-neutral-300'
+                      }`}
+                    >
+                      <div className="w-8 h-8 rounded-lg bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 mt-0.5">
+                        <Calendar className="w-4 h-4" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-bold font-mono">Sesiones 1 a 1</span>
+                          <span className="text-[10px] font-mono font-semibold text-emerald-600 dark:text-emerald-400">
+                            {completedSessionsCount}/12 Hechas
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-neutral-500 dark:text-neutral-400 leading-tight mt-0.5">
+                          Encuentros quincenales, enlaces Meet, bitácoras y memorias PDF.
+                        </p>
+                      </div>
+                      {dashboardTab === 'sesiones' && <Check className="w-4 h-4 text-black dark:text-white shrink-0 mt-1" />}
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setDashboardTab('integraciones');
+                        setOpenDropdown(null);
+                      }}
+                      className={`w-full p-3 rounded-xl text-left transition-colors flex items-start gap-3 cursor-pointer ${
+                        dashboardTab === 'integraciones'
+                          ? 'bg-black/5 dark:bg-white/10 text-black dark:text-white font-bold'
+                          : 'hover:bg-black/5 dark:hover:bg-white/5 text-neutral-700 dark:text-neutral-300'
+                      }`}
+                    >
+                      <div className="w-8 h-8 rounded-lg bg-blue-500/15 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0 mt-0.5">
+                        <FileSpreadsheet className="w-4 h-4" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-bold font-mono">Bases de Datos & Sheets</span>
+                          <span className="text-[10px] font-mono text-blue-600 dark:text-blue-400">
+                            4 Conectadas
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-neutral-500 dark:text-neutral-400 leading-tight mt-0.5">
+                          Acuerdos y bitácoras sincronizados en vivo con Google Workspace.
+                        </p>
+                      </div>
+                      {dashboardTab === 'integraciones' && <Check className="w-4 h-4 text-black dark:text-white shrink-0 mt-1" />}
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Vista Móvil: Selector Desplegable Completo */}
+            <div className="sm:hidden relative">
+              <button
+                type="button"
+                onClick={() => setOpenDropdown(openDropdown === 'mobile' ? null : 'mobile')}
+                className="w-full px-4 py-3 rounded-2xl border border-black/10 dark:border-white/10 bg-white/40 dark:bg-neutral-900/40 backdrop-blur-md flex items-center justify-between text-xs font-mono font-bold text-black dark:text-white cursor-pointer shadow-xs"
+              >
+                <div className="flex items-center gap-2">
+                  <span className="text-neutral-400 uppercase text-[10px]">Ver Panel:</span>
+                  <span>
+                    {dashboardTab === 'resumen' && 'Resumen General'}
+                    {dashboardTab === 'talleres' && 'Talleres Ontológicos'}
+                    {dashboardTab === 'temario' && 'Temario & Syllabus'}
+                    {dashboardTab === 'sesiones' && 'Sesiones 1 a 1'}
+                    {dashboardTab === 'integraciones' && 'Bases & Google Sheets'}
+                  </span>
+                </div>
+                <ChevronDown className={`w-4 h-4 transition-transform ${openDropdown === 'mobile' ? 'rotate-180' : ''}`} />
+              </button>
+
+              {openDropdown === 'mobile' && (
+                <div className="absolute top-full left-0 right-0 mt-2 rounded-2xl border border-black/10 dark:border-white/15 bg-white/95 dark:bg-neutral-900/95 backdrop-blur-2xl shadow-xl z-50 p-2 space-y-1">
+                  {[
+                    { id: 'resumen', label: 'Resumen General', desc: 'Métricas, accesos rápidos y taller activo', icon: Sparkles },
+                    { id: 'talleres', label: 'Talleres Ontológicos', desc: `Raíz, Tallo, Florecimiento (${accreditedWorkshopsCount}/3)`, icon: BookOpen },
+                    { id: 'temario', label: 'Temario & Syllabus', desc: '12 Estaciones Reflexivas', icon: BookMarked },
+                    { id: 'sesiones', label: 'Sesiones 1 a 1', desc: `12 Sesiones, Meet y Bitácoras (${completedSessionsCount}/12)`, icon: Calendar },
+                    { id: 'integraciones', label: 'Bases & Google Sheets', desc: 'Expedientes oficiales en vivo', icon: FileSpreadsheet },
+                  ].map((item) => (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => {
+                        setDashboardTab(item.id as any);
+                        setOpenDropdown(null);
+                      }}
+                      className={`w-full p-2.5 rounded-xl text-left flex items-center justify-between text-xs font-mono cursor-pointer ${
+                        dashboardTab === item.id
+                          ? 'bg-black text-white dark:bg-white dark:text-black font-bold'
+                          : 'text-neutral-700 dark:text-neutral-300 hover:bg-black/5 dark:hover:bg-white/5'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <item.icon className="w-4 h-4 shrink-0" />
+                        <div>
+                          <div>{item.label}</div>
+                          <div className="text-[10px] opacity-70 font-sans">{item.desc}</div>
+                        </div>
+                      </div>
+                      {dashboardTab === item.id && <Check className="w-4 h-4 shrink-0" />}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
           </nav>
         </header>
@@ -868,183 +1126,303 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
               />
             </section>
 
-            {/* Tu Momento Actual: Fotografía, Pregunta y Próximo Paso */}
+            {/* Tu Momento Actual: Fotografía, Pregunta y Próximo Paso Organizado con la Nueva Información */}
             <section
               id="tu-momento-actual"
               className="rounded-3xl border border-black/10 dark:border-white/15 bg-white/20 dark:bg-neutral-950/30 backdrop-blur-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow"
             >
-              <div className="relative h-56 sm:h-64 w-full overflow-hidden border-b border-black/10 dark:border-white/10">
+              {/* Header Visual con Fotografía y Estado Actual */}
+              <div className="relative h-60 sm:h-72 w-full overflow-hidden border-b border-black/10 dark:border-white/10">
                 <img
                   src={currentPhoto.url}
                   alt={currentPhoto.title}
                   referrerPolicy="no-referrer"
                   className="w-full h-full object-cover transition-transform duration-700 hover:scale-102"
                 />
-                <div className="absolute top-4 left-4 bg-black/90 text-white px-3 py-1 text-[10px] font-bold uppercase tracking-widest rounded-full shadow-xs flex items-center gap-1.5">
-                  <span className={`w-1.5 h-1.5 rounded-full ${activeCycleAccent.dot}`} />
-                  <span>Tu momento actual</span>
+                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-black/20" />
+
+                <div className="absolute top-4 left-4 flex flex-wrap items-center gap-2">
+                  <div className="bg-black/90 text-white px-3.5 py-1.5 text-[10px] font-bold uppercase tracking-widest rounded-full shadow-xs flex items-center gap-2 border border-white/20">
+                    <span className={`w-2 h-2 rounded-full ${activeCycleAccent.dot} animate-pulse`} />
+                    <span>Tu Momento Actual</span>
+                  </div>
+                  <span className="bg-white/90 dark:bg-black/80 text-black dark:text-white px-3 py-1 text-[10px] font-bold uppercase tracking-wider rounded-full backdrop-blur-md shadow-xs border border-black/10 dark:border-white/20">
+                    Ciclo {currentCycle}: {currentCycle === 1 ? 'Raíz' : currentCycle === 2 ? 'Tallo' : 'Florecimiento'} • Sesión {currentSessionNumber} de 12
+                  </span>
                 </div>
 
-                <div className="absolute bottom-4 left-4 right-4 bg-black/75 backdrop-blur-md text-white p-3.5 rounded-2xl border border-white/15">
-                  <span className="text-[10px] uppercase tracking-widest text-neutral-300 block font-mono">
-                    {currentPhoto.title}
-                  </span>
-                  <p className="text-xs font-light text-neutral-200 mt-0.5 leading-snug">
-                    {currentPhoto.description}
-                  </p>
+                <div className="absolute bottom-4 left-4 right-4 text-white">
+                  <div className="bg-black/60 backdrop-blur-md p-4 rounded-2xl border border-white/15 max-w-3xl">
+                    <div className="text-[10px] uppercase tracking-widest text-emerald-400 font-mono font-bold">
+                      Estación #{currentSessionNumber}: {currentNodeInfo.weekLabel}
+                    </div>
+                    <h2 className="text-base sm:text-lg font-bold text-white mt-1 leading-snug">
+                      {currentNodeInfo.sessionTitle}
+                    </h2>
+                    <p className="text-xs font-light text-neutral-200 mt-1 leading-relaxed line-clamp-2">
+                      {currentNodeInfo.objective}
+                    </p>
+                  </div>
                 </div>
               </div>
 
               <div className="p-6 sm:p-8 space-y-6">
-                {/* Pregunta de Apertura Ontológica */}
-                <div className="p-5 rounded-2xl bg-white/30 dark:bg-neutral-900/40 backdrop-blur-md border border-black/10 dark:border-white/10 space-y-2 shadow-xs">
-                  <div>
+                {/* 3 Pilares Fundamentales del Momento Actual (Fácil lectura, sin repetición) */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {/* Pilar 1: Próxima Sesión 1 a 1 */}
+                  <div className="p-5 rounded-2xl border border-black/10 dark:border-white/10 bg-white/30 dark:bg-neutral-900/40 backdrop-blur-md flex flex-col justify-between space-y-4">
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-500 dark:text-neutral-400 font-mono flex items-center gap-1.5">
+                          <Clock className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                          Sesión Individual
+                        </span>
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20">
+                          {currentSession.status === 'completed' ? 'Completada' : 'Programada'}
+                        </span>
+                      </div>
+                      <div className="text-sm font-bold text-black dark:text-white">
+                        Sesión #{currentSessionNumber} de 12
+                      </div>
+                      <p className="text-xs text-neutral-600 dark:text-neutral-400">
+                        {formatHumanDate(currentSession.date)}
+                      </p>
+                    </div>
+
+                    <div className="pt-2 flex flex-col gap-2">
+                      <a
+                        href={currentSession.meetLink || 'https://meet.google.com/new'}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="w-full px-3.5 py-2 rounded-xl bg-black text-white dark:bg-white dark:text-black text-xs font-semibold hover:opacity-90 transition-opacity flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
+                      >
+                        <Video className="w-3.5 h-3.5 text-emerald-400 dark:text-emerald-600" />
+                        <span>Unirme por Meet</span>
+                      </a>
+                      <div className="flex items-center gap-2">
+                        <a
+                          href={currentSessionGCalUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="flex-1 px-2.5 py-1.5 rounded-xl border border-black/10 dark:border-white/10 bg-white/50 dark:bg-neutral-800/60 text-[11px] font-medium text-neutral-700 dark:text-neutral-200 hover:bg-white/80 dark:hover:bg-neutral-700 transition-colors text-center inline-flex items-center justify-center gap-1"
+                        >
+                          <Calendar className="w-3 h-3 text-neutral-500" />
+                          <span>Google Calendar</span>
+                        </a>
+                        <button
+                          type="button"
+                          onClick={() => setDashboardTab('sesiones')}
+                          className="px-2.5 py-1.5 rounded-xl border border-black/10 dark:border-white/10 bg-white/50 dark:bg-neutral-800/60 text-[11px] font-medium text-neutral-700 dark:text-neutral-200 hover:bg-white/80 dark:hover:bg-neutral-700 transition-colors cursor-pointer"
+                          title="Ver todas las sesiones"
+                        >
+                          Ver 12
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Pilar 2: Taller Troncal RBC en Curso */}
+                  <div className="p-5 rounded-2xl border border-black/10 dark:border-white/10 bg-white/30 dark:bg-neutral-900/40 backdrop-blur-md flex flex-col justify-between space-y-4">
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-500 dark:text-neutral-400 font-mono flex items-center gap-1.5">
+                          <Award className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
+                          Taller Troncal
+                        </span>
+                        <span
+                          className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+                            isCurrentCycleWorkshopAttended
+                              ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-500/20'
+                              : 'bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/20'
+                          }`}
+                        >
+                          {isCurrentCycleWorkshopAttended ? 'Acreditado ✓' : 'En Curso'}
+                        </span>
+                      </div>
+                      <div className="text-sm font-bold text-black dark:text-white line-clamp-1">
+                        {currentCycleWorkshop.title}
+                      </div>
+                      <p className="text-xs text-neutral-600 dark:text-neutral-400">
+                        Fase {currentCycleWorkshop.stageName} • {currentCycleWorkshop.levelBadge}
+                      </p>
+                    </div>
+
+                    <div className="pt-2 flex flex-col gap-2">
+                      <a
+                        href={currentCycleWorkshop.meetLink || 'https://meet.google.com/rbc-conversatorio-ontologico'}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="w-full px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold transition-colors flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
+                      >
+                        <Video className="w-3.5 h-3.5 text-indigo-200" />
+                        <span>Sala del Taller (Meet)</span>
+                      </a>
+                      <button
+                        type="button"
+                        onClick={() => setDashboardTab('talleres')}
+                        className="w-full px-2.5 py-1.5 rounded-xl border border-black/10 dark:border-white/10 bg-white/50 dark:bg-neutral-800/60 text-[11px] font-medium text-neutral-700 dark:text-neutral-200 hover:bg-white/80 dark:hover:bg-neutral-700 transition-colors text-center inline-flex items-center justify-center gap-1 cursor-pointer"
+                      >
+                        <BookOpen className="w-3 h-3 text-neutral-500" />
+                        <span>Ver Temario & Memoria</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Pilar 3: Expedientes Oficiales (Google Forms & Sheets) */}
+                  <div className="p-5 rounded-2xl border border-black/10 dark:border-white/10 bg-white/30 dark:bg-neutral-900/40 backdrop-blur-md flex flex-col justify-between space-y-4">
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-500 dark:text-neutral-400 font-mono flex items-center gap-1.5">
+                          <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                          Bases de Datos & Form
+                        </span>
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-500/15 text-blue-700 dark:text-blue-300 border border-blue-500/20">
+                          En Vivo
+                        </span>
+                      </div>
+                      <div className="text-sm font-bold text-black dark:text-white">
+                        Expediente Oficial
+                      </div>
+                      <p className="text-xs text-neutral-600 dark:text-neutral-400">
+                        Acuerdos y bitácoras sincronizados en Google Workspace.
+                      </p>
+                    </div>
+
+                    <div className="pt-2 space-y-1.5">
+                      <div className="flex items-center gap-1.5">
+                        <a
+                          href={OFFICIAL_FORMS_SHEETS_BASE_MAP.sesiones_individuales.formUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="flex-1 px-2.5 py-1.5 rounded-xl border border-black/10 dark:border-white/10 bg-white/50 dark:bg-neutral-800/60 text-[10px] font-semibold text-neutral-800 dark:text-neutral-200 hover:bg-white/80 dark:hover:bg-neutral-700 transition-colors truncate inline-flex items-center gap-1"
+                          title="Formulario de Acuerdo de Sesiones Individuales"
+                        >
+                          <FileText className="w-3 h-3 text-indigo-500 shrink-0" />
+                          <span>Acuerdo Form</span>
+                        </a>
+                        <a
+                          href={OFFICIAL_FORMS_SHEETS_BASE_MAP.sesiones_individuales.sheetUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="p-1.5 rounded-xl border border-black/10 dark:border-white/10 bg-white/50 dark:bg-neutral-800/60 text-emerald-600 dark:text-emerald-400 hover:bg-white/80 dark:hover:bg-neutral-700 transition-colors"
+                          title="Hoja de Cálculo Acuerdo Sesiones Sheets"
+                        >
+                          <FileSpreadsheet className="w-3.5 h-3.5" />
+                        </a>
+                      </div>
+
+                      <div className="flex items-center gap-1.5">
+                        <a
+                          href={OFFICIAL_FORMS_SHEETS_BASE_MAP.bitacora_sesiones_b2b.formUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="flex-1 px-2.5 py-1.5 rounded-xl border border-black/10 dark:border-white/10 bg-white/50 dark:bg-neutral-800/60 text-[10px] font-semibold text-neutral-800 dark:text-neutral-200 hover:bg-white/80 dark:hover:bg-neutral-700 transition-colors truncate inline-flex items-center gap-1"
+                          title="Formulario Bitácora Sesiones B2B"
+                        >
+                          <FileText className="w-3 h-3 text-emerald-500 shrink-0" />
+                          <span>Bitácora Form</span>
+                        </a>
+                        <a
+                          href={OFFICIAL_FORMS_SHEETS_BASE_MAP.bitacora_sesiones_b2b.sheetUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="p-1.5 rounded-xl border border-black/10 dark:border-white/10 bg-white/50 dark:bg-neutral-800/60 text-emerald-600 dark:text-emerald-400 hover:bg-white/80 dark:hover:bg-neutral-700 transition-colors"
+                          title="Hoja de Cálculo Bitácora Sesiones Sheets"
+                        >
+                          <FileSpreadsheet className="w-3.5 h-3.5" />
+                        </a>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Pregunta de Apertura Ontológica & Foco Somático */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Pregunta de Apertura */}
+                  <div className="p-5 rounded-2xl bg-white/30 dark:bg-neutral-900/40 backdrop-blur-md border border-black/10 dark:border-white/10 space-y-2 shadow-xs">
                     <span className="text-[10px] font-bold uppercase tracking-widest text-neutral-500 dark:text-neutral-400 block font-mono">
-                      Pregunta de Apertura Ontológica
+                      Pregunta de Apertura del Momento
                     </span>
-                    <h2 className="text-base sm:text-lg font-normal text-black dark:text-white leading-snug mt-1">
-                      {isCycleMilestone
-                        ? '«¿Qué grandes descubrimientos o patrones has notado en estas semanas y cómo sientes que tu perspectiva ha cambiado?»'
-                        : '«¿Qué es importante para ti traer a este espacio hoy?»'}
-                    </h2>
-                    <p className="text-xs text-neutral-600 dark:text-neutral-400 font-light leading-relaxed mt-1">
-                      Este espacio nace completamente abierto a tu emergente. No hay temas predeterminados ni respuestas correctas. Conversaremos sobre lo que esté vivo en ti.
+                    <h3 className="text-sm sm:text-base font-medium text-black dark:text-white leading-snug">
+                      «{currentNodeInfo.keyQuestion || (isCycleMilestone
+                        ? '¿Qué grandes descubrimientos o patrones has notado en estas semanas y cómo sientes que tu perspectiva ha cambiado?'
+                        : '¿Qué es importante para ti traer a este espacio hoy?')}»
+                    </h3>
+                    <p className="text-xs text-neutral-600 dark:text-neutral-400 font-light leading-relaxed">
+                      Espacio abierto al emergente. Conversamos sobre lo que hoy demanda sentido y coherencia en tus decisiones.
+                    </p>
+                  </div>
+
+                  {/* Foco Somático & Micro-Práctica */}
+                  <div className="p-5 rounded-2xl bg-white/30 dark:bg-neutral-900/40 backdrop-blur-md border border-black/10 dark:border-white/10 space-y-2 shadow-xs">
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-neutral-500 dark:text-neutral-400 block font-mono flex items-center gap-1">
+                      <Brain className="w-3 h-3 text-indigo-500" />
+                      Foco Somático & Encarnación
+                    </span>
+                    <h3 className="text-sm sm:text-base font-medium text-black dark:text-white leading-snug">
+                      {currentNodeInfo.dailyMicroPractice?.title || 'Pausa de Coherencia y Centramiento'}
+                    </h3>
+                    <p className="text-xs text-neutral-600 dark:text-neutral-400 font-light leading-relaxed">
+                      {currentNodeInfo.dailyMicroPractice?.description ||
+                        currentNodeInfo.methodology?.somatic ||
+                        'Calibración de la tensión diafragmática y presencia corporal previa a cada decisión.'}
                     </p>
                   </div>
                 </div>
 
-                {/* Cosecha de Ciclo (Hito de 4 sesiones) */}
+                {/* Cosecha de Ciclo si corresponde */}
                 {isCycleMilestone && (
-                  <div className="p-5 rounded-2xl bg-white/30 dark:bg-neutral-900/45 backdrop-blur-md border border-black dark:border-white space-y-3">
+                  <div className="p-5 rounded-2xl bg-amber-500/10 dark:bg-amber-500/15 backdrop-blur-md border border-amber-500/30 space-y-3">
                     <div className="flex items-center gap-2">
                       <Sparkles className="w-4 h-4 text-amber-500" />
                       <h3 className="text-xs font-bold text-black dark:text-white uppercase tracking-wider font-mono">
-                        Cosecha del Ciclo {currentCycle}
+                        Cosecha del Ciclo {currentCycle} (Hito de Integración)
                       </h3>
                     </div>
                     <p className="text-xs text-neutral-700 dark:text-neutral-300 leading-relaxed">
-                      Hemos completado 4 encuentros. Este espacio está dedicado a integrar la siembra:
+                      Has completado las sesiones de este ciclo. Es momento de recoger las distinciones adquiridas, verificar cambios de observador y consolidar los nuevos acuerdos.
                     </p>
-                    <ul className="list-disc list-inside text-xs text-neutral-800 dark:text-neutral-200 space-y-1 font-light">
-                      <li>¿Qué descubrimientos o patrones recurrentes has identificado?</li>
-                      <li>¿Cómo se ha transformado tu manera de observar tus quiebres y decisiones?</li>
-                    </ul>
-                    {currentPostForm?.cycleHarvest && (
-                      <div className="mt-2 p-3.5 rounded-xl bg-white/40 dark:bg-black/40 backdrop-blur-sm border border-black/15 dark:border-white/15 text-xs text-neutral-800 dark:text-neutral-200 font-light shadow-2xs">
-                        <strong className="font-semibold text-black dark:text-white block mb-0.5">
-                          Tu cosecha registrada:
-                        </strong>
-                        {currentPostForm.cycleHarvest}
-                      </div>
-                    )}
                   </div>
                 )}
 
-                {/* Bloques de Próximo Paso */}
-                <div className="space-y-4 pt-1">
-                  <span className="text-[10px] font-bold uppercase tracking-widest text-neutral-500 dark:text-neutral-400 block font-mono">
-                    Información Esencial del Próximo Paso
-                  </span>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {/* Próximo Encuentro */}
-                    <div className="p-5 rounded-2xl border border-black/10 dark:border-white/10 bg-white/25 dark:bg-neutral-900/35 backdrop-blur-md space-y-3">
-                      <div className="flex items-center gap-2 text-xs font-bold text-black dark:text-white">
-                        <Clock className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                        <span>Tu Próxima Sesión</span>
-                      </div>
-                      <p className="text-xs text-neutral-700 dark:text-neutral-300">
-                        {formatHumanDate(currentSession.date)}
-                      </p>
-                      <div className="pt-2 flex flex-wrap gap-2">
-                        <a
-                          href={currentSession.meetLink || 'https://meet.google.com/new'}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="px-4 py-2 rounded-xl bg-black text-white dark:bg-white dark:text-black text-xs font-semibold hover:opacity-90 transition-opacity inline-flex items-center gap-1.5 cursor-pointer shadow-xs"
-                        >
-                          <Video className="w-3.5 h-3.5 text-emerald-400 dark:text-emerald-600" />
-                          <span>Unirme por Meet</span>
-                        </a>
-
-                        <button
-                          type="button"
-                          onClick={() => setDashboardTab('sesiones')}
-                          className="px-4 py-2 rounded-xl border border-black/15 dark:border-white/15 bg-white/50 dark:bg-black/50 backdrop-blur-xs text-xs font-semibold hover:bg-white/70 dark:hover:bg-neutral-800 transition-colors inline-flex items-center gap-1.5 cursor-pointer"
-                        >
-                          <Calendar className="w-3.5 h-3.5 text-neutral-500" />
-                          <span>Ver todas las sesiones</span>
-                        </button>
-                      </div>
+                {/* Acciones de Memoria y Bitácora de Sesión */}
+                <div className="p-4 rounded-2xl border border-black/10 dark:border-white/10 bg-white/20 dark:bg-neutral-900/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-xl bg-black dark:bg-white text-white dark:text-black flex items-center justify-center shrink-0">
+                      <FileText className="w-4 h-4" />
                     </div>
-
-                    {/* Memoria de Sesión & Cuestionario Posterior */}
-                    <div className="p-5 rounded-2xl border border-black/10 dark:border-white/10 bg-white/25 dark:bg-neutral-900/35 backdrop-blur-md space-y-3">
-                      <div className="flex items-center gap-2 text-xs font-bold text-black dark:text-white">
-                        <FileText className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
-                        <span>Memoria y Bitácora Posterior</span>
+                    <div>
+                      <div className="text-xs font-bold text-black dark:text-white">
+                        {currentPostForm ? 'Memoria de Sesión Registrada' : 'Bitácora de Sesión Pendiente'}
                       </div>
-                      <p className="text-xs text-neutral-700 dark:text-neutral-300">
+                      <div className="text-[11px] text-neutral-500 dark:text-neutral-400">
                         {currentPostForm
-                          ? 'Tu memoria de sesión está registrada y lista para consultar.'
-                          : 'Registra el emergente y el paso a la acción tras tu encuentro.'}
-                      </p>
-                      <div className="pt-2 flex flex-wrap gap-2">
-                        {currentPostForm ? (
-                          <button
-                            type="button"
-                            onClick={() => handleDownloadMemory(currentPostForm, currentSession)}
-                            className="px-4 py-2 rounded-xl bg-black text-white dark:bg-white dark:text-black text-xs font-semibold hover:opacity-90 transition-opacity inline-flex items-center gap-1.5 cursor-pointer shadow-xs"
-                          >
-                            <Download className="w-3.5 h-3.5" />
-                            <span>Descargar Memoria (PDF)</span>
-                          </button>
-                        ) : (
-                          <button
-                            type="button"
-                            onClick={() => handleOpenBitacora(currentSession)}
-                            className="px-4 py-2 rounded-xl bg-black text-white dark:bg-white dark:text-black text-xs font-semibold hover:opacity-90 transition-opacity inline-flex items-center gap-1.5 cursor-pointer shadow-xs"
-                          >
-                            <FileText className="w-3.5 h-3.5" />
-                            <span>Registrar Bitácora</span>
-                          </button>
-                        )}
-
-                        {currentPostForm && (
-                          <button
-                            type="button"
-                            onClick={() => handleOpenBitacora(currentSession)}
-                            className="px-3.5 py-2 rounded-xl border border-black/15 dark:border-white/15 bg-white/50 dark:bg-black/50 backdrop-blur-xs text-xs font-semibold hover:bg-white/70 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
-                          >
-                            Editar registro
-                          </button>
-                        )}
+                          ? `Registrada para la Sesión #${currentSessionNumber}`
+                          : `Registra el emergente y los acuerdos de la Sesión #${currentSessionNumber}`}
                       </div>
                     </div>
                   </div>
 
-                  {/* Síntesis del Tema Emergente */}
-                  {currentPostForm && (
-                    <div className="p-4 rounded-2xl border border-black/10 dark:border-white/10 bg-white/25 dark:bg-neutral-900/35 backdrop-blur-md space-y-3">
-                      <div>
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-500 font-mono">
-                          El tema emergente de este encuentro:
-                        </span>
-                        <p className="text-xs font-medium text-black dark:text-white mt-0.5">
-                          {currentPostForm.emergentTopic || currentPostForm.masterJudgmentAndNarrative}
-                        </p>
-                      </div>
-
-                      <div>
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-500 font-mono">
-                          El paso a la acción acordado:
-                        </span>
-                        <p className="text-xs font-medium text-black dark:text-white mt-0.5">
-                          {currentPostForm.actionStep || currentPostForm.agreedActionItems?.[0]}
-                        </p>
-                      </div>
-                    </div>
-                  )}
+                  <div className="flex items-center gap-2">
+                    {currentPostForm && (
+                      <button
+                        type="button"
+                        onClick={() => handleDownloadMemory(currentPostForm, currentSession)}
+                        className="px-3.5 py-1.5 rounded-xl border border-black/15 dark:border-white/15 bg-white/50 dark:bg-black/50 text-xs font-semibold hover:bg-white/80 dark:hover:bg-neutral-800 transition-colors inline-flex items-center gap-1.5 cursor-pointer"
+                      >
+                        <Download className="w-3.5 h-3.5" />
+                        <span>Descargar PDF</span>
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => handleOpenBitacora(currentSession)}
+                      className="px-3.5 py-1.5 rounded-xl bg-black text-white dark:bg-white dark:text-black text-xs font-semibold hover:opacity-90 transition-opacity inline-flex items-center gap-1.5 cursor-pointer shadow-xs"
+                    >
+                      <FileText className="w-3.5 h-3.5" />
+                      <span>{currentPostForm ? 'Editar Bitácora' : 'Registrar Bitácora'}</span>
+                    </button>
+                  </div>
                 </div>
               </div>
             </section>
