@@ -544,3 +544,5 @@ export const AdminAutomationsManager: React.FC<AdminAutomationsManagerProps> = (
     </div>
   );
 };
+
+export default AdminAutomationsManager;

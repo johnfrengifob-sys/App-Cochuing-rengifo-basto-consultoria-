@@ -724,7 +724,7 @@ export const AdminSessionsManager: React.FC<AdminSessionsManagerProps> = ({
       badgeColor: 'bg-sky-50 dark:bg-sky-950/40 text-sky-700 dark:text-sky-300 border-sky-200 dark:border-sky-800',
       dotColor: 'bg-sky-500',
       borderAccent: 'border-sky-200/80 dark:border-sky-800/60',
-      description: levelSettings['Nivel I']?.focus || 'Mapeo de la transparencia cotidiana, suspensión de automatismos, quiebres ocultos y anclaje somático inicial.',
+      description: 'Mapeo de la transparencia cotidiana, suspensión de automatismos, quiebres ocultos y anclaje somático inicial.',
     },
     {
       id: 'Nivel II' as const,
@@ -733,7 +733,7 @@ export const AdminSessionsManager: React.FC<AdminSessionsManagerProps> = ({
       badgeColor: 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800',
       dotColor: 'bg-emerald-500',
       borderAccent: 'border-emerald-200/80 dark:border-emerald-800/60',
-      description: levelSettings['Nivel II']?.focus || 'Sabiduría somático-emocional, disolución de resignaciones y resentimientos, y diseño de conversaciones de coordinación de acciones.',
+      description: 'Sabiduría somático-emocional, disolución de resignaciones y resentimientos, y diseño de conversaciones de coordinación de acciones.',
     },
     {
       id: 'Nivel III' as const,
@@ -742,7 +742,7 @@ export const AdminSessionsManager: React.FC<AdminSessionsManagerProps> = ({
       badgeColor: 'bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800',
       dotColor: 'bg-purple-500',
       borderAccent: 'border-purple-200/80 dark:border-purple-800/60',
-      description: levelSettings['Nivel III']?.focus || 'Liderazgo ontológico, visión directiva compartida, maestría en la acción directiva y trascendencia transformacional.',
+      description: 'Liderazgo ontológico, visión directiva compartida, maestría en la acción directiva y trascendencia transformacional.',
     },
   ];
 
