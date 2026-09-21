@@ -80,6 +80,8 @@ export class ServerDbSyncService {
     programNodes?: ProgramNodeInfo[];
     formsSheetsIntegrations?: FormsSheetsIntegrationPair[];
     deletedWorkshopIds?: string[];
+    deletedSessionIds?: string[];
+    replaceSessions?: boolean;
   }): Promise<ServerDbState | null> {
     if (this.isSyncing) return null;
     this.isSyncing = true;
@@ -265,6 +267,22 @@ export class ServerDbSyncService {
       return res.ok;
     } catch (err) {
       console.warn('[ServerDbSync] Error saving forms-sheets integrations to server DB:', err);
+      return false;
+    }
+  }
+
+  /**
+   * Delete a session directly from server persistent database
+   */
+  static async deleteSession(sessionId: string): Promise<boolean> {
+    try {
+      const res = await fetch(`/api/db/sessions/${encodeURIComponent(sessionId)}`, {
+        method: 'DELETE',
+        headers: { 'Accept': 'application/json' },
+      });
+      return res.ok;
+    } catch (err) {
+      console.warn('[ServerDbSync] Error deleting session from server DB:', err);
       return false;
     }
   }

@@ -688,7 +688,7 @@ export const UnifiedWorkbookSpace: React.FC<UnifiedWorkbookSpaceProps> = ({
                   {existingWorkshopForm.levelSpecificAnswer && (
                     <div className="p-4 rounded-2xl bg-[#F9F9F9] dark:bg-[#202024] border border-gray-100 dark:border-neutral-800 space-y-1.5">
                       <span className="font-bold text-black dark:text-white uppercase tracking-wider block text-[11px]">
-                        3. Eje Temático: {activeNodeInfo.keyQuestion}
+                        3. Eje Temático: {activeNodeInfo.keyQuestion || activeNodeInfo.sessionTitle}
                       </span>
                       <p className="text-gray-700 dark:text-neutral-300 font-light leading-relaxed whitespace-pre-wrap">
                         {existingWorkshopForm.levelSpecificAnswer}
@@ -783,7 +783,7 @@ export const UnifiedWorkbookSpace: React.FC<UnifiedWorkbookSpaceProps> = ({
                       <span className="w-5 h-5 rounded-full bg-black text-white dark:bg-white dark:text-black font-mono text-[10px] flex items-center justify-center">
                         3
                       </span>
-                      <span>Eje del Taller: {activeNodeInfo.keyQuestion}</span>
+                      <span>Eje del Taller: {activeNodeInfo.keyQuestion || activeNodeInfo.sessionTitle}</span>
                     </label>
                     <p className="text-[11px] font-light text-gray-400 dark:text-neutral-500 pl-6">
                       {activeNodeInfo.levelPrompt}

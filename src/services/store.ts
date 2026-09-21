@@ -3,6 +3,7 @@ import {
   ClientStatus,
   ProgramAccessLevel,
   Session,
+  ConsultoriaSessionType,
   PostSessionForm,
   FormSubmission,
   AIInsight,
@@ -356,8 +357,7 @@ export let PROGRAM_NODES: ProgramNodeInfo[] = [
       'Diseño de ofertas profesionales y personales de alto valor percibido.',
       'Liderazgo generativo con capacidad para abrir posibilidades donde antes solo se percibían bloqueos.',
     ],
-    keyQuestion:
-      '¿Qué nueva identidad pública y profesional estás declarando para los próximos trimestres?',
+    keyQuestion: '',
     levelPrompt:
       'Escribe la visión de futuro que ahora te convoca, desprendida de la necesidad de complacer o controlar.',
     methodology: {
@@ -1841,7 +1841,16 @@ export class OntologicalStore {
       PROGRAM_NODES
     );
     const safe = Array.isArray(list) && list.length > 0 ? list : PROGRAM_NODES;
+    let modified = false;
     safe.forEach((node) => {
+      if (
+        node.keyQuestion &&
+        (node.keyQuestion.includes('nueva identidad pública y profesional') ||
+          node.keyQuestion.includes('próximos trimestres'))
+      ) {
+        node.keyQuestion = '';
+        modified = true;
+      }
       if (!node.roadmapSteps || node.roadmapSteps.length === 0) {
         node.roadmapSteps = DEFAULT_ROADMAP_STEPS[node.step] || [];
       }
@@ -1852,6 +1861,9 @@ export class OntologicalStore {
         node.googleFormsUrl = 'https://forms.gle/APUFto8sGbJt322WA';
       }
     });
+    if (modified) {
+      this.save(STORAGE_KEYS.PROGRAM_NODES, safe);
+    }
     return safe;
   }
 
@@ -1887,6 +1899,15 @@ export class OntologicalStore {
       if (!map.has(c.step)) map.set(c.step, c);
     });
     const merged = Array.from(map.values()).sort((a, b) => a.step - b.step);
+    merged.forEach((node) => {
+      if (
+        node.keyQuestion &&
+        (node.keyQuestion.includes('nueva identidad pública y profesional') ||
+          node.keyQuestion.includes('próximos trimestres'))
+      ) {
+        node.keyQuestion = '';
+      }
+    });
     this.save(STORAGE_KEYS.PROGRAM_NODES, merged);
     PROGRAM_NODES.length = 0;
     PROGRAM_NODES.push(...merged);
@@ -4477,15 +4498,31 @@ export class OntologicalStore {
       const isMilestone = num === 4 || num === 8 || num === 12 || num === sessionCount;
       const nodeInfo = programNodes.find((n) => n.step === num);
 
+      const lvl = num <= 4 ? 'Nivel I' : (num <= 8 ? 'Nivel II' : 'Nivel III');
+      const wk = num <= 2 ? 'Semanas 1-2' : (num <= 4 ? 'Semanas 3-4' : (num <= 6 ? 'Semanas 5-6' : (num <= 8 ? 'Semanas 7-8' : (num <= 10 ? 'Semanas 9-10' : 'Semanas 11-12'))));
+      const sType: ConsultoriaSessionType = isMilestone ? 'cierre_ciclo' : 'sesion';
+      const sTitle = nodeInfo?.sessionTitle 
+        ? `Sesión ${num}: ${nodeInfo.sessionTitle}`
+        : (isMilestone ? `Sesión #${num}: Cierre de Ciclo` : `Sesión #${num}: Consultoría Ontológica 1 a 1`);
+
       sessions.push({
         id: `sess-${clientId}-${num}`,
         clientId: clientId,
         sessionNumber: num,
+        title: sTitle,
+        sessionType: sType,
+        level: lvl,
+        weekLabel: wk,
+        weekNumber: num,
         date: sessionDate,
+        scheduledDate: sessionDate.split('T')[0],
+        scheduledTime: '10:00',
         meetLink: `https://meet.google.com/rbc-${clientId.replace(/[^a-zA-Z0-9]/g, '')}-s${num}`,
         status: status,
         isPaid: true,
         durationMinutes: 60,
+        sessionGoal: isMilestone ? 'Revisión del estado actual, medición de evolución y rediseño de acuerdos.' : 'Acompañamiento ontológico no direccional y exploración libre del quiebre.',
+        openingQuestion: isMilestone ? 'Sesión de Cierre de Ciclo: Revisión del estado actual y aprendizajes consolidados.' : '¿Qué es importante para ti traer a este espacio hoy?',
         ontologicalFocus: nodeInfo?.sessionTitle || (isMilestone ? 'Cierre de Ciclo & Cosecha Ontológica' : 'Acompañamiento del Emergente (Lienzo en Blanco)'),
         notes: nodeInfo
           ? `Sesión ${num}: ${nodeInfo.level} • ${nodeInfo.sessionTitle}`
@@ -4570,7 +4607,114 @@ export class OntologicalStore {
 
   static deleteSession(sessionId: string): void {
     const sessions = this.getSessions();
-    this.saveSessions(sessions.filter((s) => s.id !== sessionId));
+    const filtered = sessions.filter((s) => s.id !== sessionId);
+    this.save(STORAGE_KEYS.SESSIONS, filtered);
+    try {
+      FirestoreSyncService.deleteSession(sessionId).catch(() => {});
+    } catch {
+      // safe fallback
+    }
+    try {
+      ServerDbSyncService.syncWithServer({
+        sessions: filtered,
+        deletedSessionIds: [sessionId],
+        replaceSessions: true,
+      }).catch(() => {});
+      ServerDbSyncService.deleteSession(sessionId).catch(() => {});
+    } catch {
+      // safe fallback
+    }
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('rbc-sessions-updated', { detail: { sessions: filtered } }));
+    }
+  }
+
+  /**
+   * Sincroniza bidireccionalmente las sesiones creadas con Firebase Firestore
+   */
+  static async syncSessionsWithFirestore(): Promise<{ count: number; updated: Session[] }> {
+    try {
+      const remoteSessions = await FirestoreSyncService.fetchAllSessions();
+      const local = this.getSessions();
+      const validClients = new Set(this.getUsers().map((u) => u.uid));
+      
+      const sessionMap = new Map<string, Session>();
+      // Cargar locales válidas
+      local.forEach((s) => {
+        if (s.id && validClients.has(s.clientId)) {
+          sessionMap.set(s.id, s);
+        }
+      });
+      // Mergear remotas de Firestore
+      remoteSessions.forEach((s) => {
+        if (s && s.id && validClients.has(s.clientId)) {
+          const existing = sessionMap.get(s.id);
+          sessionMap.set(s.id, { ...(existing || {}), ...s });
+        }
+      });
+
+      const merged = Array.from(sessionMap.values()).sort((a, b) => {
+        return (a.sessionNumber || 1) - (b.sessionNumber || 1);
+      });
+
+      this.save(STORAGE_KEYS.SESSIONS, merged);
+      await ServerDbSyncService.syncWithServer({ sessions: merged, replaceSessions: true });
+
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('rbc-sessions-updated', { detail: { sessions: merged } }));
+      }
+      return { count: merged.length, updated: merged };
+    } catch (e) {
+      console.warn('syncSessionsWithFirestore error:', e);
+      return { count: this.getSessions().length, updated: this.getSessions() };
+    }
+  }
+
+  /**
+   * Elimina registros antiguos, caducados o huérfanos de sesiones tanto en Firestore como en la BD local
+   */
+  static async purgeOldOrOrphanedSessions(): Promise<{ deletedCount: number; remainingCount: number }> {
+    const sessions = this.getSessions();
+    const validUsers = this.getUsers();
+    const validClientIds = validUsers.map((u) => u.uid);
+    const validSet = new Set(validClientIds);
+
+    const toDelete: string[] = [];
+    const keep: Session[] = [];
+
+    sessions.forEach((s) => {
+      const isCarolina = s.clientId === 'client-carolina' || (s.id && s.id.includes('carolina'));
+      const isOrphan = !validSet.has(s.clientId);
+      if (isCarolina || isOrphan) {
+        toDelete.push(s.id);
+      } else {
+        keep.push(s);
+      }
+    });
+
+    // Eliminar en Firestore
+    for (const id of toDelete) {
+      FirestoreSyncService.deleteSession(id).catch(() => {});
+    }
+    await FirestoreSyncService.purgeOldOrOrphanedSessions(validClientIds);
+
+    // Guardar lista limpia
+    this.save(STORAGE_KEYS.SESSIONS, keep);
+    await ServerDbSyncService.syncWithServer({
+      sessions: keep,
+      deletedSessionIds: toDelete,
+      replaceSessions: true,
+    });
+
+    for (const id of toDelete) {
+      ServerDbSyncService.deleteSession(id).catch(() => {});
+    }
+
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('rbc-sessions-updated', { detail: { sessions: keep } }));
+    }
+
+    return { deletedCount: toDelete.length, remainingCount: keep.length };
   }
 
   // --- POST-SESSION FORMS (EVALUACIÓN POST-SESIÓN & CUADERNO DE TRABAJO) ---

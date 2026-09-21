@@ -1388,7 +1388,7 @@ export const ClientWorkstationView: React.FC<ClientWorkstationViewProps> = ({
                   Pregunta Clave & Eje de Indagación:
                 </span>
                 <p className="text-xs text-gray-700 dark:text-neutral-300 font-light leading-relaxed">
-                  {currentNodeInfo.keyQuestion}
+                  {currentNodeInfo.keyQuestion || 'Profundización reflexiva y consolidación de compromisos de futuro.'}
                 </p>
               </div>
 

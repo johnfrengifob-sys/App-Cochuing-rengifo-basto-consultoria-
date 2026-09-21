@@ -38,13 +38,13 @@
       "welcomeMessage": "Bienvenido legadobarber2026 a tu Espacio Ontológico de Consultoría RBC.",
       "programAccessLevel": "premium",
       "lastActivityAt": "2026-03-15T12:00:00.000Z",
-      "inactivityDaysCount": 189,
+      "inactivityDaysCount": 190,
       "weeklyFollowupActive": false,
       "weeklyFollowupWeek": 1,
       "lastWeeklyFollowupAt": "2026-03-15T12:00:00.000Z",
-      "nextWeeklyFollowupDueAt": "2026-09-27T16:21:41.838Z",
+      "nextWeeklyFollowupDueAt": "2026-09-28T13:46:31.353Z",
       "trackingEndedReason": "Seguimiento finalizado automáticamente: Inactividad prolongada superior a 30 días en la página.",
-      "trackingEndedAt": "2026-09-20T16:21:41.838Z",
+      "trackingEndedAt": "2026-09-21T13:46:31.353Z",
       "workshopMemories": {},
       "welcomeMessageSentAt": "2026-03-15T12:00:00.000Z",
       "totalInvested": "$1.500.000 COP"
@@ -76,7 +76,7 @@
       "id": "sess-client-legadobarber2026-1",
       "clientId": "client-legadobarber2026",
       "sessionNumber": 1,
-      "date": "2026-09-20T16:23:51.772Z",
+      "date": "2026-09-21T13:47:18.498Z",
       "meetLink": "https://meet.google.com/rbc-clientlegadobarber2026-s1",
       "status": "scheduled",
       "isPaid": true,
@@ -91,13 +91,22 @@
       "formsIntegrationId": "bitacora_sesiones_b2b",
       "expedienteSyncStatus": "synced",
       "bitacoraSheetUrl": "https://docs.google.com/spreadsheets/d/1Mm3CRZVvKYFak5APwIBmfK-vZAUfnx1zg-eq8WOLbZk/edit?usp=sharing",
-      "agreementSheetUrl": "https://docs.google.com/spreadsheets/d/1PCwxfgI0WdV2eMyEjLY_iYkYv5c4DNh5i43lNDvPT88/edit?usp=sharing"
+      "agreementSheetUrl": "https://docs.google.com/spreadsheets/d/1PCwxfgI0WdV2eMyEjLY_iYkYv5c4DNh5i43lNDvPT88/edit?usp=sharing",
+      "title": "Sesión 1: Mapeo de la Transparencia y Quiebres Inconscientes",
+      "sessionType": "sesion",
+      "level": "Nivel I",
+      "weekLabel": "Semanas 1-2",
+      "weekNumber": 1,
+      "scheduledDate": "2026-09-21",
+      "scheduledTime": "10:00",
+      "sessionGoal": "Acompañamiento ontológico no direccional y exploración libre del quiebre.",
+      "openingQuestion": "¿Qué es importante para ti traer a este espacio hoy?"
     },
     {
       "id": "sess-client-legadobarber2026-2",
       "clientId": "client-legadobarber2026",
       "sessionNumber": 2,
-      "date": "2026-10-04T16:23:51.772Z",
+      "date": "2026-10-05T13:47:18.498Z",
       "meetLink": "https://meet.google.com/rbc-clientlegadobarber2026-s2",
       "status": "scheduled",
       "isPaid": true,
@@ -112,13 +121,22 @@
       "formsIntegrationId": "bitacora_sesiones_b2b",
       "expedienteSyncStatus": "synced",
       "bitacoraSheetUrl": "https://docs.google.com/spreadsheets/d/1Mm3CRZVvKYFak5APwIBmfK-vZAUfnx1zg-eq8WOLbZk/edit?usp=sharing",
-      "agreementSheetUrl": "https://docs.google.com/spreadsheets/d/1PCwxfgI0WdV2eMyEjLY_iYkYv5c4DNh5i43lNDvPT88/edit?usp=sharing"
+      "agreementSheetUrl": "https://docs.google.com/spreadsheets/d/1PCwxfgI0WdV2eMyEjLY_iYkYv5c4DNh5i43lNDvPT88/edit?usp=sharing",
+      "title": "Sesión 2: Mapeo de la Transparencia y Quiebres Inconscientes ",
+      "sessionType": "sesion",
+      "level": "Nivel I",
+      "weekLabel": "Semanas 1-2",
+      "weekNumber": 2,
+      "scheduledDate": "2026-10-05",
+      "scheduledTime": "10:00",
+      "sessionGoal": "Acompañamiento ontológico no direccional y exploración libre del quiebre.",
+      "openingQuestion": "¿Qué es importante para ti traer a este espacio hoy?"
     },
     {
       "id": "sess-client-legadobarber2026-3",
       "clientId": "client-legadobarber2026",
       "sessionNumber": 3,
-      "date": "2026-10-18T16:23:51.772Z",
+      "date": "2026-10-19T13:47:18.498Z",
       "meetLink": "https://meet.google.com/rbc-clientlegadobarber2026-s3",
       "status": "scheduled",
       "isPaid": true,
@@ -133,13 +151,22 @@
       "formsIntegrationId": "bitacora_sesiones_b2b",
       "expedienteSyncStatus": "synced",
       "bitacoraSheetUrl": "https://docs.google.com/spreadsheets/d/1Mm3CRZVvKYFak5APwIBmfK-vZAUfnx1zg-eq8WOLbZk/edit?usp=sharing",
-      "agreementSheetUrl": "https://docs.google.com/spreadsheets/d/1PCwxfgI0WdV2eMyEjLY_iYkYv5c4DNh5i43lNDvPT88/edit?usp=sharing"
+      "agreementSheetUrl": "https://docs.google.com/spreadsheets/d/1PCwxfgI0WdV2eMyEjLY_iYkYv5c4DNh5i43lNDvPT88/edit?usp=sharing",
+      "title": "Sesión 3: Mapeo de la Transparencia y Quiebres Inconscientes",
+      "sessionType": "sesion",
+      "level": "Nivel I",
+      "weekLabel": "Semanas 3-4",
+      "weekNumber": 3,
+      "scheduledDate": "2026-10-19",
+      "scheduledTime": "10:00",
+      "sessionGoal": "Acompañamiento ontológico no direccional y exploración libre del quiebre.",
+      "openingQuestion": "¿Qué es importante para ti traer a este espacio hoy?"
     },
     {
       "id": "sess-client-legadobarber2026-4",
       "clientId": "client-legadobarber2026",
       "sessionNumber": 4,
-      "date": "2026-11-01T16:23:51.772Z",
+      "date": "2026-11-02T13:47:18.498Z",
       "meetLink": "https://meet.google.com/rbc-clientlegadobarber2026-s4",
       "status": "scheduled",
       "isPaid": true,
@@ -154,13 +181,22 @@
       "formsIntegrationId": "bitacora_sesiones_b2b",
       "expedienteSyncStatus": "synced",
       "bitacoraSheetUrl": "https://docs.google.com/spreadsheets/d/1Mm3CRZVvKYFak5APwIBmfK-vZAUfnx1zg-eq8WOLbZk/edit?usp=sharing",
-      "agreementSheetUrl": "https://docs.google.com/spreadsheets/d/1PCwxfgI0WdV2eMyEjLY_iYkYv5c4DNh5i43lNDvPT88/edit?usp=sharing"
+      "agreementSheetUrl": "https://docs.google.com/spreadsheets/d/1PCwxfgI0WdV2eMyEjLY_iYkYv5c4DNh5i43lNDvPT88/edit?usp=sharing",
+      "title": "Sesión 4: Recopilación, Evaluación de Avance y Cierre de Ciclo",
+      "sessionType": "cierre_ciclo",
+      "level": "Nivel I",
+      "weekLabel": "Semanas 3-4",
+      "weekNumber": 4,
+      "scheduledDate": "2026-11-02",
+      "scheduledTime": "10:00",
+      "sessionGoal": "Revisión del estado actual, medición de evolución y rediseño de acuerdos.",
+      "openingQuestion": "Sesión de Cierre de Ciclo: Revisión del estado actual, aprendizajes consolidados y rediseño del siguiente tramo."
     },
     {
       "id": "sess-client-legadobarber2026-5",
       "clientId": "client-legadobarber2026",
       "sessionNumber": 5,
-      "date": "2026-11-15T16:23:51.772Z",
+      "date": "2026-11-16T13:47:18.498Z",
       "meetLink": "https://meet.google.com/rbc-clientlegadobarber2026-s5",
       "status": "scheduled",
       "isPaid": true,
@@ -175,13 +211,22 @@
       "formsIntegrationId": "bitacora_sesiones_b2b",
       "expedienteSyncStatus": "synced",
       "bitacoraSheetUrl": "https://docs.google.com/spreadsheets/d/1Mm3CRZVvKYFak5APwIBmfK-vZAUfnx1zg-eq8WOLbZk/edit?usp=sharing",
-      "agreementSheetUrl": "https://docs.google.com/spreadsheets/d/1PCwxfgI0WdV2eMyEjLY_iYkYv5c4DNh5i43lNDvPT88/edit?usp=sharing"
+      "agreementSheetUrl": "https://docs.google.com/spreadsheets/d/1PCwxfgI0WdV2eMyEjLY_iYkYv5c4DNh5i43lNDvPT88/edit?usp=sharing",
+      "title": "Sesión 5: Mapeo de la Transparencia y Quiebres Inconscientes",
+      "sessionType": "sesion",
+      "level": "Nivel II",
+      "weekLabel": "Semanas 5-6",
+      "weekNumber": 5,
+      "scheduledDate": "2026-11-16",
+      "scheduledTime": "10:00",
+      "sessionGoal": "Acompañamiento ontológico no direccional y exploración libre del quiebre.",
+      "openingQuestion": "¿Qué es importante para ti traer a este espacio hoy?"
     },
     {
       "id": "sess-client-legadobarber2026-6",
       "clientId": "client-legadobarber2026",
       "sessionNumber": 6,
-      "date": "2026-11-29T16:23:51.772Z",
+      "date": "2026-11-30T13:47:18.498Z",
       "meetLink": "https://meet.google.com/rbc-clientlegadobarber2026-s6",
       "status": "scheduled",
       "isPaid": true,
@@ -196,13 +241,22 @@
       "formsIntegrationId": "bitacora_sesiones_b2b",
       "expedienteSyncStatus": "synced",
       "bitacoraSheetUrl": "https://docs.google.com/spreadsheets/d/1Mm3CRZVvKYFak5APwIBmfK-vZAUfnx1zg-eq8WOLbZk/edit?usp=sharing",
-      "agreementSheetUrl": "https://docs.google.com/spreadsheets/d/1PCwxfgI0WdV2eMyEjLY_iYkYv5c4DNh5i43lNDvPT88/edit?usp=sharing"
+      "agreementSheetUrl": "https://docs.google.com/spreadsheets/d/1PCwxfgI0WdV2eMyEjLY_iYkYv5c4DNh5i43lNDvPT88/edit?usp=sharing",
+      "title": "Sesión 6: Mapeo de la Transparencia y Quiebres Inconscientes",
+      "sessionType": "sesion",
+      "level": "Nivel II",
+      "weekLabel": "Semanas 5-6",
+      "weekNumber": 6,
+      "scheduledDate": "2026-11-30",
+      "scheduledTime": "10:00",
+      "sessionGoal": "Acompañamiento ontológico no direccional y exploración libre del quiebre.",
+      "openingQuestion": "¿Qué es importante para ti traer a este espacio hoy?"
     },
     {
       "id": "sess-client-legadobarber2026-7",
       "clientId": "client-legadobarber2026",
       "sessionNumber": 7,
-      "date": "2026-12-13T16:23:51.772Z",
+      "date": "2026-12-14T13:47:18.498Z",
       "meetLink": "https://meet.google.com/rbc-clientlegadobarber2026-s7",
       "status": "scheduled",
       "isPaid": true,
@@ -217,13 +271,22 @@
       "formsIntegrationId": "bitacora_sesiones_b2b",
       "expedienteSyncStatus": "synced",
       "bitacoraSheetUrl": "https://docs.google.com/spreadsheets/d/1Mm3CRZVvKYFak5APwIBmfK-vZAUfnx1zg-eq8WOLbZk/edit?usp=sharing",
-      "agreementSheetUrl": "https://docs.google.com/spreadsheets/d/1PCwxfgI0WdV2eMyEjLY_iYkYv5c4DNh5i43lNDvPT88/edit?usp=sharing"
+      "agreementSheetUrl": "https://docs.google.com/spreadsheets/d/1PCwxfgI0WdV2eMyEjLY_iYkYv5c4DNh5i43lNDvPT88/edit?usp=sharing",
+      "title": "Sesión 7: Mapeo de la Transparencia y Quiebres Inconscientes ",
+      "sessionType": "sesion",
+      "level": "Nivel II",
+      "weekLabel": "Semanas 7-8",
+      "weekNumber": 7,
+      "scheduledDate": "2026-12-14",
+      "scheduledTime": "10:00",
+      "sessionGoal": "Acompañamiento ontológico no direccional y exploración libre del quiebre.",
+      "openingQuestion": "¿Qué es importante para ti traer a este espacio hoy?"
     },
     {
       "id": "sess-client-legadobarber2026-8",
       "clientId": "client-legadobarber2026",
       "sessionNumber": 8,
-      "date": "2026-12-27T16:23:51.772Z",
+      "date": "2026-12-28T13:47:18.498Z",
       "meetLink": "https://meet.google.com/rbc-clientlegadobarber2026-s8",
       "status": "scheduled",
       "isPaid": true,
@@ -238,13 +301,22 @@
       "formsIntegrationId": "bitacora_sesiones_b2b",
       "expedienteSyncStatus": "synced",
       "bitacoraSheetUrl": "https://docs.google.com/spreadsheets/d/1Mm3CRZVvKYFak5APwIBmfK-vZAUfnx1zg-eq8WOLbZk/edit?usp=sharing",
-      "agreementSheetUrl": "https://docs.google.com/spreadsheets/d/1PCwxfgI0WdV2eMyEjLY_iYkYv5c4DNh5i43lNDvPT88/edit?usp=sharing"
+      "agreementSheetUrl": "https://docs.google.com/spreadsheets/d/1PCwxfgI0WdV2eMyEjLY_iYkYv5c4DNh5i43lNDvPT88/edit?usp=sharing",
+      "title": "Sesión 8: Recopilación, Evaluación de Avance y Cierre de Ciclo",
+      "sessionType": "cierre_ciclo",
+      "level": "Nivel II",
+      "weekLabel": "Semanas 7-8",
+      "weekNumber": 8,
+      "scheduledDate": "2026-12-28",
+      "scheduledTime": "10:00",
+      "sessionGoal": "Revisión del estado actual, medición de evolución y rediseño de acuerdos.",
+      "openingQuestion": "Sesión de Cierre de Ciclo: Revisión del estado actual, aprendizajes consolidados y rediseño del siguiente tramo."
     },
     {
       "id": "sess-client-legadobarber2026-9",
       "clientId": "client-legadobarber2026",
       "sessionNumber": 9,
-      "date": "2027-01-10T16:23:51.772Z",
+      "date": "2027-01-11T13:47:18.498Z",
       "meetLink": "https://meet.google.com/rbc-clientlegadobarber2026-s9",
       "status": "scheduled",
       "isPaid": true,
@@ -259,13 +331,22 @@
       "formsIntegrationId": "bitacora_sesiones_b2b",
       "expedienteSyncStatus": "synced",
       "bitacoraSheetUrl": "https://docs.google.com/spreadsheets/d/1Mm3CRZVvKYFak5APwIBmfK-vZAUfnx1zg-eq8WOLbZk/edit?usp=sharing",
-      "agreementSheetUrl": "https://docs.google.com/spreadsheets/d/1PCwxfgI0WdV2eMyEjLY_iYkYv5c4DNh5i43lNDvPT88/edit?usp=sharing"
+      "agreementSheetUrl": "https://docs.google.com/spreadsheets/d/1PCwxfgI0WdV2eMyEjLY_iYkYv5c4DNh5i43lNDvPT88/edit?usp=sharing",
+      "title": "Sesión 9: Mapeo de la Transparencia y Quiebres Inconscientes",
+      "sessionType": "sesion",
+      "level": "Nivel III",
+      "weekLabel": "Semanas 9-10",
+      "weekNumber": 9,
+      "scheduledDate": "2027-01-11",
+      "scheduledTime": "10:00",
+      "sessionGoal": "Acompañamiento ontológico no direccional y exploración libre del quiebre.",
+      "openingQuestion": "¿Qué es importante para ti traer a este espacio hoy?"
     },
     {
       "id": "sess-client-legadobarber2026-10",
       "clientId": "client-legadobarber2026",
       "sessionNumber": 10,
-      "date": "2027-01-24T16:23:51.772Z",
+      "date": "2027-01-25T13:47:18.498Z",
       "meetLink": "https://meet.google.com/rbc-clientlegadobarber2026-s10",
       "status": "scheduled",
       "isPaid": true,
@@ -280,13 +361,22 @@
       "formsIntegrationId": "bitacora_sesiones_b2b",
       "expedienteSyncStatus": "synced",
       "bitacoraSheetUrl": "https://docs.google.com/spreadsheets/d/1Mm3CRZVvKYFak5APwIBmfK-vZAUfnx1zg-eq8WOLbZk/edit?usp=sharing",
-      "agreementSheetUrl": "https://docs.google.com/spreadsheets/d/1PCwxfgI0WdV2eMyEjLY_iYkYv5c4DNh5i43lNDvPT88/edit?usp=sharing"
+      "agreementSheetUrl": "https://docs.google.com/spreadsheets/d/1PCwxfgI0WdV2eMyEjLY_iYkYv5c4DNh5i43lNDvPT88/edit?usp=sharing",
+      "title": "Sesión 10: Mapeo de la Transparencia y Quiebres Inconscientes",
+      "sessionType": "sesion",
+      "level": "Nivel III",
+      "weekLabel": "Semanas 9-10",
+      "weekNumber": 10,
+      "scheduledDate": "2027-01-25",
+      "scheduledTime": "10:00",
+      "sessionGoal": "Acompañamiento ontológico no direccional y exploración libre del quiebre.",
+      "openingQuestion": "¿Qué es importante para ti traer a este espacio hoy?"
     },
     {
       "id": "sess-client-legadobarber2026-11",
       "clientId": "client-legadobarber2026",
       "sessionNumber": 11,
-      "date": "2027-02-07T16:23:51.772Z",
+      "date": "2027-02-08T13:47:18.498Z",
       "meetLink": "https://meet.google.com/rbc-clientlegadobarber2026-s11",
       "status": "scheduled",
       "isPaid": true,
@@ -301,13 +391,22 @@
       "formsIntegrationId": "bitacora_sesiones_b2b",
       "expedienteSyncStatus": "synced",
       "bitacoraSheetUrl": "https://docs.google.com/spreadsheets/d/1Mm3CRZVvKYFak5APwIBmfK-vZAUfnx1zg-eq8WOLbZk/edit?usp=sharing",
-      "agreementSheetUrl": "https://docs.google.com/spreadsheets/d/1PCwxfgI0WdV2eMyEjLY_iYkYv5c4DNh5i43lNDvPT88/edit?usp=sharing"
+      "agreementSheetUrl": "https://docs.google.com/spreadsheets/d/1PCwxfgI0WdV2eMyEjLY_iYkYv5c4DNh5i43lNDvPT88/edit?usp=sharing",
+      "title": "Sesión 11: Mapeo de la Transparencia y Quiebres Inconscientes",
+      "sessionType": "sesion",
+      "level": "Nivel III",
+      "weekLabel": "Semanas 11-12",
+      "weekNumber": 11,
+      "scheduledDate": "2027-02-08",
+      "scheduledTime": "10:00",
+      "sessionGoal": "Acompañamiento ontológico no direccional y exploración libre del quiebre.",
+      "openingQuestion": "¿Qué es importante para ti traer a este espacio hoy?"
     },
     {
       "id": "sess-client-legadobarber2026-12",
       "clientId": "client-legadobarber2026",
       "sessionNumber": 12,
-      "date": "2027-02-21T16:23:51.772Z",
+      "date": "2027-02-22T13:47:18.498Z",
       "meetLink": "https://meet.google.com/rbc-clientlegadobarber2026-s12",
       "status": "scheduled",
       "isPaid": true,
@@ -322,7 +421,16 @@
       "formsIntegrationId": "bitacora_sesiones_b2b",
       "expedienteSyncStatus": "synced",
       "bitacoraSheetUrl": "https://docs.google.com/spreadsheets/d/1Mm3CRZVvKYFak5APwIBmfK-vZAUfnx1zg-eq8WOLbZk/edit?usp=sharing",
-      "agreementSheetUrl": "https://docs.google.com/spreadsheets/d/1PCwxfgI0WdV2eMyEjLY_iYkYv5c4DNh5i43lNDvPT88/edit?usp=sharing"
+      "agreementSheetUrl": "https://docs.google.com/spreadsheets/d/1PCwxfgI0WdV2eMyEjLY_iYkYv5c4DNh5i43lNDvPT88/edit?usp=sharing",
+      "title": "Sesión 12: Recopilación, Evaluación de Avance y Cierre de Ciclo",
+      "sessionType": "cierre_ciclo",
+      "level": "Nivel III",
+      "weekLabel": "Semanas 11-12",
+      "weekNumber": 12,
+      "scheduledDate": "2027-02-22",
+      "scheduledTime": "10:00",
+      "sessionGoal": "Revisión del estado actual, medición de evolución y rediseño de acuerdos.",
+      "openingQuestion": "Sesión de Cierre de Ciclo: Revisión del estado actual, aprendizajes consolidados y rediseño del siguiente tramo."
     }
   ],
   "forms": [],
@@ -414,7 +522,7 @@
       "eventDate": "2026-10-11T00:00:00.000Z",
       "id": "event-1789824188701",
       "createdAt": "2026-09-19T13:41:44.765Z",
-      "updatedAt": "2026-09-20T16:32:46.490Z"
+      "updatedAt": "2026-09-21T14:11:33.800Z"
     },
     {
       "title": "Taller 1: Raíz (Cuerpo, Emoción y Evolución de las Emociones).",
@@ -519,7 +627,7 @@
       "eventDate": "2026-10-18T00:00:00.000Z",
       "id": "event-1789824792376",
       "createdAt": "2026-09-19T13:41:44.765Z",
-      "updatedAt": "2026-09-20T16:32:46.490Z",
+      "updatedAt": "2026-09-21T14:11:33.800Z",
       "currency": "COP"
     },
     {
@@ -618,7 +726,7 @@
       "eventDate": "2026-11-01T00:00:00.000Z",
       "id": "event-1789828629011",
       "createdAt": "2026-09-19T14:37:11.465Z",
-      "updatedAt": "2026-09-20T16:32:46.490Z",
+      "updatedAt": "2026-09-21T14:11:33.800Z",
       "currency": "COP"
     },
     {
@@ -704,7 +812,7 @@
       ],
       "workbookSubmissions": [],
       "createdAt": "2026-09-19T14:43:27.250Z",
-      "updatedAt": "2026-09-20T16:42:10.412Z",
+      "updatedAt": "2026-09-21T14:11:33.800Z",
       "launchDate": "2026-10-31",
       "googleFormsUrl": "https://forms.gle/5Hiuxwq13n3gC3zt6",
       "googleSheetsUrl": "https://docs.google.com/spreadsheets/d/1DyKs4OsJDTTOa8SMSvOQdWcttrmRKJ8_vxnJH9rV5UA/edit?usp=sharing",
@@ -725,7 +833,7 @@
   "programNodes": [
     {
       "step": 1,
-      "weekLabel": "Semanas 1-2",
+      "weekLabel": "Semanas 1-4",
       "level": "Nivel I",
       "levelTitle": "Fundamentos & Transparencia",
       "sessionTitle": "Mapeo de la Transparencia y Quiebres Inconscientes",
@@ -738,32 +846,32 @@
       "keyQuestion": "¿En qué áreas de tu vida estás operando en piloto automático tolerando costos ocultos?",
       "levelPrompt": "Registra los límites que has omitido declarar y los acuerdos tácitos que están drenando tu energía vital y directiva.",
       "methodology": {
+        "emotional": "Reconocimiento de la resignación y la sobrecarga como señales tempranas de falta de límites.",
         "linguistic": "Diferenciación entre el fluir transparente y la declaración de quiebre como interrupción deliberada.",
-        "somatic": "Calibración de la tensión muscular postural al momento de asumir compromisos automáticos.",
-        "emotional": "Reconocimiento de la resignación y la sobrecarga como señales tempranas de falta de límites."
+        "somatic": "Calibración de la tensión muscular postural al momento de asumir compromisos automáticos."
       },
       "dailyMicroPractice": {
-        "title": "Pausa de Coherencia y Mapeo en 3 Tiempos",
         "description": "3 veces al día, detente 90 segundos. Inhala profundo, escanea tu cuerpo y pregúntate: \"¿Estoy operando por convicción o por inercia automática?\" Anota cualquier quiebre no declarado.",
-        "frequency": "Diaria (3 veces al día: 9:00 AM, 2:00 PM, 6:00 PM)"
+        "frequency": "Diaria (3 veces al día: 9:00 AM, 2:00 PM, 6:00 PM)",
+        "title": "Pausa de Coherencia y Mapeo en 3 Tiempos"
       },
       "reinforcementPack": {
-        "title": "Kit de Auto-Observación y Transparencia Consciente",
-        "subtitle": "Protocolo para desarticular la inercia reactiva y fundar el nuevo observador",
-        "summary": "La transparencia es el flujo de la vida donde actuamos sin pensar. Cuando surge un obstáculo, aparece el quiebre. Si no lo declaramos, se convierte en sufrimiento crónico. Este refuerzo te entrega las herramientas para nombrar el quiebre con serenidad y certeza.",
-        "audioGuideTitle": "Centramiento Somático y Despertar de la Transparencia",
         "audioDuration": "8:45 min",
+        "audioGuideTitle": "Centramiento Somático y Despertar de la Transparencia",
         "audioScript": "Cierra los ojos y trae tu atención al peso de tu cuerpo sobre el asiento. Inhala en 4 tiempos, sostén en 2 y exhala lentamente en 6. Observa el flujo de pensamientos sin apegarte. Nombra el quiebre principal que hoy te inquieta. Dale la bienvenida sin juzgarlo. Es la puerta hacia tu transformación.",
         "keyPractices": [
           "Bitácora de Quiebres: Registra cada interrupción en tu flujo diario sin buscar soluciones inmediatas, sólo observando.",
           "La Pregunta de Soberanía: \"¿Desde qué necesidad no dicha estoy aceptando este compromiso?\"",
           "Protocolo de Higiene Lingüística: Evita frases absolutistas como \"tengo que\" y sustitúyelas por \"elijo\"."
         ],
-        "selfCareProtocol": "Cuando sientas saturación inmediata, no respondas correos ni tomes decisiones. Bebe un vaso de agua, realiza 5 respiraciones conscientes y declara una pausa de 15 minutos.",
         "reflectiveQuestions": [
           "¿A qué le estás diciendo \"sí\" cuando en realidad tu cuerpo te está pidiendo un rotundo \"no\"?",
           "¿Qué conversación difícil has estado posponiendo bajo la excusa de no tener tiempo?"
-        ]
+        ],
+        "selfCareProtocol": "Cuando sientas saturación inmediata, no respondas correos ni tomes decisiones. Bebe un vaso de agua, realiza 5 respiraciones conscientes y declara una pausa de 15 minutos.",
+        "subtitle": "Protocolo para desarticular la inercia reactiva y fundar el nuevo observador",
+        "summary": "La transparencia es el flujo de la vida donde actuamos sin pensar. Cuando surge un obstáculo, aparece el quiebre. Si no lo declaramos, se convierte en sufrimiento crónico. Este refuerzo te entrega las herramientas para nombrar el quiebre con serenidad y certeza.",
+        "title": "Kit de Auto-Observación y Transparencia Consciente"
       },
       "studyMaterials": [
         {
@@ -842,31 +950,39 @@
         }
       ],
       "googleSheetsUrl": "https://docs.google.com/spreadsheets/d/1Mm3CRZVvKYFak5APwIBmfK-vZAUfnx1zg-eq8WOLbZk/edit?usp=sharing",
-      "googleFormsUrl": "https://forms.gle/APUFto8sGbJt322WA"
+      "googleFormsUrl": "https://forms.gle/APUFto8sGbJt322WA",
+      "updatedAt": "2026-09-21T14:15:25.189Z",
+      "immediateConfirmation": true,
+      "scheduledReminders": true,
+      "postSurveyDispatched": false,
+      "welcomeMessage": "¡Hola! Tu módulo de sesión \"Mapeo de la Transparencia y Quiebres Inconscientes\" ha sido habilitado con éxito.",
+      "reminderMessage": "Recordatorio: Tu módulo de sesión \"Mapeo de la Transparencia y Quiebres Inconscientes\" requiere revisión de compromisos y cuaderno de trabajo.",
+      "postSurveyMessage": "Por favor diligencia la Bitácora del módulo \"Mapeo de la Transparencia y Quiebres Inconscientes\".",
+      "customWebhookUrl": ""
     },
     {
       "step": 2,
-      "weekLabel": "Semanas 3-4",
+      "weekLabel": "Semanas 2-4",
       "level": "Nivel I",
       "levelTitle": "Fundamentos & Transparencia",
-      "sessionTitle": "Fronteras, Declaraciones y Límites No Dichos",
-      "objective": "Dominar el poder del \"Basta\" y del \"No\" ontológico como actos fundacionales de soberanía personal, cuidado del valor propio y dignidad en todas las relaciones.",
+      "sessionTitle": "Mapeo de la Transparencia y Quiebres Inconscientes ",
+      "objective": "Identificar la transparencia cotidiana, los automatismos operativos y los quiebres no declarados en el ámbito profesional y personal para recuperar el poder de acción reflexiva.",
       "tangibleOutcomes": [
-        "Proclamación asertiva de límites claros sin culpa ni justificaciones excesivas.",
-        "Erradicación del patrón de complacencia sistemática y sobre-adaptación.",
-        "Diseño de conversaciones de frontera con colaboradores, clientes y entorno personal."
+        "Identificación precisa de las fugas de energía y automatismos en la rutina ejecutiva.",
+        "Mapeo estructurado de quiebres ocultos y acuerdos tácitos no consensuados.",
+        "Recuperación de la capacidad de pausar y observar antes de reaccionar compulsivamente."
       ],
-      "keyQuestion": "¿Qué conversación difícil has postergado y qué límite no dicho necesitas proclamar con firmeza?",
-      "levelPrompt": "Describe la conversación postergada y el \"No\" que requieres declarar para proteger tu dignidad, foco y bienestar integral.",
+      "keyQuestion": "¿En qué áreas de tu vida estás operando en piloto automático tolerando costos ocultos?",
+      "levelPrompt": "Registra los límites que has omitido declarar y los acuerdos tácitos que están drenando tu energía vital y directiva.",
       "methodology": {
-        "linguistic": "Actos del habla declarativos: La declaración del \"No\", del \"Basta\" y del \"Ignoro\" como actos de poder.",
-        "somatic": "Arraigo en planta de pies y apertura torácica para sostener la firmeza sin rigidez hostil.",
-        "emotional": "Transformación de la culpa en auto-reparación y validación de las propias necesidades."
+        "emotional": "Reconocimiento de la resignación y la sobrecarga como señales tempranas de falta de límites.",
+        "linguistic": "Diferenciación entre el fluir transparente y la declaración de quiebre como interrupción deliberada.",
+        "somatic": "Calibración de la tensión muscular postural al momento de asumir compromisos automáticos."
       },
       "dailyMicroPractice": {
-        "title": "El Escudo de Soberanía Relacional",
-        "description": "Antes de responder a cualquier petición demandante, toma una pausa de 5 segundos y responde: \"Déjame revisarlo y te confirmo a las X horas\". Elimina el sí automático.",
-        "frequency": "Cada vez que recibas una petición imprevista"
+        "description": "3 veces al día, detente 90 segundos. Inhala profundo, escanea tu cuerpo y pregúntate: \"¿Estoy operando por convicción o por inercia automática?\" Anota cualquier quiebre no declarado.",
+        "frequency": "Diaria (3 veces al día: 9:00 AM, 2:00 PM, 6:00 PM)",
+        "title": "Pausa de Coherencia y Mapeo en 3 Tiempos"
       },
       "reinforcementPack": {
         "title": "Protocolo de Declaraciones Fundamentales y Soberanía",
@@ -888,106 +1004,84 @@
       },
       "studyMaterials": [
         {
-          "title": "Plantilla: Guion para Conversaciones Difíciles y Límites",
-          "type": "Ficha de Ejercicio",
-          "pages": "3 páginas",
-          "description": "Estructuras lingüísticas paso a paso para comunicar desacuerdos y límites sin confrontación destructiva."
+          "title": "Matriz de Mapeo de Transparencia y Quiebres",
+          "type": "Matriz de Diagnóstico",
+          "pages": "4 páginas",
+          "description": "Plantilla de auto-evaluación para auditar los 5 dominios vitales y detectar costos invisibles."
         },
         {
-          "title": "Manual de Declaraciones Fundamentales de Vida",
+          "title": "Guía de Práctica: La Pausa como Intervención Ontológica",
           "type": "Guía de Trabajo",
-          "pages": "8 páginas",
-          "description": "Estudio de las 6 declaraciones básicas del lenguaje generativo y su impacto relacional."
+          "pages": "6 páginas",
+          "description": "Manual de micro-intervenciones de 2 minutos para el día a día directivo."
         }
       ],
       "roadmapSteps": [
         {
           "id": "step-2-1",
           "stepNumber": 1,
-          "title": "Alineación de Columna y Arraigo Territorial",
+          "title": "Centramiento Somático y Apertura",
           "durationMinutes": 10,
           "phaseType": "Centramiento & Apertura",
-          "description": "Activación del plexo solar y enraizamiento para sostener límites sin hostilidad ni culpa.",
-          "keyInstructions": [
-            "Postura de arraigo con pies al ancho de hombros y pelvis relajada.",
-            "Respirar hacia el bajo vientre sintiendo la estabilidad territorial."
-          ]
+          "description": "Alineación corporal y fijación de intención."
         },
         {
           "id": "step-2-2",
           "stepNumber": 2,
-          "title": "Los Actos Declarativos: La Declaración del \"Basta\"",
-          "durationMinutes": 20,
-          "phaseType": "Marco Teórico Ontológico",
-          "description": "El \"No\" como acto fundacional de dignidad, soberanía personal y cuidado del vínculo.",
-          "keyInstructions": [
-            "Explicar por qué quien no puede decir no, tampoco puede dar un sí genuino.",
-            "Desmontar la creencia aprendida de que poner límites equivale a desamor o egoísmo."
-          ]
+          "title": "Exploración del Quiebre Ontológico",
+          "durationMinutes": 30,
+          "phaseType": "Dinámica Vivencial",
+          "description": "Indagación sobre narrativas, juicios y posibilidades."
         },
         {
           "id": "step-2-3",
           "stepNumber": 3,
-          "title": "Auditoría de Conversaciones Postergadas",
-          "durationMinutes": 25,
-          "phaseType": "Dinámica Vivencial",
-          "description": "Mapeo de la persona y situación específica donde se requiere proclamar un límite claro.",
-          "keyInstructions": [
-            "Elegir una conversación postergada por más de 1 mes.",
-            "Redactar el guion de la frontera con honestidad impecable."
-          ]
-        },
-        {
-          "id": "step-2-4",
-          "stepNumber": 4,
-          "title": "Somática de la Firmeza sin Agresión",
-          "durationMinutes": 15,
-          "phaseType": "Práctica Somática",
-          "description": "Ensayo del \"No\" con contacto visual sereno, tono de voz pausado y sin justificarse.",
-          "keyInstructions": [
-            "Practicar la frase: \"Agradezco la oferta, pero elijo no asumirla\".",
-            "Evitar explicaciones defensivas o disculpas automáticas."
-          ]
-        },
-        {
-          "id": "step-2-5",
-          "stepNumber": 5,
-          "title": "Pacto de Soberanía y Plan de Aplicación",
-          "durationMinutes": 10,
+          "title": "Cierre y Compromisos de Acción",
+          "durationMinutes": 20,
           "phaseType": "Cierre & Acuerdos",
-          "description": "Fijar fecha, hora y contexto para tener la conversación de frontera.",
-          "keyInstructions": [
-            "Agendar en Google Calendar el momento exacto para la conversación.",
-            "Registrar el compromiso en el cuaderno de trabajo."
-          ]
+          "description": "Declaración de acuerdos y micro-práctica de integración."
         }
       ],
       "googleSheetsUrl": "https://docs.google.com/spreadsheets/d/1Mm3CRZVvKYFak5APwIBmfK-vZAUfnx1zg-eq8WOLbZk/edit?usp=sharing",
-      "googleFormsUrl": "https://forms.gle/APUFto8sGbJt322WA"
+      "googleFormsUrl": "https://forms.gle/APUFto8sGbJt322WA",
+      "reflectiveQuestions": [
+        "¿Qué juicio maestro limitante descubriste durante esta sesión?",
+        "¿A qué nueva acción te comprometes a partir de este descubrimiento?"
+      ],
+      "googleDriveFolderUrl": "",
+      "triggersEnabled": true,
+      "experienceToolEnabled": true,
+      "immediateConfirmation": true,
+      "scheduledReminders": true,
+      "postSurveyDispatched": false,
+      "welcomeMessage": "¡Hola! Tu módulo de sesión \"Mapeo de la Transparencia y Quiebres Inconscientes \" ha sido habilitado con éxito.",
+      "reminderMessage": "Recordatorio: Tu módulo de sesión \"Mapeo de la Transparencia y Quiebres Inconscientes \" requiere revisión de compromisos y cuaderno de trabajo.",
+      "postSurveyMessage": "Por favor diligencia la Bitácora del módulo \"Mapeo de la Transparencia y Quiebres Inconscientes \".",
+      "customWebhookUrl": ""
     },
     {
       "step": 3,
-      "weekLabel": "Semanas 5-6",
-      "level": "Nivel II",
-      "levelTitle": "Corporalidad & Reencuadre",
-      "sessionTitle": "Somatización, Mandatos y Sabiduría de las Emociones",
-      "objective": "Decodificar los mensajes somáticos en el cuerpo reconociendo la sabiduría intrínseca de cada emoción (el miedo como prudencia, la culpa como auto-reparación y la exigencia como límite adaptativo).",
+      "weekLabel": "Semanas 3-4 ",
+      "level": "Nivel I",
+      "levelTitle": "Fundamentos & Transparencia",
+      "sessionTitle": "Mapeo de la Transparencia y Quiebres Inconscientes",
+      "objective": "Identificar la transparencia cotidiana, los automatismos operativos y los quiebres no declarados en el ámbito profesional y personal para recuperar el poder de acción reflexiva.",
       "tangibleOutcomes": [
-        "Capacidad para escuchar el síntoma corporal como un mensajero inteligente antes de que somatice en enfermedad.",
-        "Transformación de la autoexigencia tiránica en auto-asistencia y excelencia compasiva.",
-        "Gestión de estados emocionales densos desde la aceptación y el rediseño corporal."
+        "Identificación precisa de las fugas de energía y automatismos en la rutina ejecutiva.",
+        "Mapeo estructurado de quiebres ocultos y acuerdos tácitos no consensuados.",
+        "Recuperación de la capacidad de pausar y observar antes de reaccionar compulsivamente."
       ],
-      "keyQuestion": "¿Qué emoción tiene una fuerte presencia en tu cuerpo hoy y qué señal adaptativa busca comunicarte?",
-      "levelPrompt": "Conecta con la sensación física exacta y decodifica el mensaje profundo de tu cuerpo sin juzgarlo ni intentar reprimirlo.",
+      "keyQuestion": "¿En qué áreas de tu vida estás operando en piloto automático tolerando costos ocultos?",
+      "levelPrompt": "Registra los límites que has omitido declarar y los acuerdos tácitos que están drenando tu energía vital y directiva.",
       "methodology": {
-        "linguistic": "Reencuadre de mandatos introyectados (\"debo ser perfecto\", \"no puedo fallar\") a acuerdos de auto-cuidado.",
-        "somatic": "Liberación de la tensión en mandíbula, diafragma y hombros mediante micro-movimientos somáticos.",
-        "emotional": "Decodificación de la intención positiva de las emociones descalificadas."
+        "emotional": "Reconocimiento de la resignación y la sobrecarga como señales tempranas de falta de límites.",
+        "linguistic": "Diferenciación entre el fluir transparente y la declaración de quiebre como interrupción deliberada.",
+        "somatic": "Calibración de la tensión muscular postural al momento de asumir compromisos automáticos."
       },
       "dailyMicroPractice": {
-        "title": "Escaneo Somático de Liberación Maxilar y Torácica",
-        "description": "Al inicio y final del día, realiza 3 minutos de respiración diafragmática mientras sueltas conscientemente la mandíbula y relajas los hombros hacia atrás.",
-        "frequency": "2 veces al día (mañana y noche)"
+        "description": "3 veces al día, detente 90 segundos. Inhala profundo, escanea tu cuerpo y pregúntate: \"¿Estoy operando por convicción o por inercia automática?\" Anota cualquier quiebre no declarado.",
+        "frequency": "Diaria (3 veces al día: 9:00 AM, 2:00 PM, 6:00 PM)",
+        "title": "Pausa de Coherencia y Mapeo en 3 Tiempos"
       },
       "reinforcementPack": {
         "title": "Protocolo de Auto-asistencia y Desactivación de la Autoexigencia",
@@ -1009,101 +1103,84 @@
       },
       "studyMaterials": [
         {
-          "title": "Protocolo Somático: Mapeo de Estados Emocionales en el Cuerpo",
-          "type": "Protocolo Somático",
-          "pages": "5 páginas",
-          "description": "Guía visual para ubicar y liberar tensiones en diafragma, trapecios y plexo solar."
+          "title": "Matriz de Mapeo de Transparencia y Quiebres",
+          "type": "Matriz de Diagnóstico",
+          "pages": "4 páginas",
+          "description": "Plantilla de auto-evaluación para auditar los 5 dominios vitales y detectar costos invisibles."
         },
         {
-          "title": "Compendio: La Inteligencia Adaptativa de las Emociones",
+          "title": "Guía de Práctica: La Pausa como Intervención Ontológica",
           "type": "Guía de Trabajo",
-          "pages": "7 páginas",
-          "description": "Análisis detallado de la función protectora del miedo, la rabia, la culpa y la tristeza."
+          "pages": "6 páginas",
+          "description": "Manual de micro-intervenciones de 2 minutos para el día a día directivo."
         }
       ],
       "roadmapSteps": [
         {
           "id": "step-3-1",
           "stepNumber": 1,
-          "title": "Silencio Reflexivo y Toma de Consciencia",
+          "title": "Centramiento Somático y Apertura",
           "durationMinutes": 10,
           "phaseType": "Centramiento & Apertura",
-          "description": "Revisión del estado interior y suspensión del juicio de autocrítica destructiva.",
-          "keyInstructions": [
-            "Observar pensamientos como nubes sin aferrarse a ninguno."
-          ]
+          "description": "Alineación corporal y fijación de intención."
         },
         {
           "id": "step-3-2",
           "stepNumber": 2,
-          "title": "Arqueología del Juicio Maestro",
-          "durationMinutes": 25,
-          "phaseType": "Marco Teórico Ontológico",
-          "description": "Identificar la narrativa troncal que condiciona el comportamiento y la autovaloración.",
-          "keyInstructions": [
-            "Detectar mandatos familiares y culturales introyectados."
-          ]
+          "title": "Exploración del Quiebre Ontológico",
+          "durationMinutes": 30,
+          "phaseType": "Dinámica Vivencial",
+          "description": "Indagación sobre narrativas, juicios y posibilidades."
         },
         {
           "id": "step-3-3",
           "stepNumber": 3,
-          "title": "Laboratorio: Hechos vs Interpretaciones",
-          "durationMinutes": 25,
-          "phaseType": "Dinámica Vivencial",
-          "description": "Someter a juicio crítico la creencia limitante y contrastarla con hechos observables.",
-          "keyInstructions": [
-            "Escribir el juicio en una columna y los hechos verificables en otra."
-          ]
-        },
-        {
-          "id": "step-3-4",
-          "stepNumber": 4,
-          "title": "Postura de Certeza vs Postura de Indecisión",
-          "durationMinutes": 15,
-          "phaseType": "Práctica Somática",
-          "description": "Experimentar en el cuerpo la solidez de una convicción frente a la vacilación reactiva.",
-          "keyInstructions": [
-            "Caminar habitando el espacio con dignidad y mirada al horizonte."
-          ]
-        },
-        {
-          "id": "step-3-5",
-          "stepNumber": 5,
-          "title": "Declaración del Nuevo Observador",
-          "durationMinutes": 15,
+          "title": "Cierre y Compromisos de Acción",
+          "durationMinutes": 20,
           "phaseType": "Cierre & Acuerdos",
-          "description": "Enunciar la nueva afirmación ontológica habilitante y fijar prácticas de higiene mental.",
-          "keyInstructions": [
-            "Sellar el nuevo pacto de interpretación ante el grupo."
-          ]
+          "description": "Declaración de acuerdos y micro-práctica de integración."
         }
       ],
       "googleSheetsUrl": "https://docs.google.com/spreadsheets/d/1Mm3CRZVvKYFak5APwIBmfK-vZAUfnx1zg-eq8WOLbZk/edit?usp=sharing",
-      "googleFormsUrl": "https://forms.gle/APUFto8sGbJt322WA"
+      "googleFormsUrl": "https://forms.gle/APUFto8sGbJt322WA",
+      "reflectiveQuestions": [
+        "¿Qué juicio maestro limitante descubriste durante esta sesión?",
+        "¿A qué nueva acción te comprometes a partir de este descubrimiento?"
+      ],
+      "googleDriveFolderUrl": "",
+      "triggersEnabled": true,
+      "experienceToolEnabled": true,
+      "immediateConfirmation": true,
+      "scheduledReminders": true,
+      "postSurveyDispatched": false,
+      "welcomeMessage": "¡Hola! Tu módulo de sesión \"Mapeo de la Transparencia y Quiebres Inconscientes  (Copia)\" ha sido habilitado con éxito.",
+      "reminderMessage": "Recordatorio: Tu módulo de sesión \"Mapeo de la Transparencia y Quiebres Inconscientes  (Copia)\" requiere revisión de compromisos y cuaderno de trabajo.",
+      "postSurveyMessage": "Por favor diligencia la Bitácora del módulo \"Mapeo de la Transparencia y Quiebres Inconscientes  (Copia)\".",
+      "customWebhookUrl": ""
     },
     {
       "step": 4,
-      "weekLabel": "Semanas 7-8",
-      "level": "Nivel II",
-      "levelTitle": "Corporalidad & Reencuadre",
-      "sessionTitle": "Reencuadre de Juicios, Reclamos y Promesas",
-      "objective": "Fundamentar juicios maestros limitantes y transformar la queja estéril en reclamos ontológicos y pedidos orientados a la coordinación de acciones impecables.",
+      "weekLabel": "Semanas 4-4  ",
+      "level": "Nivel I",
+      "levelTitle": "Fundamentos & Transparencia",
+      "sessionTitle": "Recopilación, Evaluación de Avance y Cierre de Ciclo",
+      "objective": "Evaluar la evolución del cliente respecto al punto de partida del ciclo, revisar los aprendizajes ontológicos y somáticos consolidados, y alinear las nuevas coordenadas del proceso hacia el siguiente nivel de liderazgo.",
       "tangibleOutcomes": [
-        "Eliminación de la queja pasiva y sustitución por pedidos estructurados con condiciones de satisfacción.",
-        "Fundamentación rigurosa de juicios sobre uno mismo y sobre los demás.",
-        "Cierre de ciclos de resentimiento y reconstrucción de la confianza relacional."
+        "Identificación precisa de las fugas de energía y automatismos en la rutina ejecutiva.",
+        "Mapeo estructurado de quiebres ocultos y acuerdos tácitos no consensuados.",
+        "Recuperación de la capacidad de pausar y observar antes de reaccionar compulsivamente."
       ],
-      "keyQuestion": "¿Qué juicio automático sobre ti o tu equipo estás tratando erróneamente como un hecho absoluto?",
-      "levelPrompt": "Distingue las afirmaciones comprobables de tus interpretaciones subjetivas y diseña un pedido impecable para destrabar la situación.",
+      "keyQuestion": "¿En qué áreas de tu vida estás operando en piloto automático tolerando costos ocultos?",
+      "levelPrompt": "Espacio 100% privado y libre de interrupciones, con disponibilidad reflexiva para auditar el trayecto recorrido, evaluar los compromisos cumplidos y definir el rumbo de su proceso.",
       "methodology": {
-        "linguistic": "Los 5 pasos para fundamentar un juicio: Propósito, Estándar, Dominio de acción, Afirmaciones fácticas y Juicio contrario.",
-        "somatic": "Postura de apertura y flexibilidad somática para abandonar el apego a la razón absoluta.",
-        "emotional": "Tránsito del resentimiento a la aceptación activa y la paz relacional."
+        "emotional": "Reconocimiento de la resignación y la sobrecarga como señales tempranas de falta de límites.",
+        "linguistic": "Diferenciación entre el fluir transparente y la declaración de quiebre como interrupción deliberada.",
+        "somatic": "Calibración de la tensión muscular postural al momento de asumir compromisos automáticos."
       },
       "dailyMicroPractice": {
-        "title": "El Filtro de los 5 Fundamentos",
-        "description": "Cada vez que te descubras emitiendo un juicio descalificador (\"Este proyecto no funcionará\", \"Nunca me toman en cuenta\"), escribe 3 hechos comprobables que lo sustenten y 3 que lo contradigan.",
-        "frequency": "Diaria (ante cualquier juicio limitante)"
+        "description": "3 veces al día, detente 90 segundos. Inhala profundo, escanea tu cuerpo y pregúntate: \"¿Estoy operando por convicción o por inercia automática?\" Anota cualquier quiebre no declarado.",
+        "frequency": "Diaria (3 veces al día: 9:00 AM, 2:00 PM, 6:00 PM)",
+        "title": "Pausa de Coherencia y Mapeo en 3 Tiempos"
       },
       "reinforcementPack": {
         "title": "Manual de Conversaciones Impecables y Coordinación de Acciones",
@@ -1125,101 +1202,84 @@
       },
       "studyMaterials": [
         {
-          "title": "Matriz de Fundamentación de Juicios Maestros",
+          "title": "Matriz de Mapeo de Transparencia y Quiebres",
           "type": "Matriz de Diagnóstico",
           "pages": "4 páginas",
-          "description": "Herramienta para auditar los juicios automáticos de insuficiencia y transformarlos en motores de acción."
+          "description": "Plantilla de auto-evaluación para auditar los 5 dominios vitales y detectar costos invisibles."
         },
         {
-          "title": "Guía Práctica: El Arte del Pedido, la Oferta y la Promesa Impecable",
+          "title": "Guía de Práctica: La Pausa como Intervención Ontológica",
           "type": "Guía de Trabajo",
           "pages": "6 páginas",
-          "description": "Protocolos de comunicación directiva de alta efectividad."
+          "description": "Manual de micro-intervenciones de 2 minutos para el día a día directivo."
         }
       ],
       "roadmapSteps": [
         {
           "id": "step-4-1",
           "stepNumber": 1,
-          "title": "Escaneo Somático en 5 Ejes",
+          "title": "Centramiento Somático y Apertura",
           "durationMinutes": 10,
           "phaseType": "Centramiento & Apertura",
-          "description": "Auditoría física de la tensión en cabeza, garganta, pecho, diafragma y pelvis.",
-          "keyInstructions": [
-            "Respirar llevando luz y distensión a cada zona contraída."
-          ]
+          "description": "Alineación corporal y fijación de intención."
         },
         {
           "id": "step-4-2",
           "stepNumber": 2,
-          "title": "La Biología del Compromiso Directivo",
-          "durationMinutes": 20,
-          "phaseType": "Marco Teórico Ontológico",
-          "description": "Cómo el cuerpo comunica liderazgo, autoridad moral y apertura antes que la voz.",
-          "keyInstructions": [
-            "Comprender la relación entre postura corporal y química cerebral."
-          ]
+          "title": "Exploración del Quiebre Ontológico",
+          "durationMinutes": 30,
+          "phaseType": "Dinámica Vivencial",
+          "description": "Indagación sobre narrativas, juicios y posibilidades."
         },
         {
           "id": "step-4-3",
           "stepNumber": 3,
-          "title": "Laboratorio de Presencia e Impacto Verbal",
-          "durationMinutes": 25,
-          "phaseType": "Dinámica Vivencial",
-          "description": "Práctica de proyectar la voz desde el centro corporal en lugar de la garganta apretada.",
-          "keyInstructions": [
-            "Hablar sosteniendo el aire en el diafragma con volumen natural."
-          ]
-        },
-        {
-          "id": "step-4-4",
-          "stepNumber": 4,
-          "title": "Reseteo Somático en 90 Segundos",
+          "title": "Cierre y Compromisos de Acción",
           "durationMinutes": 20,
-          "phaseType": "Práctica Somática",
-          "description": "Técnica de regulación del nervio vago para antes de juntas y presentaciones complejas.",
-          "keyInstructions": [
-            "Exhalación prolongada con sonido \"S\" para bajar la frecuencia cardíaca."
-          ]
-        },
-        {
-          "id": "step-4-5",
-          "stepNumber": 5,
-          "title": "Protocolo Diario de Encarnación Directiva",
-          "durationMinutes": 15,
           "phaseType": "Cierre & Acuerdos",
-          "description": "Establecer disparadores diarios para recordar la postura centrada y serena.",
-          "keyInstructions": [
-            "Elegir una alarma o recordatorio visual en el escritorio."
-          ]
+          "description": "Declaración de acuerdos y micro-práctica de integración."
         }
       ],
       "googleSheetsUrl": "https://docs.google.com/spreadsheets/d/1Mm3CRZVvKYFak5APwIBmfK-vZAUfnx1zg-eq8WOLbZk/edit?usp=sharing",
-      "googleFormsUrl": "https://forms.gle/APUFto8sGbJt322WA"
+      "googleFormsUrl": "https://forms.gle/APUFto8sGbJt322WA",
+      "reflectiveQuestions": [
+        "¿Qué juicio maestro limitante descubriste durante esta sesión?",
+        "¿A qué nueva acción te comprometes a partir de este descubrimiento?"
+      ],
+      "googleDriveFolderUrl": "",
+      "triggersEnabled": true,
+      "experienceToolEnabled": true,
+      "immediateConfirmation": true,
+      "scheduledReminders": true,
+      "postSurveyDispatched": false,
+      "welcomeMessage": "¡Hola! Tu módulo de sesión \"Recopilación, Evaluación de Avance y Cierre de Ciclo\" ha sido habilitado con éxito.",
+      "reminderMessage": "Recordatorio: Tu módulo de sesión \"Recopilación, Evaluación de Avance y Cierre de Ciclo\" requiere revisión de compromisos y cuaderno de trabajo.",
+      "postSurveyMessage": "Por favor diligencia la Bitácora del módulo \"Recopilación, Evaluación de Avance y Cierre de Ciclo\".",
+      "customWebhookUrl": ""
     },
     {
       "step": 5,
-      "weekLabel": "Semanas 9-10",
-      "level": "Nivel III",
-      "levelTitle": "Dirección & Trascendencia",
-      "sessionTitle": "Diseño de Conversaciones de Futuro y Posibilidad",
-      "objective": "Proyectar escenarios de certeza interna, construyendo ofertas irresistibles y relaciones basadas en la confianza generativa y la soberanía ontológica.",
+      "weekLabel": "Semanas 1-4  ",
+      "level": "Nivel II",
+      "levelTitle": "Fundamentos & Transparencia",
+      "sessionTitle": "Mapeo de la Transparencia y Quiebres Inconscientes",
+      "objective": "Identificar la transparencia cotidiana, los automatismos operativos y los quiebres no declarados en el ámbito profesional y personal para recuperar el poder de acción reflexiva.",
       "tangibleOutcomes": [
-        "Declaración clara de una nueva visión de futuro desprendida del miedo y la necesidad de aprobación.",
-        "Diseño de ofertas profesionales y personales de alto valor percibido.",
-        "Liderazgo generativo con capacidad para abrir posibilidades donde antes solo se percibían bloqueos."
+        "Identificación precisa de las fugas de energía y automatismos en la rutina ejecutiva.",
+        "Mapeo estructurado de quiebres ocultos y acuerdos tácitos no consensuados.",
+        "Recuperación de la capacidad de pausar y observar antes de reaccionar compulsivamente."
       ],
-      "keyQuestion": "¿Qué nueva identidad pública y profesional estás declarando para los próximos trimestres?",
-      "levelPrompt": "Escribe la visión de futuro que ahora te convoca, desprendida de la necesidad de complacer o controlar.",
+      "keyQuestion": "¿En qué áreas de tu vida estás operando en piloto automático tolerando costos ocultos?",
+      "levelPrompt": "Registra los límites que has omitido declarar y los acuerdos tácitos que están drenando tu energía vital y directiva.",
       "methodology": {
-        "linguistic": "Declaraciones de visión, promesa de futuro y diseño de ofertas de valor transformacional.",
-        "somatic": "Disposición corporal de avance, centramiento y presencia expansiva.",
-        "emotional": "Entusiasmo sereno, ambición ética y gratitud generativa."
+        "emotional": "Reconocimiento de la resignación y la sobrecarga como señales tempranas de falta de límites.",
+        "linguistic": "Diferenciación entre el fluir transparente y la declaración de quiebre como interrupción deliberada.",
+        "somatic": "Calibración de la tensión muscular postural al momento de asumir compromisos automáticos."
       },
       "dailyMicroPractice": {
-        "title": "Visualización de Futuro y Enraizamiento de Posibilidad",
-        "description": "Dedica los primeros 5 minutos de cada mañana a visualizar tu estado de ser ideal en tus conversaciones clave del día, sintiendo la certeza en tu cuerpo antes de interactuar.",
-        "frequency": "Diaria (primeros 5 minutos del día)"
+        "description": "3 veces al día, detente 90 segundos. Inhala profundo, escanea tu cuerpo y pregúntate: \"¿Estoy operando por convicción o por inercia automática?\" Anota cualquier quiebre no declarado.",
+        "frequency": "Diaria (3 veces al día: 9:00 AM, 2:00 PM, 6:00 PM)",
+        "title": "Pausa de Coherencia y Mapeo en 3 Tiempos"
       },
       "reinforcementPack": {
         "title": "Manifiesto de Identidad Pública y Diseño de Ofertas de Futuro",
@@ -1241,101 +1301,84 @@
       },
       "studyMaterials": [
         {
-          "title": "Lienzo de Diseño de Identidad Pública y Oferta Única",
-          "type": "Ficha de Ejercicio",
+          "title": "Matriz de Mapeo de Transparencia y Quiebres",
+          "type": "Matriz de Diagnóstico",
           "pages": "4 páginas",
-          "description": "Plantilla estructurada para redactar tu propuesta de valor y presencia ejecutiva."
+          "description": "Plantilla de auto-evaluación para auditar los 5 dominios vitales y detectar costos invisibles."
         },
         {
-          "title": "Cuaderno: Conversaciones de Futuro y Arquitectura de Posibilidad",
+          "title": "Guía de Práctica: La Pausa como Intervención Ontológica",
           "type": "Guía de Trabajo",
-          "pages": "8 páginas",
-          "description": "Técnicas avanzadas de indagación apreciativa y diseño ontológico de proyectos."
+          "pages": "6 páginas",
+          "description": "Manual de micro-intervenciones de 2 minutos para el día a día directivo."
         }
       ],
       "roadmapSteps": [
         {
           "id": "step-5-1",
           "stepNumber": 1,
-          "title": "Centramiento en el Horizonte de Posibilidad",
+          "title": "Centramiento Somático y Apertura",
           "durationMinutes": 10,
           "phaseType": "Centramiento & Apertura",
-          "description": "Conectar con la visión de largo plazo sin la ansiedad ni el apremio del corto plazo.",
-          "keyInstructions": [
-            "Visualizar el escenario deseado con todos los sentidos despiertos."
-          ]
+          "description": "Alineación corporal y fijación de intención."
         },
         {
           "id": "step-5-2",
           "stepNumber": 2,
-          "title": "Anatomía de Peticiones, Ofertas y Promesas",
-          "durationMinutes": 25,
-          "phaseType": "Marco Teórico Ontológico",
-          "description": "Las 4 fases de la coordinación de acciones y cómo evitar promesas rotas o malentendidos.",
-          "keyInstructions": [
-            "Explicar el ciclo: Preparación, Negociación, Ejecución y Evaluación."
-          ]
+          "title": "Exploración del Quiebre Ontológico",
+          "durationMinutes": 30,
+          "phaseType": "Dinámica Vivencial",
+          "description": "Indagación sobre narrativas, juicios y posibilidades."
         },
         {
           "id": "step-5-3",
           "stepNumber": 3,
-          "title": "Diseño de la Red de Ayuda y Conversaciones de Futuro",
-          "durationMinutes": 25,
-          "phaseType": "Dinámica Vivencial",
-          "description": "Identificar a las personas clave a quienes solicitar colaboración estratégica impecable.",
-          "keyInstructions": [
-            "Redactar 2 peticiones formales con fecha y condiciones exactas."
-          ]
-        },
-        {
-          "id": "step-5-4",
-          "stepNumber": 4,
-          "title": "Corporalidad de la Oferta Impecable",
-          "durationMinutes": 15,
-          "phaseType": "Práctica Somática",
-          "description": "Habitar la generosidad y el valor propio al proponer acuerdos y proyectos de impacto.",
-          "keyInstructions": [
-            "Apertura de brazos y mirada limpia sin suplicar ni exigir."
-          ]
-        },
-        {
-          "id": "step-5-5",
-          "stepNumber": 5,
-          "title": "Acuerdos de Ejecución y Renegociación",
-          "durationMinutes": 15,
+          "title": "Cierre y Compromisos de Acción",
+          "durationMinutes": 20,
           "phaseType": "Cierre & Acuerdos",
-          "description": "Compromisos de entrega y protocolo de aviso temprano ante cualquier imprevisto.",
-          "keyInstructions": [
-            "Fijar el estándar de cumplimiento y respeto a la palabra empeñada."
-          ]
+          "description": "Declaración de acuerdos y micro-práctica de integración."
         }
       ],
       "googleSheetsUrl": "https://docs.google.com/spreadsheets/d/1Mm3CRZVvKYFak5APwIBmfK-vZAUfnx1zg-eq8WOLbZk/edit?usp=sharing",
-      "googleFormsUrl": "https://forms.gle/APUFto8sGbJt322WA"
+      "googleFormsUrl": "https://forms.gle/APUFto8sGbJt322WA",
+      "reflectiveQuestions": [
+        "¿Qué juicio maestro limitante descubriste durante esta sesión?",
+        "¿A qué nueva acción te comprometes a partir de este descubrimiento?"
+      ],
+      "googleDriveFolderUrl": "",
+      "triggersEnabled": true,
+      "experienceToolEnabled": true,
+      "immediateConfirmation": true,
+      "scheduledReminders": true,
+      "postSurveyDispatched": false,
+      "welcomeMessage": "¡Hola! Tu módulo de sesión \"Mapeo de la Transparencia y Quiebres Inconscientes  (Copia) (Copia)\" ha sido habilitado con éxito.",
+      "reminderMessage": "Recordatorio: Tu módulo de sesión \"Mapeo de la Transparencia y Quiebres Inconscientes  (Copia) (Copia)\" requiere revisión de compromisos y cuaderno de trabajo.",
+      "postSurveyMessage": "Por favor diligencia la Bitácora del módulo \"Mapeo de la Transparencia y Quiebres Inconscientes  (Copia) (Copia)\".",
+      "customWebhookUrl": ""
     },
     {
       "step": 6,
-      "weekLabel": "Semanas 11-12",
-      "level": "Nivel III",
-      "levelTitle": "Dirección & Trascendencia",
-      "sessionTitle": "Integración Ontológica y Compromisos Innegociables",
-      "objective": "Consolidar el nuevo observador ontológico con protocolos de auto-asistencia permanente, estándares innegociables y coherencia lingüística, emocional y corporal.",
+      "weekLabel": "Semanas 2-4",
+      "level": "Nivel II",
+      "levelTitle": "Fundamentos & Transparencia",
+      "sessionTitle": "Mapeo de la Transparencia y Quiebres Inconscientes",
+      "objective": "Identificar la transparencia cotidiana, los automatismos operativos y los quiebres no declarados en el ámbito profesional y personal para recuperar el poder de acción reflexiva.",
       "tangibleOutcomes": [
-        "Carta de Compromisos Innegociables firmada como pacto de coherencia vital.",
-        "Protocolo personalizado de auto-coaching para afrontar quiebres futuros con autonomía total.",
-        "Consolidación del aprendizaje ontológico como una forma permanente de habitar el mundo."
+        "Identificación precisa de las fugas de energía y automatismos en la rutina ejecutiva.",
+        "Mapeo estructurado de quiebres ocultos y acuerdos tácitos no consensuados.",
+        "Recuperación de la capacidad de pausar y observar antes de reaccionar compulsivamente."
       ],
-      "keyQuestion": "¿Cuáles son tus 3 estándares innegociables de vida y cómo sostendrás tu coherencia ontológica?",
-      "levelPrompt": "Sella tus compromisos definitivos y los hábitos de auto-observación que garantizarán tu autonomía y bienestar duradero.",
+      "keyQuestion": "¿En qué áreas de tu vida estás operando en piloto automático tolerando costos ocultos?",
+      "levelPrompt": "Registra los límites que has omitido declarar y los acuerdos tácitos que están drenando tu energía vital y directiva.",
       "methodology": {
-        "linguistic": "Declaración de cierre de programa, promesas hacia uno mismo y formalización de pactos éticos.",
-        "somatic": "Integración postural global: solidez, flexibilidad, apertura y centramiento sostenible.",
-        "emotional": "Paz interna, gratitud trascendente y confianza incondicional en el propio proceso."
+        "emotional": "Reconocimiento de la resignación y la sobrecarga como señales tempranas de falta de límites.",
+        "linguistic": "Diferenciación entre el fluir transparente y la declaración de quiebre como interrupción deliberada.",
+        "somatic": "Calibración de la tensión muscular postural al momento de asumir compromisos automáticos."
       },
       "dailyMicroPractice": {
-        "title": "El Ritual de Coherencia y Cierre Diario",
-        "description": "Al final de cada jornada, revisa tus 3 estándares innegociables. Agradece un acierto, reconoce un aprendizaje y declara el descanso como un acto sagrado de auto-cuidado.",
-        "frequency": "Diaria (antes de dormir)"
+        "description": "3 veces al día, detente 90 segundos. Inhala profundo, escanea tu cuerpo y pregúntate: \"¿Estoy operando por convicción o por inercia automática?\" Anota cualquier quiebre no declarado.",
+        "frequency": "Diaria (3 veces al día: 9:00 AM, 2:00 PM, 6:00 PM)",
+        "title": "Pausa de Coherencia y Mapeo en 3 Tiempos"
       },
       "reinforcementPack": {
         "title": "Compendio de Integración Ontológica y Carta de Innegociables",
@@ -1357,248 +1400,549 @@
       },
       "studyMaterials": [
         {
-          "title": "Carta Magna de Compromisos Innegociables",
-          "type": "Ficha de Ejercicio",
-          "pages": "3 páginas",
-          "description": "Documento formal para sellar los 3 estándares rectores de tu vida profesional y personal."
+          "title": "Matriz de Mapeo de Transparencia y Quiebres",
+          "type": "Matriz de Diagnóstico",
+          "pages": "4 páginas",
+          "description": "Plantilla de auto-evaluación para auditar los 5 dominios vitales y detectar costos invisibles."
         },
         {
-          "title": "Manual Permanente de Auto-Asistencia Ontológica",
+          "title": "Guía de Práctica: La Pausa como Intervención Ontológica",
           "type": "Guía de Trabajo",
-          "pages": "12 páginas",
-          "description": "Compendio integral de protocolos y herramientas para toda la vida."
+          "pages": "6 páginas",
+          "description": "Manual de micro-intervenciones de 2 minutos para el día a día directivo."
         }
       ],
       "roadmapSteps": [
         {
           "id": "step-6-1",
           "stepNumber": 1,
-          "title": "Centramiento en la Gratitud y la Presencia",
+          "title": "Centramiento Somático y Apertura",
           "durationMinutes": 10,
           "phaseType": "Centramiento & Apertura",
-          "description": "Reconocer el camino recorrido, los quiebres superados y la nueva coherencia alcanzada.",
-          "keyInstructions": [
-            "Agradecer al propio proceso y a los compañeros de viaje."
-          ]
+          "description": "Alineación corporal y fijación de intención."
         },
         {
           "id": "step-6-2",
           "stepNumber": 2,
-          "title": "La Soberanía Ontológica como Manera de Ser",
-          "durationMinutes": 20,
-          "phaseType": "Marco Teórico Ontológico",
-          "description": "Cómo sostener al nuevo observador en contextos cambiantes, exigentes y de alta presión.",
-          "keyInstructions": [
-            "Integrar lenguaje, cuerpo y emoción como una tríada indivisible."
-          ]
+          "title": "Exploración del Quiebre Ontológico",
+          "durationMinutes": 30,
+          "phaseType": "Dinámica Vivencial",
+          "description": "Indagación sobre narrativas, juicios y posibilidades."
         },
         {
           "id": "step-6-3",
           "stepNumber": 3,
-          "title": "Proclamación del Manifiesto de Soberanía Personal",
-          "durationMinutes": 30,
-          "phaseType": "Dinámica Vivencial",
-          "description": "Lectura y firma del compromiso ontológico con la propia vida y liderazgo.",
-          "keyInstructions": [
-            "Cada participante lee su manifiesto en voz alta ante la comunidad."
-          ]
-        },
-        {
-          "id": "step-6-4",
-          "stepNumber": 4,
-          "title": "Arquetipo Somático del Soberano",
-          "durationMinutes": 15,
-          "phaseType": "Práctica Somática",
-          "description": "Anclar corporalmente la serenidad inquebrantable ante cualquier circunstancia.",
-          "keyInstructions": [
-            "Postura de arraigo profundo, pecho espacioso y respiración calmada."
-          ]
-        },
-        {
-          "id": "step-6-5",
-          "stepNumber": 5,
-          "title": "Cierre del Ciclo y Plan de Sostenibilidad Vital",
-          "durationMinutes": 15,
+          "title": "Cierre y Compromisos de Acción",
+          "durationMinutes": 20,
           "phaseType": "Cierre & Acuerdos",
-          "description": "Fijar el cronograma de revisiones trimestrales y entrega de certificado de logro.",
-          "keyInstructions": [
-            "Declarar el inicio formal de la nueva etapa de vida."
-          ]
+          "description": "Declaración de acuerdos y micro-práctica de integración."
         }
       ],
       "googleSheetsUrl": "https://docs.google.com/spreadsheets/d/1Mm3CRZVvKYFak5APwIBmfK-vZAUfnx1zg-eq8WOLbZk/edit?usp=sharing",
-      "googleFormsUrl": "https://forms.gle/APUFto8sGbJt322WA"
+      "googleFormsUrl": "https://forms.gle/APUFto8sGbJt322WA",
+      "reflectiveQuestions": [
+        "¿Qué juicio maestro limitante descubriste durante esta sesión?",
+        "¿A qué nueva acción te comprometes a partir de este descubrimiento?"
+      ],
+      "googleDriveFolderUrl": "",
+      "triggersEnabled": true,
+      "experienceToolEnabled": true,
+      "immediateConfirmation": true,
+      "scheduledReminders": true,
+      "postSurveyDispatched": false,
+      "welcomeMessage": "¡Hola! Tu módulo de sesión \"Mapeo de la Transparencia y Quiebres Inconscientes  (Copia) (Copia) (Copia)\" ha sido habilitado con éxito.",
+      "reminderMessage": "Recordatorio: Tu módulo de sesión \"Mapeo de la Transparencia y Quiebres Inconscientes  (Copia) (Copia) (Copia)\" requiere revisión de compromisos y cuaderno de trabajo.",
+      "postSurveyMessage": "Por favor diligencia la Bitácora del módulo \"Mapeo de la Transparencia y Quiebres Inconscientes  (Copia) (Copia) (Copia)\".",
+      "customWebhookUrl": ""
     },
     {
       "step": 7,
-      "weekLabel": "Semana 7",
+      "weekLabel": "Semanas 4-3",
       "level": "Nivel II",
-      "levelTitle": "Arquitectura Lingüística & Compromisos",
-      "sessionTitle": "El Arte de la Escucha Comprometida y el Silencio Fecundo",
-      "objective": "Trascender la escucha automática para habitar la presencia atenta, desactivar la necesidad de validación inmediata y generar espacios de coordinación impecables.",
+      "levelTitle": "Fundamentos & Transparencia",
+      "sessionTitle": "Mapeo de la Transparencia y Quiebres Inconscientes ",
+      "objective": "Identificar la transparencia cotidiana, los automatismos operativos y los quiebres no declarados en el ámbito profesional y personal para recuperar el poder de acción reflexiva.",
       "tangibleOutcomes": [
-        "Diferenciación entre oír biológicamente y escuchar ontológicamente con empatía profunda.",
-        "Identificación de los 4 filtros automáticos que distorsionan las conversaciones directivas.",
-        "Instalación del silencio como competencia de liderazgo y contención emocional."
+        "Identificación precisa de las fugas de energía y automatismos en la rutina ejecutiva.",
+        "Mapeo estructurado de quiebres ocultos y acuerdos tácitos no consensuados.",
+        "Recuperación de la capacidad de pausar y observar antes de reaccionar compulsivamente."
       ],
-      "keyQuestion": "¿Desde qué juicio o necesidad interna estás escuchando a quienes te rodean?",
-      "levelPrompt": "Registra las conversaciones donde interrumpes o completas mentalmente las frases del otro sin concederle legitimidad.",
+      "keyQuestion": "¿En qué áreas de tu vida estás operando en piloto automático tolerando costos ocultos?",
+      "levelPrompt": "Registra los límites que has omitido declarar y los acuerdos tácitos que están drenando tu energía vital y directiva.",
       "methodology": {
-        "linguistic": "Distinción entre relato del hablante e interpretaciones del oyente; validación del quiebre ajeno.",
-        "somatic": "Relajación del diafragma, contacto visual sereno y postura de recepción abierta.",
-        "emotional": "Curiosidad genuina, paciencia reflexiva y disolución de la urgencia reactiva."
+        "emotional": "Reconocimiento de la resignación y la sobrecarga como señales tempranas de falta de límites.",
+        "linguistic": "Diferenciación entre el fluir transparente y la declaración de quiebre como interrupción deliberada.",
+        "somatic": "Calibración de la tensión muscular postural al momento de asumir compromisos automáticos."
       },
       "dailyMicroPractice": {
-        "title": "Pausa de Escucha sin Interrupción (3 Minutos)",
-        "description": "En al menos dos interacciones hoy, escucha activamente sin juzgar, opinar ni dar consejos.",
-        "frequency": "Diaria (2 interacciones clave)"
+        "description": "3 veces al día, detente 90 segundos. Inhala profundo, escanea tu cuerpo y pregúntate: \"¿Estoy operando por convicción o por inercia automática?\" Anota cualquier quiebre no declarado.",
+        "frequency": "Diaria (3 veces al día: 9:00 AM, 2:00 PM, 6:00 PM)",
+        "title": "Pausa de Coherencia y Mapeo en 3 Tiempos"
       },
-      "roadmapSteps": [],
+      "roadmapSteps": [
+        {
+          "id": "step-7-1",
+          "stepNumber": 1,
+          "title": "Centramiento Somático y Apertura",
+          "durationMinutes": 10,
+          "phaseType": "Centramiento & Apertura",
+          "description": "Alineación corporal y fijación de intención."
+        },
+        {
+          "id": "step-7-2",
+          "stepNumber": 2,
+          "title": "Exploración del Quiebre Ontológico",
+          "durationMinutes": 30,
+          "phaseType": "Dinámica Vivencial",
+          "description": "Indagación sobre narrativas, juicios y posibilidades."
+        },
+        {
+          "id": "step-7-3",
+          "stepNumber": 3,
+          "title": "Cierre y Compromisos de Acción",
+          "durationMinutes": 20,
+          "phaseType": "Cierre & Acuerdos",
+          "description": "Declaración de acuerdos y micro-práctica de integración."
+        }
+      ],
       "googleSheetsUrl": "https://docs.google.com/spreadsheets/d/1Mm3CRZVvKYFak5APwIBmfK-vZAUfnx1zg-eq8WOLbZk/edit?usp=sharing",
-      "googleFormsUrl": "https://forms.gle/APUFto8sGbJt322WA"
+      "googleFormsUrl": "https://forms.gle/APUFto8sGbJt322WA",
+      "studyMaterials": [
+        {
+          "title": "Matriz de Mapeo de Transparencia y Quiebres",
+          "type": "Matriz de Diagnóstico",
+          "pages": "4 páginas",
+          "description": "Plantilla de auto-evaluación para auditar los 5 dominios vitales y detectar costos invisibles."
+        },
+        {
+          "title": "Guía de Práctica: La Pausa como Intervención Ontológica",
+          "type": "Guía de Trabajo",
+          "pages": "6 páginas",
+          "description": "Manual de micro-intervenciones de 2 minutos para el día a día directivo."
+        }
+      ],
+      "reflectiveQuestions": [
+        "¿Qué juicio maestro limitante descubriste durante esta sesión?",
+        "¿A qué nueva acción te comprometes a partir de este descubrimiento?"
+      ],
+      "googleDriveFolderUrl": "",
+      "triggersEnabled": true,
+      "experienceToolEnabled": true,
+      "immediateConfirmation": true,
+      "scheduledReminders": true,
+      "postSurveyDispatched": false,
+      "welcomeMessage": "¡Hola! Tu módulo de sesión \"Mapeo de la Transparencia y Quiebres Inconscientes  (Copia) (Copia) (Copia) (Copia)\" ha sido habilitado con éxito.",
+      "reminderMessage": "Recordatorio: Tu módulo de sesión \"Mapeo de la Transparencia y Quiebres Inconscientes  (Copia) (Copia) (Copia) (Copia)\" requiere revisión de compromisos y cuaderno de trabajo.",
+      "postSurveyMessage": "Por favor diligencia la Bitácora del módulo \"Mapeo de la Transparencia y Quiebres Inconscientes  (Copia) (Copia) (Copia) (Copia)\".",
+      "customWebhookUrl": ""
     },
     {
       "step": 8,
-      "weekLabel": "Semana 8",
+      "weekLabel": "Semanas 4-4",
       "level": "Nivel II",
-      "levelTitle": "Arquitectura Lingüística & Compromisos",
-      "sessionTitle": "Gestión Adaptativa de la Culpa, Miedo e Ira Directiva",
-      "objective": "Comprender la raíz ontológica de las emociones complejas para transformarlas en energía de acción lúcida y cuidado legítimo.",
+      "levelTitle": "Fundamentos & Transparencia",
+      "sessionTitle": "Recopilación, Evaluación de Avance y Cierre de Ciclo",
+      "objective": "Evaluar la evolución del cliente respecto al punto de partida del ciclo, revisar los aprendizajes ontológicos y somáticos consolidados, y alinear las nuevas coordenadas del proceso hacia el siguiente nivel de liderazgo.",
       "tangibleOutcomes": [
-        "Mapeo de la culpa como señal de un estándar ético quebrantado que requiere reparación, no castigo.",
-        "Canalización de la ira directiva hacia la delimitación firme y el reclamo constructivo.",
-        "Distinción entre miedo prudencial (anticipación de riesgos) y miedo paralizante."
+        "Identificación precisa de las fugas de energía y automatismos en la rutina ejecutiva.",
+        "Mapeo estructurado de quiebres ocultos y acuerdos tácitos no consensuados.",
+        "Recuperación de la capacidad de pausar y observar antes de reaccionar compulsivamente."
       ],
-      "keyQuestion": "¿Qué emoción estás silenciando en tu cuerpo y qué mensaje de dignidad te está entregando?",
-      "levelPrompt": "Explora el costo somático de sostener el resentimiento o la culpa acumulada en tus roles.",
+      "keyQuestion": "¿En qué áreas de tu vida estás operando en piloto automático tolerando costos ocultos?",
+      "levelPrompt": "Espacio 100% privado y libre de interrupciones, con disponibilidad reflexiva para auditar el trayecto recorrido, evaluar los compromisos cumplidos y definir el rumbo de su proceso.",
       "methodology": {
-        "linguistic": "Reencuadre de la ira en juicio de injusticia; reconstrucción de promesas incumplidas.",
-        "somatic": "Descompresión de mandíbula, cuello y espalda media mediante exhalación sonora.",
-        "emotional": "Transición del resentimiento a la aceptación activa y la paz interna."
+        "emotional": "Reconocimiento de la resignación y la sobrecarga como señales tempranas de falta de límites.",
+        "linguistic": "Diferenciación entre el fluir transparente y la declaración de quiebre como interrupción deliberada.",
+        "somatic": "Calibración de la tensión muscular postural al momento de asumir compromisos automáticos."
       },
       "dailyMicroPractice": {
-        "title": "Desahogo Somático y Reencuadre Emocional",
-        "description": "Respira hondo 4 veces con exhalación larga al sentir frustración, identificando el estándar herido.",
-        "frequency": "Ante cada episodio de tensión"
+        "description": "3 veces al día, detente 90 segundos. Inhala profundo, escanea tu cuerpo y pregúntate: \"¿Estoy operando por convicción o por inercia automática?\" Anota cualquier quiebre no declarado.",
+        "frequency": "Diaria (3 veces al día: 9:00 AM, 2:00 PM, 6:00 PM)",
+        "title": "Pausa de Coherencia y Mapeo en 3 Tiempos"
       },
-      "roadmapSteps": [],
+      "roadmapSteps": [
+        {
+          "id": "step-8-1",
+          "stepNumber": 1,
+          "title": "Centramiento Somático y Apertura",
+          "durationMinutes": 10,
+          "phaseType": "Centramiento & Apertura",
+          "description": "Alineación corporal y fijación de intención."
+        },
+        {
+          "id": "step-8-2",
+          "stepNumber": 2,
+          "title": "Exploración del Quiebre Ontológico",
+          "durationMinutes": 30,
+          "phaseType": "Dinámica Vivencial",
+          "description": "Indagación sobre narrativas, juicios y posibilidades."
+        },
+        {
+          "id": "step-8-3",
+          "stepNumber": 3,
+          "title": "Cierre y Compromisos de Acción",
+          "durationMinutes": 20,
+          "phaseType": "Cierre & Acuerdos",
+          "description": "Declaración de acuerdos y micro-práctica de integración."
+        }
+      ],
       "googleSheetsUrl": "https://docs.google.com/spreadsheets/d/1Mm3CRZVvKYFak5APwIBmfK-vZAUfnx1zg-eq8WOLbZk/edit?usp=sharing",
-      "googleFormsUrl": "https://forms.gle/APUFto8sGbJt322WA"
+      "googleFormsUrl": "https://forms.gle/APUFto8sGbJt322WA",
+      "studyMaterials": [
+        {
+          "title": "Matriz de Mapeo de Transparencia y Quiebres",
+          "type": "Matriz de Diagnóstico",
+          "pages": "4 páginas",
+          "description": "Plantilla de auto-evaluación para auditar los 5 dominios vitales y detectar costos invisibles."
+        },
+        {
+          "title": "Guía de Práctica: La Pausa como Intervención Ontológica",
+          "type": "Guía de Trabajo",
+          "pages": "6 páginas",
+          "description": "Manual de micro-intervenciones de 2 minutos para el día a día directivo."
+        }
+      ],
+      "reflectiveQuestions": [
+        "¿Qué juicio maestro limitante descubriste durante esta sesión?",
+        "¿A qué nueva acción te comprometes a partir de este descubrimiento?"
+      ],
+      "googleDriveFolderUrl": "",
+      "triggersEnabled": true,
+      "experienceToolEnabled": true,
+      "immediateConfirmation": true,
+      "scheduledReminders": true,
+      "postSurveyDispatched": false,
+      "welcomeMessage": "¡Hola! Tu módulo de sesión \"Recopilación, Evaluación de Avance y Cierre de Ciclo (Copia)\" ha sido habilitado con éxito.",
+      "reminderMessage": "Recordatorio: Tu módulo de sesión \"Recopilación, Evaluación de Avance y Cierre de Ciclo (Copia)\" requiere revisión de compromisos y cuaderno de trabajo.",
+      "postSurveyMessage": "Por favor diligencia la Bitácora del módulo \"Recopilación, Evaluación de Avance y Cierre de Ciclo (Copia)\".",
+      "customWebhookUrl": ""
     },
     {
       "step": 9,
-      "weekLabel": "Semana 9",
+      "weekLabel": "Semanas 4-1",
       "level": "Nivel III",
-      "levelTitle": "Dirección & Trascendencia",
-      "sessionTitle": "Soberanía Relacional y Reconfiguración de Vínculos de Confianza",
-      "objective": "Construir o restaurar la confianza relacional en equipos y vínculos significativos mediante pilares de sinceridad, competencia e involucramiento.",
+      "levelTitle": "Fundamentos & Transparencia",
+      "sessionTitle": "Mapeo de la Transparencia y Quiebres Inconscientes",
+      "objective": "Identificar la transparencia cotidiana, los automatismos operativos y los quiebres no declarados en el ámbito profesional y personal para recuperar el poder de acción reflexiva.",
       "tangibleOutcomes": [
-        "Auditoría ontológica de la confianza en los 3 dominios: Sinceridad, Competencia y Confiabilidad.",
-        "Protocolo estructurado para reparar promesas rotas sin evasivas ni justificaciones defensivas.",
-        "Establecimiento de fronteras limpias frente a relaciones transaccionales desgastantes."
+        "Identificación precisa de las fugas de energía y automatismos en la rutina ejecutiva.",
+        "Mapeo estructurado de quiebres ocultos y acuerdos tácitos no consensuados.",
+        "Recuperación de la capacidad de pausar y observar antes de reaccionar compulsivamente."
       ],
-      "keyQuestion": "¿En qué vínculos has perdido la credibilidad o dónde te cuesta volver a confiar plenamente?",
-      "levelPrompt": "Rediseña los acuerdos explícitos que devolverán la transparencia y la solidez a tus relaciones nucleares.",
+      "keyQuestion": "¿En qué áreas de tu vida estás operando en piloto automático tolerando costos ocultos?",
+      "levelPrompt": "Registra los límites que has omitido declarar y los acuerdos tácitos que están drenando tu energía vital y directiva.",
       "methodology": {
-        "linguistic": "Declaraciones de confianza y disculpa ontológica con restitución de daños acordada.",
-        "somatic": "Calibración de la distancia interpersonal y postura de seguridad sin agresividad.",
-        "emotional": "Vulnerabilidad corajuda y disposición a renegociar el pacto vincular."
+        "emotional": "Reconocimiento de la resignación y la sobrecarga como señales tempranas de falta de límites.",
+        "linguistic": "Diferenciación entre el fluir transparente y la declaración de quiebre como interrupción deliberada.",
+        "somatic": "Calibración de la tensión muscular postural al momento de asumir compromisos automáticos."
       },
       "dailyMicroPractice": {
-        "title": "Validación de Acuerdos Claros",
-        "description": "Antes de cerrar un compromiso, verifica explícitamente: \"¿Qué entendemos ambos por cumplido?\"",
-        "frequency": "Diaria en acuerdos de trabajo"
+        "description": "3 veces al día, detente 90 segundos. Inhala profundo, escanea tu cuerpo y pregúntate: \"¿Estoy operando por convicción o por inercia automática?\" Anota cualquier quiebre no declarado.",
+        "frequency": "Diaria (3 veces al día: 9:00 AM, 2:00 PM, 6:00 PM)",
+        "title": "Pausa de Coherencia y Mapeo en 3 Tiempos"
       },
-      "roadmapSteps": [],
+      "roadmapSteps": [
+        {
+          "id": "step-9-1",
+          "stepNumber": 1,
+          "title": "Centramiento Somático y Apertura",
+          "durationMinutes": 10,
+          "phaseType": "Centramiento & Apertura",
+          "description": "Alineación corporal y fijación de intención."
+        },
+        {
+          "id": "step-9-2",
+          "stepNumber": 2,
+          "title": "Exploración del Quiebre Ontológico",
+          "durationMinutes": 30,
+          "phaseType": "Dinámica Vivencial",
+          "description": "Indagación sobre narrativas, juicios y posibilidades."
+        },
+        {
+          "id": "step-9-3",
+          "stepNumber": 3,
+          "title": "Cierre y Compromisos de Acción",
+          "durationMinutes": 20,
+          "phaseType": "Cierre & Acuerdos",
+          "description": "Declaración de acuerdos y micro-práctica de integración."
+        }
+      ],
       "googleSheetsUrl": "https://docs.google.com/spreadsheets/d/1Mm3CRZVvKYFak5APwIBmfK-vZAUfnx1zg-eq8WOLbZk/edit?usp=sharing",
-      "googleFormsUrl": "https://forms.gle/APUFto8sGbJt322WA"
+      "googleFormsUrl": "https://forms.gle/APUFto8sGbJt322WA",
+      "studyMaterials": [
+        {
+          "title": "Matriz de Mapeo de Transparencia y Quiebres",
+          "type": "Matriz de Diagnóstico",
+          "pages": "4 páginas",
+          "description": "Plantilla de auto-evaluación para auditar los 5 dominios vitales y detectar costos invisibles."
+        },
+        {
+          "title": "Guía de Práctica: La Pausa como Intervención Ontológica",
+          "type": "Guía de Trabajo",
+          "pages": "6 páginas",
+          "description": "Manual de micro-intervenciones de 2 minutos para el día a día directivo."
+        }
+      ],
+      "reflectiveQuestions": [
+        "¿Qué juicio maestro limitante descubriste durante esta sesión?",
+        "¿A qué nueva acción te comprometes a partir de este descubrimiento?"
+      ],
+      "googleDriveFolderUrl": "",
+      "triggersEnabled": true,
+      "experienceToolEnabled": true,
+      "immediateConfirmation": true,
+      "scheduledReminders": true,
+      "postSurveyDispatched": false,
+      "welcomeMessage": "¡Hola! Tu módulo de sesión \"Mapeo de la Transparencia y Quiebres Inconscientes  (Copia) (Copia) (Copia) (Copia) (Copia)\" ha sido habilitado con éxito.",
+      "reminderMessage": "Recordatorio: Tu módulo de sesión \"Mapeo de la Transparencia y Quiebres Inconscientes  (Copia) (Copia) (Copia) (Copia) (Copia)\" requiere revisión de compromisos y cuaderno de trabajo.",
+      "postSurveyMessage": "Por favor diligencia la Bitácora del módulo \"Mapeo de la Transparencia y Quiebres Inconscientes  (Copia) (Copia) (Copia) (Copia) (Copia)\".",
+      "customWebhookUrl": ""
     },
     {
       "step": 10,
-      "weekLabel": "Semana 10",
+      "weekLabel": "Semanas 4-2",
       "level": "Nivel III",
-      "levelTitle": "Dirección & Trascendencia",
-      "sessionTitle": "Presencia Ejecutiva, Autoridad Serena y Arraigo Corporal",
-      "objective": "Desarrollar una presencia directiva basada en el centramiento somático, la economía de palabras y la convicción profunda.",
+      "levelTitle": "Fundamentos & Transparencia",
+      "sessionTitle": "Mapeo de la Transparencia y Quiebres Inconscientes",
+      "objective": "Identificar la transparencia cotidiana, los automatismos operativos y los quiebres no declarados en el ámbito profesional y personal para recuperar el poder de acción reflexiva.",
       "tangibleOutcomes": [
-        "Desarticulación del síndrome del impostor y la necesidad compulsiva de agradar a todos.",
-        "Manejo del tono de voz, ritmo respiratorio y postura erguida ante comités o audiencias críticas.",
-        "Habilidad para sostener conversaciones difíciles sin perder el aplomo ni la calidez."
+        "Identificación precisa de las fugas de energía y automatismos en la rutina ejecutiva.",
+        "Mapeo estructurado de quiebres ocultos y acuerdos tácitos no consensuados.",
+        "Recuperación de la capacidad de pausar y observar antes de reaccionar compulsivamente."
       ],
-      "keyQuestion": "¿Desde qué corporalidad estás comunicando tu valor y visión como líder?",
-      "levelPrompt": "Registra las situaciones donde achicas tu postura o dudas de tu autoridad legítima.",
+      "keyQuestion": "¿En qué áreas de tu vida estás operando en piloto automático tolerando costos ocultos?",
+      "levelPrompt": "Registra los límites que has omitido declarar y los acuerdos tácitos que están drenando tu energía vital y directiva.",
       "methodology": {
-        "linguistic": "Actos de habla directos, precisos y asertivos, sin rodeos ni disculpas innecesarias.",
-        "somatic": "Arraigo podal (pies bien apoyados), mirada estable y apertura torácica serena.",
-        "emotional": "Dignidad serena, orgullo noble y desapego de la aprobación externa inmediata."
+        "emotional": "Reconocimiento de la resignación y la sobrecarga como señales tempranas de falta de límites.",
+        "linguistic": "Diferenciación entre el fluir transparente y la declaración de quiebre como interrupción deliberada.",
+        "somatic": "Calibración de la tensión muscular postural al momento de asumir compromisos automáticos."
       },
       "dailyMicroPractice": {
-        "title": "Centramiento en 60 Segundos antes de Reuniones",
-        "description": "Ponte de pie, alinea columna, siente el suelo con los pies y exhala dos veces con calma.",
-        "frequency": "Antes de cada reunión directiva"
+        "description": "3 veces al día, detente 90 segundos. Inhala profundo, escanea tu cuerpo y pregúntate: \"¿Estoy operando por convicción o por inercia automática?\" Anota cualquier quiebre no declarado.",
+        "frequency": "Diaria (3 veces al día: 9:00 AM, 2:00 PM, 6:00 PM)",
+        "title": "Pausa de Coherencia y Mapeo en 3 Tiempos"
       },
-      "roadmapSteps": [],
+      "roadmapSteps": [
+        {
+          "id": "step-10-1",
+          "stepNumber": 1,
+          "title": "Centramiento Somático y Apertura",
+          "durationMinutes": 10,
+          "phaseType": "Centramiento & Apertura",
+          "description": "Alineación corporal y fijación de intención."
+        },
+        {
+          "id": "step-10-2",
+          "stepNumber": 2,
+          "title": "Exploración del Quiebre Ontológico",
+          "durationMinutes": 30,
+          "phaseType": "Dinámica Vivencial",
+          "description": "Indagación sobre narrativas, juicios y posibilidades."
+        },
+        {
+          "id": "step-10-3",
+          "stepNumber": 3,
+          "title": "Cierre y Compromisos de Acción",
+          "durationMinutes": 20,
+          "phaseType": "Cierre & Acuerdos",
+          "description": "Declaración de acuerdos y micro-práctica de integración."
+        }
+      ],
       "googleSheetsUrl": "https://docs.google.com/spreadsheets/d/1Mm3CRZVvKYFak5APwIBmfK-vZAUfnx1zg-eq8WOLbZk/edit?usp=sharing",
-      "googleFormsUrl": "https://forms.gle/APUFto8sGbJt322WA"
+      "googleFormsUrl": "https://forms.gle/APUFto8sGbJt322WA",
+      "studyMaterials": [
+        {
+          "title": "Matriz de Mapeo de Transparencia y Quiebres",
+          "type": "Matriz de Diagnóstico",
+          "pages": "4 páginas",
+          "description": "Plantilla de auto-evaluación para auditar los 5 dominios vitales y detectar costos invisibles."
+        },
+        {
+          "title": "Guía de Práctica: La Pausa como Intervención Ontológica",
+          "type": "Guía de Trabajo",
+          "pages": "6 páginas",
+          "description": "Manual de micro-intervenciones de 2 minutos para el día a día directivo."
+        }
+      ],
+      "reflectiveQuestions": [
+        "¿Qué juicio maestro limitante descubriste durante esta sesión?",
+        "¿A qué nueva acción te comprometes a partir de este descubrimiento?"
+      ],
+      "googleDriveFolderUrl": "",
+      "triggersEnabled": true,
+      "experienceToolEnabled": true,
+      "immediateConfirmation": true,
+      "scheduledReminders": true,
+      "postSurveyDispatched": false,
+      "welcomeMessage": "¡Hola! Tu módulo de sesión \"Mapeo de la Transparencia y Quiebres Inconscientes  (Copia) (Copia) (Copia) (Copia) (Copia) (Copia)\" ha sido habilitado con éxito.",
+      "reminderMessage": "Recordatorio: Tu módulo de sesión \"Mapeo de la Transparencia y Quiebres Inconscientes  (Copia) (Copia) (Copia) (Copia) (Copia) (Copia)\" requiere revisión de compromisos y cuaderno de trabajo.",
+      "postSurveyMessage": "Por favor diligencia la Bitácora del módulo \"Mapeo de la Transparencia y Quiebres Inconscientes  (Copia) (Copia) (Copia) (Copia) (Copia) (Copia)\".",
+      "customWebhookUrl": ""
     },
     {
       "step": 11,
-      "weekLabel": "Semana 11",
+      "weekLabel": "Semanas 4-3",
       "level": "Nivel III",
-      "levelTitle": "Dirección & Trascendencia",
-      "sessionTitle": "Diseño de Conversaciones de Futuro y Nuevas Posibilidades",
-      "objective": "Pasar de la gestión de la queja a la apertura deliberada de escenarios de futuro innovadores y sostenibles.",
+      "levelTitle": "Fundamentos & Transparencia",
+      "sessionTitle": "Mapeo de la Transparencia y Quiebres Inconscientes",
+      "objective": "Identificar la transparencia cotidiana, los automatismos operativos y los quiebres no declarados en el ámbito profesional y personal para recuperar el poder de acción reflexiva.",
       "tangibleOutcomes": [
-        "Diferenciación entre conversaciones sobre problemas pasados y conversaciones para la acción futura.",
-        "Diseño de ofertas atractivas y pedidos transformacionales a aliados estratégicos.",
-        "Construcción de un mapa de posibilidades inexploradas en los próximos 12 a 36 meses."
+        "Identificación precisa de las fugas de energía y automatismos en la rutina ejecutiva.",
+        "Mapeo estructurado de quiebres ocultos y acuerdos tácitos no consensuados.",
+        "Recuperación de la capacidad de pausar y observar antes de reaccionar compulsivamente."
       ],
-      "keyQuestion": "¿Qué futuro estás invitando a existir con tus conversaciones cotidianas?",
-      "levelPrompt": "Formula tres proyectos ambiciosos que hoy parecen imposibles por falta de atrevimiento declarativo.",
+      "keyQuestion": "¿En qué áreas de tu vida estás operando en piloto automático tolerando costos ocultos?",
+      "levelPrompt": "Registra los límites que has omitido declarar y los acuerdos tácitos que están drenando tu energía vital y directiva.",
       "methodology": {
-        "linguistic": "Declaraciones de visión, peticiones audaces y coordinación anticipatoria de acciones.",
-        "somatic": "Inclinación ligera hacia adelante: la corporalidad del explorador y el creador de futuros.",
-        "emotional": "Entusiasmo sereno, esperanza fundada y audacia reflexiva."
+        "emotional": "Reconocimiento de la resignación y la sobrecarga como señales tempranas de falta de límites.",
+        "linguistic": "Diferenciación entre el fluir transparente y la declaración de quiebre como interrupción deliberada.",
+        "somatic": "Calibración de la tensión muscular postural al momento de asumir compromisos automáticos."
       },
       "dailyMicroPractice": {
-        "title": "Declaración de Intención Matutina",
-        "description": "Declara en voz alta al iniciar el día: \"Hoy elijo ser el arquitecto de las posibilidades en...\"",
-        "frequency": "Diaria (al iniciar la jornada)"
+        "description": "3 veces al día, detente 90 segundos. Inhala profundo, escanea tu cuerpo y pregúntate: \"¿Estoy operando por convicción o por inercia automática?\" Anota cualquier quiebre no declarado.",
+        "frequency": "Diaria (3 veces al día: 9:00 AM, 2:00 PM, 6:00 PM)",
+        "title": "Pausa de Coherencia y Mapeo en 3 Tiempos"
       },
-      "roadmapSteps": [],
+      "roadmapSteps": [
+        {
+          "id": "step-11-1",
+          "stepNumber": 1,
+          "title": "Centramiento Somático y Apertura",
+          "durationMinutes": 10,
+          "phaseType": "Centramiento & Apertura",
+          "description": "Alineación corporal y fijación de intención."
+        },
+        {
+          "id": "step-11-2",
+          "stepNumber": 2,
+          "title": "Exploración del Quiebre Ontológico",
+          "durationMinutes": 30,
+          "phaseType": "Dinámica Vivencial",
+          "description": "Indagación sobre narrativas, juicios y posibilidades."
+        },
+        {
+          "id": "step-11-3",
+          "stepNumber": 3,
+          "title": "Cierre y Compromisos de Acción",
+          "durationMinutes": 20,
+          "phaseType": "Cierre & Acuerdos",
+          "description": "Declaración de acuerdos y micro-práctica de integración."
+        }
+      ],
       "googleSheetsUrl": "https://docs.google.com/spreadsheets/d/1Mm3CRZVvKYFak5APwIBmfK-vZAUfnx1zg-eq8WOLbZk/edit?usp=sharing",
-      "googleFormsUrl": "https://forms.gle/APUFto8sGbJt322WA"
+      "googleFormsUrl": "https://forms.gle/APUFto8sGbJt322WA",
+      "studyMaterials": [
+        {
+          "title": "Matriz de Mapeo de Transparencia y Quiebres",
+          "type": "Matriz de Diagnóstico",
+          "pages": "4 páginas",
+          "description": "Plantilla de auto-evaluación para auditar los 5 dominios vitales y detectar costos invisibles."
+        },
+        {
+          "title": "Guía de Práctica: La Pausa como Intervención Ontológica",
+          "type": "Guía de Trabajo",
+          "pages": "6 páginas",
+          "description": "Manual de micro-intervenciones de 2 minutos para el día a día directivo."
+        }
+      ],
+      "reflectiveQuestions": [
+        "¿Qué juicio maestro limitante descubriste durante esta sesión?",
+        "¿A qué nueva acción te comprometes a partir de este descubrimiento?"
+      ],
+      "googleDriveFolderUrl": "",
+      "triggersEnabled": true,
+      "experienceToolEnabled": true,
+      "immediateConfirmation": true,
+      "scheduledReminders": true,
+      "postSurveyDispatched": false,
+      "welcomeMessage": "¡Hola! Tu módulo de sesión \"Mapeo de la Transparencia y Quiebres Inconscientes\" ha sido habilitado con éxito.",
+      "reminderMessage": "Recordatorio: Tu módulo de sesión \"Mapeo de la Transparencia y Quiebres Inconscientes\" requiere revisión de compromisos y cuaderno de trabajo.",
+      "postSurveyMessage": "Por favor diligencia la Bitácora del módulo \"Mapeo de la Transparencia y Quiebres Inconscientes\".",
+      "customWebhookUrl": ""
     },
     {
       "step": 12,
-      "weekLabel": "Semana 12",
+      "weekLabel": "Semanas 4-4",
       "level": "Nivel III",
-      "levelTitle": "Dirección & Trascendencia",
-      "sessionTitle": "Consolidación del Nuevo Observador, Carta de Innegociables y Cierre",
-      "objective": "Sellar el proceso de transformación ontológica con protocolos de autoasistencia definitiva y autonomía duradera.",
+      "levelTitle": "Fundamentos & Transparencia",
+      "sessionTitle": "Recopilación, Evaluación de Avance y Cierre de Ciclo",
+      "objective": "Evaluar la evolución del cliente respecto al punto de partida del ciclo, revisar los aprendizajes ontológicos y somáticos consolidados, y alinear las nuevas coordenadas del proceso hacia el siguiente nivel de liderazgo.",
       "tangibleOutcomes": [
-        "Consolidación del nuevo observador con soberanía lingüística, corporal y emocional integral.",
-        "Firma de la Carta Magna de Compromisos Innegociables de vida y liderazgo.",
-        "Establecimiento del sistema de monitoreo trimestral para sostener la coherencia personal."
+        "Identificación precisa de las fugas de energía y automatismos en la rutina ejecutiva.",
+        "Mapeo estructurado de quiebres ocultos y acuerdos tácitos no consensuados.",
+        "Recuperación de la capacidad de pausar y observar antes de reaccionar compulsivamente."
       ],
-      "keyQuestion": "¿Quién eres hoy frente al mundo y cómo honrarás la dignidad de tu propia vida?",
-      "levelPrompt": "Sella tu pacto con tu propia coherencia, reconociendo tu evolución y celebrando el camino recorrido.",
+      "keyQuestion": "¿En qué áreas de tu vida estás operando en piloto automático tolerando costos ocultos?",
+      "levelPrompt": "Espacio 100% privado y libre de interrupciones, con disponibilidad reflexiva para auditar el trayecto recorrido, evaluar los compromisos cumplidos y definir el rumbo de su proceso.",
       "methodology": {
-        "linguistic": "Declaración solemne de cierre de ciclo, agradecimiento y afirmación de soberanía.",
-        "somatic": "Integración postural global: solidez, arraigo, apertura y liviandad armónica.",
-        "emotional": "Gratitud profunda, plenitud y amor propio incondicional."
+        "emotional": "Reconocimiento de la resignación y la sobrecarga como señales tempranas de falta de límites.",
+        "linguistic": "Diferenciación entre el fluir transparente y la declaración de quiebre como interrupción deliberada.",
+        "somatic": "Calibración de la tensión muscular postural al momento de asumir compromisos automáticos."
       },
       "dailyMicroPractice": {
-        "title": "El Anclaje Diario de Gratitud y Coherencia",
-        "description": "Cada noche, agradece 3 victorias ontológicas y renueva tus estándares innegociables.",
-        "frequency": "Diaria (al anochecer)"
+        "description": "3 veces al día, detente 90 segundos. Inhala profundo, escanea tu cuerpo y pregúntate: \"¿Estoy operando por convicción o por inercia automática?\" Anota cualquier quiebre no declarado.",
+        "frequency": "Diaria (3 veces al día: 9:00 AM, 2:00 PM, 6:00 PM)",
+        "title": "Pausa de Coherencia y Mapeo en 3 Tiempos"
       },
-      "roadmapSteps": [],
+      "roadmapSteps": [
+        {
+          "id": "step-12-1",
+          "stepNumber": 1,
+          "title": "Centramiento Somático y Apertura",
+          "durationMinutes": 10,
+          "phaseType": "Centramiento & Apertura",
+          "description": "Alineación corporal y fijación de intención."
+        },
+        {
+          "id": "step-12-2",
+          "stepNumber": 2,
+          "title": "Exploración del Quiebre Ontológico",
+          "durationMinutes": 30,
+          "phaseType": "Dinámica Vivencial",
+          "description": "Indagación sobre narrativas, juicios y posibilidades."
+        },
+        {
+          "id": "step-12-3",
+          "stepNumber": 3,
+          "title": "Cierre y Compromisos de Acción",
+          "durationMinutes": 20,
+          "phaseType": "Cierre & Acuerdos",
+          "description": "Declaración de acuerdos y micro-práctica de integración."
+        }
+      ],
       "googleSheetsUrl": "https://docs.google.com/spreadsheets/d/1Mm3CRZVvKYFak5APwIBmfK-vZAUfnx1zg-eq8WOLbZk/edit?usp=sharing",
-      "googleFormsUrl": "https://forms.gle/APUFto8sGbJt322WA"
+      "googleFormsUrl": "https://forms.gle/APUFto8sGbJt322WA",
+      "studyMaterials": [
+        {
+          "title": "Matriz de Mapeo de Transparencia y Quiebres",
+          "type": "Matriz de Diagnóstico",
+          "pages": "4 páginas",
+          "description": "Plantilla de auto-evaluación para auditar los 5 dominios vitales y detectar costos invisibles."
+        },
+        {
+          "title": "Guía de Práctica: La Pausa como Intervención Ontológica",
+          "type": "Guía de Trabajo",
+          "pages": "6 páginas",
+          "description": "Manual de micro-intervenciones de 2 minutos para el día a día directivo."
+        }
+      ],
+      "reflectiveQuestions": [
+        "¿Qué juicio maestro limitante descubriste durante esta sesión?",
+        "¿A qué nueva acción te comprometes a partir de este descubrimiento?"
+      ],
+      "googleDriveFolderUrl": "",
+      "triggersEnabled": true,
+      "experienceToolEnabled": true,
+      "immediateConfirmation": true,
+      "scheduledReminders": true,
+      "postSurveyDispatched": false,
+      "welcomeMessage": "¡Hola! Tu módulo de sesión \"Recopilación, Evaluación de Avance y Cierre de Ciclo\" ha sido habilitado con éxito.",
+      "reminderMessage": "Recordatorio: Tu módulo de sesión \"Recopilación, Evaluación de Avance y Cierre de Ciclo\" requiere revisión de compromisos y cuaderno de trabajo.",
+      "postSurveyMessage": "Por favor diligencia la Bitácora del módulo \"Recopilación, Evaluación de Avance y Cierre de Ciclo\".",
+      "customWebhookUrl": ""
     }
   ],
-  "lastUpdated": "2026-09-20T16:42:10.412Z",
+  "lastUpdated": "2026-09-21T14:15:48.860Z",
   "deletedWorkshopIds": [
     "taller-1-raiz",
     "taller-2-tallo",
@@ -1630,7 +1974,7 @@
       "defaultGid": "0",
       "isCodeBaseAnchor": true,
       "webhookUrl": "/api/integrations/forms-sheets/ingest/talleres_registro",
-      "updatedAt": "2026-09-20T16:42:09.884Z"
+      "updatedAt": "2026-09-21T13:51:54.891Z"
     },
     {
       "id": "sesiones_individuales",
@@ -1664,7 +2008,7 @@
       "defaultGid": "0",
       "isCodeBaseAnchor": true,
       "webhookUrl": "/api/integrations/forms-sheets/ingest/sesiones_individuales",
-      "updatedAt": "2026-09-20T16:42:09.884Z"
+      "updatedAt": "2026-09-21T13:51:54.891Z"
     },
     {
       "id": "bitacora_sesiones_b2b",
@@ -1696,7 +2040,7 @@
       "defaultGid": "0",
       "isCodeBaseAnchor": true,
       "webhookUrl": "/api/integrations/forms-sheets/ingest/bitacora_sesiones_b2b",
-      "updatedAt": "2026-09-20T16:42:09.884Z"
+      "updatedAt": "2026-09-21T13:51:54.891Z"
     },
     {
       "id": "bitacora_talleres",
@@ -1729,7 +2073,7 @@
       "defaultGid": "0",
       "isCodeBaseAnchor": true,
       "webhookUrl": "/api/integrations/forms-sheets/ingest/bitacora_talleres",
-      "updatedAt": "2026-09-20T16:42:09.884Z"
+      "updatedAt": "2026-09-21T13:51:54.891Z"
     }
   ]
 }

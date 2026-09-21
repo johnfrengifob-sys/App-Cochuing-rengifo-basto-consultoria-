@@ -644,8 +644,20 @@ async function startServer() {
         });
       }
 
-      // Merge Sessions
-      if (Array.isArray(clientState.sessions)) {
+      // Merge Sessions (supports replaceSessions and deletedSessionIds)
+      if (Array.isArray(clientState.deletedSessionIds) && clientState.deletedSessionIds.length > 0) {
+        const toDelete = new Set(clientState.deletedSessionIds);
+        const prevLen = currentDb.sessions.length;
+        currentDb.sessions = currentDb.sessions.filter((s: any) => !toDelete.has(s.id));
+        if (currentDb.sessions.length !== prevLen) {
+          changed = true;
+        }
+      }
+
+      if (clientState.replaceSessions && Array.isArray(clientState.sessions)) {
+        currentDb.sessions = [...clientState.sessions];
+        changed = true;
+      } else if (Array.isArray(clientState.sessions)) {
         clientState.sessions.forEach((s: any) => {
           if (!s || !s.id) return;
           const idx = currentDb.sessions.findIndex((existing: any) => existing.id === s.id);
@@ -1035,6 +1047,30 @@ async function startServer() {
       });
     } catch (err: any) {
       res.status(500).json({ error: err.message || 'Error al eliminar taller' });
+    }
+  });
+
+  // API: Delete a Session from persistent database
+  app.delete('/api/db/sessions/:id', (req, res) => {
+    try {
+      const { id } = req.params;
+      const db = readServerDatabase();
+      if (!Array.isArray(db.sessions)) db.sessions = [];
+
+      const beforeCount = db.sessions.length;
+      db.sessions = db.sessions.filter((s: any) => s.id !== id);
+
+      writeServerDatabase(db);
+      console.log(`[Server DB] Sesión ${id} eliminada permanentemente de app_database.json`);
+
+      res.json({
+        success: true,
+        message: `Sesión ${id} eliminada permanentemente de la base de datos`,
+        deletedId: id,
+        totalSessions: db.sessions.length,
+      });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message || 'Error al eliminar sesión' });
     }
   });
 

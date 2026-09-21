@@ -255,7 +255,10 @@ export const AdminAcademicManager: React.FC<AdminAcademicManagerProps> = ({
         )}
 
         {currentTab === 'sessions' && (
-          <AdminSessionsManager onRefreshParent={handleRefresh} />
+          <AdminSessionsManager
+            onRefreshParent={handleRefresh}
+            onGoToAutomations={() => setCurrentTab('automations')}
+          />
         )}
 
         {currentTab === 'forms_sheets' && (

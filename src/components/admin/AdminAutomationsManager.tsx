@@ -22,7 +22,9 @@ import {
   RefreshCw,
   Clock,
   Layers,
+  Zap,
 } from 'lucide-react';
+import { AutomatedTriggersManager } from '../AutomatedTriggersManager';
 import {
   OntologicalStore,
   DEFAULT_MAKE_PHASE1_WEBHOOK,
@@ -44,7 +46,7 @@ export const AdminAutomationsManager: React.FC<AdminAutomationsManagerProps> = (
   onRefresh,
 }) => {
   const [activeTab, setActiveTab] = useState<
-    'phase1_funnel' | 'phase2_calendly' | 'phase3_payment' | 'phase4_ai'
+    'phase1_funnel' | 'phase2_calendly' | 'phase3_payment' | 'phase4_ai' | 'session_triggers'
   >('phase1_funnel');
 
   // Phase 1 (Funnel) Config State
@@ -276,6 +278,18 @@ export const AdminAutomationsManager: React.FC<AdminAutomationsManagerProps> = (
         >
           <Sparkles className="w-3.5 h-3.5 text-purple-500" />
           <span>Fase 4: Copiloto IA & Quiebres</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('session_triggers')}
+          className={`flex items-center gap-2 px-4 py-2 rounded-xl font-medium transition-all cursor-pointer shrink-0 ${
+            activeTab === 'session_triggers'
+              ? 'bg-white dark:bg-neutral-800 text-black dark:text-white font-bold shadow-2xs'
+              : 'text-gray-600 dark:text-neutral-400 hover:text-black dark:hover:text-white'
+          }`}
+        >
+          <Zap className="w-3.5 h-3.5 text-amber-500" />
+          <span>Fase 5: Disparadores de Sesiones & Make.com</span>
         </button>
       </div>
 
@@ -539,6 +553,13 @@ export const AdminAutomationsManager: React.FC<AdminAutomationsManagerProps> = (
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* TAB CONTENT: FASE 5 DISPARADORES DE SESIÓN & MAKE.COM */}
+      {activeTab === 'session_triggers' && (
+        <div className="space-y-4">
+          <AutomatedTriggersManager />
         </div>
       )}
     </div>

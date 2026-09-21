@@ -888,6 +888,45 @@ export class FirestoreSyncService {
     return null;
   }
 
+  // Fetch all sessions from Firestore
+  static async fetchAllSessions(): Promise<Session[]> {
+    try {
+      const snap = await getDocs(collection(db, 'sessions'));
+      const results: Session[] = [];
+      snap.forEach((d) => {
+        const sess = d.data() as Session;
+        if (sess && sess.id) {
+          results.push(sess);
+        }
+      });
+      return results;
+    } catch (e) {
+      console.warn('fetchAllSessions notice:', e);
+      return [];
+    }
+  }
+
+  // Purge old, orphaned or invalid sessions from Firestore
+  static async purgeOldOrOrphanedSessions(validClientIds?: string[]): Promise<{ deletedIds: string[] }> {
+    const deletedIds: string[] = [];
+    try {
+      const snap = await getDocs(collection(db, 'sessions'));
+      const validSet = validClientIds && validClientIds.length > 0 ? new Set(validClientIds) : null;
+      for (const d of snap.docs) {
+        const sess = d.data() as Session;
+        const isCarolina = sess.clientId === 'client-carolina' || (sess.id && sess.id.includes('carolina'));
+        const isInvalidClient = validSet ? !validSet.has(sess.clientId) : false;
+        if (isCarolina || isInvalidClient) {
+          await deleteDoc(d.ref);
+          deletedIds.push(d.id);
+        }
+      }
+    } catch (e) {
+      console.warn('purgeOldOrOrphanedSessions notice:', e);
+    }
+    return { deletedIds };
+  }
+
   // Fetch all sessions for a specific client from Firestore
   static async fetchClientSessions(clientId: string): Promise<Session[]> {
     if (!clientId) return [];

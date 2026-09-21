@@ -1038,3 +1038,127 @@ export const TEMARIO_SYLLABUS_DATA: TemarioCycleConfig[] = [
     ],
   },
 ];
+
+export interface CoreWorkshopDefinition {
+  id: string;
+  matchIds: string[];
+  stageName: 'Raíz' | 'Tallo' | 'Florecimiento';
+  cycleNumber: 1 | 2 | 3;
+  phase: string;
+  levelBadge: string;
+  accentColor: string;
+  title: string;
+  subtitle: string;
+  thematicFocus: string;
+  guidingQuestion: string;
+  somaticPractice: string;
+  meetLink: string;
+  defaultDate: string;
+}
+
+export const CORE_PROGRAM_WORKSHOPS: CoreWorkshopDefinition[] = [
+  {
+    id: 'taller-1-raiz',
+    matchIds: ['taller-1-raiz', 'taller-1', 'raiz', 'event-raiz-balance', 'workshop-1-raiz'],
+    stageName: 'Raíz',
+    cycleNumber: 1,
+    phase: 'Fase I • Fundamentos & Transparencia',
+    levelBadge: 'Nivel I • Taller Troncal Raíz',
+    accentColor: 'emerald',
+    title: 'Taller 1: Raíz y Balance Ontológico',
+    subtitle: 'Mapeo de la Transparencia, Decodificación Somática & Quiebres Inconscientes',
+    thematicFocus:
+      'Suspensión reflexiva del piloto automático, decodificación de tensiones musculares y reconocimiento de quiebres ocultos en la rutina ejecutiva.',
+    guidingQuestion:
+      '¿En qué áreas de tu vida estás operando en piloto automático tolerando costos ocultos que drenan tu energía vital?',
+    somaticPractice:
+      'Respiración diafragmática 4-2-6 y enraizamiento en planta de pies ante situaciones de alta fricción o reactividad.',
+    meetLink: 'https://meet.google.com/hxt-rbco-grp',
+    defaultDate: 'Ciclo Raíz (Encuentros 1 a 4)',
+  },
+  {
+    id: 'taller-2-tallo',
+    matchIds: ['taller-2-tallo', 'taller-2', 'tallo', 'event-tallo', 'workshop-2-tallo'],
+    stageName: 'Tallo',
+    cycleNumber: 2,
+    phase: 'Fase II • Fronteras & Soberanía Relacional',
+    levelBadge: 'Nivel II • Taller Troncal Tallo',
+    accentColor: 'amber',
+    title: 'Taller 2: Tallo & Soberanía Relacional',
+    subtitle: 'Fronteras, Actos Declarativos & Deconstrucción de la Culpa',
+    thematicFocus:
+      'El poder fundacional del "No" y del "Basta" ontológico. Deconstrucción de la culpa condicionada y diseño de conversaciones de frontera.',
+    guidingQuestion:
+      '¿Qué límites has omitido declarar por temor al conflicto o por necesidad aprendida de aprobación?',
+    somaticPractice:
+      'Apertura de caja torácica, alineación de eje vertical y anclaje de mirada asertiva sin contracción mandibular.',
+    meetLink: 'https://meet.google.com/hxt-rbco-grp',
+    defaultDate: 'Ciclo Tallo (Encuentros 5 a 8)',
+  },
+  {
+    id: 'taller-3-florecimiento',
+    matchIds: ['taller-3-florecimiento', 'taller-3', 'florecimiento', 'event-florecimiento', 'workshop-3-florecimiento'],
+    stageName: 'Florecimiento',
+    cycleNumber: 3,
+    phase: 'Fase III • Maestría Lingüística & Cosecha',
+    levelBadge: 'Nivel III • Taller Troncal Florecimiento',
+    accentColor: 'indigo',
+    title: 'Taller 3: Florecimiento & Integración',
+    subtitle: 'El Nuevo Observador, Maestría Lingüística & Cosecha Integral',
+    thematicFocus:
+      'Integración somática, diseño de futuros conversacionales, firma de la Carta Magna de Innegociables y consolidación del nuevo observador.',
+    guidingQuestion:
+      '¿Cuáles son tus estándares innegociables de vida y cómo sostendrás tu coherencia ontológica de forma autónoma?',
+    somaticPractice:
+      'Ritual de Retorno al Centro: alineación de eje, contacto mano-corazón y exhalación liberadora.',
+    meetLink: 'https://meet.google.com/hxt-rbco-grp',
+    defaultDate: 'Ciclo Florecimiento (Encuentros 9 a 12)',
+  },
+];
+
+export function isWorkshopAccreditedForUser(
+  user: {
+    uid?: string;
+    email?: string;
+    name?: string;
+    completedWorkshopIds?: string[];
+    enrolledWorkshopIds?: string[];
+    workshopMemories?: Record<string, any>;
+    programProgress?: number;
+  },
+  ws: CoreWorkshopDefinition,
+  eventRegistrations?: { eventId?: string; email?: string; userUid?: string; name?: string; attendedEvent?: boolean; attended?: boolean }[]
+): boolean {
+  if (!user) return false;
+  const completedIds = user.completedWorkshopIds || [];
+  if (
+    completedIds.some(
+      (id) => ws.matchIds.includes(id) || id.toLowerCase().includes(ws.stageName.toLowerCase())
+    )
+  ) {
+    return true;
+  }
+  if (
+    user.workshopMemories &&
+    (user.workshopMemories[ws.id] ||
+      Object.keys(user.workshopMemories).some((k) => ws.matchIds.includes(k)))
+  ) {
+    return true;
+  }
+  if (eventRegistrations && eventRegistrations.length > 0) {
+    const reg = eventRegistrations.find(
+      (r) =>
+        ws.matchIds.some((m) => r.eventId?.toLowerCase().includes(m)) &&
+        (r.attendedEvent === true || r.attended === true) &&
+        ((r.email && user.email && r.email.toLowerCase() === user.email.toLowerCase()) ||
+          (r.userUid && user.uid && r.userUid === user.uid))
+    );
+    if (reg) return true;
+  }
+  const prog = user.programProgress || 1;
+  if (ws.stageName === 'Raíz' && prog >= 4) return true;
+  if (ws.stageName === 'Tallo' && prog >= 8) return true;
+  if (ws.stageName === 'Florecimiento' && prog >= 12) return true;
+  return false;
+}
+

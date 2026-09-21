@@ -282,7 +282,7 @@ export class PDFGenerator {
             ? `
           <div class="card">
             <h3 class="card-title">2. Respuesta al Eje de Indagación (${node.level})</h3>
-            <div class="field-label" style="margin-bottom: 6px;">${escapeHTML(node.keyQuestion)}:</div>
+            ${node.keyQuestion ? `<div class="field-label" style="margin-bottom: 6px;">${escapeHTML(node.keyQuestion)}:</div>` : ''}
             <div class="card-content">${escapeHTML(form.levelSpecificAnswer)}</div>
           </div>
         `
@@ -535,7 +535,7 @@ export class PDFGenerator {
           ${form.levelSpecificAnswer ? `
           <div style="margin-bottom: 12px;">
             <div style="font-size: 11px; font-weight: 700; color: #047857; text-transform: uppercase; margin-bottom: 4px;">
-              2. Respuesta al Eje Central de Indagación ("${escapeHTML(node.keyQuestion)}"):
+              2. Respuesta al Eje Central de Indagación${node.keyQuestion ? ` ("${escapeHTML(node.keyQuestion)}")` : ''}:
             </div>
             <p style="margin: 0; font-size: 12px; color: #111827; background: #ffffff; padding: 10px 12px; border-radius: 6px; border: 1px solid #d1fae5; line-height: 1.5;">
               ${escapeHTML(form.levelSpecificAnswer)}
@@ -597,6 +597,7 @@ export class PDFGenerator {
         </div>
 
         <!-- Eje de Indagación Clave -->
+        ${node.keyQuestion ? `
         <div class="card">
           <div class="card-title">Pregunta Central de Indagación Ontológica</div>
           <p style="font-size: 13px; font-weight: 600; color: #111827; margin: 0 0 4px 0;">
@@ -616,6 +617,7 @@ export class PDFGenerator {
             `}
           </div>
         </div>
+        ` : ''}
 
         <div class="footer">
           <div>${COMPANY_INFO.fullName} • Material de Trabajo Personal & Confidencial</div>

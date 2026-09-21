@@ -77,10 +77,12 @@ import AdminAutomationsManager from './AdminAutomationsManager';
 interface AdminSessionsManagerProps {
   onSelectClientForFicha?: (clientId: string) => void;
   onRefreshParent?: () => void;
+  onGoToAutomations?: () => void;
 }
 
 export const AdminSessionsManager: React.FC<AdminSessionsManagerProps> = ({
   onRefreshParent,
+  onGoToAutomations,
 }) => {
   // 1. Estados principales de Módulos y Cuestionarios
   const [nodes, setNodes] = useState<ProgramNodeInfo[]>(() =>
@@ -395,6 +397,43 @@ export const AdminSessionsManager: React.FC<AdminSessionsManagerProps> = ({
     });
 
     setIsLevelEditorOpen(true);
+  };
+
+  const [isSyncingFirebase, setIsSyncingFirebase] = useState(false);
+  const [isPurgingOld, setIsPurgingOld] = useState(false);
+
+  // Sincronizar base de datos de sesiones con Firebase Firestore
+  const handleSyncFirebaseSessions = async () => {
+    setIsSyncingFirebase(true);
+    try {
+      const res = await OntologicalStore.syncSessionsWithFirestore();
+      setSessions(OntologicalStore.getSessions());
+      showNotification(`Base de datos de sesiones sincronizada con Firebase (${res.count} sesiones activas).`);
+    } catch (e) {
+      console.error('Error syncing sessions with Firebase:', e);
+      showNotification('Error al sincronizar con Firebase.');
+    } finally {
+      setIsSyncingFirebase(false);
+    }
+  };
+
+  // Depurar y eliminar registros de sesiones antiguos o huérfanos
+  const handlePurgeOldSessions = async () => {
+    setIsPurgingOld(true);
+    try {
+      const res = await OntologicalStore.purgeOldOrOrphanedSessions();
+      setSessions(OntologicalStore.getSessions());
+      if (res.deletedCount > 0) {
+        showNotification(`Se eliminaron ${res.deletedCount} registros antiguos. ${res.remainingCount} sesiones activas conservadas.`);
+      } else {
+        showNotification(`La base de datos de sesiones está al día (${res.remainingCount} sesiones activas).`);
+      }
+    } catch (e) {
+      console.error('Error purging old sessions:', e);
+      showNotification('Error al depurar registros antiguos.');
+    } finally {
+      setIsPurgingOld(false);
+    }
   };
 
   // Guardar cambios del Editor de Niveles en todas las sesiones y sincronizar
@@ -794,12 +833,6 @@ export const AdminSessionsManager: React.FC<AdminSessionsManagerProps> = ({
 
   // Renderizador unificado de tarjeta de módulo curricular
   const renderModuleCard = (node: ProgramNodeInfo) => {
-    const nodeQuestionnaire = questionnaires.find(
-      (q) => q.targetType === 'workshop_node' && q.targetStep === node.step
-    );
-    const questionsCount = nodeQuestionnaire?.questions?.length || 0;
-    const roadmapCount = node.roadmapSteps?.length || 0;
-
     return (
       <div
         key={node.step}
@@ -839,18 +872,6 @@ export const AdminSessionsManager: React.FC<AdminSessionsManagerProps> = ({
               {node.objective}
             </p>
           </div>
-
-          {/* Pregunta Clave Destacada */}
-          {node.keyQuestion && (
-            <div className="p-2.5 rounded-xl bg-gray-50/90 dark:bg-neutral-800/40 border border-gray-100 dark:border-neutral-800/60">
-              <span className="text-[9px] font-semibold uppercase tracking-wider text-indigo-500 block mb-0.5">
-                Pregunta Detonante:
-              </span>
-              <p className="text-[11px] font-medium text-gray-700 dark:text-neutral-300 italic line-clamp-2">
-                "{node.keyQuestion}"
-              </p>
-            </div>
-          )}
 
           {/* Insignia y Acceso a la Base Oficial Google Forms & Sheets */}
           {node.googleFormsUrl ? (
@@ -903,28 +924,6 @@ export const AdminSessionsManager: React.FC<AdminSessionsManagerProps> = ({
               <span>Vincular Base de Datos Google Forms & Sheets</span>
             </button>
           )}
-
-          {/* Insignias de Metodología */}
-          <div className="flex flex-wrap items-center gap-1.5 pt-1">
-            {roadmapCount > 0 && (
-              <span className="text-[10px] px-2 py-0.5 rounded-md bg-gray-100 dark:bg-neutral-800 text-gray-600 dark:text-neutral-300 font-medium flex items-center gap-1">
-                <ListOrdered className="w-3 h-3 text-emerald-500" />
-                <span>{roadmapCount} Fases</span>
-              </span>
-            )}
-
-            {questionsCount > 0 && (
-              <span className="text-[10px] px-2 py-0.5 rounded-md bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 font-medium flex items-center gap-1">
-                <HelpCircle className="w-3 h-3 text-indigo-500" />
-                <span>{questionsCount} Preguntas</span>
-              </span>
-            )}
-
-            <span className="text-[10px] px-2 py-0.5 rounded-md bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 font-medium flex items-center gap-1">
-              <Sparkles className="w-3 h-3 text-purple-500" />
-              <span>Ontológico</span>
-            </span>
-          </div>
         </div>
 
         {/* Botonera de Acciones de la Tarjeta */}
@@ -1218,7 +1217,39 @@ export const AdminSessionsManager: React.FC<AdminSessionsManagerProps> = ({
             </div>
 
             {/* Acciones Rápidas */}
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={handleSyncFirebaseSessions}
+                disabled={isSyncingFirebase}
+                className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-white dark:bg-neutral-900 border border-gray-200 dark:border-neutral-700 hover:bg-gray-50 dark:hover:bg-neutral-800 text-gray-700 dark:text-neutral-200 text-xs font-semibold shadow-2xs cursor-pointer transition-all active:scale-[0.98] disabled:opacity-50"
+                title="Sincronizar base de datos de sesiones con Firebase Firestore"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 text-emerald-600 ${isSyncingFirebase ? 'animate-spin' : ''}`} />
+                <span>{isSyncingFirebase ? 'Sincronizando...' : 'Sincronizar Firebase'}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handlePurgeOldSessions}
+                disabled={isPurgingOld}
+                className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-white dark:bg-neutral-900 border border-gray-200 dark:border-neutral-700 hover:bg-rose-50 dark:hover:bg-rose-950/30 text-rose-700 dark:text-rose-400 text-xs font-semibold shadow-2xs cursor-pointer transition-all active:scale-[0.98] disabled:opacity-50"
+                title="Depurar y eliminar registros de sesiones antiguos o huérfanos"
+              >
+                <Trash2 className="w-3.5 h-3.5 text-rose-500" />
+                <span>{isPurgingOld ? 'Depurando...' : 'Depurar antiguos'}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleOpenLevelEditor}
+                className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-white dark:bg-neutral-900 border border-gray-200 dark:border-neutral-700 hover:bg-gray-50 dark:hover:bg-neutral-800 text-gray-800 dark:text-neutral-200 text-xs font-bold shadow-2xs cursor-pointer transition-all active:scale-[0.98]"
+                title="Configurar y editar títulos, focos y preguntas ontológicas por nivel"
+              >
+                <Layers className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400 shrink-0" />
+                <span>Editor de Niveles</span>
+              </button>
+
               <button
                 type="button"
                 onClick={() => {
@@ -1230,26 +1261,6 @@ export const AdminSessionsManager: React.FC<AdminSessionsManagerProps> = ({
               >
                 <Plus className="w-3.5 h-3.5" />
                 <span>Nueva Sesión 1 a 1</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={handleOpenLevelEditor}
-                className="inline-flex items-center justify-center gap-2 px-3.5 py-2 rounded-xl bg-white dark:bg-neutral-900 border border-gray-200 dark:border-neutral-700 hover:bg-gray-50 dark:hover:bg-neutral-800 text-gray-800 dark:text-neutral-200 text-xs font-bold shadow-2xs cursor-pointer transition-all active:scale-[0.98]"
-                title="Configurar y editar títulos, focos y preguntas ontológicas por nivel"
-              >
-                <Layers className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400 shrink-0" />
-                <span>Editor de Niveles</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setIsAutomationsModalOpen(true)}
-                className="inline-flex items-center justify-center gap-2 px-3.5 py-2 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-900 dark:text-amber-200 text-xs font-bold shadow-2xs cursor-pointer transition-all active:scale-[0.98]"
-                title="Abrir Centro Global de Automatizaciones, Webhooks y Disparadores Make.com"
-              >
-                <Zap className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 shrink-0" />
-                <span>Automatizaciones & Webhooks</span>
               </button>
             </div>
           </div>
@@ -2096,7 +2107,7 @@ export const AdminSessionsManager: React.FC<AdminSessionsManagerProps> = ({
                       <p className="text-xs text-gray-600 dark:text-neutral-300 font-light leading-relaxed">
                         {previewNode.objective}
                       </p>
-                      {previewNode.keyQuestion && (
+                      {previewNode.keyQuestion && !previewNode.keyQuestion.includes('nueva identidad pública y profesional') && (
                         <p className="text-xs font-medium text-indigo-700 dark:text-indigo-400 italic pt-1">
                           Pregunta de inicio: "{previewNode.keyQuestion}"
                         </p>
@@ -2396,7 +2407,13 @@ export const AdminSessionsManager: React.FC<AdminSessionsManagerProps> = ({
           if (onRefreshParent) onRefreshParent();
         }}
         onOpenAutomationsPanel={() => {
-          setIsAutomationsModalOpen(true);
+          if (onGoToAutomations) {
+            setSelectedConsultoriaSession(null);
+            setIsConsultoriaModalOpen(false);
+            onGoToAutomations();
+          } else {
+            setIsAutomationsModalOpen(true);
+          }
         }}
       />
 
