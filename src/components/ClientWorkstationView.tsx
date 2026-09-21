@@ -11,7 +11,7 @@ import {
   CronogramaEvent,
   EventRegistration,
 } from '../types';
-import { PROGRAM_NODES, OntologicalStore } from '../services/store';
+import { PROGRAM_NODES, OntologicalStore, BRE_B_NU_CONFIG } from '../services/store';
 import { getEmailAvatarUrl } from '../utils/avatar';
 import { PDFGenerator } from '../utils/pdfGenerator';
 import { safeCopyToClipboard } from '../utils/clipboard';
@@ -21,6 +21,10 @@ import { ClientTrafficStatusBadge } from './ClientTrafficStatusBadge';
 import { GeminiOntologicalCopilot } from './GeminiOntologicalCopilot';
 import { PostSessionWorkbookModal } from './PostSessionWorkbookModal';
 import { UnifiedFormsSheetsClientView } from './UnifiedFormsSheetsClientView';
+import { ParticipantTalleresModule, CoreWorkshopTrack } from './dashboard/ParticipantTalleresModule';
+import { ParticipantSesionesModule } from './dashboard/ParticipantSesionesModule';
+import { ParticipantIntegracionesModule } from './dashboard/ParticipantIntegracionesModule';
+import { CORE_WORKSHOPS_CATALOG } from '../data/coreWorkshopsCatalog';
 import {
   ArrowLeft,
   Calendar,
@@ -137,7 +141,12 @@ export const ClientWorkstationView: React.FC<ClientWorkstationViewProps> = ({
     );
   }
 
-  const [activeTab, setActiveTab] = useState<'material' | 'diagnosis' | 'report' | 'cross_workspace'>('material');
+  const [activeTab, setActiveTab] = useState<
+    'material' | 'talleres' | 'sesiones' | 'cross_workspace' | 'diagnosis' | 'report'
+  >('talleres');
+  const [selectedWorkshopId, setSelectedWorkshopId] = useState<string>('taller-1-raiz');
+  const [isTalleresExpanded, setIsTalleresExpanded] = useState<boolean>(true);
+  const [downloadToastMessage, setDownloadToastMessage] = useState<string | null>(null);
   const [isEditingBreakdown, setIsEditingBreakdown] = useState(false);
   const [tempBreakdown, setTempBreakdown] = useState(client.primaryBreakdown || '');
   const [isEditingInvested, setIsEditingInvested] = useState(false);
@@ -484,6 +493,153 @@ export const ClientWorkstationView: React.FC<ClientWorkstationViewProps> = ({
       return isoStr;
     }
   };
+
+  // Verificación de asistencia y acreditación de taller para el participante
+  const isWorkshopAttended = (wsOrId: CoreWorkshopTrack | string) => {
+    const ws =
+      typeof wsOrId === 'string'
+        ? CORE_WORKSHOPS_CATALOG.find((w) => w.id === wsOrId || w.matchIds.includes(wsOrId))
+        : wsOrId;
+
+    if (!ws) {
+      const idStr = typeof wsOrId === 'string' ? wsOrId : '';
+      return (client.completedWorkshopIds || []).includes(idStr);
+    }
+
+    const completedIds = client.completedWorkshopIds || [];
+    if (
+      completedIds.some(
+        (id) =>
+          ws.matchIds.includes(id) || id.toLowerCase().includes(ws.stageName.toLowerCase())
+      )
+    ) {
+      return true;
+    }
+
+    if (
+      client.workshopMemories &&
+      (client.workshopMemories[ws.id] ||
+        Object.keys(client.workshopMemories).some((k) => ws.matchIds.includes(k)))
+    ) {
+      return true;
+    }
+
+    const regFound = cronogramaEvents.some((evt) => {
+      const isMatchingEvt = ws.matchIds.some(
+        (id) =>
+          evt.id.toLowerCase().includes(id) ||
+          evt.title.toLowerCase().includes(ws.stageName.toLowerCase())
+      );
+      if (!isMatchingEvt) return false;
+      const isUserSubmission = evt.workbookSubmissions?.some(
+        (sub) =>
+          sub.participantEmail?.toLowerCase() === client.email.toLowerCase() ||
+          sub.participantName?.toLowerCase() === client.name.toLowerCase()
+      );
+      return isUserSubmission;
+    });
+    if (regFound) return true;
+
+    // Progresión del programa (Nivel / paso)
+    if (ws.stageName === 'Raíz' && currentStep >= 4) return true;
+    if (ws.stageName === 'Tallo' && currentStep >= 8) return true;
+    if (ws.stageName === 'Florecimiento' && currentStep >= 12) return true;
+
+    return false;
+  };
+
+  const getWorkshopMemoryDetails = (ws: CoreWorkshopTrack) => {
+    const mem =
+      client.workshopMemories?.[ws.id] ||
+      (client.workshopMemories &&
+        Object.entries(client.workshopMemories).find(([k]) => ws.matchIds.includes(k))?.[1]);
+
+    const matchingEvt = cronogramaEvents.find((evt) =>
+      ws.matchIds.some(
+        (id) =>
+          evt.id.toLowerCase().includes(id) ||
+          evt.title.toLowerCase().includes(ws.stageName.toLowerCase())
+      )
+    );
+    const submission = matchingEvt?.workbookSubmissions?.find(
+      (s) =>
+        s.participantEmail?.toLowerCase() === client.email.toLowerCase() ||
+        s.participantName?.toLowerCase() === client.name.toLowerCase()
+    );
+
+    return {
+      completedAt: mem?.completedAt || submission?.submittedAt || ws.defaultDate,
+      keyBreakthrough:
+        mem?.keyBreakthrough ||
+        (submission?.answers?.['quiebre_principal']
+          ? String(submission.answers['quiebre_principal'])
+          : ws.defaultBreakthrough),
+      commitments:
+        mem?.commitments ||
+        (submission?.answers?.['compromisos']
+          ? String(submission.answers['compromisos'])
+          : ws.defaultCommitments),
+      pdfUrl: mem?.pdfUrl,
+      answers: submission?.answers,
+    };
+  };
+
+  const handleDownloadWorkshopMemory = (ws: CoreWorkshopTrack) => {
+    const details = getWorkshopMemoryDetails(ws);
+    setDownloadToastMessage(`Preparando Memoria de Taller "${ws.title}" (PDF)...`);
+    try {
+      PDFGenerator.generateWorkshopMemoryPDF(ws.title, client, {
+        workshopCategory: ws.levelBadge,
+        completedAt: details.completedAt,
+        keyBreakthrough: details.keyBreakthrough,
+        commitments: details.commitments,
+        somaticPractice: ws.somaticPractice,
+        answers: details.answers,
+      });
+      setTimeout(() => {
+        setDownloadToastMessage('¡PDF de memoria de taller descargado!');
+        setTimeout(() => setDownloadToastMessage(null), 3000);
+      }, 600);
+    } catch (err) {
+      console.error('Error al generar PDF de taller:', err);
+      setDownloadToastMessage('Error al generar el PDF de taller.');
+      setTimeout(() => setDownloadToastMessage(null), 3500);
+    }
+  };
+
+  const handleDownloadSessionPDF = (form?: Partial<PostSessionForm> | null, sess?: Session) => {
+    const targetSession = sess || sessions.find((s) => s.sessionNumber === currentStep) || sessions[0] || {
+      id: `sess-${client.uid}-${currentStep}`,
+      sessionNumber: currentStep,
+      clientId: client.uid,
+      clientName: client.name,
+      date: new Date().toISOString(),
+      status: 'scheduled',
+      durationMinutes: 60,
+      meetLink: 'https://meet.google.com/rbc-sesion-directiva',
+    };
+
+    const effectiveForm =
+      form ||
+      postSessionForms.find((f) => f.sessionNumber === targetSession.sessionNumber) ||
+      null;
+
+    setDownloadToastMessage(`Generando Bitácora de Sesión ${targetSession.sessionNumber} (PDF)...`);
+    try {
+      PDFGenerator.generateSessionWorkbookPDF(effectiveForm, client, targetSession);
+      setTimeout(() => {
+        setDownloadToastMessage(`¡Bitácora Sesión ${targetSession.sessionNumber} descargada en PDF!`);
+        setTimeout(() => setDownloadToastMessage(null), 3000);
+      }, 600);
+    } catch (err) {
+      console.error('Error al generar PDF de bitácora:', err);
+      setDownloadToastMessage('Hubo un inconveniente al generar el PDF de bitácora.');
+      setTimeout(() => setDownloadToastMessage(null), 3500);
+    }
+  };
+
+  const accreditedWorkshopsCount = CORE_WORKSHOPS_CATALOG.filter((w) => isWorkshopAttended(w)).length;
+  const currentCycleNumber = currentStep <= 4 ? 1 : currentStep <= 8 ? 2 : 3;
 
   return (
     <div className="space-y-8 w-full">
@@ -1202,8 +1358,58 @@ export const ClientWorkstationView: React.FC<ClientWorkstationViewProps> = ({
         </div>
       </div>
 
-      {/* Tab Selector: Material del Módulo vs Diagnóstico & IA vs Informe PDF */}
+      {/* Tab Selector: Talleres vs Sesiones vs Formularios & Sheets vs Material vs Diagnóstico & IA vs Informe */}
       <div className="flex flex-wrap items-center gap-1.5 p-1.5 glass-panel-opal rounded-2xl shadow-xs">
+        <button
+          type="button"
+          onClick={() => setActiveTab('talleres')}
+          className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer flex items-center gap-2 ${
+            activeTab === 'talleres'
+              ? 'bg-white dark:bg-[#1A1A1E] text-black dark:text-white shadow-2xs'
+              : 'text-gray-500 dark:text-neutral-400 hover:text-black dark:hover:text-white'
+          }`}
+        >
+          <BookOpen className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+          <span>Talleres Grupales RBC</span>
+          <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 font-mono font-medium">
+            {accreditedWorkshopsCount}/3
+          </span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab('sesiones')}
+          className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer flex items-center gap-2 ${
+            activeTab === 'sesiones'
+              ? 'bg-white dark:bg-[#1A1A1E] text-black dark:text-white shadow-2xs'
+              : 'text-gray-500 dark:text-neutral-400 hover:text-black dark:hover:text-white'
+          }`}
+        >
+          <Calendar className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
+          <span>Sesiones Individuales 1 a 1</span>
+          <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-indigo-100 text-indigo-800 dark:bg-indigo-950 dark:text-indigo-300 font-mono font-medium">
+            {sessions.length} reg.
+          </span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab('cross_workspace')}
+          className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer flex items-center gap-2 ${
+            activeTab === 'cross_workspace'
+              ? 'bg-white dark:bg-[#1A1A1E] text-black dark:text-white shadow-2xs'
+              : 'text-gray-500 dark:text-neutral-400 hover:text-black dark:hover:text-white'
+          }`}
+        >
+          <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+          <span>Integraciones Forms & Sheets</span>
+          {crossData.totalCrossRecords > 0 && (
+            <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 font-mono font-medium">
+              {crossData.totalCrossRecords}
+            </span>
+          )}
+        </button>
+
         <button
           type="button"
           onClick={() => setActiveTab('material')}
@@ -1213,8 +1419,8 @@ export const ClientWorkstationView: React.FC<ClientWorkstationViewProps> = ({
               : 'text-gray-500 dark:text-neutral-400 hover:text-black dark:hover:text-white'
           }`}
         >
-          <Layers className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-          <span>Material del Módulo {currentStep}</span>
+          <Layers className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+          <span>Material Módulo {currentStep}</span>
         </button>
 
         <button
@@ -1244,26 +1450,8 @@ export const ClientWorkstationView: React.FC<ClientWorkstationViewProps> = ({
               : 'text-gray-500 dark:text-neutral-400 hover:text-black dark:hover:text-white'
           }`}
         >
-          <Download className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+          <Download className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
           <span>Informe Ejecutivo PDF</span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setActiveTab('cross_workspace')}
-          className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer flex items-center gap-2 ${
-            activeTab === 'cross_workspace'
-              ? 'bg-white dark:bg-[#1A1A1E] text-black dark:text-white shadow-2xs'
-              : 'text-gray-500 dark:text-neutral-400 hover:text-black dark:hover:text-white'
-          }`}
-        >
-          <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-          <span>Expediente Google Forms & Sheets</span>
-          {crossData.totalCrossRecords > 0 && (
-            <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 font-mono font-medium">
-              {crossData.totalCrossRecords}
-            </span>
-          )}
         </button>
       </div>
 
@@ -1583,9 +1771,78 @@ export const ClientWorkstationView: React.FC<ClientWorkstationViewProps> = ({
         </div>
       )}
 
-      {/* Tab 4: Expediente Cruzado Google Forms & Sheets (4 Recursos) */}
+      {/* Tab: Talleres Grupales RBC (Acreditación, Memorias & Google Sheets) */}
+      {activeTab === 'talleres' && (
+        <div className="space-y-6">
+          <ParticipantTalleresModule
+            isExpanded={isTalleresExpanded}
+            onToggle={() => setIsTalleresExpanded(!isTalleresExpanded)}
+            accreditedWorkshopsCount={accreditedWorkshopsCount}
+            coreWorkshops={CORE_WORKSHOPS_CATALOG}
+            selectedWorkshopId={selectedWorkshopId}
+            onSelectWorkshopId={(wsId) => setSelectedWorkshopId(wsId)}
+            isWorkshopAttended={isWorkshopAttended}
+            getWorkshopMemoryDetails={getWorkshopMemoryDetails}
+            onDownloadWorkshopMemory={handleDownloadWorkshopMemory}
+            onCopyPaymentKey={() => {
+              safeCopyToClipboard(BRE_B_NU_CONFIG.llave);
+              setDownloadToastMessage('Clave de pago Bre-B copiada al portapapeles');
+              setTimeout(() => setDownloadToastMessage(null), 2500);
+            }}
+            copiedPaymentKey={false}
+            hasWorkshopsAccess={client.hasWorkshopsAccess ?? true}
+            enrolledWorkshopIds={client.enrolledWorkshopIds || ['taller-1-raiz', 'taller-2-tallo']}
+            onGoToIntegrations={() => setActiveTab('cross_workspace')}
+          />
+        </div>
+      )}
+
+      {/* Tab: Sesiones Individuales 1 a 1 (12 Sesiones, Agendamiento, Bitácoras & Meets) */}
+      {activeTab === 'sesiones' && (
+        <div className="space-y-6">
+          <div className="flex items-center justify-between pb-2">
+            <div>
+              <h3 className="text-base sm:text-lg font-bold text-black dark:text-white">
+                Gestión de Sesiones Individuales de {client.name}
+              </h3>
+              <p className="text-xs text-gray-500 dark:text-neutral-400 font-light">
+                Historial, bitácoras de trabajo, actas confidenciales y accesos a Google Meet / Calendar.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setIsNewSessionModalOpen(true)}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-black text-white dark:bg-white dark:text-black text-xs font-bold shadow-xs hover:bg-neutral-800 dark:hover:bg-neutral-200 cursor-pointer"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>Programar Sesión</span>
+            </button>
+          </div>
+
+          <ParticipantSesionesModule
+            sessions={sessions}
+            postForms={postSessionForms}
+            currentSessionNumber={currentStep}
+            currentCycle={currentCycleNumber}
+            activeUser={client}
+            onOpenBitacora={(sess) => handleOpenWorkbookForSession(sess)}
+            onDownloadSessionPDF={(form, sess) => handleDownloadSessionPDF(form, sess)}
+            onGoToIntegrations={() => setActiveTab('cross_workspace')}
+          />
+        </div>
+      )}
+
+      {/* Tab: Expediente Cruzado Google Forms & Sheets (4 Recursos) */}
       {activeTab === 'cross_workspace' && (
-        <UnifiedFormsSheetsClientView client={client} onRefreshParent={onRefreshClients} />
+        <div className="space-y-6">
+          <ParticipantIntegracionesModule
+            activeUser={client}
+            sessions={sessions}
+            postForms={postSessionForms}
+            onRefresh={onRefreshClients}
+            onSelectSession={(sess) => handleOpenWorkbookForSession(sess)}
+          />
+        </div>
       )}
 
       {/* Modal de Formulario Post-Sesión & Generación de Cuaderno de Trabajo */}
@@ -2247,6 +2504,15 @@ export const ClientWorkstationView: React.FC<ClientWorkstationViewProps> = ({
                 <span>Confirmar Asignación</span>
               </button>
             </div>
+          </div>
+        </div>
+      )}
+      {/* Toast Notification flotante para descargas y acciones */}
+      {downloadToastMessage && (
+        <div className="fixed bottom-6 right-6 z-50 animate-bounce">
+          <div className="bg-black/90 dark:bg-white/90 text-white dark:text-black text-xs font-semibold px-4 py-2.5 rounded-2xl shadow-xl flex items-center gap-2 backdrop-blur-md">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+            <span>{downloadToastMessage}</span>
           </div>
         </div>
       )}

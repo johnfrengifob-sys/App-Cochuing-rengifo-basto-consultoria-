@@ -450,7 +450,7 @@ export const CoachDashboard: React.FC<CoachDashboardProps> = ({
           {/* Funciones de la Consola: 4 Botones Principales Unificados */}
           <div className="w-full pt-1">
             <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-2.5 w-full max-w-7xl mx-auto">
-              {/* Función 1: Clientes (Pipeline & Directorio) */}
+              {/* Función 1: Clientes CRM (Pipeline & Directorio) */}
               <button
                 id="coach-nav-clients-btn"
                 type="button"
@@ -472,7 +472,7 @@ export const CoachDashboard: React.FC<CoachDashboardProps> = ({
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between gap-1">
-                    <span className="text-xs font-semibold truncate leading-tight">Clientes</span>
+                    <span className="text-xs font-semibold truncate leading-tight">Clientes CRM</span>
                     <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono font-bold shrink-0 ${
                       activeMainTab === 'clients' || activeMainTab === 'crm'
                         ? 'bg-white/20 dark:bg-black/20 text-white dark:text-black'
@@ -674,36 +674,30 @@ export const CoachDashboard: React.FC<CoachDashboardProps> = ({
             />
           )}
 
-          {/* CRM & Clientes Unified View Header */}
-          <div className="space-y-3 pb-4 border-b border-gray-100 dark:border-neutral-800">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div>
-                <h2 className="text-xl sm:text-2xl font-light text-black dark:text-white tracking-tight">
-                  {clientsViewMode === 'pipeline' ? (
-                    <>CRM & Clientes: <strong className="font-semibold">Pipeline y Directorio</strong></>
-                  ) : (
-                    <>Ficha Integral del Coachee: <strong className="font-semibold">{selectedClient?.name || 'Cliente'}</strong></>
-                  )}
-                </h2>
-                <p className="text-xs text-gray-500 dark:text-neutral-400 font-light mt-0.5">
-                  {clientsViewMode === 'pipeline'
-                    ? 'Embudo comercial ontológico, prospección de talleres y directorio interactivo integrado de clientes activos e inactivos.'
-                    : 'Ficha individualizada de acompañamiento, quiebre ontológico central, bitácora y sesiones ejecutivas.'}
-                </p>
-              </div>
+          {/* Workstation Header (only when inspecting an individual client) */}
+          {clientsViewMode === 'workstation' && (
+            <div className="space-y-3 pb-4 border-b border-gray-100 dark:border-neutral-800">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <h2 className="text-xl sm:text-2xl font-light text-black dark:text-white tracking-tight">
+                    Ficha Integral del Coachee: <strong className="font-semibold">{selectedClient?.name || 'Cliente'}</strong>
+                  </h2>
+                  <p className="text-xs text-gray-500 dark:text-neutral-400 font-light mt-0.5">
+                    Ficha individualizada de acompañamiento, quiebre ontológico central, bitácora y sesiones ejecutivas.
+                  </p>
+                </div>
 
-              {clientsViewMode === 'workstation' && (
                 <button
                   type="button"
                   onClick={() => setClientsViewMode('pipeline')}
                   className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-gray-100 dark:bg-neutral-800 hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black text-xs font-semibold text-gray-700 dark:text-neutral-300 transition-all cursor-pointer shadow-2xs self-start sm:self-auto"
                 >
                   <ArrowLeft className="w-3.5 h-3.5" />
-                  <span>Volver al CRM General</span>
+                  <span>Volver a Clientes CRM</span>
                 </button>
-              )}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Sub-View Content */}
           {clientsViewMode === 'pipeline' ? (
@@ -712,6 +706,7 @@ export const CoachDashboard: React.FC<CoachDashboardProps> = ({
                 embedded={true}
                 prospects={prospects}
                 clients={clients}
+                sessions={allSessions}
                 eventRegistrations={eventRegistrations}
                 onRefreshProspects={handleRefreshProspects}
                 onRefreshClients={handleRefreshClientsList}

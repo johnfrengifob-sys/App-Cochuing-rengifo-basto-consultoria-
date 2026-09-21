@@ -31,6 +31,7 @@ export interface User {
   transformationSpacesEnabled?: boolean; // Espacio 'Tu camino de transformación' habilitado
   welcomeMessage?: string; // Mensaje de bienvenida personalizado humano e inspirador
   completedWorkshopIds?: string[]; // IDs de talleres completados: ['taller-1-raiz', 'taller-2-tallo', 'taller-3-florecimiento']
+  attendedWorkshopIds?: string[]; // IDs de talleres asistidos/acreditados
   workshopMemories?: Record<
     string,
     {

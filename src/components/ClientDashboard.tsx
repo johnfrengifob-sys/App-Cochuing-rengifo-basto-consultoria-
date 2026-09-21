@@ -21,6 +21,12 @@ import {
   Smartphone,
   Copy,
   Lock,
+  ExternalLink,
+  FileSpreadsheet,
+  ArrowRight,
+  RefreshCw,
+  Eye,
+  Brain,
 } from 'lucide-react';
 import { User, Session, PostSessionForm, CronogramaEvent, ProgramNodeInfo } from '../types';
 import { OntologicalStore, COMPANY_INFO, PROGRAM_NODES, BRE_B_NU_CONFIG } from '../services/store';
@@ -30,8 +36,13 @@ import { PDFGenerator } from '../utils/pdfGenerator';
 import { safeCopyToClipboard } from '../utils/clipboard';
 import { PostSessionWorkbookModal } from './PostSessionWorkbookModal';
 import { ParticipantTemarioSyllabus } from './dashboard/ParticipantTemarioSyllabus';
+import { ParticipantTalleresModule, CoreWorkshopTrack } from './dashboard/ParticipantTalleresModule';
+import { CORE_WORKSHOPS_CATALOG as CORE_WORKSHOPS } from '../data/coreWorkshopsCatalog';
+import { ParticipantSesionesModule } from './dashboard/ParticipantSesionesModule';
+import { ParticipantIntegracionesModule } from './dashboard/ParticipantIntegracionesModule';
 import { TemarioSyllabusItem } from '../data/temarioOntologico';
 import { CURATED_EXPERIENCE_PHOTOS } from '../data/initialExperiences';
+import { OFFICIAL_FORMS_SHEETS_BASE_MAP, OFFICIAL_FORMS_SHEETS_BASE_LIST } from '../data/officialFormsSheetsBase';
 import coachAvatarImg from '../assets/images/regenerated_image_1788287101599.jpg';
 import whiteWavesBg from '../assets/images/white_waves_bg_1788461168119.jpg';
 import { PromotionalEventBanner } from './PromotionalEventBanner';
@@ -44,94 +55,6 @@ interface ClientDashboardProps {
   onOpenDiagnosticWorkspace?: () => void;
 }
 
-// Definición canónica de los 3 talleres ontológicos fundamentales
-interface CoreWorkshopTrack {
-  id: string;
-  matchIds: string[];
-  stageName: 'Raíz' | 'Tallo' | 'Florecimiento';
-  phase: string;
-  levelBadge: string;
-  accentColor: 'emerald' | 'amber' | 'indigo';
-  title: string;
-  subtitle: string;
-  thematicFocus: string;
-  guidingQuestion: string;
-  somaticPractice: string;
-  meetLink: string;
-  defaultDate: string;
-  defaultBreakthrough: string;
-  defaultCommitments: string;
-}
-
-const CORE_WORKSHOPS: CoreWorkshopTrack[] = [
-  {
-    id: 'taller-1-raiz',
-    matchIds: ['taller-1-raiz', 'taller-1', 'raiz', 'event-raiz-balance'],
-    stageName: 'Raíz',
-    phase: 'Fase I • Fundamentos & Transparencia',
-    levelBadge: 'Nivel I • Fase Raíz',
-    accentColor: 'emerald',
-    title: 'Taller 1: Raíz y Balance Ontológico',
-    subtitle: 'Mapeo de la Transparencia, Decodificación Somática & Quiebres Inconscientes',
-    thematicFocus:
-      'Suspensión reflexiva del piloto automático, decodificación de tensiones musculares y reconocimiento de quiebres ocultos en la rutina ejecutiva.',
-    guidingQuestion:
-      '¿En qué áreas de tu vida estás operando en piloto automático tolerando costos ocultos que drenan tu energía vital?',
-    somaticPractice:
-      'Respiración diafragmática 4-2-6 y enraizamiento en planta de pies ante situaciones de alta fricción o reactividad.',
-    meetLink: 'https://meet.google.com/hxt-rbco-grp',
-    defaultDate: 'Ciclo Raíz',
-    defaultBreakthrough:
-      'Identificación de automatismos reactivos y apertura deliberada de espacio para la pausa reflexiva antes de responder.',
-    defaultCommitments:
-      'Pausa somática de 90 segundos al percibir tensión; registro quincenal de quiebres en la bitácora personal.',
-  },
-  {
-    id: 'taller-2-tallo',
-    matchIds: ['taller-2-tallo', 'taller-2', 'tallo', 'event-tallo'],
-    stageName: 'Tallo',
-    phase: 'Fase II • Fronteras & Soberanía Relacional',
-    levelBadge: 'Nivel II • Fase Tallo',
-    accentColor: 'amber',
-    title: 'Taller 2: Tallo & Soberanía Relacional',
-    subtitle: 'Fronteras, Actos Declarativos & Deconstrucción de la Culpa',
-    thematicFocus:
-      'El poder fundacional del "No" y del "Basta" ontológico. Deconstrucción de la culpa condicionada y diseño de conversaciones de frontera.',
-    guidingQuestion:
-      '¿Qué límites has omitido declarar por temor al conflicto o por necesidad aprendida de aprobación?',
-    somaticPractice:
-      'Apertura de caja torácica, alineación de eje vertical y anclaje de mirada asertiva sin contracción mandibular.',
-    meetLink: 'https://meet.google.com/hxt-rbco-grp',
-    defaultDate: 'Ciclo Tallo',
-    defaultBreakthrough:
-      'Declaración clara de fronteras personales sin culpa ni necesidad de justificaciones reactivas excesivas.',
-    defaultCommitments:
-      'Sostener el "No" limpio y respetuoso ante peticiones que vulneren el descanso o la coherencia interna.',
-  },
-  {
-    id: 'taller-3-florecimiento',
-    matchIds: ['taller-3-florecimiento', 'taller-3', 'florecimiento', 'event-florecimiento'],
-    stageName: 'Florecimiento',
-    phase: 'Fase III • Maestría Lingüística & Cosecha',
-    levelBadge: 'Nivel III • Fase Florecimiento',
-    accentColor: 'indigo',
-    title: 'Taller 3: Florecimiento & Integración',
-    subtitle: 'El Nuevo Observador, Maestría Lingüística & Cosecha Integral',
-    thematicFocus:
-      'Integración coherente de cuerpo, emoción y lenguaje. Proclamación del Manifiesto de Soberanía Personal y coordinación impecable de compromisos.',
-    guidingQuestion:
-      '¿Desde qué nuevo observador estás eligiendo diseñar tu futuro y tus acuerdos relacionales?',
-    somaticPractice:
-      'Presencia centrada, respiración fluida y soltura mandibular para articulación de juicios fundados y promesas claras.',
-    meetLink: 'https://meet.google.com/hxt-rbco-grp',
-    defaultDate: 'Ciclo Florecimiento',
-    defaultBreakthrough:
-      'Habitar un observador reflexivo con capacidad de generar nuevas realidades a través de la palabra comprometida.',
-    defaultCommitments:
-      'Revisión periódica del Manifiesto Ontológico y cumplimiento riguroso de promesas y pedidos directivos.',
-  },
-];
-
 export const ClientDashboard: React.FC<ClientDashboardProps> = ({
   client,
   onLogout,
@@ -143,6 +66,11 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
   useEffect(() => {
     setActiveUser(client);
   }, [client]);
+
+  // Tab activo de navegación del panel de clientes
+  const [dashboardTab, setDashboardTab] = useState<
+    'resumen' | 'talleres' | 'sesiones' | 'integraciones' | 'temario'
+  >('resumen');
 
   // Estados de datos sincronizados con Store y Firestore
   const [sessions, setSessions] = useState<Session[]>(() =>
@@ -169,6 +97,10 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
 
   // Estado de descarga de PDF con confirmación visual
   const [downloadToastMessage, setDownloadToastMessage] = useState<string | null>(null);
+
+  // Estado de expansión del módulo de talleres
+  const [isTalleresModuleExpanded, setIsTalleresModuleExpanded] = useState<boolean>(true);
+  const [selectedWorkshopTrackId, setSelectedWorkshopTrackId] = useState<string>('taller-1-raiz');
 
   // Estado de copiado de llave de pago Bre-B Nu
   const [copiedPaymentKey, setCopiedPaymentKey] = useState(false);
@@ -320,6 +252,14 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
       actionAgreements: [],
       somaticFocus: '',
       programNodeStep: currentSessionNumber,
+      googleSheetsUrl: OFFICIAL_FORMS_SHEETS_BASE_MAP.bitacora_sesiones_b2b.sheetUrl,
+      googleFormsUrl: OFFICIAL_FORMS_SHEETS_BASE_MAP.bitacora_sesiones_b2b.formUrl,
+      agreementFormUrl: OFFICIAL_FORMS_SHEETS_BASE_MAP.sesiones_individuales.formUrl,
+      agreementSheetUrl: OFFICIAL_FORMS_SHEETS_BASE_MAP.sesiones_individuales.sheetUrl,
+      bitacoraFormUrl: OFFICIAL_FORMS_SHEETS_BASE_MAP.bitacora_sesiones_b2b.formUrl,
+      bitacoraSheetUrl: OFFICIAL_FORMS_SHEETS_BASE_MAP.bitacora_sesiones_b2b.sheetUrl,
+      formsIntegrationId: 'bitacora_sesiones_b2b',
+      expedienteSyncStatus: 'synced',
     };
   }, [sessions, currentSessionNumber, activeUser, isCycleMilestone]);
 
@@ -344,8 +284,6 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
     }
     return CURATED_EXPERIENCE_PHOTOS[0]; // Raíz somática y presencia
   }, [currentSessionNumber]);
-
-
 
   // Verificación de asistencia a talleres (por objeto o por identificador)
   const isWorkshopAttended = (wsOrId: CoreWorkshopTrack | string) => {
@@ -556,7 +494,6 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
 
   const completedSessionsCount = useMemo(() => {
     const completedExplicit = sessions.filter((s) => s.status === 'completed').length;
-    // Si el participante está en el encuentro N, ha completado al menos N-1 encuentros
     const progressiveCount = Math.max(0, currentSessionNumber - 1);
     return Math.min(12, Math.max(completedExplicit, progressiveCount));
   }, [sessions, currentSessionNumber]);
@@ -581,7 +518,7 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
 
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-10 space-y-7">
         {/* ========================================================================= */}
-        {/* 1. CABECERA LIMPIA: SIN BOTONES DE PAGO NI PROGRESO INDEPENDIENTE          */}
+        {/* 1. CABECERA LIMPIA: IDENTIFICACIÓN Y ANILLO INTEGRAL DE AVANCE            */}
         {/* ========================================================================= */}
         <header className="rounded-3xl border border-black/10 dark:border-white/10 bg-white/20 dark:bg-neutral-950/30 backdrop-blur-xl p-6 sm:p-7 space-y-5 shadow-xs transition-all">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -615,7 +552,7 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
               </div>
             </div>
 
-            {/* Acción sobria en cabecera: Únicamente Cerrar sesión */}
+            {/* Acción sobria en cabecera: Cerrar sesión */}
             <div className="flex items-center gap-3 self-start sm:self-auto">
               {onLogout && (
                 <button
@@ -629,10 +566,9 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
             </div>
           </div>
 
-          {/* BLOQUE CENTRAL UNIFICADO DE PROGRESO CON ACENTO SUTIL DE COLOR Y LÍNEA CIRCULAR DE AVANCE */}
+          {/* BLOQUE CENTRAL UNIFICADO DE PROGRESO */}
           <div className="p-4 sm:p-5 rounded-2xl border border-black/10 dark:border-white/10 bg-white/25 dark:bg-neutral-900/35 backdrop-blur-md flex flex-col md:flex-row md:items-center justify-between gap-4 text-xs shadow-xs">
             <div className="flex items-center gap-2.5 flex-wrap">
-              {/* Indicador pulsante con acento según el ciclo */}
               <span className={`w-2 h-2 rounded-full ${activeCycleAccent.dot} shrink-0 animate-pulse`} />
               <span className="font-bold text-black dark:text-white text-xs sm:text-sm">
                 Ciclo {currentCycle} de 3
@@ -649,10 +585,8 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
 
             {/* LÍNEA CIRCULAR DE AVANCE DEL PROCESO COMPLETO (SESIONES + TALLERES) */}
             <div className="flex items-center gap-3 self-start md:self-auto pt-2.5 md:pt-0 border-t md:border-t-0 border-black/5 dark:border-white/5">
-              {/* Anillo circular de carga con porcentaje */}
               <div className="relative w-11 h-11 flex items-center justify-center shrink-0">
                 <svg className="w-11 h-11 -rotate-90 transform" viewBox="0 0 44 44">
-                  {/* Anillo de fondo */}
                   <circle
                     cx="22"
                     cy="22"
@@ -662,7 +596,6 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
                     stroke="currentColor"
                     fill="transparent"
                   />
-                  {/* Anillo de avance dinámico */}
                   <circle
                     cx="22"
                     cy="22"
@@ -685,7 +618,6 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
                 </div>
               </div>
 
-              {/* Indicadores contextuales: detalle de avance sumando talleres y sesiones */}
               <div className="space-y-0.5">
                 <div className="flex items-center gap-2">
                   <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">
@@ -706,303 +638,530 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
               </div>
             </div>
           </div>
-        </header>
 
-        {/* ========================================================================= */}
-        {/* 2. TALLER ONTOLÓGICO EN CURSO (BANNER OFICIAL CON AFICHE Y ACCESO MEET)     */}
-        {/* ========================================================================= */}
-        <section id="banner-taller-en-curso" className="space-y-3">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 px-1">
-            <div className="flex items-center gap-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
-              <h2 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-black dark:text-white font-mono">
-                Taller Ontológico en Curso • Espacio Vivencial Grupal
-              </h2>
-            </div>
-
-            {/* Selector de Talleres del Programa: Raíz (Ciclo 1), Tallo (Ciclo 2), Florecimiento (Ciclo 3) */}
-            <div className="flex items-center gap-1.5 p-1 rounded-xl bg-white/60 dark:bg-neutral-900/60 border border-black/10 dark:border-white/10 text-[11px] font-mono self-start sm:self-auto shadow-xs">
+          {/* ========================================================================= */}
+          {/* BARRA DE NAVEGACIÓN PRINCIPAL: PANELES DE TALLERES, SESIONES E INTEGRACIONES */}
+          {/* ========================================================================= */}
+          <nav aria-label="Secciones del Panel de Clientes" className="pt-2 border-t border-black/5 dark:border-white/5">
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
               {[
-                { id: 'taller-1-raiz', cycle: 1, label: 'Raíz (Ciclo 1)' },
-                { id: 'taller-2-tallo', cycle: 2, label: 'Tallo (Ciclo 2)' },
-                { id: 'taller-3-florecimiento', cycle: 3, label: 'Florecimiento (Ciclo 3)' },
-              ].map(({ id, cycle, label }) => {
-                const isSelected = selectedDashboardWorkshopId === id;
-                const isMyCurrentCycle = currentCycle === cycle;
-                const isAccredited = isWorkshopAttended(id);
-
+                {
+                  id: 'resumen',
+                  label: 'Resumen & Momento Actual',
+                  icon: Sparkles,
+                  badge: null,
+                },
+                {
+                  id: 'talleres',
+                  label: 'Paneles de Talleres Ontológicos',
+                  icon: BookOpen,
+                  badge: `${accreditedWorkshopsCount}/3`,
+                },
+                {
+                  id: 'sesiones',
+                  label: 'Paneles de Sesiones 1 a 1',
+                  icon: Calendar,
+                  badge: `${completedSessionsCount}/12`,
+                },
+                {
+                  id: 'integraciones',
+                  label: 'Formularios & Google Sheets',
+                  icon: FileSpreadsheet,
+                  badge: '4 Conectadas',
+                },
+                {
+                  id: 'temario',
+                  label: 'Temario & Syllabus',
+                  icon: BookMarked,
+                  badge: '12 Estaciones',
+                },
+              ].map(({ id, label, icon: Icon, badge }) => {
+                const isSelected = dashboardTab === id;
                 return (
                   <button
                     key={id}
                     type="button"
-                    onClick={() => setSelectedDashboardWorkshopId(id)}
-                    className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${
+                    onClick={() => setDashboardTab(id as any)}
+                    className={`px-3.5 py-2.5 rounded-2xl text-xs font-mono font-medium transition-all flex items-center gap-2 shrink-0 cursor-pointer ${
                       isSelected
-                        ? 'bg-black dark:bg-white text-white dark:text-black font-bold shadow-xs'
-                        : 'text-neutral-600 dark:text-neutral-400 hover:text-black dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/5'
+                        ? 'bg-black text-white dark:bg-white dark:text-black font-bold shadow-sm'
+                        : 'text-neutral-600 dark:text-neutral-400 hover:text-black dark:hover:text-white hover:bg-white/40 dark:hover:bg-neutral-900/40 border border-transparent'
                     }`}
                   >
+                    <Icon className="w-4 h-4 shrink-0" />
                     <span>{label}</span>
-                    {isMyCurrentCycle && (
+                    {badge && (
                       <span
-                        className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0"
-                        title="Tu ciclo actual"
-                      />
-                    )}
-                    {isAccredited && (
-                      <span className="text-[10px] text-emerald-500 font-bold shrink-0" title="Acreditado">
-                        ✓
+                        className={`text-[9px] px-2 py-0.2 rounded-full font-mono ${
+                          isSelected
+                            ? 'bg-white/20 text-white dark:bg-black/20 dark:text-black'
+                            : 'bg-black/5 dark:bg-white/10 text-neutral-600 dark:text-neutral-400'
+                        }`}
+                      >
+                        {badge}
                       </span>
                     )}
                   </button>
                 );
               })}
             </div>
-          </div>
-
-          <PromotionalEventBanner
-            event={selectedWorkshopEvent}
-            variant="participant"
-            isAttended={isWorkshopAttended(selectedWorkshopEvent.id)}
-            participantCycle={currentCycle}
-            onNavigateToSyllabus={() => {
-              const el = document.getElementById('temario-ontologico-syllabus');
-              if (el) {
-                el.scrollIntoView({ behavior: 'smooth' });
-              }
-              const workshopTabId =
-                selectedWorkshopEvent.id === 'taller-1-raiz'
-                  ? 'workshop-1-raiz'
-                  : selectedWorkshopEvent.id === 'taller-2-tallo'
-                  ? 'workshop-2-tallo'
-                  : 'workshop-3-florecimiento';
-              setSelectedTemarioItemId(workshopTabId);
-            }}
-            onDownloadWorkbookPDF={() => {
-              const matchingCoreWs = CORE_WORKSHOPS.find(
-                (w) => w.id === selectedWorkshopEvent.id || w.matchIds.includes(selectedWorkshopEvent.id)
-              );
-              if (matchingCoreWs) {
-                handleDownloadWorkshopMemory(matchingCoreWs);
-              }
-            }}
-          />
-        </section>
+          </nav>
+        </header>
 
         {/* ========================================================================= */}
-        {/* 3. TU MOMENTO ACTUAL: FOTOGRAFÍA, PREGUNTA Y PRÓXIMO PASO                 */}
+        {/* VISTA 1: RESUMEN Y MOMENTO ACTUAL                                         */}
         {/* ========================================================================= */}
-        <section
-          id="tu-momento-actual"
-          className="rounded-3xl border border-black/10 dark:border-white/15 bg-white/20 dark:bg-neutral-950/30 backdrop-blur-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow"
-        >
-          {/* Fotografía a color curada */}
-          <div className="relative h-56 sm:h-64 w-full overflow-hidden border-b border-black/10 dark:border-white/10">
-            <img
-              src={currentPhoto.url}
-              alt={currentPhoto.title}
-              referrerPolicy="no-referrer"
-              className="w-full h-full object-cover transition-transform duration-700 hover:scale-102"
-            />
-            <div className="absolute top-4 left-4 bg-black/90 text-white px-3 py-1 text-[10px] font-bold uppercase tracking-widest rounded-full shadow-xs flex items-center gap-1.5">
-              <span className={`w-1.5 h-1.5 rounded-full ${activeCycleAccent.dot}`} />
-              <span>Tu momento actual</span>
-            </div>
-
-            <div className="absolute bottom-4 left-4 right-4 bg-black/75 backdrop-blur-md text-white p-3.5 rounded-2xl border border-white/15">
-              <span className="text-[10px] uppercase tracking-widest text-neutral-300 block font-mono">
-                {currentPhoto.title}
-              </span>
-              <p className="text-xs font-light text-neutral-200 mt-0.5 leading-snug">
-                {currentPhoto.description}
-              </p>
-            </div>
-          </div>
-
-          {/* Contenido Interior del Lienzo */}
-          <div className="p-6 sm:p-8 space-y-6">
-            {/* Pregunta de Apertura Ontológica: Contenedor limpio con transparencia elegante */}
-            <div className="p-5 rounded-2xl bg-white/30 dark:bg-neutral-900/40 backdrop-blur-md border border-black/10 dark:border-white/10 space-y-2 shadow-xs">
-              <div>
-                <span className="text-[10px] font-bold uppercase tracking-widest text-neutral-500 dark:text-neutral-400 block font-mono">
-                  Pregunta de Apertura Ontológica
-                </span>
-                <h2 className="text-base sm:text-lg font-normal text-black dark:text-white leading-snug mt-1">
-                  {isCycleMilestone
-                    ? '«¿Qué grandes descubrimientos o patrones has notado en estas semanas y cómo sientes que tu perspectiva ha cambiado?»'
-                    : '«¿Qué es importante para ti traer a este espacio hoy?»'}
-                </h2>
-                <p className="text-xs text-neutral-600 dark:text-neutral-400 font-light leading-relaxed mt-1">
-                  Este espacio nace completamente abierto a tu emergente. No hay temas predeterminados ni respuestas correctas. Conversaremos sobre lo que esté vivo en ti.
-                </p>
-              </div>
-            </div>
-
-            {/* Cosecha de Ciclo (Hito de 4 sesiones) */}
-            {isCycleMilestone && (
-              <div className="p-5 rounded-2xl bg-white/30 dark:bg-neutral-900/45 backdrop-blur-md border border-black dark:border-white space-y-3">
-                <div className="flex items-center gap-2">
-                  <Sparkles className="w-4 h-4 text-amber-500" />
-                  <h3 className="text-xs font-bold text-black dark:text-white uppercase tracking-wider font-mono">
-                    Cosecha del Ciclo {currentCycle}
-                  </h3>
+        {dashboardTab === 'resumen' && (
+          <div className="space-y-7">
+            {/* 3 Tarjetas de Acceso Rápido a los nuevos Paneles */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {/* Tarjeta 1: Talleres Ontológicos */}
+              <button
+                type="button"
+                onClick={() => setDashboardTab('talleres')}
+                className="p-5 rounded-3xl border border-black/10 dark:border-white/10 bg-white/20 dark:bg-neutral-950/30 backdrop-blur-xl text-left hover:border-black/20 dark:hover:border-white/20 transition-all cursor-pointer group shadow-xs space-y-3"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="w-10 h-10 rounded-2xl bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/25 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                    <BookOpen className="w-5 h-5" />
+                  </div>
+                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-700 dark:text-amber-300 font-semibold">
+                    {accreditedWorkshopsCount} de 3 Acreditados
+                  </span>
                 </div>
-                <p className="text-xs text-neutral-700 dark:text-neutral-300 leading-relaxed">
-                  Hemos completado 4 encuentros. Este espacio está dedicado a integrar la siembra:
-                </p>
-                <ul className="list-disc list-inside text-xs text-neutral-800 dark:text-neutral-200 space-y-1 font-light">
-                  <li>¿Qué descubrimientos o patrones recurrentes has identificado?</li>
-                  <li>¿Cómo se ha transformado tu manera de observar tus quiebres y decisiones?</li>
-                </ul>
-                {currentPostForm?.cycleHarvest && (
-                  <div className="mt-2 p-3.5 rounded-xl bg-white/40 dark:bg-black/40 backdrop-blur-sm border border-black/15 dark:border-white/15 text-xs text-neutral-800 dark:text-neutral-200 font-light shadow-2xs">
-                    <strong className="font-semibold text-black dark:text-white block mb-0.5">
-                      Tu cosecha registrada:
-                    </strong>
-                    {currentPostForm.cycleHarvest}
+                <div>
+                  <h3 className="text-sm font-bold text-black dark:text-white font-mono uppercase tracking-wider">
+                    Paneles de Talleres
+                  </h3>
+                  <p className="text-xs text-neutral-600 dark:text-neutral-400 font-light mt-0.5 line-clamp-2">
+                    Raíz, Tallo y Florecimiento • Salas Meet, formularios de inscripción y memorias en PDF.
+                  </p>
+                </div>
+                <div className="flex items-center gap-1 text-[11px] font-mono text-black dark:text-white font-bold group-hover:translate-x-1 transition-transform">
+                  <span>Ver paneles de talleres</span>
+                  <ArrowRight className="w-3 h-3" />
+                </div>
+              </button>
+
+              {/* Tarjeta 2: Sesiones 1 a 1 */}
+              <button
+                type="button"
+                onClick={() => setDashboardTab('sesiones')}
+                className="p-5 rounded-3xl border border-black/10 dark:border-white/10 bg-white/20 dark:bg-neutral-950/30 backdrop-blur-xl text-left hover:border-black/20 dark:hover:border-white/20 transition-all cursor-pointer group shadow-xs space-y-3"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="w-10 h-10 rounded-2xl bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 border border-indigo-500/25 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                    <Calendar className="w-5 h-5" />
+                  </div>
+                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-indigo-500/15 text-indigo-700 dark:text-indigo-300 font-semibold">
+                    {completedSessionsCount} de 12 Realizadas
+                  </span>
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-black dark:text-white font-mono uppercase tracking-wider">
+                    Paneles de Sesiones
+                  </h3>
+                  <p className="text-xs text-neutral-600 dark:text-neutral-400 font-light mt-0.5 line-clamp-2">
+                    Las 12 estaciones reflexivas quincenales, enlaces Meet, acuerdos 1 a 1 y bitácoras B2B.
+                  </p>
+                </div>
+                <div className="flex items-center gap-1 text-[11px] font-mono text-black dark:text-white font-bold group-hover:translate-x-1 transition-transform">
+                  <span>Ver todas las sesiones</span>
+                  <ArrowRight className="w-3 h-3" />
+                </div>
+              </button>
+
+              {/* Tarjeta 3: Integraciones Formularios & Google Sheets */}
+              <button
+                type="button"
+                onClick={() => setDashboardTab('integraciones')}
+                className="p-5 rounded-3xl border border-black/10 dark:border-white/10 bg-white/20 dark:bg-neutral-950/30 backdrop-blur-xl text-left hover:border-black/20 dark:hover:border-white/20 transition-all cursor-pointer group shadow-xs space-y-3"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="w-10 h-10 rounded-2xl bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/25 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                    <FileSpreadsheet className="w-5 h-5" />
+                  </div>
+                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 font-semibold">
+                    4 Bases Oficiales
+                  </span>
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-black dark:text-white font-mono uppercase tracking-wider">
+                    Formularios & Sheets
+                  </h3>
+                  <p className="text-xs text-neutral-600 dark:text-neutral-400 font-light mt-0.5 line-clamp-2">
+                    Expediente consolidado en vivo: acuerdos, bitácoras y hojas de respuestas auditadas.
+                  </p>
+                </div>
+                <div className="flex items-center gap-1 text-[11px] font-mono text-black dark:text-white font-bold group-hover:translate-x-1 transition-transform">
+                  <span>Ver expediente Sheets</span>
+                  <ArrowRight className="w-3 h-3" />
+                </div>
+              </button>
+            </div>
+
+            {/* Banner Taller Ontológico en Curso */}
+            <section id="banner-taller-en-curso" className="space-y-3">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 px-1">
+                <div className="flex items-center gap-2">
+                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+                  <h2 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-black dark:text-white font-mono">
+                    Taller Ontológico en Curso • Espacio Vivencial Grupal
+                  </h2>
+                </div>
+
+                <div className="flex items-center gap-1.5 p-1 rounded-xl bg-white/60 dark:bg-neutral-900/60 border border-black/10 dark:border-white/10 text-[11px] font-mono self-start sm:self-auto shadow-xs">
+                  {[
+                    { id: 'taller-1-raiz', cycle: 1, label: 'Raíz (Ciclo 1)' },
+                    { id: 'taller-2-tallo', cycle: 2, label: 'Tallo (Ciclo 2)' },
+                    { id: 'taller-3-florecimiento', cycle: 3, label: 'Florecimiento (Ciclo 3)' },
+                  ].map(({ id, cycle, label }) => {
+                    const isSelected = selectedDashboardWorkshopId === id;
+                    const isMyCurrentCycle = currentCycle === cycle;
+                    const isAccredited = isWorkshopAttended(id);
+
+                    return (
+                      <button
+                        key={id}
+                        type="button"
+                        onClick={() => setSelectedDashboardWorkshopId(id)}
+                        className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${
+                          isSelected
+                            ? 'bg-black dark:bg-white text-white dark:text-black font-bold shadow-xs'
+                            : 'text-neutral-600 dark:text-neutral-400 hover:text-black dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/5'
+                        }`}
+                      >
+                        <span>{label}</span>
+                        {isMyCurrentCycle && (
+                          <span
+                            className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0"
+                            title="Tu ciclo actual"
+                          />
+                        )}
+                        {isAccredited && (
+                          <span className="text-[10px] text-emerald-500 font-bold shrink-0" title="Acreditado">
+                            ✓
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <PromotionalEventBanner
+                event={selectedWorkshopEvent}
+                variant="participant"
+                isAttended={isWorkshopAttended(selectedWorkshopEvent.id)}
+                participantCycle={currentCycle}
+                onNavigateToSyllabus={() => {
+                  setDashboardTab('talleres');
+                }}
+                onDownloadWorkbookPDF={() => {
+                  const matchingCoreWs = CORE_WORKSHOPS.find(
+                    (w) => w.id === selectedWorkshopEvent.id || w.matchIds.includes(selectedWorkshopEvent.id)
+                  );
+                  if (matchingCoreWs) {
+                    handleDownloadWorkshopMemory(matchingCoreWs);
+                  }
+                }}
+              />
+            </section>
+
+            {/* Tu Momento Actual: Fotografía, Pregunta y Próximo Paso */}
+            <section
+              id="tu-momento-actual"
+              className="rounded-3xl border border-black/10 dark:border-white/15 bg-white/20 dark:bg-neutral-950/30 backdrop-blur-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow"
+            >
+              <div className="relative h-56 sm:h-64 w-full overflow-hidden border-b border-black/10 dark:border-white/10">
+                <img
+                  src={currentPhoto.url}
+                  alt={currentPhoto.title}
+                  referrerPolicy="no-referrer"
+                  className="w-full h-full object-cover transition-transform duration-700 hover:scale-102"
+                />
+                <div className="absolute top-4 left-4 bg-black/90 text-white px-3 py-1 text-[10px] font-bold uppercase tracking-widest rounded-full shadow-xs flex items-center gap-1.5">
+                  <span className={`w-1.5 h-1.5 rounded-full ${activeCycleAccent.dot}`} />
+                  <span>Tu momento actual</span>
+                </div>
+
+                <div className="absolute bottom-4 left-4 right-4 bg-black/75 backdrop-blur-md text-white p-3.5 rounded-2xl border border-white/15">
+                  <span className="text-[10px] uppercase tracking-widest text-neutral-300 block font-mono">
+                    {currentPhoto.title}
+                  </span>
+                  <p className="text-xs font-light text-neutral-200 mt-0.5 leading-snug">
+                    {currentPhoto.description}
+                  </p>
+                </div>
+              </div>
+
+              <div className="p-6 sm:p-8 space-y-6">
+                {/* Pregunta de Apertura Ontológica */}
+                <div className="p-5 rounded-2xl bg-white/30 dark:bg-neutral-900/40 backdrop-blur-md border border-black/10 dark:border-white/10 space-y-2 shadow-xs">
+                  <div>
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-neutral-500 dark:text-neutral-400 block font-mono">
+                      Pregunta de Apertura Ontológica
+                    </span>
+                    <h2 className="text-base sm:text-lg font-normal text-black dark:text-white leading-snug mt-1">
+                      {isCycleMilestone
+                        ? '«¿Qué grandes descubrimientos o patrones has notado en estas semanas y cómo sientes que tu perspectiva ha cambiado?»'
+                        : '«¿Qué es importante para ti traer a este espacio hoy?»'}
+                    </h2>
+                    <p className="text-xs text-neutral-600 dark:text-neutral-400 font-light leading-relaxed mt-1">
+                      Este espacio nace completamente abierto a tu emergente. No hay temas predeterminados ni respuestas correctas. Conversaremos sobre lo que esté vivo en ti.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Cosecha de Ciclo (Hito de 4 sesiones) */}
+                {isCycleMilestone && (
+                  <div className="p-5 rounded-2xl bg-white/30 dark:bg-neutral-900/45 backdrop-blur-md border border-black dark:border-white space-y-3">
+                    <div className="flex items-center gap-2">
+                      <Sparkles className="w-4 h-4 text-amber-500" />
+                      <h3 className="text-xs font-bold text-black dark:text-white uppercase tracking-wider font-mono">
+                        Cosecha del Ciclo {currentCycle}
+                      </h3>
+                    </div>
+                    <p className="text-xs text-neutral-700 dark:text-neutral-300 leading-relaxed">
+                      Hemos completado 4 encuentros. Este espacio está dedicado a integrar la siembra:
+                    </p>
+                    <ul className="list-disc list-inside text-xs text-neutral-800 dark:text-neutral-200 space-y-1 font-light">
+                      <li>¿Qué descubrimientos o patrones recurrentes has identificado?</li>
+                      <li>¿Cómo se ha transformado tu manera de observar tus quiebres y decisiones?</li>
+                    </ul>
+                    {currentPostForm?.cycleHarvest && (
+                      <div className="mt-2 p-3.5 rounded-xl bg-white/40 dark:bg-black/40 backdrop-blur-sm border border-black/15 dark:border-white/15 text-xs text-neutral-800 dark:text-neutral-200 font-light shadow-2xs">
+                        <strong className="font-semibold text-black dark:text-white block mb-0.5">
+                          Tu cosecha registrada:
+                        </strong>
+                        {currentPostForm.cycleHarvest}
+                      </div>
+                    )}
                   </div>
                 )}
+
+                {/* Bloques de Próximo Paso */}
+                <div className="space-y-4 pt-1">
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-neutral-500 dark:text-neutral-400 block font-mono">
+                    Información Esencial del Próximo Paso
+                  </span>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {/* Próximo Encuentro */}
+                    <div className="p-5 rounded-2xl border border-black/10 dark:border-white/10 bg-white/25 dark:bg-neutral-900/35 backdrop-blur-md space-y-3">
+                      <div className="flex items-center gap-2 text-xs font-bold text-black dark:text-white">
+                        <Clock className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                        <span>Tu Próxima Sesión</span>
+                      </div>
+                      <p className="text-xs text-neutral-700 dark:text-neutral-300">
+                        {formatHumanDate(currentSession.date)}
+                      </p>
+                      <div className="pt-2 flex flex-wrap gap-2">
+                        <a
+                          href={currentSession.meetLink || 'https://meet.google.com/new'}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="px-4 py-2 rounded-xl bg-black text-white dark:bg-white dark:text-black text-xs font-semibold hover:opacity-90 transition-opacity inline-flex items-center gap-1.5 cursor-pointer shadow-xs"
+                        >
+                          <Video className="w-3.5 h-3.5 text-emerald-400 dark:text-emerald-600" />
+                          <span>Unirme por Meet</span>
+                        </a>
+
+                        <button
+                          type="button"
+                          onClick={() => setDashboardTab('sesiones')}
+                          className="px-4 py-2 rounded-xl border border-black/15 dark:border-white/15 bg-white/50 dark:bg-black/50 backdrop-blur-xs text-xs font-semibold hover:bg-white/70 dark:hover:bg-neutral-800 transition-colors inline-flex items-center gap-1.5 cursor-pointer"
+                        >
+                          <Calendar className="w-3.5 h-3.5 text-neutral-500" />
+                          <span>Ver todas las sesiones</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Memoria de Sesión & Cuestionario Posterior */}
+                    <div className="p-5 rounded-2xl border border-black/10 dark:border-white/10 bg-white/25 dark:bg-neutral-900/35 backdrop-blur-md space-y-3">
+                      <div className="flex items-center gap-2 text-xs font-bold text-black dark:text-white">
+                        <FileText className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+                        <span>Memoria y Bitácora Posterior</span>
+                      </div>
+                      <p className="text-xs text-neutral-700 dark:text-neutral-300">
+                        {currentPostForm
+                          ? 'Tu memoria de sesión está registrada y lista para consultar.'
+                          : 'Registra el emergente y el paso a la acción tras tu encuentro.'}
+                      </p>
+                      <div className="pt-2 flex flex-wrap gap-2">
+                        {currentPostForm ? (
+                          <button
+                            type="button"
+                            onClick={() => handleDownloadMemory(currentPostForm, currentSession)}
+                            className="px-4 py-2 rounded-xl bg-black text-white dark:bg-white dark:text-black text-xs font-semibold hover:opacity-90 transition-opacity inline-flex items-center gap-1.5 cursor-pointer shadow-xs"
+                          >
+                            <Download className="w-3.5 h-3.5" />
+                            <span>Descargar Memoria (PDF)</span>
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => handleOpenBitacora(currentSession)}
+                            className="px-4 py-2 rounded-xl bg-black text-white dark:bg-white dark:text-black text-xs font-semibold hover:opacity-90 transition-opacity inline-flex items-center gap-1.5 cursor-pointer shadow-xs"
+                          >
+                            <FileText className="w-3.5 h-3.5" />
+                            <span>Registrar Bitácora</span>
+                          </button>
+                        )}
+
+                        {currentPostForm && (
+                          <button
+                            type="button"
+                            onClick={() => handleOpenBitacora(currentSession)}
+                            className="px-3.5 py-2 rounded-xl border border-black/15 dark:border-white/15 bg-white/50 dark:bg-black/50 backdrop-blur-xs text-xs font-semibold hover:bg-white/70 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
+                          >
+                            Editar registro
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Síntesis del Tema Emergente */}
+                  {currentPostForm && (
+                    <div className="p-4 rounded-2xl border border-black/10 dark:border-white/10 bg-white/25 dark:bg-neutral-900/35 backdrop-blur-md space-y-3">
+                      <div>
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-500 font-mono">
+                          El tema emergente de este encuentro:
+                        </span>
+                        <p className="text-xs font-medium text-black dark:text-white mt-0.5">
+                          {currentPostForm.emergentTopic || currentPostForm.masterJudgmentAndNarrative}
+                        </p>
+                      </div>
+
+                      <div>
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-500 font-mono">
+                          El paso a la acción acordado:
+                        </span>
+                        <p className="text-xs font-medium text-black dark:text-white mt-0.5">
+                          {currentPostForm.actionStep || currentPostForm.agreedActionItems?.[0]}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
-            )}
-
-            {/* Bloques de Próximo Paso */}
-            <div className="space-y-4 pt-1">
-              <span className="text-[10px] font-bold uppercase tracking-widest text-neutral-500 dark:text-neutral-400 block font-mono">
-                Información Esencial del Próximo Paso
-              </span>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {/* Próximo Encuentro */}
-                <div className="p-5 rounded-2xl border border-black/10 dark:border-white/10 bg-white/25 dark:bg-neutral-900/35 backdrop-blur-md space-y-3">
-                  <div className="flex items-center gap-2 text-xs font-bold text-black dark:text-white">
-                    <Clock className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                    <span>Tu Próxima Sesión</span>
-                  </div>
-                  <p className="text-xs text-neutral-700 dark:text-neutral-300">
-                    {formatHumanDate(currentSession.date)}
-                  </p>
-                  <div className="pt-2 flex flex-wrap gap-2">
-                    <a
-                      href={currentSession.meetLink || 'https://meet.google.com/new'}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="px-4 py-2 rounded-xl bg-black text-white dark:bg-white dark:text-black text-xs font-semibold hover:opacity-90 transition-opacity inline-flex items-center gap-1.5 cursor-pointer shadow-xs"
-                    >
-                      <Video className="w-3.5 h-3.5 text-emerald-400 dark:text-emerald-600" />
-                      <span>Unirme por Meet</span>
-                    </a>
-
-                    <a
-                      href="https://calendar.google.com"
-                      target="_blank"
-                      rel="noreferrer"
-                      className="px-4 py-2 rounded-xl border border-black/15 dark:border-white/15 bg-white/50 dark:bg-black/50 backdrop-blur-xs text-xs font-semibold hover:bg-white/70 dark:hover:bg-neutral-800 transition-colors inline-flex items-center gap-1.5 cursor-pointer"
-                    >
-                      <Calendar className="w-3.5 h-3.5 text-neutral-500" />
-                      <span>Reprogramar</span>
-                    </a>
-                  </div>
-                </div>
-
-                {/* Memoria de Sesión & Cuestionario Posterior */}
-                <div className="p-5 rounded-2xl border border-black/10 dark:border-white/10 bg-white/25 dark:bg-neutral-900/35 backdrop-blur-md space-y-3">
-                  <div className="flex items-center gap-2 text-xs font-bold text-black dark:text-white">
-                    <FileText className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
-                    <span>Memoria y Bitácora Posterior</span>
-                  </div>
-                  <p className="text-xs text-neutral-700 dark:text-neutral-300">
-                    {currentPostForm
-                      ? 'Tu memoria de sesión está registrada y lista para consultar.'
-                      : 'Registra el emergente y el paso a la acción tras tu encuentro.'}
-                  </p>
-                  <div className="pt-2 flex flex-wrap gap-2">
-                    {currentPostForm ? (
-                      <button
-                        type="button"
-                        onClick={() => handleDownloadMemory(currentPostForm, currentSession)}
-                        className="px-4 py-2 rounded-xl bg-black text-white dark:bg-white dark:text-black text-xs font-semibold hover:opacity-90 transition-opacity inline-flex items-center gap-1.5 cursor-pointer shadow-xs"
-                      >
-                        <Download className="w-3.5 h-3.5" />
-                        <span>Descargar Memoria (PDF)</span>
-                      </button>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={() => handleOpenBitacora(currentSession)}
-                        className="px-4 py-2 rounded-xl bg-black text-white dark:bg-white dark:text-black text-xs font-semibold hover:opacity-90 transition-opacity inline-flex items-center gap-1.5 cursor-pointer shadow-xs"
-                      >
-                        <FileText className="w-3.5 h-3.5" />
-                        <span>Registrar Bitácora</span>
-                      </button>
-                    )}
-
-                    {currentPostForm && (
-                      <button
-                        type="button"
-                        onClick={() => handleOpenBitacora(currentSession)}
-                        className="px-3.5 py-2 rounded-xl border border-black/15 dark:border-white/15 bg-white/50 dark:bg-black/50 backdrop-blur-xs text-xs font-semibold hover:bg-white/70 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
-                      >
-                        Editar registro
-                      </button>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {/* Síntesis del Tema Emergente */}
-              {currentPostForm && (
-                <div className="p-4 rounded-2xl border border-black/10 dark:border-white/10 bg-white/25 dark:bg-neutral-900/35 backdrop-blur-md space-y-3">
-                  <div>
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-500 font-mono">
-                      El tema emergente de este encuentro:
-                    </span>
-                    <p className="text-xs font-medium text-black dark:text-white mt-0.5">
-                      {currentPostForm.emergentTopic || currentPostForm.masterJudgmentAndNarrative}
-                    </p>
-                  </div>
-
-                  <div>
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-500 font-mono">
-                      El paso a la acción acordado:
-                    </span>
-                    <p className="text-xs font-medium text-black dark:text-white mt-0.5">
-                      {currentPostForm.actionStep || currentPostForm.agreedActionItems?.[0]}
-                    </p>
-                  </div>
-                </div>
-              )}
-            </div>
+            </section>
           </div>
-        </section>
+        )}
 
         {/* ========================================================================= */}
-        {/* 3. TEMARIO ONTOLÓGICO & SYLLABUS DE LECTURA DE INFORMACIÓN                */}
+        {/* VISTA 2: PANELES DE TALLERES ONTOLÓGICOS                                  */}
         {/* ========================================================================= */}
-        <section id="temario-ontologico-syllabus" className="space-y-4">
-          <ParticipantTemarioSyllabus
-            activeUser={activeUser}
-            sessions={sessions}
-            postForms={postForms}
-            cronogramaEvents={cronogramaEvents}
-            currentSessionNumber={currentSessionNumber}
-            currentCycle={currentCycle}
-            selectedItemId={selectedTemarioItemId}
-            onSelectItem={setSelectedTemarioItemId}
-            onOpenBitacora={handleOpenBitacora}
-            onDownloadSessionPDF={handleDownloadMemory}
-            onDownloadWorkshopPDF={handleDownloadWorkshopMemoryFromSyllabus}
-            onCopyPaymentKey={handleCopyPaymentKey}
-            copiedPaymentKey={copiedPaymentKey}
-            isWorkshopAttended={isWorkshopAttendedById}
-          />
-        </section>
+        {dashboardTab === 'talleres' && (
+          <div className="space-y-7">
+            {/* Banner del taller */}
+            <PromotionalEventBanner
+              event={selectedWorkshopEvent}
+              variant="participant"
+              isAttended={isWorkshopAttended(selectedWorkshopEvent.id)}
+              participantCycle={currentCycle}
+              onNavigateToSyllabus={() => {
+                setSelectedWorkshopTrackId(selectedWorkshopEvent.id);
+                setIsTalleresModuleExpanded(true);
+              }}
+              onDownloadWorkbookPDF={() => {
+                const matchingCoreWs = CORE_WORKSHOPS.find(
+                  (w) => w.id === selectedWorkshopEvent.id || w.matchIds.includes(selectedWorkshopEvent.id)
+                );
+                if (matchingCoreWs) {
+                  handleDownloadWorkshopMemory(matchingCoreWs);
+                }
+              }}
+            />
 
-
-
-
+            {/* Módulo interactivo de los 3 Talleres Troncales */}
+            <ParticipantTalleresModule
+              isExpanded={isTalleresModuleExpanded}
+              onToggle={() => setIsTalleresModuleExpanded(!isTalleresModuleExpanded)}
+              accreditedWorkshopsCount={accreditedWorkshopsCount}
+              coreWorkshops={CORE_WORKSHOPS}
+              selectedWorkshopId={selectedWorkshopTrackId}
+              onSelectWorkshopId={setSelectedWorkshopTrackId}
+              isWorkshopAttended={isWorkshopAttended}
+              getWorkshopMemoryDetails={getWorkshopMemoryDetails}
+              onDownloadWorkshopMemory={handleDownloadWorkshopMemory}
+              onCopyPaymentKey={handleCopyPaymentKey}
+              copiedPaymentKey={copiedPaymentKey}
+              hasWorkshopsAccess={activeUser.hasWorkshopsAccess ?? true}
+              enrolledWorkshopIds={activeUser.enrolledWorkshopIds || ['taller-1-raiz', 'taller-2-tallo']}
+              onGoToIntegrations={() => setDashboardTab('integraciones')}
+            />
+          </div>
+        )}
 
         {/* ========================================================================= */}
-        {/* 6. ACOMPAÑAMIENTO CERCANO: CONTACTO DIRECTO CON EL FACILITADOR           */}
+        {/* VISTA 3: PANELES DE SESIONES 1 A 1                                        */}
+        {/* ========================================================================= */}
+        {dashboardTab === 'sesiones' && (
+          <div className="space-y-7">
+            <ParticipantSesionesModule
+              sessions={sessions}
+              postForms={postForms}
+              currentSessionNumber={currentSessionNumber}
+              currentCycle={currentCycle}
+              activeUser={activeUser}
+              onOpenBitacora={handleOpenBitacora}
+              onDownloadSessionPDF={handleDownloadMemory}
+              onGoToIntegrations={() => setDashboardTab('integraciones')}
+            />
+          </div>
+        )}
+
+        {/* ========================================================================= */}
+        {/* VISTA 4: INTEGRACIONES DE FORMULARIOS Y GOOGLE SHEETS                     */}
+        {/* ========================================================================= */}
+        {dashboardTab === 'integraciones' && (
+          <div className="space-y-7">
+            <ParticipantIntegracionesModule
+              activeUser={activeUser}
+              sessions={sessions}
+              postForms={postForms}
+              onRefresh={() => {
+                const currentSessions = OntologicalStore.getSessionsForClient(activeUser.uid);
+                const currentForms = OntologicalStore.getPostSessionFormsForClient(activeUser.uid);
+                setSessions(currentSessions);
+                setPostForms(currentForms);
+              }}
+              onSelectSession={(sess) => {
+                handleOpenBitacora(sess);
+              }}
+            />
+          </div>
+        )}
+
+        {/* ========================================================================= */}
+        {/* VISTA 5: TEMARIO & SYLLABUS ONTOLÓGICO                                    */}
+        {/* ========================================================================= */}
+        {dashboardTab === 'temario' && (
+          <section id="temario-ontologico-syllabus" className="space-y-4">
+            <ParticipantTemarioSyllabus
+              activeUser={activeUser}
+              sessions={sessions}
+              postForms={postForms}
+              cronogramaEvents={cronogramaEvents}
+              currentSessionNumber={currentSessionNumber}
+              currentCycle={currentCycle}
+              selectedItemId={selectedTemarioItemId}
+              onSelectItem={setSelectedTemarioItemId}
+              onOpenBitacora={handleOpenBitacora}
+              onDownloadSessionPDF={handleDownloadMemory}
+              onDownloadWorkshopPDF={handleDownloadWorkshopMemoryFromSyllabus}
+              onCopyPaymentKey={handleCopyPaymentKey}
+              copiedPaymentKey={copiedPaymentKey}
+              isWorkshopAttended={isWorkshopAttendedById}
+            />
+          </section>
+        )}
+
+        {/* ========================================================================= */}
+        {/* FOOTER: CONTACTO DIRECTO CON EL FACILITADOR                               */}
         {/* ========================================================================= */}
         <footer className="p-5 rounded-3xl border border-black/10 dark:border-white/10 bg-white/85 dark:bg-neutral-950/80 backdrop-blur-md flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-xs shadow-xs">
           <div className="flex items-center gap-3">
@@ -1034,7 +1193,7 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
       </div>
 
       {/* ========================================================================= */}
-      {/* 7. MODAL DE CUESTIONARIO POSTERIOR / BITÁCORA                             */}
+      {/* MODAL DE CUESTIONARIO POSTERIOR / BITÁCORA                                 */}
       {/* ========================================================================= */}
       {isModalOpen && (
         <PostSessionWorkbookModal
