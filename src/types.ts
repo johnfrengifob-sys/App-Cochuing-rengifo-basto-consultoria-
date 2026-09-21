@@ -132,6 +132,12 @@ export type ConsultoriaSessionType =
 export interface SessionAutomationsConfig {
   immediateConfirmation: boolean; // Activador 1 (Inmediato): Confirmación de agendamiento y envío automático del enlace
   scheduledReminders: boolean; // Activador 2 (Programado): Recordatorios automáticos al cliente antes del encuentro
+  postSurveyDispatched?: boolean; // Activador 3: Envío de evaluación / bitácora post-sesión
+  triggersEnabled?: boolean; // Interruptor general de activadores automáticos
+  welcomeMessage?: string;
+  reminderMessage?: string;
+  postSurveyMessage?: string;
+  customWebhookUrl?: string;
 }
 
 export interface SessionConversationalGuide {
@@ -199,6 +205,9 @@ export interface Session {
   programClosingAxes?: SessionProgramClosingAxes;
   automationsConfig?: SessionAutomationsConfig;
   expedienteSyncStatus?: 'synced' | 'pending' | 'draft';
+  level?: 'Nivel I' | 'Nivel II' | 'Nivel III' | string;
+  weekLabel?: string; // Ej. "Semanas 1-2", "Semanas 3-4", "Semana 1", etc.
+  weekNumber?: number; // 1 to 12
 }
 
 export interface PostSessionForm {

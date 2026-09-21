@@ -361,6 +361,15 @@ export class FirestoreSyncService {
           guideTitle: session.guideTitle || '',
           videoUrl: session.videoUrl || '',
           videoTitle: session.videoTitle || '',
+          googleFormsUrl: session.googleFormsUrl || '',
+          googleSheetsUrl: session.googleSheetsUrl || '',
+          formsIntegrationId: session.formsIntegrationId || '',
+          sessionType: session.sessionType || 'sesion',
+          openingQuestion: session.openingQuestion || '',
+          automationsConfig: session.automationsConfig || null,
+          level: session.level || '',
+          weekLabel: session.weekLabel || '',
+          weekNumber: session.weekNumber || 1,
         },
         { merge: true }
       );

@@ -131,6 +131,33 @@
         },
         "durationMinutes": {
           "type": "number"
+        },
+        "googleFormsUrl": {
+          "type": "string"
+        },
+        "googleSheetsUrl": {
+          "type": "string"
+        },
+        "formsIntegrationId": {
+          "type": "string"
+        },
+        "sessionType": {
+          "type": "string"
+        },
+        "openingQuestion": {
+          "type": "string"
+        },
+        "automationsConfig": {
+          "type": "object"
+        },
+        "level": {
+          "type": "string"
+        },
+        "weekLabel": {
+          "type": "string"
+        },
+        "weekNumber": {
+          "type": "number"
         }
       },
       "required": ["id", "clientId", "status", "date"]

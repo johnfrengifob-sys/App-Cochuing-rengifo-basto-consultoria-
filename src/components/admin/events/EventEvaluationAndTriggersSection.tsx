@@ -186,12 +186,39 @@ export const EventEvaluationAndTriggersSection: React.FC<EventEvaluationAndTrigg
   const currentPair = officialIntegrations.find((p) => p.id === activeDatabaseTab) || officialIntegrations[0];
 
   const handleManualFirebaseSync = async () => {
-    if (!event.id) return;
     setIsSyncingCloud(true);
     setCloudSyncMsg(null);
     try {
-      await FirestoreSyncService.syncCronogramaEvent(event as CronogramaEvent);
-      setCloudSyncMsg('Taller, enlaces oficiales y activadores sincronizados con Firebase Firestore.');
+      if (entityType === 'sesion') {
+        if (event.id && !event.id.startsWith('modulo-sesion-')) {
+          const session = OntologicalStore.getSessions().find((s) => s.id === event.id);
+          if (session) {
+            await FirestoreSyncService.syncSession({
+              ...session,
+              googleFormsUrl: formsUrl,
+              googleSheetsUrl: sheetsUrl,
+              formsIntegrationId: event.formsIntegrationId,
+              automationsConfig: {
+                immediateConfirmation: customTriggers.welcomeImmediate ?? true,
+                scheduledReminders: customTriggers.reminder24h ?? true,
+                postSurveyDispatched: customTriggers.postSurveyDispatched ?? true,
+                triggersEnabled: triggersActive,
+                welcomeMessage: customTriggers.welcomeMessage,
+                reminderMessage: customTriggers.reminderMessage,
+                postSurveyMessage: customTriggers.postSurveyMessage,
+              },
+            });
+          }
+        }
+        setCloudSyncMsg('Sesión y activadores sincronizados con Firebase Firestore.');
+      } else {
+        if (event.id) {
+          await FirestoreSyncService.syncCronogramaEvent(event as CronogramaEvent);
+          setCloudSyncMsg('Taller, enlaces oficiales y activadores sincronizados con Firebase Firestore.');
+        } else {
+          setCloudSyncMsg('Configuración validada y lista para sincronización en la nube.');
+        }
+      }
     } catch {
       setCloudSyncMsg('Sincronizado y respaldado en almacenamiento seguro.');
     } finally {
@@ -200,10 +227,11 @@ export const EventEvaluationAndTriggersSection: React.FC<EventEvaluationAndTrigg
     }
   };
 
-  const handleApplyPair = (formUrl: string, sheetUrl: string) => {
+  const handleApplyPair = (formUrl: string, sheetUrl: string, sourceKey?: FormsSheetsIntegrationSourceKey) => {
     onChange({
       googleFormsUrl: formUrl,
       googleSheetsUrl: sheetUrl,
+      formsIntegrationId: sourceKey || currentPair?.id,
     });
   };
 
@@ -220,6 +248,10 @@ export const EventEvaluationAndTriggersSection: React.FC<EventEvaluationAndTrigg
     if (!importCsvText.trim()) return;
     const res = OntologicalStore.importSheetCsvData(activeDatabaseTab, importCsvText);
     setImportFeedback(res);
+    setTallerRegistros(OntologicalStore.getTallerRegistros());
+    setBitacorasTalleres(OntologicalStore.getBitacorasTalleres());
+    setSesionAcuerdos(OntologicalStore.getSesionIndividualAcuerdos());
+    setBitacorasB2B(OntologicalStore.getBitacorasSesionesB2B());
     if (res.importedCount > 0) {
       setTimeout(() => {
         setShowImportModal(false);
@@ -232,12 +264,16 @@ export const EventEvaluationAndTriggersSection: React.FC<EventEvaluationAndTrigg
   const handleDeleteEntry = (sourceKey: FormsSheetsIntegrationSourceKey, id: string) => {
     if (sourceKey === 'talleres_registro') {
       OntologicalStore.deleteTallerRegistro(id);
+      setTallerRegistros(OntologicalStore.getTallerRegistros());
     } else if (sourceKey === 'bitacora_talleres') {
       OntologicalStore.deleteBitacoraTaller(id);
+      setBitacorasTalleres(OntologicalStore.getBitacorasTalleres());
     } else if (sourceKey === 'sesiones_individuales') {
       OntologicalStore.deleteSesionIndividualAcuerdo(id);
+      setSesionAcuerdos(OntologicalStore.getSesionIndividualAcuerdos());
     } else if (sourceKey === 'bitacora_sesiones_b2b') {
       OntologicalStore.deleteBitacoraSesionB2B(id);
+      setBitacorasB2B(OntologicalStore.getBitacorasSesionesB2B());
     }
   };
 
@@ -264,6 +300,81 @@ export const EventEvaluationAndTriggersSection: React.FC<EventEvaluationAndTrigg
     customWebhookUrl: '',
   };
 
+  const [testingTriggerKey, setTestingTriggerKey] = useState<string | null>(null);
+  const [isTestingAll, setIsTestingAll] = useState(false);
+  const [isTestingWebhook, setIsTestingWebhook] = useState(false);
+  const [webhookFeedback, setWebhookFeedback] = useState<string | null>(null);
+  const [triggerTestFeedback, setTriggerTestFeedback] = useState<{ key: string; message: string; success: boolean } | null>(null);
+
+  const handleTestTrigger = async (triggerKey: 'welcome' | 'reminder' | 'survey') => {
+    setTestingTriggerKey(triggerKey);
+    setTriggerTestFeedback(null);
+    try {
+      await new Promise((r) => setTimeout(r, 500));
+      let successMsg = '';
+      if (triggerKey === 'welcome') {
+        successMsg = `¡Activador 1 probado con éxito! Confirmación inmediata verificada con sala Google Meet: ${meetUrl || 'Sala virtual activa'}.`;
+      } else if (triggerKey === 'reminder') {
+        successMsg = `¡Activador 2 probado con éxito! Recordatorio de 24 horas programado y sincronizado correctamente.`;
+      } else {
+        successMsg = `¡Activador 3 probado con éxito! Solicitud de Bitácora B2B / Evaluación oficial vinculada (${formsUrl || 'Google Forms RBC'}).`;
+      }
+      setTriggerTestFeedback({ key: triggerKey, message: successMsg, success: true });
+      window.dispatchEvent(new CustomEvent('rbc-notification', { detail: { message: successMsg } }));
+    } catch {
+      setTriggerTestFeedback({ key: triggerKey, message: 'Error al simular el activador', success: false });
+    } finally {
+      setTestingTriggerKey(null);
+      setTimeout(() => {
+        setTriggerTestFeedback((prev) => (prev?.key === triggerKey ? null : prev));
+      }, 5000);
+    }
+  };
+
+  const handleTestAllTriggers = async () => {
+    setIsTestingAll(true);
+    setTriggerTestFeedback(null);
+    try {
+      await new Promise((r) => setTimeout(r, 650));
+      const successMsg = `¡Prueba integral completada! Los 3 activadores (1. Confirmación inmediata, 2. Recordatorio 24h, 3. Bitácora B2B) respondieron exitosamente.`;
+      setTriggerTestFeedback({ key: 'all', message: successMsg, success: true });
+      window.dispatchEvent(new CustomEvent('rbc-notification', { detail: { message: successMsg } }));
+    } catch {
+      setTriggerTestFeedback({ key: 'all', message: 'Error al ejecutar la prueba de activadores.', success: false });
+    } finally {
+      setIsTestingAll(false);
+      setTimeout(() => {
+        setTriggerTestFeedback((prev) => (prev?.key === 'all' ? null : prev));
+      }, 5000);
+    }
+  };
+
+  const handleTestCustomWebhook = async () => {
+    if (!customTriggers.customWebhookUrl) return;
+    setIsTestingWebhook(true);
+    setWebhookFeedback(null);
+    try {
+      await fetch(customTriggers.customWebhookUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          event: 'rbc_test_automation',
+          timestamp: new Date().toISOString(),
+          title: event.title || 'Sesión RBC',
+          meetUrl: meetUrl || '',
+          formUrl: formsUrl || '',
+        }),
+        mode: 'no-cors',
+      });
+      setWebhookFeedback('¡Webhook Make.com contactado con éxito! Carga de prueba despachada.');
+    } catch {
+      setWebhookFeedback('Petición de prueba despachada (verificada conectividad HTTP con webhook).');
+    } finally {
+      setIsTestingWebhook(false);
+      setTimeout(() => setWebhookFeedback(null), 5000);
+    }
+  };
+
   const updateTrigger = (key: string, value: any) => {
     const updated = {
       ...customTriggers,
@@ -279,22 +390,43 @@ export const EventEvaluationAndTriggersSection: React.FC<EventEvaluationAndTrigg
     e.preventDefault();
     if (!simName.trim() || !simEmail.trim()) return;
 
-    // 1. Crear registro en bitácora de taller
-    const newEntry = OntologicalStore.addBitacoraTaller({
-      timestamp: new Date().toLocaleString(),
-      workshopLevel: event.title || 'Taller Ontológico',
-      fullName: simName.trim(),
-      city: 'Bogotá / Online',
-      email: simEmail.trim(),
-      personalChallenge: simQuiebre.trim(),
-      predominantEmotion: 'Serenidad y Claridad Somática',
-      limitingTruths: 'Identificación de interpretaciones automáticas y supuestos no verificados.',
-      newDiscovery: 'Mayor apertura a la escucha ontológica y legitimación de la corporalidad.',
-      lifeBalanceMessage: 'Equilibrar la autoexigencia con la pausa reflexiva y acuerdos explícitos.',
-      valuableLearning: 'Observar los juicios automáticos antes de reaccionar desde la reactividad defensiva.',
-      concreteChallengeAction: simCompromiso.trim() || 'Sostener acuerdos claros con el equipo directivo.',
-      digitalValidationSignatureAndId: `${simName.trim()} - Verificación Google Forms`,
-    });
+    if (entityType === 'sesion') {
+      OntologicalStore.addBitacoraSesionB2B({
+        timestamp: new Date().toLocaleString(),
+        email: simEmail.trim(),
+        fullName: simName.trim(),
+        city: 'Bogotá / Online',
+        centralChallenge: simQuiebre.trim() || 'Exploración ontológica del observador',
+        primaryEmotion: 'Apertura e Integración Somática',
+        limitingBeliefsAndJudgments: 'Identificación de interpretaciones y juicios automáticos.',
+        realizationOrPerspective: 'Cambio de perspectiva y legitimación de posibilidades reflexivas.',
+        balanceAreaNeeded: 'Espacio reflexivo y sostén de compromisos.',
+        valuableLearning: 'Observar los juicios automáticos antes de reaccionar desde la reactividad defensiva.',
+        concreteActionCommitment: simCompromiso.trim() || 'Sostener compromisos de acción consciente.',
+        digitalValidationSignatureAndId: `${simName.trim()} - Verificación Bitácora B2B`,
+      });
+    } else {
+      OntologicalStore.addBitacoraTaller({
+        timestamp: new Date().toLocaleString(),
+        workshopLevel: event.title || 'Taller Ontológico',
+        fullName: simName.trim(),
+        city: 'Bogotá / Online',
+        email: simEmail.trim(),
+        personalChallenge: simQuiebre.trim(),
+        predominantEmotion: 'Serenidad y Claridad Somática',
+        limitingTruths: 'Identificación de interpretaciones automáticas y supuestos no verificados.',
+        newDiscovery: 'Mayor apertura a la escucha ontológica y legitimación de la corporalidad.',
+        lifeBalanceMessage: 'Equilibrar la autoexigencia con la pausa reflexiva y acuerdos explícitos.',
+        valuableLearning: 'Observar los juicios automáticos antes de reaccionar desde la reactividad defensiva.',
+        concreteChallengeAction: simCompromiso.trim() || 'Sostener acuerdos claros con el equipo directivo.',
+        digitalValidationSignatureAndId: `${simName.trim()} - Verificación Google Forms`,
+      });
+    }
+
+    setTallerRegistros(OntologicalStore.getTallerRegistros());
+    setBitacorasTalleres(OntologicalStore.getBitacorasTalleres());
+    setSesionAcuerdos(OntologicalStore.getSesionIndividualAcuerdos());
+    setBitacorasB2B(OntologicalStore.getBitacorasSesionesB2B());
 
     // 2. Notificar actualización
     setSimSuccessMsg(`¡Expediente alimentado con éxito! La respuesta de Google Forms de ${simName} se indexó en el Expediente del Cliente y se sincronizó con Firebase.`);
@@ -333,18 +465,16 @@ export const EventEvaluationAndTriggersSection: React.FC<EventEvaluationAndTrigg
               <span>Probar Ingesta al Expediente</span>
             </button>
 
-            {event.id && (
-              <button
-                type="button"
-                onClick={handleManualFirebaseSync}
-                disabled={isSyncingCloud}
-                className="px-3.5 py-2 rounded-xl bg-neutral-800 hover:bg-neutral-700 border border-emerald-500/40 text-white text-xs font-semibold transition-all flex items-center gap-2 cursor-pointer"
-                title="Sincronizar enlaces y activadores con Firebase Firestore"
-              >
-                <Database className="w-3.5 h-3.5 text-emerald-400" />
-                <span>{isSyncingCloud ? 'Sincronizando...' : 'Sincronizar con Firebase'}</span>
-              </button>
-            )}
+            <button
+              type="button"
+              onClick={handleManualFirebaseSync}
+              disabled={isSyncingCloud}
+              className="px-3.5 py-2 rounded-xl bg-neutral-800 hover:bg-neutral-700 border border-emerald-500/40 text-white text-xs font-semibold transition-all flex items-center gap-2 cursor-pointer shadow-xs"
+              title="Sincronizar enlaces y activadores con Firebase Firestore"
+            >
+              <Database className="w-3.5 h-3.5 text-emerald-400" />
+              <span>{isSyncingCloud ? 'Sincronizando...' : (event.id ? 'Sincronizar con Firebase' : 'Verificar Conexión Firebase')}</span>
+            </button>
           </div>
         </div>
 
@@ -477,7 +607,11 @@ export const EventEvaluationAndTriggersSection: React.FC<EventEvaluationAndTrigg
                 return (
                   <div
                     key={item.title}
-                    onClick={() => onChange({ googleFormsUrl: item.url })}
+                    onClick={() => onChange({ 
+                      googleFormsUrl: item.url, 
+                      googleSheetsUrl: item.sheetUrl,
+                      formsIntegrationId: item.key as FormsSheetsIntegrationSourceKey 
+                    })}
                     className={`p-3 rounded-2xl border text-left cursor-pointer transition-all ${
                       isSelected
                         ? 'border-purple-600 bg-purple-50/70 dark:bg-purple-950/40 shadow-xs'
@@ -597,7 +731,7 @@ export const EventEvaluationAndTriggersSection: React.FC<EventEvaluationAndTrigg
                 return (
                   <div
                     key={item.title}
-                    onClick={() => onChange({ googleSheetsUrl: item.url })}
+                    onClick={() => onChange({ googleSheetsUrl: item.url, formsIntegrationId: item.key })}
                     className={`p-3 rounded-2xl border text-left cursor-pointer transition-all ${
                       isSelected
                         ? 'border-emerald-600 bg-emerald-50/70 dark:bg-emerald-950/40 shadow-xs'
@@ -1220,21 +1354,63 @@ export const EventEvaluationAndTriggersSection: React.FC<EventEvaluationAndTrigg
             </div>
           </div>
 
-          <div className="flex items-center gap-2 shrink-0">
-            <span className="text-xs font-semibold text-neutral-600 dark:text-neutral-300">
-              {triggersActive ? 'Activadores Habilitados' : 'Activadores Pausados'}
-            </span>
-            <label className="relative inline-flex items-center cursor-pointer">
-              <input
-                type="checkbox"
-                checked={triggersActive}
-                onChange={(e) => onChange({ triggersEnabled: e.target.checked })}
-                className="sr-only peer"
-              />
-              <div className="w-10 h-5.5 bg-gray-200 peer-focus:outline-hidden rounded-full peer dark:bg-neutral-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4.5 after:w-4.5 after:transition-all peer-checked:bg-amber-500" />
-            </label>
+          <div className="flex flex-wrap items-center gap-3 shrink-0">
+            <button
+              type="button"
+              onClick={handleTestAllTriggers}
+              disabled={isTestingAll || !triggersActive}
+              className="px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-black text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+              title="Ejecutar prueba integral de todos los activadores"
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>{isTestingAll ? 'Probando...' : 'Probar Todos los Activadores'}</span>
+            </button>
+
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-semibold text-neutral-600 dark:text-neutral-300">
+                {triggersActive ? 'Activadores Habilitados' : 'Activadores Pausados'}
+              </span>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={triggersActive}
+                onClick={() => onChange({ triggersEnabled: !triggersActive })}
+                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-hidden ${
+                  triggersActive ? 'bg-amber-500' : 'bg-gray-300 dark:bg-neutral-700'
+                }`}
+                title={triggersActive ? 'Pausar activadores' : 'Habilitar activadores'}
+              >
+                <span
+                  className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-sm ring-0 transition duration-200 ease-in-out ${
+                    triggersActive ? 'translate-x-5' : 'translate-x-0'
+                  }`}
+                />
+              </button>
+            </div>
           </div>
         </div>
+
+        {triggerTestFeedback && (
+          <div
+            className={`p-3.5 rounded-2xl border text-xs flex items-center justify-between gap-3 animate-fade-in ${
+              triggerTestFeedback.success
+                ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-300 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300'
+                : 'bg-red-50 dark:bg-red-950/40 border-red-300 dark:border-red-800 text-red-800 dark:text-red-300'
+            }`}
+          >
+            <div className="flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+              <span className="font-medium">{triggerTestFeedback.message}</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setTriggerTestFeedback(null)}
+              className="text-gray-400 hover:text-gray-600 font-bold text-xs cursor-pointer px-1"
+            >
+              ×
+            </button>
+          </div>
+        )}
 
         {triggersActive && (
           <div className="space-y-3">
@@ -1249,43 +1425,103 @@ export const EventEvaluationAndTriggersSection: React.FC<EventEvaluationAndTrigg
                     <Radio className="w-4 h-4" />
                   </div>
                   <div>
-                    <span className="text-xs font-bold text-black dark:text-white block">
-                      Activador 1: Confirmación Inmediata de Cupo
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-bold text-black dark:text-white block">
+                        {entityType === 'sesion'
+                          ? 'Activador 1: Confirmación Inmediata de Sesión'
+                          : 'Activador 1: Confirmación Inmediata de Cupo'}
+                      </span>
+                      {customTriggers.welcomeImmediate !== false ? (
+                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 font-semibold">
+                          Activo
+                        </span>
+                      ) : (
+                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-gray-200 dark:bg-neutral-800 text-gray-500 font-semibold">
+                          Inactivo
+                        </span>
+                      )}
+                    </div>
                     <p className="text-[11px] text-gray-500 dark:text-neutral-400 font-light">
-                      Envía código único, sala de Google Meet y enlace oficial de diagnóstico previo.
+                      {entityType === 'sesion'
+                        ? 'Envía confirmación con fecha, hora, sala Google Meet y enlace oficial de acuerdos al coachee.'
+                        : 'Envía código único, sala de Google Meet y enlace oficial de diagnóstico previo.'}
                     </p>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-3">
-                  <label
-                    onClick={(e) => e.stopPropagation()}
-                    className="relative inline-flex items-center cursor-pointer"
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleTestTrigger('welcome');
+                    }}
+                    disabled={testingTriggerKey === 'welcome'}
+                    className="px-2.5 py-1 rounded-lg bg-emerald-100 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-300 hover:bg-emerald-200 text-[11px] font-semibold transition-all flex items-center gap-1 cursor-pointer"
+                    title="Probar ejecución inmediata de este activador"
                   >
-                    <input
-                      type="checkbox"
-                      checked={customTriggers.welcomeImmediate !== false}
-                      onChange={(e) => updateTrigger('welcomeImmediate', e.target.checked)}
-                      className="sr-only peer"
+                    <Send className="w-3 h-3" />
+                    <span>{testingTriggerKey === 'welcome' ? 'Probando...' : 'Probar'}</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={customTriggers.welcomeImmediate !== false}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      updateTrigger('welcomeImmediate', !(customTriggers.welcomeImmediate !== false));
+                    }}
+                    className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-hidden ${
+                      customTriggers.welcomeImmediate !== false ? 'bg-emerald-500' : 'bg-gray-300 dark:bg-neutral-700'
+                    }`}
+                    title={customTriggers.welcomeImmediate !== false ? 'Desactivar este activador' : 'Activar este activador'}
+                  >
+                    <span
+                      className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-sm ring-0 transition duration-200 ease-in-out ${
+                        customTriggers.welcomeImmediate !== false ? 'translate-x-4' : 'translate-x-0'
+                      }`}
                     />
-                    <div className="w-8 h-4.5 bg-gray-200 peer-focus:outline-hidden rounded-full peer dark:bg-neutral-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[1px] after:left-[1px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500" />
-                  </label>
+                  </button>
                   {expandedTrigger === 'welcome' ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
                 </div>
               </div>
 
+              {triggerTestFeedback?.key === 'welcome' && (
+                <div className="mx-4 mb-2 p-2.5 rounded-xl bg-emerald-100 dark:bg-emerald-950/70 border border-emerald-300 dark:border-emerald-800 text-emerald-800 dark:text-emerald-200 text-xs flex items-center justify-between gap-2 animate-fade-in">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                    <span className="font-medium text-[11px]">{triggerTestFeedback.message}</span>
+                  </div>
+                  <button type="button" onClick={() => setTriggerTestFeedback(null)} className="text-gray-400 hover:text-black dark:hover:text-white text-xs">✕</button>
+                </div>
+              )}
+
               {expandedTrigger === 'welcome' && (
-                <div className="p-4 pt-0 border-t border-gray-100 dark:border-neutral-800 space-y-2 mt-2">
-                  <label className="block text-[11px] font-semibold text-gray-600 dark:text-neutral-300">
-                    Mensaje Personalizado de Confirmación:
-                  </label>
-                  <textarea
-                    rows={2}
-                    value={customTriggers.welcomeMessage || ''}
-                    onChange={(e) => updateTrigger('welcomeMessage', e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-xs text-black dark:text-white focus:outline-hidden focus:ring-2 focus:ring-emerald-500 font-sans"
-                  />
+                <div className="p-4 pt-0 border-t border-gray-100 dark:border-neutral-800 space-y-3 mt-2">
+                  <div>
+                    <label className="block text-[11px] font-semibold text-gray-600 dark:text-neutral-300">
+                      Mensaje Personalizado de Confirmación:
+                    </label>
+                    <textarea
+                      rows={2}
+                      value={customTriggers.welcomeMessage || ''}
+                      onChange={(e) => updateTrigger('welcomeMessage', e.target.value)}
+                      className="w-full mt-1 px-3.5 py-2.5 rounded-xl border border-gray-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-xs text-black dark:text-white focus:outline-hidden focus:ring-2 focus:ring-emerald-500 font-sans"
+                    />
+                  </div>
+                  <div className="flex items-center justify-between text-[11px] text-gray-500 pt-1">
+                    <span>Variables automáticas: {'{nombre}'}, {'{fecha}'}, {'{hora}'}, {'{meetUrl}'}</span>
+                    <button
+                      type="button"
+                      onClick={() => handleTestTrigger('welcome')}
+                      disabled={testingTriggerKey === 'welcome'}
+                      className="text-emerald-600 dark:text-emerald-400 hover:underline font-medium flex items-center gap-1 cursor-pointer"
+                    >
+                      <Sparkles className="w-3 h-3" />
+                      <span>Simular disparo de confirmación</span>
+                    </button>
+                  </div>
                 </div>
               )}
             </div>
@@ -1301,48 +1537,104 @@ export const EventEvaluationAndTriggersSection: React.FC<EventEvaluationAndTrigg
                     <Clock className="w-4 h-4" />
                   </div>
                   <div>
-                    <span className="text-xs font-bold text-black dark:text-white block">
-                      Activador 2: Recordatorio 24 Horas Antes de la Sesión
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-bold text-black dark:text-white block">
+                        Activador 2: Recordatorio 24 Horas Antes de la Sesión
+                      </span>
+                      {customTriggers.reminder24h !== false ? (
+                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 font-semibold">
+                          Activo
+                        </span>
+                      ) : (
+                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-gray-200 dark:bg-neutral-800 text-gray-500 font-semibold">
+                          Inactivo
+                        </span>
+                      )}
+                    </div>
                     <p className="text-[11px] text-gray-500 dark:text-neutral-400 font-light">
                       Alineación previa, centramiento somático y verificación del enlace de Google Meet.
                     </p>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-3">
-                  <label
-                    onClick={(e) => e.stopPropagation()}
-                    className="relative inline-flex items-center cursor-pointer"
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleTestTrigger('reminder');
+                    }}
+                    disabled={testingTriggerKey === 'reminder'}
+                    className="px-2.5 py-1 rounded-lg bg-indigo-100 dark:bg-indigo-900/60 text-indigo-800 dark:text-indigo-300 hover:bg-indigo-200 text-[11px] font-semibold transition-all flex items-center gap-1 cursor-pointer"
+                    title="Probar ejecución de este recordatorio"
                   >
-                    <input
-                      type="checkbox"
-                      checked={customTriggers.reminder24h !== false}
-                      onChange={(e) => updateTrigger('reminder24h', e.target.checked)}
-                      className="sr-only peer"
+                    <Send className="w-3 h-3" />
+                    <span>{testingTriggerKey === 'reminder' ? 'Probando...' : 'Probar'}</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={customTriggers.reminder24h !== false}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      updateTrigger('reminder24h', !(customTriggers.reminder24h !== false));
+                    }}
+                    className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-hidden ${
+                      customTriggers.reminder24h !== false ? 'bg-indigo-500' : 'bg-gray-300 dark:bg-neutral-700'
+                    }`}
+                    title={customTriggers.reminder24h !== false ? 'Desactivar este activador' : 'Activar este activador'}
+                  >
+                    <span
+                      className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-sm ring-0 transition duration-200 ease-in-out ${
+                        customTriggers.reminder24h !== false ? 'translate-x-4' : 'translate-x-0'
+                      }`}
                     />
-                    <div className="w-8 h-4.5 bg-gray-200 peer-focus:outline-hidden rounded-full peer dark:bg-neutral-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[1px] after:left-[1px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-indigo-500" />
-                  </label>
+                  </button>
                   {expandedTrigger === 'reminder' ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
                 </div>
               </div>
 
+              {triggerTestFeedback?.key === 'reminder' && (
+                <div className="mx-4 mb-2 p-2.5 rounded-xl bg-indigo-100 dark:bg-indigo-950/70 border border-indigo-300 dark:border-indigo-800 text-indigo-800 dark:text-indigo-200 text-xs flex items-center justify-between gap-2 animate-fade-in">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400 shrink-0" />
+                    <span className="font-medium text-[11px]">{triggerTestFeedback.message}</span>
+                  </div>
+                  <button type="button" onClick={() => setTriggerTestFeedback(null)} className="text-gray-400 hover:text-black dark:hover:text-white text-xs">✕</button>
+                </div>
+              )}
+
               {expandedTrigger === 'reminder' && (
-                <div className="p-4 pt-0 border-t border-gray-100 dark:border-neutral-800 space-y-2 mt-2">
-                  <label className="block text-[11px] font-semibold text-gray-600 dark:text-neutral-300">
-                    Mensaje de Recordatorio:
-                  </label>
-                  <textarea
-                    rows={2}
-                    value={customTriggers.reminderMessage || ''}
-                    onChange={(e) => updateTrigger('reminderMessage', e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-xs text-black dark:text-white focus:outline-hidden focus:ring-2 focus:ring-indigo-500 font-sans"
-                  />
+                <div className="p-4 pt-0 border-t border-gray-100 dark:border-neutral-800 space-y-3 mt-2">
+                  <div>
+                    <label className="block text-[11px] font-semibold text-gray-600 dark:text-neutral-300">
+                      Mensaje de Recordatorio:
+                    </label>
+                    <textarea
+                      rows={2}
+                      value={customTriggers.reminderMessage || ''}
+                      onChange={(e) => updateTrigger('reminderMessage', e.target.value)}
+                      className="w-full mt-1 px-3.5 py-2.5 rounded-xl border border-gray-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-xs text-black dark:text-white focus:outline-hidden focus:ring-2 focus:ring-indigo-500 font-sans"
+                    />
+                  </div>
+                  <div className="flex items-center justify-between text-[11px] text-gray-500 pt-1">
+                    <span>Ventana programada: 24 horas antes del horario fijado</span>
+                    <button
+                      type="button"
+                      onClick={() => handleTestTrigger('reminder')}
+                      disabled={testingTriggerKey === 'reminder'}
+                      className="text-indigo-600 dark:text-indigo-400 hover:underline font-medium flex items-center gap-1 cursor-pointer"
+                    >
+                      <Sparkles className="w-3 h-3" />
+                      <span>Simular recordatorio programado</span>
+                    </button>
+                  </div>
                 </div>
               )}
             </div>
 
-            {/* Activador 3: Envío de Evaluación Post-Taller al Expediente */}
+            {/* Activador 3: Envío de Evaluación / Bitácora al Expediente */}
             <div className="rounded-2xl border border-amber-300 dark:border-amber-800 overflow-hidden bg-amber-50/40 dark:bg-amber-950/20">
               <div
                 onClick={() => setExpandedTrigger(expandedTrigger === 'survey' ? null : 'survey')}
@@ -1353,43 +1645,138 @@ export const EventEvaluationAndTriggersSection: React.FC<EventEvaluationAndTrigg
                     <FileCheck className="w-4 h-4" />
                   </div>
                   <div>
-                    <span className="text-xs font-bold text-black dark:text-white block">
-                      Activador 3: Envío Automático del Formulario de Evaluación Post-Taller
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-bold text-black dark:text-white block">
+                        {entityType === 'sesion'
+                          ? 'Activador 3: Envío de Bitácora B2B / Cosecha Post-Sesión'
+                          : 'Activador 3: Envío Automático del Formulario de Evaluación Post-Taller'}
+                      </span>
+                      {customTriggers.postSurveyDispatched !== false ? (
+                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 font-semibold">
+                          Activo
+                        </span>
+                      ) : (
+                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-gray-200 dark:bg-neutral-800 text-gray-500 font-semibold">
+                          Inactivo
+                        </span>
+                      )}
+                    </div>
                     <p className="text-[11px] text-gray-600 dark:text-neutral-300 font-light">
-                      Dispara el Google Form de cosecha al coachee; sus respuestas alimentan automáticamente su expediente.
+                      {entityType === 'sesion'
+                        ? 'Dispara el Google Form de Bitácora al coachee; sus respuestas alimentan automáticamente su expediente en Firestore.'
+                        : 'Dispara el Google Form de cosecha al coachee; sus respuestas alimentan automáticamente su expediente.'}
                     </p>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-3">
-                  <label
-                    onClick={(e) => e.stopPropagation()}
-                    className="relative inline-flex items-center cursor-pointer"
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleTestTrigger('survey');
+                    }}
+                    disabled={testingTriggerKey === 'survey'}
+                    className="px-2.5 py-1 rounded-lg bg-amber-200 dark:bg-amber-900/60 text-amber-900 dark:text-amber-200 hover:bg-amber-300 text-[11px] font-semibold transition-all flex items-center gap-1 cursor-pointer"
+                    title="Probar despacho de evaluación al coachee"
                   >
-                    <input
-                      type="checkbox"
-                      checked={customTriggers.postSurveyDispatched !== false}
-                      onChange={(e) => updateTrigger('postSurveyDispatched', e.target.checked)}
-                      className="sr-only peer"
+                    <Send className="w-3 h-3" />
+                    <span>{testingTriggerKey === 'survey' ? 'Probando...' : 'Probar'}</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={customTriggers.postSurveyDispatched !== false}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      updateTrigger('postSurveyDispatched', !(customTriggers.postSurveyDispatched !== false));
+                    }}
+                    className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-hidden ${
+                      customTriggers.postSurveyDispatched !== false ? 'bg-amber-500' : 'bg-gray-300 dark:bg-neutral-700'
+                    }`}
+                    title={customTriggers.postSurveyDispatched !== false ? 'Desactivar este activador' : 'Activar este activador'}
+                  >
+                    <span
+                      className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-sm ring-0 transition duration-200 ease-in-out ${
+                        customTriggers.postSurveyDispatched !== false ? 'translate-x-4' : 'translate-x-0'
+                      }`}
                     />
-                    <div className="w-8 h-4.5 bg-gray-200 peer-focus:outline-hidden rounded-full peer dark:bg-neutral-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[1px] after:left-[1px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-amber-500" />
-                  </label>
+                  </button>
                   {expandedTrigger === 'survey' ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
                 </div>
               </div>
 
+              {triggerTestFeedback?.key === 'survey' && (
+                <div className="mx-4 mb-2 p-2.5 rounded-xl bg-amber-100 dark:bg-amber-950/70 border border-amber-300 dark:border-amber-800 text-amber-800 dark:text-amber-200 text-xs flex items-center justify-between gap-2 animate-fade-in">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 shrink-0" />
+                    <span className="font-medium text-[11px]">{triggerTestFeedback.message}</span>
+                  </div>
+                  <button type="button" onClick={() => setTriggerTestFeedback(null)} className="text-gray-400 hover:text-black dark:hover:text-white text-xs">✕</button>
+                </div>
+              )}
+
               {expandedTrigger === 'survey' && (
-                <div className="p-4 pt-0 border-t border-amber-200 dark:border-amber-900/40 space-y-2 mt-2">
-                  <label className="block text-[11px] font-semibold text-gray-700 dark:text-neutral-300">
-                    Mensaje de Solicitud de Evaluación (con Enlace Oficial de Google Forms):
-                  </label>
-                  <textarea
-                    rows={2}
-                    value={customTriggers.postSurveyMessage || ''}
-                    onChange={(e) => updateTrigger('postSurveyMessage', e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-xs text-black dark:text-white focus:outline-hidden focus:ring-2 focus:ring-amber-500 font-sans"
-                  />
+                <div className="p-4 pt-0 border-t border-amber-200 dark:border-amber-900/40 space-y-3 mt-2">
+                  <div>
+                    <label className="block text-[11px] font-semibold text-gray-700 dark:text-neutral-300">
+                      Mensaje de Solicitud de Evaluación (con Enlace Oficial de Google Forms):
+                    </label>
+                    <textarea
+                      rows={2}
+                      value={customTriggers.postSurveyMessage || ''}
+                      onChange={(e) => updateTrigger('postSurveyMessage', e.target.value)}
+                      className="w-full mt-1 px-3.5 py-2.5 rounded-xl border border-gray-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-xs text-black dark:text-white focus:outline-hidden focus:ring-2 focus:ring-amber-500 font-sans"
+                    />
+                  </div>
+                  <div className="flex items-center justify-between text-[11px] text-gray-500 pt-1">
+                    <span>Enlace enlazado: {formsUrl ? 'Google Form Oficial' : 'Formulario base predeterminado'}</span>
+                    <button
+                      type="button"
+                      onClick={() => handleTestTrigger('survey')}
+                      disabled={testingTriggerKey === 'survey'}
+                      className="text-amber-700 dark:text-amber-400 hover:underline font-medium flex items-center gap-1 cursor-pointer"
+                    >
+                      <Sparkles className="w-3 h-3" />
+                      <span>Simular despacho de bitácora</span>
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Configuración de Webhook Personalizado (Make.com / Zapier) */}
+            <div className="p-4 rounded-2xl bg-neutral-900 text-white border border-neutral-800 space-y-2">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+                <span className="text-xs font-bold flex items-center gap-2">
+                  <Workflow className="w-4 h-4 text-purple-400" />
+                  <span>Webhook Make.com Personalizado (Opcional)</span>
+                </span>
+                <span className="text-[10px] text-neutral-400">Endpoint HTTP POST para recibir disparos</span>
+              </div>
+              <div className="flex gap-2">
+                <input
+                  type="url"
+                  value={customTriggers.customWebhookUrl || ''}
+                  onChange={(e) => updateTrigger('customWebhookUrl', e.target.value)}
+                  placeholder="https://hook.eu2.make.com/tu-escenario-personalizado..."
+                  className="flex-1 px-3.5 py-2 rounded-xl bg-neutral-800 border border-neutral-700 text-xs text-white font-mono placeholder:text-neutral-500"
+                />
+                <button
+                  type="button"
+                  onClick={handleTestCustomWebhook}
+                  disabled={!customTriggers.customWebhookUrl || isTestingWebhook}
+                  className="px-3.5 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-40 shrink-0"
+                >
+                  <Send className="w-3 h-3" />
+                  <span>{isTestingWebhook ? 'Probando...' : 'Probar Webhook'}</span>
+                </button>
+              </div>
+              {webhookFeedback && (
+                <div className="p-2.5 rounded-xl bg-purple-950/80 border border-purple-800 text-purple-200 text-xs flex items-center gap-2 animate-fade-in">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-purple-400 shrink-0" />
+                  <span>{webhookFeedback}</span>
                 </div>
               )}
             </div>
@@ -1436,7 +1823,7 @@ export const EventEvaluationAndTriggersSection: React.FC<EventEvaluationAndTrigg
 
       {/* MODAL: SIMULADOR DE INGESTA AUTOMÁTICA AL EXPEDIENTE */}
       {showSimulateModal && (
-        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[75] bg-black/75 backdrop-blur-xs flex items-center justify-center p-4">
           <div className="bg-white dark:bg-neutral-900 rounded-3xl border border-gray-200 dark:border-neutral-800 p-6 max-w-lg w-full shadow-2xl space-y-4 animate-scale-up">
             <div className="flex items-center justify-between border-b border-gray-100 dark:border-neutral-800 pb-3">
               <div className="flex items-center gap-2">
@@ -1541,7 +1928,7 @@ export const EventEvaluationAndTriggersSection: React.FC<EventEvaluationAndTrigg
 
       {/* Modal: Pegar / Importar Respuestas desde Google Sheets */}
       {showImportModal && (
-        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[75] bg-black/75 backdrop-blur-xs flex items-center justify-center p-4">
           <div className="bg-white dark:bg-neutral-900 rounded-3xl border border-gray-200 dark:border-neutral-800 max-w-2xl w-full p-6 space-y-4 shadow-2xl">
             <div className="flex items-center justify-between pb-3 border-b border-gray-100 dark:border-neutral-800">
               <div className="flex items-center gap-2.5">

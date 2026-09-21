@@ -49,6 +49,7 @@ import {
   Sliders,
   Film,
   Filter,
+  LayoutGrid,
 } from 'lucide-react';
 import {
   ProgramNodeInfo,
@@ -71,6 +72,7 @@ import {
 import { safeCopyToClipboard } from '../../utils/clipboard';
 import { ConsultoriaSessionCreationModal } from './ConsultoriaSessionCreationModal';
 import { EventEvaluationAndTriggersSection } from './events/EventEvaluationAndTriggersSection';
+import AdminAutomationsManager from './AdminAutomationsManager';
 
 interface AdminSessionsManagerProps {
   onSelectClientForFicha?: (clientId: string) => void;
@@ -98,6 +100,9 @@ export const AdminSessionsManager: React.FC<AdminSessionsManagerProps> = ({
   // Generador de Sesiones Modal State
   const [isConsultoriaModalOpen, setIsConsultoriaModalOpen] = useState(false);
   const [selectedConsultoriaSession, setSelectedConsultoriaSession] = useState<Session | null>(null);
+
+  // Modal de Automatizaciones Make.com
+  const [isAutomationsModalOpen, setIsAutomationsModalOpen] = useState(false);
 
   // Estado del Editor de Niveles
   const [isLevelEditorOpen, setIsLevelEditorOpen] = useState(false);
@@ -128,12 +133,22 @@ export const AdminSessionsManager: React.FC<AdminSessionsManagerProps> = ({
   const [sessionSearch, setSessionSearch] = useState('');
   const [sessionStatusFilter, setSessionStatusFilter] = useState<'all' | 'scheduled' | 'completed'>('all');
 
+  // Sub-pestaña de visualización en el panel
+  // 'modules': Malla Curricular y Módulos de Sesión (12 Semanas)
+  // 'scheduled': Agenda de Sesiones 1 a 1 de Coachees
+  const [catalogSubTab, setCatalogSubTab] = useState<'modules' | 'scheduled'>('modules');
+
+  // Organización de sesiones por nivel o por semanas:
+  // 'none' (cuadrícula corrida) | 'by_level' (agrupado por nivel) | 'by_week' (agrupado por semanas)
+  const [groupBy, setGroupBy] = useState<'none' | 'by_level' | 'by_week'>('none');
+
   // Inspección de estructura de columnas de Google Sheets
   const [inspectingDatabaseKey, setInspectingDatabaseKey] = useState<FormsSheetsIntegrationSourceKey | null>(null);
 
-  // Filtros de búsqueda en catálogo de módulos
+  // Filtros de búsqueda en catálogo de módulos y agenda
   const [searchQuery, setSearchQuery] = useState('');
   const [levelFilter, setLevelFilter] = useState<'all' | 'Nivel I' | 'Nivel II' | 'Nivel III'>('all');
+  const [weekFilter, setWeekFilter] = useState<string>('all');
 
   // Modo de vista: 'catalog' (grilla/lista) o 'editor' (edición exhaustiva de un módulo)
   const [viewMode, setViewMode] = useState<'catalog' | 'editor'>('catalog');
@@ -218,7 +233,47 @@ export const AdminSessionsManager: React.FC<AdminSessionsManagerProps> = ({
     onRefreshParent?.();
   };
 
-  // Filtrado de sesiones creadas
+  // Helper para determinar nivel de una sesión (con fallback según número de sesión)
+  const getSessionLevel = (s: Session): 'Nivel I' | 'Nivel II' | 'Nivel III' => {
+    if (s.level === 'Nivel I' || s.level === 'Nivel II' || s.level === 'Nivel III') {
+      return s.level;
+    }
+    const num = s.sessionNumber || 1;
+    if (num <= 4) return 'Nivel I';
+    if (num <= 8) return 'Nivel II';
+    return 'Nivel III';
+  };
+
+  // Helper para determinar bloque de semanas de una sesión
+  const getSessionWeek = (s: Session): string => {
+    if (s.weekLabel) return s.weekLabel;
+    const num = s.sessionNumber || 1;
+    if (num <= 2) return 'Semanas 1-2';
+    if (num <= 4) return 'Semanas 3-4';
+    if (num <= 6) return 'Semanas 5-6';
+    if (num <= 8) return 'Semanas 7-8';
+    if (num <= 10) return 'Semanas 9-10';
+    return 'Semanas 11-12';
+  };
+
+  // Helper para normalizar la semana de un módulo
+  const getNodeWeekKey = (n: ProgramNodeInfo): string => {
+    if (n.weekLabel && n.weekLabel.includes('1-2')) return 'Semanas 1-2';
+    if (n.weekLabel && n.weekLabel.includes('3-4')) return 'Semanas 3-4';
+    if (n.weekLabel && n.weekLabel.includes('5-6')) return 'Semanas 5-6';
+    if (n.weekLabel && n.weekLabel.includes('7-8')) return 'Semanas 7-8';
+    if (n.weekLabel && n.weekLabel.includes('9-10')) return 'Semanas 9-10';
+    if (n.weekLabel && n.weekLabel.includes('11-12')) return 'Semanas 11-12';
+    if (n.step === 1) return 'Semanas 1-2';
+    if (n.step === 2) return 'Semanas 3-4';
+    if (n.step === 3) return 'Semanas 5-6';
+    if (n.step === 4) return 'Semanas 7-8';
+    if (n.step === 5) return 'Semanas 9-10';
+    if (n.step === 6) return 'Semanas 11-12';
+    return n.weekLabel || 'Semanas 1-2';
+  };
+
+  // Filtrado de sesiones y módulos creados
   const filteredNodes = useMemo(() => {
     return nodes.filter((n) => {
       const q = searchQuery.toLowerCase().trim();
@@ -234,27 +289,48 @@ export const AdminSessionsManager: React.FC<AdminSessionsManagerProps> = ({
         (n.weekLabel && n.weekLabel.toLowerCase().includes(q));
 
       const matchLevel = levelFilter === 'all' || n.level === levelFilter;
-      return matchSearch && matchLevel;
+
+      const nodeWeek = getNodeWeekKey(n);
+      const matchWeek =
+        weekFilter === 'all' ||
+        nodeWeek === weekFilter ||
+        (n.weekLabel && n.weekLabel.toLowerCase().includes(weekFilter.toLowerCase()));
+
+      return matchSearch && matchLevel && matchWeek;
     });
-  }, [nodes, searchQuery, levelFilter]);
+  }, [nodes, searchQuery, levelFilter, weekFilter]);
 
   // Filtrado de sesiones de coachees
   const filteredSessions = useMemo(() => {
     return sessions.filter((s) => {
       const client = clients.find((c) => c.uid === s.clientId);
+      const activeSearch = (searchQuery || sessionSearch).trim().toLowerCase();
       const matchSearch =
-        sessionSearch.trim() === '' ||
-        (s.title && s.title.toLowerCase().includes(sessionSearch.toLowerCase())) ||
-        (s.sessionGoal && s.sessionGoal.toLowerCase().includes(sessionSearch.toLowerCase())) ||
-        (client && ((client.displayName || client.name || '').toLowerCase().includes(sessionSearch.toLowerCase()) || client.email.toLowerCase().includes(sessionSearch.toLowerCase()))) ||
-        `sesión ${s.sessionNumber}`.includes(sessionSearch.toLowerCase());
+        activeSearch === '' ||
+        (s.title && s.title.toLowerCase().includes(activeSearch)) ||
+        (s.sessionGoal && s.sessionGoal.toLowerCase().includes(activeSearch)) ||
+        (client && (
+          (client.displayName || client.name || '').toLowerCase().includes(activeSearch) ||
+          client.email.toLowerCase().includes(activeSearch)
+        )) ||
+        `sesión ${s.sessionNumber}`.includes(activeSearch) ||
+        (s.weekLabel && s.weekLabel.toLowerCase().includes(activeSearch));
 
       const matchStatus =
         sessionStatusFilter === 'all' || s.status === sessionStatusFilter;
 
-      return matchSearch && matchStatus;
+      const sLevel = getSessionLevel(s);
+      const matchLevel = levelFilter === 'all' || sLevel === levelFilter;
+
+      const sWeek = getSessionWeek(s);
+      const matchWeek =
+        weekFilter === 'all' ||
+        sWeek === weekFilter ||
+        (s.weekLabel && s.weekLabel.toLowerCase().includes(weekFilter.toLowerCase()));
+
+      return matchSearch && matchStatus && matchLevel && matchWeek;
     });
-  }, [sessions, clients, sessionSearch, sessionStatusFilter]);
+  }, [sessions, clients, searchQuery, sessionSearch, sessionStatusFilter, levelFilter, weekFilter]);
 
   // Cuestionario asociado al paso activo en edición
   const activeQuestionnaire = useMemo(() => {
@@ -380,6 +456,21 @@ export const AdminSessionsManager: React.FC<AdminSessionsManagerProps> = ({
       triggersEnabled: formData.triggersEnabled ?? true,
       immediateConfirmation: (formData as any).immediateConfirmation ?? true,
       scheduledReminders: (formData as any).scheduledReminders ?? true,
+      customTriggers: {
+        welcomeImmediate: (formData as any).immediateConfirmation ?? true,
+        welcomeMessage:
+          (formData as any).welcomeMessage ||
+          `¡Hola! Tu módulo de sesión "${formData.sessionTitle || ''}" ha sido habilitado con éxito.`,
+        reminder24h: (formData as any).scheduledReminders ?? true,
+        reminderMessage:
+          (formData as any).reminderMessage ||
+          `Recordatorio: Tu módulo de sesión "${formData.sessionTitle || ''}" requiere revisión de compromisos y cuaderno de trabajo.`,
+        postSurveyDispatched: (formData as any).postSurveyDispatched ?? true,
+        postSurveyMessage:
+          (formData as any).postSurveyMessage ||
+          `Por favor diligencia la Bitácora del módulo "${formData.sessionTitle || ''}".`,
+        customWebhookUrl: (formData as any).customWebhookUrl || '',
+      },
     };
   }, [formData]);
 
@@ -402,6 +493,16 @@ export const AdminSessionsManager: React.FC<AdminSessionsManagerProps> = ({
       if (updates.triggersEnabled !== undefined) updated.triggersEnabled = updates.triggersEnabled;
       if (updates.immediateConfirmation !== undefined) updated.immediateConfirmation = updates.immediateConfirmation;
       if (updates.scheduledReminders !== undefined) updated.scheduledReminders = updates.scheduledReminders;
+      if (updates.customTriggers !== undefined) {
+        const ct = updates.customTriggers;
+        if (ct.welcomeImmediate !== undefined) updated.immediateConfirmation = ct.welcomeImmediate;
+        if (ct.reminder24h !== undefined) updated.scheduledReminders = ct.reminder24h;
+        if (ct.postSurveyDispatched !== undefined) updated.postSurveyDispatched = ct.postSurveyDispatched;
+        if (ct.welcomeMessage !== undefined) updated.welcomeMessage = ct.welcomeMessage;
+        if (ct.reminderMessage !== undefined) updated.reminderMessage = ct.reminderMessage;
+        if (ct.postSurveyMessage !== undefined) updated.postSurveyMessage = ct.postSurveyMessage;
+        if (ct.customWebhookUrl !== undefined) updated.customWebhookUrl = ct.customWebhookUrl;
+      }
       return updated as ProgramNodeInfo;
     });
   };
@@ -614,6 +715,457 @@ export const AdminSessionsManager: React.FC<AdminSessionsManagerProps> = ({
     0
   );
 
+  // Configuraciones temáticas para agrupación por nivel
+  const LEVEL_CONFIGS = [
+    {
+      id: 'Nivel I' as const,
+      title: 'Nivel I: Fundamentos & Transparencia',
+      weeks: 'Semanas 1 a 4',
+      badgeColor: 'bg-sky-50 dark:bg-sky-950/40 text-sky-700 dark:text-sky-300 border-sky-200 dark:border-sky-800',
+      dotColor: 'bg-sky-500',
+      borderAccent: 'border-sky-200/80 dark:border-sky-800/60',
+      description: levelSettings['Nivel I']?.focus || 'Mapeo de la transparencia cotidiana, suspensión de automatismos, quiebres ocultos y anclaje somático inicial.',
+    },
+    {
+      id: 'Nivel II' as const,
+      title: 'Nivel II: Corporalidad, Relaciones & Emocionalidad',
+      weeks: 'Semanas 5 a 8',
+      badgeColor: 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800',
+      dotColor: 'bg-emerald-500',
+      borderAccent: 'border-emerald-200/80 dark:border-emerald-800/60',
+      description: levelSettings['Nivel II']?.focus || 'Sabiduría somático-emocional, disolución de resignaciones y resentimientos, y diseño de conversaciones de coordinación de acciones.',
+    },
+    {
+      id: 'Nivel III' as const,
+      title: 'Nivel III: Dirección & Trascendencia',
+      weeks: 'Semanas 9 a 12',
+      badgeColor: 'bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800',
+      dotColor: 'bg-purple-500',
+      borderAccent: 'border-purple-200/80 dark:border-purple-800/60',
+      description: levelSettings['Nivel III']?.focus || 'Liderazgo ontológico, visión directiva compartida, maestría en la acción directiva y trascendencia transformacional.',
+    },
+  ];
+
+  // Configuraciones temáticas para agrupación cronológica por semanas
+  const WEEK_CONFIGS = [
+    {
+      key: 'Semanas 1-2',
+      title: 'Semanas 1-2: Diagnóstico & Transparencia Inicial',
+      level: 'Nivel I',
+      focus: 'Mapeo del observador automático, quiebres ocultos y anclaje somático inicial.',
+      badgeColor: 'bg-sky-50 dark:bg-sky-950/40 text-sky-700 dark:text-sky-300 border-sky-200 dark:border-sky-800',
+    },
+    {
+      key: 'Semanas 3-4',
+      title: 'Semanas 3-4: Declaraciones de Límites & Actos Lingüísticos',
+      level: 'Nivel I',
+      focus: 'Declaración del "No" y del "Basta", pedidos y promesas con impecabilidad ontológica.',
+      badgeColor: 'bg-sky-50 dark:bg-sky-950/40 text-sky-700 dark:text-sky-300 border-sky-200 dark:border-sky-800',
+    },
+    {
+      key: 'Semanas 5-6',
+      title: 'Semanas 5-6: Sabiduría Somática & Decodificación Emocional',
+      level: 'Nivel II',
+      focus: 'El cuerpo como territorio de aprendizaje y reencuadre de emociones limitantes en estados constructivos.',
+      badgeColor: 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800',
+    },
+    {
+      key: 'Semanas 7-8',
+      title: 'Semanas 7-8: Diseño Conversacional & Coordinación de Acciones',
+      level: 'Nivel II',
+      focus: 'Conversaciones para posibles conversaciones, gestión de quiebres relacionales y co-creación.',
+      badgeColor: 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800',
+    },
+    {
+      key: 'Semanas 9-10',
+      title: 'Semanas 9-10: Liderazgo Ontológico & Visión Directiva',
+      level: 'Nivel III',
+      focus: 'Coherencia directiva, articulación de visión y despliegue del observador transformador.',
+      badgeColor: 'bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800',
+    },
+    {
+      key: 'Semanas 11-12',
+      title: 'Semanas 11-12: Trascendencia, Cierre y Autonomía Ontológica',
+      level: 'Nivel III',
+      focus: 'Evaluación de evolución, rediseño de acuerdos a largo plazo y graduación del proceso.',
+      badgeColor: 'bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800',
+    },
+  ];
+
+  // Renderizador unificado de tarjeta de módulo curricular
+  const renderModuleCard = (node: ProgramNodeInfo) => {
+    const nodeQuestionnaire = questionnaires.find(
+      (q) => q.targetType === 'workshop_node' && q.targetStep === node.step
+    );
+    const questionsCount = nodeQuestionnaire?.questions?.length || 0;
+    const roadmapCount = node.roadmapSteps?.length || 0;
+
+    return (
+      <div
+        key={node.step}
+        className="bg-white dark:bg-neutral-900 rounded-3xl border border-gray-200 dark:border-neutral-800 p-5 shadow-xs flex flex-col justify-between space-y-4 hover:border-indigo-300 dark:hover:border-indigo-800 transition-all group"
+      >
+        {/* Cabecera de la Tarjeta */}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <span className="w-7 h-7 rounded-xl bg-neutral-100 dark:bg-neutral-800 font-mono text-xs font-bold flex items-center justify-center text-neutral-800 dark:text-neutral-200">
+                {node.step < 10 ? `0${node.step}` : node.step}
+              </span>
+              <span
+                className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                  node.level === 'Nivel I'
+                    ? 'bg-sky-100 dark:bg-sky-950/60 text-sky-700 dark:text-sky-300'
+                    : node.level === 'Nivel II'
+                    ? 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300'
+                    : 'bg-purple-100 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300'
+                }`}
+              >
+                {node.level}
+              </span>
+            </div>
+
+            <span className="text-[11px] font-medium text-gray-500 dark:text-neutral-400 bg-gray-100/80 dark:bg-neutral-800/80 px-2 py-0.5 rounded-md">
+              {node.weekLabel || `Paso ${node.step}`}
+            </span>
+          </div>
+
+          {/* Título y Objetivo */}
+          <div>
+            <h3 className="text-sm font-bold text-black dark:text-white leading-snug group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors line-clamp-2">
+              {node.sessionTitle}
+            </h3>
+            <p className="text-[11px] text-gray-500 dark:text-neutral-400 font-light mt-1.5 line-clamp-3 leading-relaxed">
+              {node.objective}
+            </p>
+          </div>
+
+          {/* Pregunta Clave Destacada */}
+          {node.keyQuestion && (
+            <div className="p-2.5 rounded-xl bg-gray-50/90 dark:bg-neutral-800/40 border border-gray-100 dark:border-neutral-800/60">
+              <span className="text-[9px] font-semibold uppercase tracking-wider text-indigo-500 block mb-0.5">
+                Pregunta Detonante:
+              </span>
+              <p className="text-[11px] font-medium text-gray-700 dark:text-neutral-300 italic line-clamp-2">
+                "{node.keyQuestion}"
+              </p>
+            </div>
+          )}
+
+          {/* Insignia y Acceso a la Base Oficial Google Forms & Sheets */}
+          {node.googleFormsUrl ? (
+            <div className="flex items-center justify-between gap-1 p-2 rounded-xl bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-200/60 dark:border-emerald-900/40 text-[10px]">
+              <div className="flex items-center gap-1.5 min-w-0">
+                <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                <span className="font-bold text-emerald-900 dark:text-emerald-300 truncate">
+                  {node.googleFormsUrl.includes('dfStXtTyb1MW6W5K9')
+                    ? 'Acuerdo Sesiones B2B'
+                    : node.googleFormsUrl.includes('APUFto8sGbJt322WA')
+                    ? 'Bitácora Sesiones B2B'
+                    : 'Google Forms & Sheets'}
+                </span>
+              </div>
+              <div className="flex items-center gap-1 shrink-0">
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleCopyUrl(node.googleFormsUrl || '', 'Enlace Formulario Coachee');
+                  }}
+                  title="Copiar enlace oficial de Google Forms para el coachee"
+                  className="p-1 rounded-md hover:bg-emerald-100 dark:hover:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300 cursor-pointer"
+                >
+                  {copiedUrl === node.googleFormsUrl ? (
+                    <CheckCheck className="w-3 h-3 text-emerald-600" />
+                  ) : (
+                    <Copy className="w-3 h-3" />
+                  )}
+                </button>
+                <a
+                  href={node.googleFormsUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  onClick={(e) => e.stopPropagation()}
+                  className="p-1 rounded-md hover:bg-emerald-100 dark:hover:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300"
+                  title="Abrir formulario en Google Forms"
+                >
+                  <ExternalLink className="w-3 h-3" />
+                </a>
+              </div>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => handleOpenEditor(node.step, 'integrations')}
+              className="w-full py-1.5 px-2 rounded-xl border border-dashed border-gray-200 dark:border-neutral-800 hover:border-indigo-300 text-[10px] text-gray-500 hover:text-indigo-600 flex items-center justify-center gap-1 transition-colors cursor-pointer"
+            >
+              <Link2 className="w-3 h-3" />
+              <span>Vincular Base de Datos Google Forms & Sheets</span>
+            </button>
+          )}
+
+          {/* Insignias de Metodología */}
+          <div className="flex flex-wrap items-center gap-1.5 pt-1">
+            {roadmapCount > 0 && (
+              <span className="text-[10px] px-2 py-0.5 rounded-md bg-gray-100 dark:bg-neutral-800 text-gray-600 dark:text-neutral-300 font-medium flex items-center gap-1">
+                <ListOrdered className="w-3 h-3 text-emerald-500" />
+                <span>{roadmapCount} Fases</span>
+              </span>
+            )}
+
+            {questionsCount > 0 && (
+              <span className="text-[10px] px-2 py-0.5 rounded-md bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 font-medium flex items-center gap-1">
+                <HelpCircle className="w-3 h-3 text-indigo-500" />
+                <span>{questionsCount} Preguntas</span>
+              </span>
+            )}
+
+            <span className="text-[10px] px-2 py-0.5 rounded-md bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 font-medium flex items-center gap-1">
+              <Sparkles className="w-3 h-3 text-purple-500" />
+              <span>Ontológico</span>
+            </span>
+          </div>
+        </div>
+
+        {/* Botonera de Acciones de la Tarjeta */}
+        <div className="pt-3 border-t border-gray-100 dark:border-neutral-800 flex items-center justify-between gap-2">
+          <div className="flex items-center gap-1.5">
+            <button
+              type="button"
+              onClick={(e) => handleDuplicate(node.step, e)}
+              title="Duplicar este tablero"
+              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl border border-gray-200/80 dark:border-neutral-700/80 text-gray-600 dark:text-neutral-300 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 hover:border-indigo-300 dark:hover:border-indigo-700 text-[11px] font-semibold transition-all cursor-pointer shadow-2xs"
+            >
+              <Copy className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
+              <span>Duplicar Tablero</span>
+            </button>
+            <button
+              type="button"
+              onClick={(e) => handleDelete(node.step, e)}
+              title="Eliminar Módulo"
+              className="p-1.5 rounded-lg text-gray-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors cursor-pointer"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+            </button>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => handleOpenEditor(node.step, 'integrations')}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-gray-200 dark:border-neutral-700 text-[11px] font-semibold text-gray-700 dark:text-neutral-300 hover:bg-gray-50 dark:hover:bg-neutral-800 hover:border-gray-300 dark:hover:border-neutral-600 transition-all cursor-pointer shadow-2xs"
+              title="Gestionar Google Forms & Sheets del módulo"
+            >
+              <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+              <span>Forms & Sheets</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => handleOpenEditor(node.step, 'general')}
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-neutral-950 dark:bg-white text-white dark:text-neutral-950 hover:bg-neutral-800 dark:hover:bg-neutral-100 text-[11px] font-bold shadow-xs cursor-pointer transition-all active:scale-[0.98]"
+            >
+              <Edit3 className="w-3.5 h-3.5" />
+              <span>Editar Módulo</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // Renderizador unificado de tarjeta de sesión 1 a 1 de coachee
+  const renderScheduledSessionCard = (sess: Session) => {
+    const client = clients.find((c) => c.uid === sess.clientId);
+    const clientName = client?.displayName || client?.name || 'Coachee sin nombre';
+    const clientEmail = client?.email || 'Sin correo';
+    const isCompleted = sess.status === 'completed';
+    const sessLevel = getSessionLevel(sess);
+    const sessWeek = getSessionWeek(sess);
+
+    return (
+      <div
+        key={sess.id}
+        className={`rounded-3xl border p-5 shadow-xs flex flex-col justify-between space-y-4 transition-all group ${
+          isCompleted
+            ? 'bg-emerald-50/20 dark:bg-emerald-950/10 border-emerald-200/70 dark:border-emerald-800/40'
+            : 'bg-white dark:bg-neutral-900 border-gray-200 dark:border-neutral-800 hover:border-indigo-300 dark:hover:border-indigo-800'
+        }`}
+      >
+        <div className="space-y-3">
+          {/* Cabecera: Sesión #, Coachee y Estado */}
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <span className="w-7 h-7 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 font-mono text-xs font-bold flex items-center justify-center text-indigo-700 dark:text-indigo-300">
+                #{sess.sessionNumber || 1}
+              </span>
+              <span
+                className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                  sessLevel === 'Nivel I'
+                    ? 'bg-sky-100 dark:bg-sky-950/60 text-sky-700 dark:text-sky-300'
+                    : sessLevel === 'Nivel II'
+                    ? 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300'
+                    : 'bg-purple-100 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300'
+                }`}
+              >
+                {sessLevel}
+              </span>
+              <span className="text-[10px] font-medium text-gray-500 dark:text-neutral-400 bg-gray-100 dark:bg-neutral-800 px-2 py-0.5 rounded-md">
+                {sessWeek}
+              </span>
+            </div>
+
+            {/* Alternador de Estado */}
+            <button
+              type="button"
+              onClick={() => {
+                const nextStatus = isCompleted ? 'scheduled' : 'completed';
+                OntologicalStore.updateSession(sess.id, { status: nextStatus });
+                FirestoreSyncService.syncSession({ ...sess, status: nextStatus });
+                setSessions(OntologicalStore.getSessions());
+                showNotification(
+                  `Sesión marcada como ${nextStatus === 'completed' ? 'Completada' : 'Programada'}`
+                );
+              }}
+              className={`px-2.5 py-1 rounded-full text-[10px] font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
+                isCompleted
+                  ? 'bg-emerald-500 text-white shadow-2xs hover:bg-emerald-600'
+                  : 'bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 hover:bg-amber-200'
+              }`}
+              title="Clic para cambiar estado"
+            >
+              {isCompleted ? (
+                <>
+                  <CheckCircle2 className="w-3 h-3" />
+                  <span>Completada</span>
+                </>
+              ) : (
+                <>
+                  <Clock className="w-3 h-3" />
+                  <span>Programada</span>
+                </>
+              )}
+            </button>
+          </div>
+
+          {/* Información del Coachee */}
+          <div className="flex items-center gap-2.5 p-2 rounded-xl bg-gray-50 dark:bg-neutral-800/60 border border-gray-100 dark:border-neutral-800">
+            <div className="w-8 h-8 rounded-full bg-indigo-100 dark:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300 font-bold text-xs flex items-center justify-center shrink-0">
+              {clientName.charAt(0).toUpperCase()}
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-xs font-bold text-black dark:text-white truncate">
+                {clientName}
+              </p>
+              <p className="text-[10px] text-gray-500 dark:text-neutral-400 truncate">
+                {clientEmail}
+              </p>
+            </div>
+          </div>
+
+          {/* Título de la Sesión y Objetivo */}
+          <div>
+            <h4 className="text-sm font-bold text-black dark:text-white leading-snug group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors line-clamp-2">
+              {sess.title || `Sesión #${sess.sessionNumber || 1}: Consultoría Ontológica 1 a 1`}
+            </h4>
+            {sess.sessionGoal && (
+              <p className="text-[11px] text-gray-500 dark:text-neutral-400 font-light mt-1 line-clamp-2 leading-relaxed">
+                {sess.sessionGoal}
+              </p>
+            )}
+          </div>
+
+          {/* Fecha, Hora y Duración */}
+          <div className="flex flex-wrap items-center gap-2 text-[11px] text-gray-600 dark:text-neutral-300 pt-1">
+            <span className="flex items-center gap-1">
+              <Calendar className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
+              <span>{sess.scheduledDate || (sess.date ? sess.date.split('T')[0] : 'Fecha por fijar')}</span>
+            </span>
+            <span className="text-gray-300 dark:text-neutral-700">•</span>
+            <span className="flex items-center gap-1">
+              <Clock className="w-3.5 h-3.5 text-gray-400 shrink-0" />
+              <span>{sess.scheduledTime || '10:00'} ({sess.durationMinutes || 60} min)</span>
+            </span>
+          </div>
+
+          {/* Enlace de Google Meet */}
+          {sess.meetLink && (
+            <div className="flex items-center justify-between gap-1 p-2 rounded-xl bg-indigo-50/70 dark:bg-indigo-950/30 border border-indigo-200/60 dark:border-indigo-900/40 text-[10px]">
+              <div className="flex items-center gap-1.5 min-w-0">
+                <Video className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400 shrink-0" />
+                <span className="font-semibold text-indigo-900 dark:text-indigo-200 truncate">
+                  {sess.meetLink}
+                </span>
+              </div>
+              <div className="flex items-center gap-1 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => {
+                    safeCopyToClipboard(sess.meetLink);
+                    showNotification('Enlace de Meet copiado al portapapeles');
+                  }}
+                  className="p-1 rounded-md text-indigo-600 dark:text-indigo-300 hover:bg-indigo-200/50 dark:hover:bg-indigo-900/50 cursor-pointer"
+                  title="Copiar enlace"
+                >
+                  <Copy className="w-3 h-3" />
+                </button>
+                <a
+                  href={sess.meetLink}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="px-2 py-0.5 rounded-lg bg-indigo-600 text-white font-bold text-[10px] hover:bg-indigo-700 flex items-center gap-1"
+                >
+                  <span>Entrar</span>
+                  <ExternalLink className="w-2.5 h-2.5" />
+                </a>
+              </div>
+            </div>
+          )}
+
+          {/* Ecosistema Google Forms & Sheets */}
+          {(sess.googleFormsUrl || sess.formsIntegrationId) && (
+            <div className="flex items-center gap-1.5 text-[10px] text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/30 px-2.5 py-1 rounded-xl border border-emerald-200/60 dark:border-emerald-800/40">
+              <FileSpreadsheet className="w-3 h-3 shrink-0" />
+              <span className="font-medium truncate">
+                Bitácora vinculada a Google Sheets en tiempo real
+              </span>
+            </div>
+          )}
+        </div>
+
+        {/* Acciones de la Tarjeta */}
+        <div className="pt-3 border-t border-gray-100 dark:border-neutral-800 flex items-center justify-between gap-2">
+          <button
+            type="button"
+            onClick={() => {
+              if (confirm('¿Eliminar esta sesión de consultoría?')) {
+                OntologicalStore.deleteSession(sess.id);
+                setSessions(OntologicalStore.getSessions());
+                showNotification('Sesión eliminada');
+              }
+            }}
+            className="p-1.5 rounded-lg text-gray-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors cursor-pointer"
+            title="Eliminar sesión"
+          >
+            <Trash2 className="w-3.5 h-3.5" />
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              setSelectedConsultoriaSession(sess);
+              setIsConsultoriaModalOpen(true);
+            }}
+            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-neutral-950 dark:bg-white text-white dark:text-neutral-950 hover:bg-neutral-800 dark:hover:bg-neutral-100 text-[11px] font-bold shadow-xs cursor-pointer transition-all active:scale-[0.98]"
+          >
+            <Edit3 className="w-3.5 h-3.5" />
+            <span>Editar Sesión</span>
+          </button>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="space-y-6 animate-fade-in text-left">
       {/* Notificación Flotante */}
@@ -629,57 +1181,188 @@ export const AdminSessionsManager: React.FC<AdminSessionsManagerProps> = ({
       {/* ========================================================================= */}
       {viewMode === 'catalog' && (
         <div className="space-y-4">
-          {/* Barra de Herramientas Rediseñada: Buscador, Filtro por Niveles y Acciones */}
-          <div className="bg-white/90 dark:bg-neutral-900/90 backdrop-blur-md p-3.5 sm:p-4 rounded-2xl border border-gray-200/80 dark:border-neutral-800 shadow-xs flex flex-col xl:flex-row items-stretch xl:items-center justify-between gap-3.5">
-            {/* Buscador Rápido con Icono y Botón de Limpiar */}
-            <div className="relative flex-1 min-w-[260px]">
-              <Search className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Buscar sesión por título, objetivo, quiebre ontológico o número..."
-                className="w-full pl-10 pr-9 py-2.5 text-xs rounded-xl border border-gray-200/80 dark:border-neutral-700 bg-gray-50/70 dark:bg-neutral-800/60 text-black dark:text-white placeholder:text-gray-400 dark:placeholder:text-neutral-500 focus:outline-hidden focus:ring-2 focus:ring-black dark:focus:ring-white transition-all"
-              />
-              {searchQuery && (
-                <button
-                  type="button"
-                  onClick={() => setSearchQuery('')}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-md text-gray-400 hover:text-black dark:hover:text-white hover:bg-gray-200/60 dark:hover:bg-neutral-700 transition-colors cursor-pointer"
-                  title="Limpiar búsqueda"
-                >
-                  <X className="w-3 h-3" />
-                </button>
-              )}
+          {/* Sub-pestañas principales: Módulos (12 Semanas) vs Agenda de Sesiones 1 a 1 */}
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-gray-200 dark:border-neutral-800 pb-3">
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setCatalogSubTab('modules')}
+                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${
+                  catalogSubTab === 'modules'
+                    ? 'bg-neutral-950 text-white dark:bg-white dark:text-neutral-950 shadow-sm'
+                    : 'bg-gray-100 dark:bg-neutral-800/80 text-gray-600 dark:text-neutral-400 hover:text-black dark:hover:text-white'
+                }`}
+              >
+                <BookOpen className="w-3.5 h-3.5" />
+                <span>Malla Curricular (12 Semanas)</span>
+                <span className="text-[10px] px-1.5 py-0.2 rounded-full font-mono bg-white/20 dark:bg-black/20">
+                  {nodes.length}
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setCatalogSubTab('scheduled')}
+                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${
+                  catalogSubTab === 'scheduled'
+                    ? 'bg-neutral-950 text-white dark:bg-white dark:text-neutral-950 shadow-sm'
+                    : 'bg-gray-100 dark:bg-neutral-800/80 text-gray-600 dark:text-neutral-400 hover:text-black dark:hover:text-white'
+                }`}
+              >
+                <Video className="w-3.5 h-3.5 text-indigo-500" />
+                <span>Agenda de Sesiones 1 a 1</span>
+                <span className="text-[10px] px-1.5 py-0.2 rounded-full font-mono bg-indigo-500/20 text-indigo-700 dark:text-indigo-300">
+                  {sessions.length}
+                </span>
+              </button>
             </div>
 
-            {/* Controles de Filtros y Acciones */}
-            <div className="flex flex-wrap sm:flex-nowrap items-center justify-between sm:justify-end gap-3 shrink-0">
-              {/* Segmented Control para Filtro de Niveles */}
-              <div className="inline-flex items-center gap-1 p-1 bg-gray-100/90 dark:bg-neutral-800/80 rounded-xl border border-gray-200/60 dark:border-neutral-700/60 overflow-x-auto">
+            {/* Acciones Rápidas */}
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedConsultoriaSession(null);
+                  setIsConsultoriaModalOpen(true);
+                }}
+                className="inline-flex items-center justify-center gap-2 px-3.5 py-2 rounded-xl bg-neutral-950 dark:bg-white text-white dark:text-neutral-950 hover:bg-neutral-800 dark:hover:bg-neutral-100 text-xs font-bold shadow-xs cursor-pointer transition-all active:scale-[0.98]"
+                title="Programar una nueva sesión de consultoría ontológica 1 a 1"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>Nueva Sesión 1 a 1</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleOpenLevelEditor}
+                className="inline-flex items-center justify-center gap-2 px-3.5 py-2 rounded-xl bg-white dark:bg-neutral-900 border border-gray-200 dark:border-neutral-700 hover:bg-gray-50 dark:hover:bg-neutral-800 text-gray-800 dark:text-neutral-200 text-xs font-bold shadow-2xs cursor-pointer transition-all active:scale-[0.98]"
+                title="Configurar y editar títulos, focos y preguntas ontológicas por nivel"
+              >
+                <Layers className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400 shrink-0" />
+                <span>Editor de Niveles</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setIsAutomationsModalOpen(true)}
+                className="inline-flex items-center justify-center gap-2 px-3.5 py-2 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-900 dark:text-amber-200 text-xs font-bold shadow-2xs cursor-pointer transition-all active:scale-[0.98]"
+                title="Abrir Centro Global de Automatizaciones, Webhooks y Disparadores Make.com"
+              >
+                <Zap className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 shrink-0" />
+                <span>Automatizaciones & Webhooks</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Barra de Herramientas: Buscador + Organización + Filtros de Nivel & Semanas */}
+          <div className="bg-white/90 dark:bg-neutral-900/90 backdrop-blur-md p-3.5 sm:p-4 rounded-2xl border border-gray-200/80 dark:border-neutral-800 shadow-xs space-y-3">
+            <div className="flex flex-col xl:flex-row items-stretch xl:items-center justify-between gap-3">
+              {/* Buscador Rápido */}
+              <div className="relative flex-1 min-w-[240px]">
+                <Search className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder={
+                    catalogSubTab === 'modules'
+                      ? 'Buscar módulo por título, objetivo, quiebre ontológico o semana...'
+                      : 'Buscar sesión agendada por coachee, correo, fecha, objetivo o semana...'
+                  }
+                  className="w-full pl-10 pr-9 py-2 text-xs rounded-xl border border-gray-200/80 dark:border-neutral-700 bg-gray-50/70 dark:bg-neutral-800/60 text-black dark:text-white placeholder:text-gray-400 focus:outline-hidden focus:ring-2 focus:ring-black dark:focus:ring-white transition-all"
+                />
+                {searchQuery && (
+                  <button
+                    type="button"
+                    onClick={() => setSearchQuery('')}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-md text-gray-400 hover:text-black dark:hover:text-white transition-colors cursor-pointer"
+                    title="Limpiar búsqueda"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                )}
+              </div>
+
+              {/* Selector de Organización (Agrupación) */}
+              <div className="flex items-center gap-1.5 p-1 bg-gray-100/90 dark:bg-neutral-800/80 rounded-xl border border-gray-200/60 dark:border-neutral-700/60 shrink-0">
+                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider px-2 flex items-center gap-1">
+                  <Sliders className="w-3 h-3 text-indigo-500" />
+                  <span>Organizar:</span>
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setGroupBy('none')}
+                  className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
+                    groupBy === 'none'
+                      ? 'bg-white dark:bg-neutral-900 text-black dark:text-white shadow-2xs font-bold'
+                      : 'text-neutral-600 dark:text-neutral-400 hover:text-black dark:hover:text-white'
+                  }`}
+                  title="Ver en cuadrícula continua"
+                >
+                  <LayoutGrid className="w-3.5 h-3.5" />
+                  <span>Cuadrícula</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setGroupBy('by_level')}
+                  className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
+                    groupBy === 'by_level'
+                      ? 'bg-white dark:bg-neutral-900 text-indigo-600 dark:text-indigo-400 shadow-2xs font-bold ring-1 ring-indigo-500/20'
+                      : 'text-neutral-600 dark:text-neutral-400 hover:text-black dark:hover:text-white'
+                  }`}
+                  title="Organizar sesiones agrupadas por Nivel Ontológico (Nivel I, II, III)"
+                >
+                  <Layers className="w-3.5 h-3.5 text-indigo-500" />
+                  <span>Por Nivel</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setGroupBy('by_week')}
+                  className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
+                    groupBy === 'by_week'
+                      ? 'bg-white dark:bg-neutral-900 text-emerald-600 dark:text-emerald-400 shadow-2xs font-bold ring-1 ring-emerald-500/20'
+                      : 'text-neutral-600 dark:text-neutral-400 hover:text-black dark:hover:text-white'
+                  }`}
+                  title="Organizar sesiones cronológicamente por Semanas (1-2, 3-4, ...)"
+                >
+                  <Calendar className="w-3.5 h-3.5 text-emerald-500" />
+                  <span>Por Semanas</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Filtros Activos: Filtro de Nivel + Filtro de Semanas */}
+            <div className="flex flex-wrap items-center justify-between gap-2.5 pt-2 border-t border-gray-100 dark:border-neutral-800 text-xs">
+              {/* Filtro por Nivel */}
+              <div className="flex flex-wrap items-center gap-1">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mr-1">
+                  Nivel:
+                </span>
                 {(['all', 'Nivel I', 'Nivel II', 'Nivel III'] as const).map((lvl) => {
-                  const label = lvl === 'all' ? 'Todos' : lvl;
                   const active = levelFilter === lvl;
-                  const count = lvl === 'all'
-                    ? nodes.length
-                    : nodes.filter((n) => n.level === lvl).length;
+                  const count =
+                    lvl === 'all'
+                      ? (catalogSubTab === 'modules' ? nodes.length : sessions.length)
+                      : (catalogSubTab === 'modules'
+                          ? nodes.filter((n) => n.level === lvl).length
+                          : sessions.filter((s) => getSessionLevel(s) === lvl).length);
                   return (
                     <button
                       key={lvl}
                       type="button"
                       onClick={() => setLevelFilter(lvl)}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${
+                      className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
                         active
-                          ? 'bg-white dark:bg-neutral-900 text-black dark:text-white shadow-2xs'
-                          : 'text-neutral-600 dark:text-neutral-400 hover:text-black dark:hover:text-white'
+                          ? 'bg-neutral-950 dark:bg-white text-white dark:text-neutral-950 shadow-2xs'
+                          : 'bg-gray-100/70 dark:bg-neutral-800 text-gray-600 dark:text-neutral-400 hover:bg-gray-200 dark:hover:bg-neutral-700'
                       }`}
                     >
-                      <span>{label}</span>
+                      <span>{lvl === 'all' ? 'Todos los Niveles' : lvl}</span>
                       <span
-                        className={`text-[10px] font-mono px-1.5 py-0.2 rounded-full ${
-                          active
-                            ? 'bg-neutral-100 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-200 font-bold'
-                            : 'bg-neutral-200/60 dark:bg-neutral-700/60 text-neutral-600 dark:text-neutral-400'
+                        className={`text-[10px] font-mono px-1 rounded-full ${
+                          active ? 'bg-white/20 dark:bg-black/20' : 'bg-gray-200/80 dark:bg-neutral-700'
                         }`}
                       >
                         {count}
@@ -689,239 +1372,308 @@ export const AdminSessionsManager: React.FC<AdminSessionsManagerProps> = ({
                 })}
               </div>
 
-              <div className="h-5 w-px bg-gray-200 dark:bg-neutral-800 hidden sm:block" />
-
-              {/* Botonera de Acciones Principales */}
-              <div className="flex items-center gap-2 w-full sm:w-auto">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setSelectedConsultoriaSession(null);
-                    setIsConsultoriaModalOpen(true);
-                  }}
-                  className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-neutral-950 dark:bg-white text-white dark:text-neutral-950 hover:bg-neutral-800 dark:hover:bg-neutral-100 text-xs font-bold shadow-xs cursor-pointer transition-all active:scale-[0.98]"
-                  title="Abrir el Generador de Sesiones"
+              {/* Filtro por Semanas */}
+              <div className="flex items-center gap-1.5">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
+                  Semanas:
+                </span>
+                <select
+                  value={weekFilter}
+                  onChange={(e) => setWeekFilter(e.target.value)}
+                  className="px-2.5 py-1 rounded-lg text-[11px] font-medium border border-gray-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-black dark:text-white cursor-pointer focus:ring-2 focus:ring-indigo-500 focus:outline-hidden"
                 >
-                  <span className="w-5 h-5 rounded-lg bg-emerald-500/20 dark:bg-emerald-500/30 text-emerald-400 dark:text-emerald-700 flex items-center justify-center shrink-0">
-                    <Plus className="w-3.5 h-3.5" />
-                  </span>
-                  <span>Nueva Sesión</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={handleOpenLevelEditor}
-                  className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-3.5 py-2 rounded-xl bg-white dark:bg-neutral-900 border border-gray-200/90 dark:border-neutral-700 hover:bg-gray-50 dark:hover:bg-neutral-800 text-gray-800 dark:text-neutral-200 text-xs font-bold shadow-2xs cursor-pointer transition-all active:scale-[0.98]"
-                  title="Configurar y editar títulos, focos y preguntas ontológicas por nivel"
-                >
-                  <Layers className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400 shrink-0" />
-                  <span>Editor de Niveles</span>
-                </button>
+                  <option value="all">Todas las semanas (1 a 12)</option>
+                  <option value="Semanas 1-2">Semanas 1-2 (Diagnóstico & Transparencia)</option>
+                  <option value="Semanas 3-4">Semanas 3-4 (Límites & Actos Lingüísticos)</option>
+                  <option value="Semanas 5-6">Semanas 5-6 (Somática & Emociones)</option>
+                  <option value="Semanas 7-8">Semanas 7-8 (Diseño Conversacional & Relaciones)</option>
+                  <option value="Semanas 9-10">Semanas 9-10 (Liderazgo & Visión Directiva)</option>
+                  <option value="Semanas 11-12">Semanas 11-12 (Trascendencia & Cierre de Ciclo)</option>
+                </select>
+                {(levelFilter !== 'all' || weekFilter !== 'all' || searchQuery) && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setLevelFilter('all');
+                      setWeekFilter('all');
+                      setSearchQuery('');
+                    }}
+                    className="text-[10px] text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 underline cursor-pointer ml-1"
+                  >
+                    Restablecer
+                  </button>
+                )}
               </div>
             </div>
           </div>
 
-          {/* Malla de Tarjetas de Sesiones Creadas */}
-          {filteredNodes.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-              {filteredNodes.map((node) => {
-                const nodeQuestionnaire = questionnaires.find(
-                  (q) => q.targetType === 'workshop_node' && q.targetStep === node.step
-                );
-                const questionsCount = nodeQuestionnaire?.questions?.length || 0;
-                const roadmapCount = node.roadmapSteps?.length || 0;
-                const materialsCount = node.studyMaterials?.length || 0;
+          {/* ========================================================================= */}
+          {/* CONTENIDO 1: MALLA DE MÓDULOS DE SESIÓN (12 SEMANAS)                      */}
+          {/* ========================================================================= */}
+          {catalogSubTab === 'modules' && (
+            <div className="space-y-6">
+              {filteredNodes.length > 0 ? (
+                <>
+                  {/* CASO A: ORGANIZACIÓN POR NIVEL */}
+                  {groupBy === 'by_level' && (
+                    <div className="space-y-8">
+                      {LEVEL_CONFIGS.map((lvl) => {
+                        const levelNodes = filteredNodes.filter((n) => n.level === lvl.id);
+                        if (levelNodes.length === 0) return null;
 
-                return (
-                  <div
-                    key={node.step}
-                    className="bg-white dark:bg-neutral-900 rounded-3xl border border-gray-200 dark:border-neutral-800 p-5 shadow-xs flex flex-col justify-between space-y-4 hover:border-indigo-300 dark:hover:border-indigo-800 transition-all group"
-                  >
-                    {/* Cabecera de la Tarjeta */}
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between gap-2">
-                        <div className="flex items-center gap-2">
-                          <span className="w-7 h-7 rounded-xl bg-neutral-100 dark:bg-neutral-800 font-mono text-xs font-bold flex items-center justify-center text-neutral-800 dark:text-neutral-200">
-                            {node.step < 10 ? `0${node.step}` : node.step}
-                          </span>
-                          <span
-                            className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                              node.level === 'Nivel I'
-                                ? 'bg-sky-100 dark:bg-sky-950/60 text-sky-700 dark:text-sky-300'
-                                : node.level === 'Nivel II'
-                                ? 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300'
-                                : 'bg-purple-100 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300'
-                            }`}
+                        return (
+                          <div
+                            key={lvl.id}
+                            className={`p-5 rounded-3xl border ${lvl.borderAccent} bg-gray-50/50 dark:bg-neutral-900/40 space-y-4`}
                           >
-                            {node.level}
-                          </span>
-                        </div>
+                            {/* Cabecera del Nivel */}
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-gray-200/70 dark:border-neutral-800 pb-3">
+                              <div className="space-y-1">
+                                <div className="flex items-center gap-2">
+                                  <span className={`w-2.5 h-2.5 rounded-full ${lvl.dotColor}`} />
+                                  <h3 className="text-base font-bold text-black dark:text-white">
+                                    {lvl.title}
+                                  </h3>
+                                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${lvl.badgeColor}`}>
+                                    {lvl.weeks}
+                                  </span>
+                                </div>
+                                <p className="text-xs text-gray-500 dark:text-neutral-400 max-w-2xl font-light">
+                                  {lvl.description}
+                                </p>
+                              </div>
+                              <span className="text-xs font-semibold px-2.5 py-1 rounded-xl bg-white dark:bg-neutral-800 text-gray-700 dark:text-neutral-300 border border-gray-200 dark:border-neutral-700 self-start sm:self-auto shrink-0">
+                                {levelNodes.length} {levelNodes.length === 1 ? 'Módulo' : 'Módulos'}
+                              </span>
+                            </div>
 
-                        <span className="text-[11px] font-medium text-gray-400">
-                          {node.weekLabel || `Paso ${node.step}`}
-                        </span>
-                      </div>
-
-                      {/* Título y Objetivo */}
-                      <div>
-                        <h3 className="text-sm font-bold text-black dark:text-white leading-snug group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors line-clamp-2">
-                          {node.sessionTitle}
-                        </h3>
-                        <p className="text-[11px] text-gray-500 dark:text-neutral-400 font-light mt-1.5 line-clamp-3 leading-relaxed">
-                          {node.objective}
-                        </p>
-                      </div>
-
-                      {/* Pregunta Clave Destacada */}
-                      {node.keyQuestion && (
-                        <div className="p-2.5 rounded-xl bg-gray-50/90 dark:bg-neutral-800/40 border border-gray-100 dark:border-neutral-800/60">
-                          <span className="text-[9px] font-semibold uppercase tracking-wider text-indigo-500 block mb-0.5">
-                            Pregunta Detonante:
-                          </span>
-                          <p className="text-[11px] font-medium text-gray-700 dark:text-neutral-300 italic line-clamp-2">
-                            "{node.keyQuestion}"
-                          </p>
-                        </div>
-                      )}
-
-                      {/* Insignia y Acceso a la Base Oficial Google Forms & Sheets */}
-                      {node.googleFormsUrl ? (
-                        <div className="flex items-center justify-between gap-1 p-2 rounded-xl bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-200/60 dark:border-emerald-900/40 text-[10px]">
-                          <div className="flex items-center gap-1.5 min-w-0">
-                            <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
-                            <span className="font-bold text-emerald-900 dark:text-emerald-300 truncate">
-                              {node.googleFormsUrl.includes('dfStXtTyb1MW6W5K9')
-                                ? 'Acuerdo Sesiones B2B'
-                                : node.googleFormsUrl.includes('APUFto8sGbJt322WA')
-                                ? 'Bitácora Sesiones B2B'
-                                : 'Google Forms & Sheets'}
-                            </span>
+                            {/* Malla de Tarjetas del Nivel */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                              {levelNodes.map(renderModuleCard)}
+                            </div>
                           </div>
-                          <div className="flex items-center gap-1 shrink-0">
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleCopyUrl(node.googleFormsUrl || '', 'Enlace Formulario Coachee');
-                              }}
-                              title="Copiar enlace oficial de Google Forms para el coachee"
-                              className="p-1 rounded-md hover:bg-emerald-100 dark:hover:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300 cursor-pointer"
-                            >
-                              {copiedUrl === node.googleFormsUrl ? (
-                                <CheckCheck className="w-3 h-3 text-emerald-600" />
-                              ) : (
-                                <Copy className="w-3 h-3" />
-                              )}
-                            </button>
-                            <a
-                              href={node.googleFormsUrl}
-                              target="_blank"
-                              rel="noreferrer"
-                              onClick={(e) => e.stopPropagation()}
-                              className="p-1 rounded-md hover:bg-emerald-100 dark:hover:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300"
-                              title="Abrir formulario en Google Forms"
-                            >
-                              <ExternalLink className="w-3 h-3" />
-                            </a>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  {/* CASO B: ORGANIZACIÓN POR SEMANAS */}
+                  {groupBy === 'by_week' && (
+                    <div className="space-y-8">
+                      {WEEK_CONFIGS.map((wk) => {
+                        const weekNodes = filteredNodes.filter(
+                          (n) => getNodeWeekKey(n) === wk.key
+                        );
+                        if (weekNodes.length === 0) return null;
+
+                        return (
+                          <div
+                            key={wk.key}
+                            className="p-5 rounded-3xl border border-gray-200/80 dark:border-neutral-800 bg-gray-50/50 dark:bg-neutral-900/40 space-y-4"
+                          >
+                            {/* Cabecera del Bloque Semanal */}
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-gray-200/70 dark:border-neutral-800 pb-3">
+                              <div className="space-y-1">
+                                <div className="flex items-center gap-2">
+                                  <Calendar className="w-4 h-4 text-emerald-500" />
+                                  <h3 className="text-base font-bold text-black dark:text-white">
+                                    {wk.title}
+                                  </h3>
+                                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${wk.badgeColor}`}>
+                                    {wk.level}
+                                  </span>
+                                </div>
+                                <p className="text-xs text-gray-500 dark:text-neutral-400 max-w-2xl font-light">
+                                  {wk.focus}
+                                </p>
+                              </div>
+                              <span className="text-xs font-semibold px-2.5 py-1 rounded-xl bg-white dark:bg-neutral-800 text-gray-700 dark:text-neutral-300 border border-gray-200 dark:border-neutral-700 self-start sm:self-auto shrink-0">
+                                {weekNodes.length} {weekNodes.length === 1 ? 'Módulo' : 'Módulos'}
+                              </span>
+                            </div>
+
+                            {/* Malla de Tarjetas del Bloque de Semanas */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                              {weekNodes.map(renderModuleCard)}
+                            </div>
                           </div>
-                        </div>
-                      ) : (
-                        <button
-                          type="button"
-                          onClick={() => handleOpenEditor(node.step, 'integrations')}
-                          className="w-full py-1.5 px-2 rounded-xl border border-dashed border-gray-200 dark:border-neutral-800 hover:border-indigo-300 text-[10px] text-gray-500 hover:text-indigo-600 flex items-center justify-center gap-1 transition-colors cursor-pointer"
-                        >
-                          <Link2 className="w-3 h-3" />
-                          <span>Vincular Base de Datos Google Forms & Sheets</span>
-                        </button>
-                      )}
-
-                      {/* Insignias de Metodología */}
-                      <div className="flex flex-wrap items-center gap-1.5 pt-1">
-                        {roadmapCount > 0 && (
-                          <span className="text-[10px] px-2 py-0.5 rounded-md bg-gray-100 dark:bg-neutral-800 text-gray-600 dark:text-neutral-300 font-medium flex items-center gap-1">
-                            <ListOrdered className="w-3 h-3 text-emerald-500" />
-                            <span>{roadmapCount} Fases</span>
-                          </span>
-                        )}
-
-                        <span className="text-[10px] px-2 py-0.5 rounded-md bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 font-medium flex items-center gap-1">
-                          <Sparkles className="w-3 h-3 text-purple-500" />
-                          <span>Ontológico</span>
-                        </span>
-                      </div>
+                        );
+                      })}
                     </div>
+                  )}
 
-                    {/* Botonera de Acciones de la Tarjeta */}
-                    <div className="pt-3 border-t border-gray-100 dark:border-neutral-800 flex items-center justify-between gap-2">
-                      <div className="flex items-center gap-1.5">
-                        <button
-                          type="button"
-                          onClick={(e) => handleDuplicate(node.step, e)}
-                          title="Duplicar este tablero"
-                          className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl border border-gray-200/80 dark:border-neutral-700/80 text-gray-600 dark:text-neutral-300 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 hover:border-indigo-300 dark:hover:border-indigo-700 text-[11px] font-semibold transition-all cursor-pointer shadow-2xs"
-                        >
-                          <Copy className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
-                          <span>Duplicar Tablero</span>
-                        </button>
-                        <button
-                          type="button"
-                          onClick={(e) => handleDelete(node.step, e)}
-                          title="Eliminar Módulo"
-                          className="p-1.5 rounded-lg text-gray-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors cursor-pointer"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-
-                      <div className="flex items-center gap-2">
-                        <button
-                          type="button"
-                          onClick={() => handleOpenEditor(node.step, 'integrations')}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-gray-200 dark:border-neutral-700 text-[11px] font-semibold text-gray-700 dark:text-neutral-300 hover:bg-gray-50 dark:hover:bg-neutral-800 hover:border-gray-300 dark:hover:border-neutral-600 transition-all cursor-pointer shadow-2xs"
-                          title="Gestionar Google Forms & Sheets del módulo"
-                        >
-                          <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-                          <span>Forms & Sheets</span>
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() => handleOpenEditor(node.step, 'general')}
-                          className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-neutral-950 dark:bg-white text-white dark:text-neutral-950 hover:bg-neutral-800 dark:hover:bg-neutral-100 text-[11px] font-bold shadow-xs cursor-pointer transition-all active:scale-[0.98]"
-                        >
-                          <Edit3 className="w-3.5 h-3.5" />
-                          <span>Editar Módulo</span>
-                        </button>
-                      </div>
+                  {/* CASO C: CUADRÍCULA CORRIDA (SIN AGRUPAR) */}
+                  {groupBy === 'none' && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                      {filteredNodes.map(renderModuleCard)}
                     </div>
-                  </div>
-                );
-              })}
-            </div>
-          ) : (
-            <div className="p-12 text-center bg-white dark:bg-neutral-900 rounded-3xl border border-dashed border-gray-200 dark:border-neutral-800 space-y-3">
-              <BookOpen className="w-8 h-8 text-gray-400 mx-auto" />
-              <h4 className="text-sm font-bold text-black dark:text-white">
-                No se encontraron módulos con el criterio especificado
-              </h4>
-              <p className="text-xs text-gray-500 max-w-sm mx-auto">
-                Intenta con otra palabra clave o restablece los filtros para ver todos los módulos curriculares.
-              </p>
-              <button
-                type="button"
-                onClick={() => {
-                  setSearchQuery('');
-                  setLevelFilter('all');
-                }}
-                className="px-4 py-2 text-xs font-semibold bg-gray-100 dark:bg-neutral-800 rounded-xl hover:bg-gray-200 cursor-pointer"
-              >
-                Limpiar Filtros
-              </button>
+                  )}
+                </>
+              ) : (
+                <div className="p-12 text-center bg-white dark:bg-neutral-900 rounded-3xl border border-dashed border-gray-200 dark:border-neutral-800 space-y-3">
+                  <BookOpen className="w-8 h-8 text-gray-400 mx-auto" />
+                  <h4 className="text-sm font-bold text-black dark:text-white">
+                    No se encontraron módulos con el criterio especificado
+                  </h4>
+                  <p className="text-xs text-gray-500 max-w-sm mx-auto">
+                    Intenta con otra palabra clave o restablece los filtros de nivel y semanas.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSearchQuery('');
+                      setLevelFilter('all');
+                      setWeekFilter('all');
+                    }}
+                    className="px-4 py-2 text-xs font-semibold bg-gray-100 dark:bg-neutral-800 rounded-xl hover:bg-gray-200 cursor-pointer"
+                  >
+                    Restablecer Filtros
+                  </button>
+                </div>
+              )}
             </div>
           )}
-      </div>
-    )}
+
+          {/* ========================================================================= */}
+          {/* CONTENIDO 2: AGENDA DE SESIONES 1 A 1 DE COACHEES                        */}
+          {/* ========================================================================= */}
+          {catalogSubTab === 'scheduled' && (
+            <div className="space-y-6">
+              {filteredSessions.length > 0 ? (
+                <>
+                  {/* CASO A: SESIONES 1 A 1 ORGANIZADAS POR NIVEL */}
+                  {groupBy === 'by_level' && (
+                    <div className="space-y-8">
+                      {LEVEL_CONFIGS.map((lvl) => {
+                        const levelSessions = filteredSessions.filter(
+                          (s) => getSessionLevel(s) === lvl.id
+                        );
+                        if (levelSessions.length === 0) return null;
+
+                        return (
+                          <div
+                            key={lvl.id}
+                            className={`p-5 rounded-3xl border ${lvl.borderAccent} bg-gray-50/50 dark:bg-neutral-900/40 space-y-4`}
+                          >
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-gray-200/70 dark:border-neutral-800 pb-3">
+                              <div className="space-y-1">
+                                <div className="flex items-center gap-2">
+                                  <span className={`w-2.5 h-2.5 rounded-full ${lvl.dotColor}`} />
+                                  <h3 className="text-base font-bold text-black dark:text-white">
+                                    {lvl.title}
+                                  </h3>
+                                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${lvl.badgeColor}`}>
+                                    {lvl.weeks}
+                                  </span>
+                                </div>
+                                <p className="text-xs text-gray-500 dark:text-neutral-400 font-light">
+                                  Sesiones de acompañamiento ontológico 1 a 1 correspondientes a este nivel formativo.
+                                </p>
+                              </div>
+                              <span className="text-xs font-semibold px-2.5 py-1 rounded-xl bg-white dark:bg-neutral-800 text-gray-700 dark:text-neutral-300 border border-gray-200 dark:border-neutral-700 self-start sm:self-auto shrink-0">
+                                {levelSessions.length} {levelSessions.length === 1 ? 'Sesión' : 'Sesiones'}
+                              </span>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                              {levelSessions.map(renderScheduledSessionCard)}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  {/* CASO B: SESIONES 1 A 1 ORGANIZADAS POR SEMANAS */}
+                  {groupBy === 'by_week' && (
+                    <div className="space-y-8">
+                      {WEEK_CONFIGS.map((wk) => {
+                        const weekSessions = filteredSessions.filter(
+                          (s) => getSessionWeek(s) === wk.key
+                        );
+                        if (weekSessions.length === 0) return null;
+
+                        return (
+                          <div
+                            key={wk.key}
+                            className="p-5 rounded-3xl border border-gray-200/80 dark:border-neutral-800 bg-gray-50/50 dark:bg-neutral-900/40 space-y-4"
+                          >
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-gray-200/70 dark:border-neutral-800 pb-3">
+                              <div className="space-y-1">
+                                <div className="flex items-center gap-2">
+                                  <Calendar className="w-4 h-4 text-emerald-500" />
+                                  <h3 className="text-base font-bold text-black dark:text-white">
+                                    {wk.title}
+                                  </h3>
+                                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${wk.badgeColor}`}>
+                                    {wk.level}
+                                  </span>
+                                </div>
+                                <p className="text-xs text-gray-500 dark:text-neutral-400 font-light">
+                                  {wk.focus}
+                                </p>
+                              </div>
+                              <span className="text-xs font-semibold px-2.5 py-1 rounded-xl bg-white dark:bg-neutral-800 text-gray-700 dark:text-neutral-300 border border-gray-200 dark:border-neutral-700 self-start sm:self-auto shrink-0">
+                                {weekSessions.length} {weekSessions.length === 1 ? 'Sesión' : 'Sesiones'}
+                              </span>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                              {weekSessions.map(renderScheduledSessionCard)}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  {/* CASO C: SESIONES 1 A 1 EN CUADRÍCULA CORRIDA */}
+                  {groupBy === 'none' && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                      {filteredSessions.map(renderScheduledSessionCard)}
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div className="p-12 text-center bg-white dark:bg-neutral-900 rounded-3xl border border-dashed border-gray-200 dark:border-neutral-800 space-y-3">
+                  <Video className="w-8 h-8 text-indigo-400 mx-auto" />
+                  <h4 className="text-sm font-bold text-black dark:text-white">
+                    No hay sesiones 1 a 1 agendadas con los criterios seleccionados
+                  </h4>
+                  <p className="text-xs text-gray-500 max-w-sm mx-auto">
+                    Puedes programar una nueva sesión con tu coachee haciendo clic en "Nueva Sesión 1 a 1" o restablecer los filtros de búsqueda.
+                  </p>
+                  <div className="flex items-center justify-center gap-2 pt-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedConsultoriaSession(null);
+                        setIsConsultoriaModalOpen(true);
+                      }}
+                      className="px-4 py-2 text-xs font-bold bg-neutral-950 dark:bg-white text-white dark:text-neutral-950 rounded-xl hover:bg-neutral-800 transition-all cursor-pointer"
+                    >
+                      + Programar Nueva Sesión
+                    </button>
+                    {(levelFilter !== 'all' || weekFilter !== 'all' || searchQuery) && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSearchQuery('');
+                          setLevelFilter('all');
+                          setWeekFilter('all');
+                        }}
+                        className="px-4 py-2 text-xs font-semibold bg-gray-100 dark:bg-neutral-800 rounded-xl hover:bg-gray-200 cursor-pointer"
+                      >
+                        Limpiar Filtros
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* ========================================================================= */}
       {/* VISTA 2: EDITOR EXHAUSTIVO DEL MÓDULO, CONTENIDO Y PREGUNTAS             */}
@@ -1644,12 +2396,42 @@ export const AdminSessionsManager: React.FC<AdminSessionsManagerProps> = ({
           if (onRefreshParent) onRefreshParent();
         }}
         onOpenAutomationsPanel={() => {
-          setIsConsultoriaModalOpen(false);
-          showNotification(
-            'Panel de Activadores y Automatizaciones RBC: Sincronización activa con Google Sheets.'
-          );
+          setIsAutomationsModalOpen(true);
         }}
       />
+
+      {/* MODAL: CENTRO GLOBAL DE AUTOMATIZACIONES MAKE.COM & WEBHOOKS */}
+      {isAutomationsModalOpen && (
+        <div className="fixed inset-0 z-[70] bg-black/75 backdrop-blur-xs flex items-center justify-center p-3 sm:p-5">
+          <div className="bg-white dark:bg-neutral-900 rounded-3xl border border-gray-200 dark:border-neutral-800 w-full max-w-5xl max-h-[92vh] flex flex-col shadow-2xl overflow-hidden animate-scale-up">
+            <div className="p-4 sm:p-5 border-b border-gray-100 dark:border-neutral-800 flex items-center justify-between bg-gray-50/80 dark:bg-neutral-900/80 shrink-0">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-xl bg-amber-500/20 text-amber-600 dark:text-amber-400">
+                  <Zap className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-black dark:text-white">
+                    Centro Global de Automatizaciones & Webhooks Make.com
+                  </h3>
+                  <p className="text-xs text-gray-500 dark:text-neutral-400">
+                    Gestión y prueba en vivo de activadores, disparadores y escenarios de integración
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsAutomationsModalOpen(false)}
+                className="p-2 rounded-xl text-gray-400 hover:text-black dark:hover:text-white hover:bg-gray-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-4 sm:p-6 overflow-y-auto flex-1">
+              <AdminAutomationsManager onRefresh={refreshAll} />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

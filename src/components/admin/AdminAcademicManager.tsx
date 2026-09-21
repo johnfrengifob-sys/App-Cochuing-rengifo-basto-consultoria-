@@ -4,6 +4,7 @@ import {
   Calendar,
   BookOpen,
   FileSpreadsheet,
+  Zap,
 } from 'lucide-react';
 import { OntologicalStore } from '../../services/store';
 import {
@@ -14,6 +15,7 @@ import {
 import { ProgramsAndEventsManager } from '../ProgramsAndEventsManager';
 import { AdminSessionsManager } from './AdminSessionsManager';
 import { AdminFormsSheetsIntegrationPanel } from './AdminFormsSheetsIntegrationPanel';
+import AdminAutomationsManager from './AdminAutomationsManager';
 
 export type AcademicAdminSubTab =
   | 'events'
@@ -51,9 +53,10 @@ export const AdminAcademicManager: React.FC<AdminAcademicManagerProps> = ({
   onRefreshRegistrations: propOnRefreshRegistrations,
   onOpenRegistrationPortal,
 }) => {
-  const [currentTab, setCurrentTab] = useState<'events' | 'sessions' | 'forms_sheets'>(() => {
+  const [currentTab, setCurrentTab] = useState<'events' | 'sessions' | 'forms_sheets' | 'automations'>(() => {
     if (initialSubTab === 'sessions') return 'sessions';
     if (initialSubTab === 'forms_sheets' || initialSubTab === 'sheets' || initialSubTab === 'integrations') return 'forms_sheets';
+    if (initialSubTab === 'automations' || initialSubTab === 'triggers' || initialSubTab === 'activadores') return 'automations';
     return 'events';
   });
 
@@ -64,6 +67,8 @@ export const AdminAcademicManager: React.FC<AdminAcademicManagerProps> = ({
       setCurrentTab('sessions');
     } else if (initialSubTab === 'forms_sheets' || initialSubTab === 'sheets' || initialSubTab === 'integrations') {
       setCurrentTab('forms_sheets');
+    } else if (initialSubTab === 'automations' || initialSubTab === 'triggers' || initialSubTab === 'activadores') {
+      setCurrentTab('automations');
     } else {
       setCurrentTab('events');
     }
@@ -148,8 +153,8 @@ export const AdminAcademicManager: React.FC<AdminAcademicManagerProps> = ({
         </div>
       </div>
 
-      {/* NAVEGACIÓN: EVENTOS Y TALLERES | SESIONES | GOOGLE FORMS & SHEETS */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 p-1.5 rounded-2xl glass-panel-opal border border-white/60 dark:border-white/10 shadow-2xs">
+      {/* NAVEGACIÓN: EVENTOS Y TALLERES | SESIONES | GOOGLE FORMS & SHEETS | AUTOMATIZACIONES */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 p-1.5 rounded-2xl glass-panel-opal border border-white/60 dark:border-white/10 shadow-2xs">
         {/* BOTÓN 1: EVENTOS Y TALLERES */}
         <button
           type="button"
@@ -212,6 +217,27 @@ export const AdminAcademicManager: React.FC<AdminAcademicManagerProps> = ({
             4 Fuentes
           </span>
         </button>
+
+        {/* BOTÓN 4: AUTOMATIZACIONES & WEBHOOKS */}
+        <button
+          type="button"
+          onClick={() => setCurrentTab('automations')}
+          className={`flex items-center justify-center gap-2.5 px-4 py-3 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
+            currentTab === 'automations'
+              ? 'bg-black text-white dark:bg-white dark:text-black shadow-xs'
+              : 'text-neutral-600 dark:text-neutral-400 hover:text-black dark:hover:text-white hover:bg-white/80 dark:hover:bg-neutral-800/80'
+          }`}
+        >
+          <Zap className="w-4 h-4 text-amber-500" />
+          <span>Automatizaciones</span>
+          <span className={`text-[11px] px-2 py-0.5 rounded-full font-mono ${
+            currentTab === 'automations'
+              ? 'bg-white/20 text-white dark:bg-black/20 dark:text-black'
+              : 'bg-amber-100/80 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300'
+          }`}>
+            Make & Logs
+          </span>
+        </button>
       </div>
 
       {/* RENDERIZADO DEL PANEL ACTIVO */}
@@ -234,6 +260,10 @@ export const AdminAcademicManager: React.FC<AdminAcademicManagerProps> = ({
 
         {currentTab === 'forms_sheets' && (
           <AdminFormsSheetsIntegrationPanel />
+        )}
+
+        {currentTab === 'automations' && (
+          <AdminAutomationsManager onRefresh={handleRefresh} />
         )}
       </div>
     </div>

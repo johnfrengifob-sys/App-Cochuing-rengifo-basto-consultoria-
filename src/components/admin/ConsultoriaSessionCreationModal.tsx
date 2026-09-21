@@ -32,6 +32,7 @@ import {
   BookOpen,
   Film,
   ArrowRight,
+  Layers,
 } from 'lucide-react';
 import {
   Session,
@@ -51,6 +52,7 @@ import {
 } from '../../data/officialFormsSheetsBase';
 import { safeCopyToClipboard } from '../../utils/clipboard';
 import { EventEvaluationAndTriggersSection } from './events/EventEvaluationAndTriggersSection';
+import { AdminAutomationsManager } from './AdminAutomationsManager';
 
 interface ConsultoriaSessionCreationModalProps {
   isOpen: boolean;
@@ -70,6 +72,7 @@ export const ConsultoriaSessionCreationModal: React.FC<ConsultoriaSessionCreatio
   onOpenAutomationsPanel,
 }) => {
   const clients = OntologicalStore.getClients();
+  const [isInternalAutomationsOpen, setIsInternalAutomationsOpen] = useState(false);
 
   // 1. Configuración General y Logística
   const normalizeInitialType = (t?: ConsultoriaSessionType): ConsultoriaSessionType => {
@@ -113,6 +116,18 @@ export const ConsultoriaSessionCreationModal: React.FC<ConsultoriaSessionCreatio
   const [sessionGoal, setSessionGoal] = useState<string>(
     initialSession?.sessionGoal || ''
   );
+  const [sessionNumber, setSessionNumber] = useState<number>(() => {
+    if (initialSession?.sessionNumber) return initialSession.sessionNumber;
+    return 1;
+  });
+  const [level, setLevel] = useState<'Nivel I' | 'Nivel II' | 'Nivel III'>(() => {
+    if (initialSession?.level) return initialSession.level as 'Nivel I' | 'Nivel II' | 'Nivel III';
+    return 'Nivel I';
+  });
+  const [weekLabel, setWeekLabel] = useState<string>(() => {
+    if (initialSession?.weekLabel) return initialSession.weekLabel;
+    return 'Semanas 1-2';
+  });
 
   // 2. Dinámica y Contenido según el Tipo de Sesión
   const defaultOpeningQuestionNormal =
@@ -165,12 +180,19 @@ export const ConsultoriaSessionCreationModal: React.FC<ConsultoriaSessionCreatio
     return generateMeetLink();
   });
 
-  const [automationsConfig, setAutomationsConfig] = useState<SessionAutomationsConfig>({
+  const [automationsConfig, setAutomationsConfig] = useState<SessionAutomationsConfig>(() => ({
+    triggersEnabled: initialSession?.automationsConfig?.triggersEnabled ?? true,
     immediateConfirmation:
       initialSession?.automationsConfig?.immediateConfirmation ?? true,
     scheduledReminders:
       initialSession?.automationsConfig?.scheduledReminders ?? true,
-  });
+    postSurveyDispatched:
+      initialSession?.automationsConfig?.postSurveyDispatched ?? true,
+    welcomeMessage: initialSession?.automationsConfig?.welcomeMessage,
+    reminderMessage: initialSession?.automationsConfig?.reminderMessage,
+    postSurveyMessage: initialSession?.automationsConfig?.postSurveyMessage,
+    customWebhookUrl: initialSession?.automationsConfig?.customWebhookUrl || '',
+  }));
 
   // 4. Evaluación, Google Forms / Sheets y Expediente
   const [formsPresetKey, setFormsPresetKey] = useState<FormsSheetsIntegrationSourceKey>(
@@ -198,11 +220,49 @@ export const ConsultoriaSessionCreationModal: React.FC<ConsultoriaSessionCreatio
       setGuideTitle(initialSession.guideTitle || '');
       setVideoUrl(initialSession.videoUrl || '');
       setVideoTitle(initialSession.videoTitle || '');
+      setCustomFormUrl(initialSession.googleFormsUrl || '');
+      setCustomSheetUrl(initialSession.googleSheetsUrl || '');
+      if (initialSession.formsIntegrationId) {
+        setFormsPresetKey(initialSession.formsIntegrationId as FormsSheetsIntegrationSourceKey);
+      }
+      if (initialSession.automationsConfig) {
+        setAutomationsConfig({
+          triggersEnabled: initialSession.automationsConfig.triggersEnabled ?? true,
+          immediateConfirmation: initialSession.automationsConfig.immediateConfirmation ?? true,
+          scheduledReminders: initialSession.automationsConfig.scheduledReminders ?? true,
+          postSurveyDispatched: initialSession.automationsConfig.postSurveyDispatched ?? true,
+          welcomeMessage: initialSession.automationsConfig.welcomeMessage,
+          reminderMessage: initialSession.automationsConfig.reminderMessage,
+          postSurveyMessage: initialSession.automationsConfig.postSurveyMessage,
+          customWebhookUrl: initialSession.automationsConfig.customWebhookUrl || '',
+        });
+      }
+      if (initialSession.meetLink) {
+        setMeetLink(initialSession.meetLink);
+      }
+      if (initialSession.level) {
+        setLevel(initialSession.level as 'Nivel I' | 'Nivel II' | 'Nivel III');
+      }
+      if (initialSession.weekLabel) {
+        setWeekLabel(initialSession.weekLabel);
+      }
+      if (initialSession.sessionNumber) {
+        setSessionNumber(initialSession.sessionNumber);
+      }
     } else {
       setGuideUrl('');
       setGuideTitle('');
       setVideoUrl('');
       setVideoTitle('');
+      setCustomFormUrl('');
+      setCustomSheetUrl('');
+      setFormsPresetKey('bitacora_sesiones_b2b');
+      setAutomationsConfig({
+        triggersEnabled: true,
+        immediateConfirmation: true,
+        scheduledReminders: true,
+        postSurveyDispatched: true,
+      });
     }
   }, [initialSession]);
 
@@ -220,6 +280,29 @@ export const ConsultoriaSessionCreationModal: React.FC<ConsultoriaSessionCreatio
         (s) => s.clientId === clientId
       );
       const nextNumber = clientSessions.length + 1;
+      setSessionNumber(nextNumber);
+
+      // Organización sugerida por Nivel y Semanas
+      if (nextNumber <= 2) {
+        setLevel('Nivel I');
+        setWeekLabel('Semanas 1-2');
+      } else if (nextNumber <= 4) {
+        setLevel('Nivel I');
+        setWeekLabel('Semanas 3-4');
+      } else if (nextNumber <= 6) {
+        setLevel('Nivel II');
+        setWeekLabel('Semanas 5-6');
+      } else if (nextNumber <= 8) {
+        setLevel('Nivel II');
+        setWeekLabel('Semanas 7-8');
+      } else if (nextNumber <= 10) {
+        setLevel('Nivel III');
+        setWeekLabel('Semanas 9-10');
+      } else {
+        setLevel('Nivel III');
+        setWeekLabel('Semanas 11-12');
+      }
+
       const isCycleClose = nextNumber % 4 === 0;
 
       if (isCycleClose) {
@@ -302,15 +385,21 @@ export const ConsultoriaSessionCreationModal: React.FC<ConsultoriaSessionCreatio
     googleSheetsUrl: finalSheetUrl,
     formsIntegrationId: formsPresetKey,
     meetUrl: meetLink,
-    triggersEnabled: automationsConfig.immediateConfirmation || automationsConfig.scheduledReminders,
+    triggersEnabled: automationsConfig.triggersEnabled ?? true,
     customTriggers: {
-      welcomeImmediate: automationsConfig.immediateConfirmation,
-      welcomeMessage: `¡Hola! Tu sesión de consultoría ontológica "${title}" ha sido programada. Sala Google Meet: ${meetLink}`,
-      reminder24h: automationsConfig.scheduledReminders,
-      reminderMessage: `Recordatorio: Tu sesión de consultoría está programada para el ${scheduledDate} a las ${scheduledTime}. Sala Google Meet: ${meetLink}`,
-      postSurveyDispatched: true,
-      postSurveyMessage: `Tu sesión de consultoría ha culminado. Por favor diligencia tu Bitácora B2B para consolidar tus descubrimientos y compromisos: ${finalFormUrl}`,
-      customWebhookUrl: '',
+      welcomeImmediate: automationsConfig.immediateConfirmation ?? true,
+      welcomeMessage:
+        automationsConfig.welcomeMessage ||
+        `¡Hola! Tu sesión de consultoría ontológica "${title || '1 a 1'}" ha sido programada para el ${scheduledDate} a las ${scheduledTime}. Sala Google Meet: ${meetLink}`,
+      reminder24h: automationsConfig.scheduledReminders ?? true,
+      reminderMessage:
+        automationsConfig.reminderMessage ||
+        `Recordatorio: Tu sesión de consultoría está programada para el ${scheduledDate} a las ${scheduledTime}. Sala Google Meet: ${meetLink}`,
+      postSurveyDispatched: automationsConfig.postSurveyDispatched ?? true,
+      postSurveyMessage:
+        automationsConfig.postSurveyMessage ||
+        `Tu sesión de consultoría ha culminado. Por favor diligencia tu Bitácora B2B para consolidar tus descubrimientos y compromisos: ${finalFormUrl}`,
+      customWebhookUrl: automationsConfig.customWebhookUrl || '',
     },
   };
 
@@ -332,11 +421,24 @@ export const ConsultoriaSessionCreationModal: React.FC<ConsultoriaSessionCreatio
     if (updates.meetUrl !== undefined) {
       setMeetLink(updates.meetUrl);
     }
+    if (updates.triggersEnabled !== undefined) {
+      setAutomationsConfig((prev) => ({
+        ...prev,
+        triggersEnabled: updates.triggersEnabled,
+      }));
+    }
     if (updates.customTriggers !== undefined) {
-      setAutomationsConfig({
-        immediateConfirmation: updates.customTriggers.welcomeImmediate ?? true,
-        scheduledReminders: updates.customTriggers.reminder24h ?? true,
-      });
+      const ct = updates.customTriggers;
+      setAutomationsConfig((prev) => ({
+        ...prev,
+        immediateConfirmation: ct.welcomeImmediate !== undefined ? ct.welcomeImmediate : prev.immediateConfirmation,
+        scheduledReminders: ct.reminder24h !== undefined ? ct.reminder24h : prev.scheduledReminders,
+        postSurveyDispatched: ct.postSurveyDispatched !== undefined ? ct.postSurveyDispatched : prev.postSurveyDispatched,
+        welcomeMessage: ct.welcomeMessage !== undefined ? ct.welcomeMessage : prev.welcomeMessage,
+        reminderMessage: ct.reminderMessage !== undefined ? ct.reminderMessage : prev.reminderMessage,
+        postSurveyMessage: ct.postSurveyMessage !== undefined ? ct.postSurveyMessage : prev.postSurveyMessage,
+        customWebhookUrl: ct.customWebhookUrl !== undefined ? ct.customWebhookUrl : prev.customWebhookUrl,
+      }));
     }
   };
 
@@ -348,13 +450,16 @@ export const ConsultoriaSessionCreationModal: React.FC<ConsultoriaSessionCreatio
     const existingSessions = OntologicalStore.getSessions().filter(
       (s) => s.clientId === clientId
     );
-    const sessionNum = initialSession?.sessionNumber || existingSessions.length + 1;
+    const sessionNum = sessionNumber || initialSession?.sessionNumber || existingSessions.length + 1;
     const dateStr = `${scheduledDate}T${scheduledTime}:00`;
 
     const savedSession: Session = {
       id: initialSession?.id || `sess-${Date.now()}`,
       clientId,
       sessionNumber: sessionNum,
+      level,
+      weekLabel,
+      weekNumber: parseInt(weekLabel.replace(/\D/g, '') || String(sessionNum), 10),
       date: new Date(dateStr).toISOString(),
       scheduledDate,
       scheduledTime,
@@ -377,7 +482,16 @@ export const ConsultoriaSessionCreationModal: React.FC<ConsultoriaSessionCreatio
           ? cycleReviewAxes
           : undefined,
       programClosingAxes: undefined,
-      automationsConfig,
+      automationsConfig: {
+        triggersEnabled: automationsConfig.triggersEnabled ?? true,
+        immediateConfirmation: automationsConfig.immediateConfirmation ?? true,
+        scheduledReminders: automationsConfig.scheduledReminders ?? true,
+        postSurveyDispatched: automationsConfig.postSurveyDispatched ?? true,
+        welcomeMessage: automationsConfig.welcomeMessage,
+        reminderMessage: automationsConfig.reminderMessage,
+        postSurveyMessage: automationsConfig.postSurveyMessage,
+        customWebhookUrl: automationsConfig.customWebhookUrl || '',
+      },
       googleFormsUrl: finalFormUrl,
       googleSheetsUrl: finalSheetUrl,
       formsIntegrationId: formsPresetKey,
@@ -728,6 +842,87 @@ export const ConsultoriaSessionCreationModal: React.FC<ConsultoriaSessionCreatio
                   className="w-full p-2.5 rounded-xl border border-gray-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-black dark:text-white focus:ring-2 focus:ring-emerald-500 focus:outline-hidden"
                   required
                 />
+              </div>
+            </div>
+
+            {/* 1.4 Organización Curricular: Nivel Ontológico, Semanas del Programa y Número de Sesión */}
+            <div className="p-3.5 rounded-2xl border border-indigo-100 dark:border-indigo-900/50 bg-indigo-50/40 dark:bg-indigo-950/20 space-y-2.5">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <span className="text-xs font-bold text-gray-900 dark:text-neutral-100 flex items-center gap-1.5">
+                  <Layers className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
+                  <span>Organización: Nivel Ontológico & Semanas de Acompañamiento</span>
+                </span>
+                <span className="text-[11px] font-semibold text-indigo-700 dark:text-indigo-300 bg-white dark:bg-neutral-800 px-2.5 py-0.5 rounded-full border border-indigo-200 dark:border-indigo-800 shadow-2xs">
+                  {level} • {weekLabel} • Sesión #{sessionNumber}
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                {/* Selector de Nivel */}
+                <div className="space-y-1">
+                  <label className="text-[11px] font-semibold text-gray-700 dark:text-neutral-300 block">
+                    Nivel Formativo *
+                  </label>
+                  <select
+                    value={level}
+                    onChange={(e) => setLevel(e.target.value as any)}
+                    className="w-full p-2.5 rounded-xl border border-gray-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-xs font-semibold text-black dark:text-white cursor-pointer focus:ring-2 focus:ring-indigo-500 focus:outline-hidden"
+                  >
+                    <option value="Nivel I">Nivel I: Fundamentos & Transparencia (Semanas 1-4)</option>
+                    <option value="Nivel II">Nivel II: Corporalidad, Relaciones & Emoción (Semanas 5-8)</option>
+                    <option value="Nivel III">Nivel III: Dirección & Trascendencia (Semanas 9-12)</option>
+                  </select>
+                </div>
+
+                {/* Selector de Semanas */}
+                <div className="space-y-1">
+                  <label className="text-[11px] font-semibold text-gray-700 dark:text-neutral-300 block">
+                    Bloque de Semanas *
+                  </label>
+                  <select
+                    value={weekLabel}
+                    onChange={(e) => setWeekLabel(e.target.value)}
+                    className="w-full p-2.5 rounded-xl border border-gray-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-xs font-semibold text-black dark:text-white cursor-pointer focus:ring-2 focus:ring-indigo-500 focus:outline-hidden"
+                  >
+                    <option value="Semanas 1-2">Semanas 1-2 (Diagnóstico & Transparencia)</option>
+                    <option value="Semanas 3-4">Semanas 3-4 (Declaraciones & Quiebres)</option>
+                    <option value="Semanas 5-6">Semanas 5-6 (Somática & Emociones)</option>
+                    <option value="Semanas 7-8">Semanas 7-8 (Diseño Conversacional & Relaciones)</option>
+                    <option value="Semanas 9-10">Semanas 9-10 (Dirección & Liderazgo Ontológico)</option>
+                    <option value="Semanas 11-12">Semanas 11-12 (Consolidación, Trascendencia & Cierre)</option>
+                  </select>
+                </div>
+
+                {/* Número de Sesión en la Ruta */}
+                <div className="space-y-1">
+                  <label className="text-[11px] font-semibold text-gray-700 dark:text-neutral-300 block">
+                    Número de Sesión (1 a 12)
+                  </label>
+                  <select
+                    value={sessionNumber}
+                    onChange={(e) => {
+                      const num = parseInt(e.target.value, 10);
+                      setSessionNumber(num);
+                      if (num <= 4) setLevel('Nivel I');
+                      else if (num <= 8) setLevel('Nivel II');
+                      else setLevel('Nivel III');
+
+                      if (num <= 2) setWeekLabel('Semanas 1-2');
+                      else if (num <= 4) setWeekLabel('Semanas 3-4');
+                      else if (num <= 6) setWeekLabel('Semanas 5-6');
+                      else if (num <= 8) setWeekLabel('Semanas 7-8');
+                      else if (num <= 10) setWeekLabel('Semanas 9-10');
+                      else setWeekLabel('Semanas 11-12');
+                    }}
+                    className="w-full p-2.5 rounded-xl border border-gray-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-xs font-semibold text-black dark:text-white cursor-pointer focus:ring-2 focus:ring-indigo-500 focus:outline-hidden"
+                  >
+                    {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((num) => (
+                      <option key={num} value={num}>
+                        Sesión #{num} {num % 4 === 0 ? '• (Hito Cierre de Ciclo)' : ''}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </div>
             </div>
 
@@ -1278,6 +1473,37 @@ export const ConsultoriaSessionCreationModal: React.FC<ConsultoriaSessionCreatio
       {/* ========================================================================= */}
       {(activeSection === 'evaluation' || activeSection === 'all') && (
         <div className="space-y-4 animate-fade-in">
+          <div className="p-3.5 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-2.5">
+              <div className="p-2 rounded-xl bg-amber-500/20 text-amber-700 dark:text-amber-300 shrink-0">
+                <Zap className="w-4 h-4" />
+              </div>
+              <div>
+                <p className="text-xs font-bold text-amber-950 dark:text-amber-200">
+                  Centro Global de Automatizaciones & Webhooks Make.com
+                </p>
+                <p className="text-[11px] text-amber-800/80 dark:text-amber-300/80">
+                  Configura webhooks, disparadores masivos e historial de logs centralizado.
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                if (onOpenAutomationsPanel) {
+                  onOpenAutomationsPanel();
+                } else {
+                  setIsInternalAutomationsOpen(true);
+                }
+              }}
+              className="w-full sm:w-auto px-3.5 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold shadow-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer shrink-0"
+            >
+              <Zap className="w-3.5 h-3.5" />
+              <span>Abrir Centro Global</span>
+              <ExternalLink className="w-3 h-3" />
+            </button>
+          </div>
+
           <EventEvaluationAndTriggersSection
             event={sessionEventData}
             onChange={handleSessionTriggersChange}
@@ -1342,6 +1568,39 @@ export const ConsultoriaSessionCreationModal: React.FC<ConsultoriaSessionCreatio
           </div>
         </form>
       </div>
+
+      {/* Modal Interno de Centro Global de Automatizaciones */}
+      {isInternalAutomationsOpen && (
+        <div className="fixed inset-0 z-[80] bg-black/80 backdrop-blur-xs flex items-center justify-center p-3 sm:p-5">
+          <div className="bg-white dark:bg-neutral-900 rounded-3xl border border-gray-200 dark:border-neutral-800 w-full max-w-5xl max-h-[92vh] flex flex-col shadow-2xl overflow-hidden animate-scale-up">
+            <div className="p-4 sm:p-5 border-b border-gray-100 dark:border-neutral-800 flex items-center justify-between bg-gray-50/80 dark:bg-neutral-900/80 shrink-0">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-xl bg-amber-500/20 text-amber-600 dark:text-amber-400">
+                  <Zap className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-black dark:text-white">
+                    Centro Global de Automatizaciones & Webhooks Make.com
+                  </h3>
+                  <p className="text-xs text-gray-500 dark:text-neutral-400">
+                    Disparadores, pruebas en vivo y registro de sincronización
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsInternalAutomationsOpen(false)}
+                className="p-2 rounded-xl text-gray-400 hover:text-black dark:hover:text-white hover:bg-gray-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-4 sm:p-6 overflow-y-auto flex-1">
+              <AdminAutomationsManager />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
