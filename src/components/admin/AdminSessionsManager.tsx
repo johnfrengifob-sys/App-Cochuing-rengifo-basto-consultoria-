@@ -123,7 +123,6 @@ export const AdminSessionsManager: React.FC<AdminSessionsManagerProps> = ({
       focus: 'Liderazgo ontológico, visión compartida, maestría en la acción directiva y trascendencia.',
     },
   });
-  const [sessionLevelAssignments, setSessionLevelAssignments] = useState<Record<number, 'Nivel I' | 'Nivel II' | 'Nivel III'>>({});
 
   // Filtros de búsqueda en sesiones programadas
   const [sessionSearch, setSessionSearch] = useState('');
@@ -319,18 +318,13 @@ export const AdminSessionsManager: React.FC<AdminSessionsManagerProps> = ({
       },
     });
 
-    const map: Record<number, 'Nivel I' | 'Nivel II' | 'Nivel III'> = {};
-    nodes.forEach((n) => {
-      map[n.step] = (n.level as 'Nivel I' | 'Nivel II' | 'Nivel III') || 'Nivel I';
-    });
-    setSessionLevelAssignments(map);
     setIsLevelEditorOpen(true);
   };
 
   // Guardar cambios del Editor de Niveles en todas las sesiones y sincronizar
   const handleSaveLevels = () => {
     const updated = nodes.map((node) => {
-      const assignedLevel = sessionLevelAssignments[node.step] || node.level || 'Nivel I';
+      const assignedLevel = (node.level as 'Nivel I' | 'Nivel II' | 'Nivel III') || 'Nivel I';
       const levelMeta = editingLevels[assignedLevel];
       return {
         ...node,
@@ -349,7 +343,7 @@ export const AdminSessionsManager: React.FC<AdminSessionsManagerProps> = ({
     }
     if (onRefreshParent) onRefreshParent();
     setIsLevelEditorOpen(false);
-    showNotification('Niveles formativos y asignación de sesiones actualizados con éxito.');
+    showNotification('Niveles formativos actualizados con éxito.');
   };
 
   // Guardar cambios del módulo en edición
@@ -412,13 +406,29 @@ export const AdminSessionsManager: React.FC<AdminSessionsManagerProps> = ({
     });
   };
 
-  // Duplicar módulo
+  // Duplicar módulo / tablero desde el catálogo
   const handleDuplicate = (step: number, e: React.MouseEvent) => {
     e.stopPropagation();
     const dup = OntologicalStore.duplicateProgramNode(step);
     if (dup) {
       refreshAll();
-      showNotification(`Módulo ${step} duplicado como Módulo ${dup.step}.`);
+      showNotification(`Tablero duplicado con éxito como Módulo ${dup.step} ("${dup.sessionTitle}").`);
+    }
+  };
+
+  // Duplicar tablero directamente desde el panel editor
+  const handleDuplicateFromEditor = () => {
+    if (!formData) return;
+    // Guardar cambios actuales en el nodo antes de duplicar
+    OntologicalStore.updateProgramNode(formData.step, formData);
+    const dup = OntologicalStore.duplicateProgramNode(formData.step);
+    if (dup) {
+      refreshAll();
+      setFormData(JSON.parse(JSON.stringify(dup)));
+      setActiveStep(dup.step);
+      showNotification(
+        `Tablero duplicado con éxito como Módulo ${dup.step} ("${dup.sessionTitle}"). Ahora estás editando la copia.`
+      );
     }
   };
 
@@ -848,10 +858,11 @@ export const AdminSessionsManager: React.FC<AdminSessionsManagerProps> = ({
                         <button
                           type="button"
                           onClick={(e) => handleDuplicate(node.step, e)}
-                          title="Duplicar Módulo"
-                          className="p-1.5 rounded-lg text-gray-400 hover:text-black dark:hover:text-white hover:bg-gray-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
+                          title="Duplicar este tablero"
+                          className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl border border-gray-200/80 dark:border-neutral-700/80 text-gray-600 dark:text-neutral-300 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 hover:border-indigo-300 dark:hover:border-indigo-700 text-[11px] font-semibold transition-all cursor-pointer shadow-2xs"
                         >
-                          <Copy className="w-3.5 h-3.5" />
+                          <Copy className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
+                          <span>Duplicar Tablero</span>
                         </button>
                         <button
                           type="button"
@@ -940,6 +951,16 @@ export const AdminSessionsManager: React.FC<AdminSessionsManagerProps> = ({
               </div>
 
               <div className="flex items-center gap-2 shrink-0">
+                <button
+                  type="button"
+                  onClick={handleDuplicateFromEditor}
+                  className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 hover:border-indigo-300 dark:hover:border-indigo-700 text-gray-700 dark:text-neutral-200 hover:text-indigo-600 dark:hover:text-indigo-400 text-xs font-semibold shadow-2xs cursor-pointer transition-all active:scale-[0.98]"
+                  title="Duplicar este tablero con su contenido actual"
+                >
+                  <Copy className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
+                  <span>Duplicar Tablero</span>
+                </button>
+
                 <button
                   type="button"
                   onClick={handleSaveModule}
@@ -1069,13 +1090,13 @@ export const AdminSessionsManager: React.FC<AdminSessionsManagerProps> = ({
 
                 <div>
                   <label className="block text-[11px] font-semibold text-black dark:text-white mb-1">
-                    Consigna / Prompt de Trabajo para el Participante
+                    Requerimientos para el Espacio
                   </label>
                   <input
                     type="text"
                     value={formData.levelPrompt || ''}
                     onChange={(e) => setFormData({ ...formData, levelPrompt: e.target.value })}
-                    placeholder="Registra los acuerdos, prioridades y compromisos de acción en este espacio..."
+                    placeholder="Requerimientos, condiciones previas y preparación para este espacio..."
                     className="w-full px-3 py-2 text-xs rounded-xl border border-gray-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-black dark:text-white"
                   />
                 </div>
@@ -1496,7 +1517,7 @@ export const AdminSessionsManager: React.FC<AdminSessionsManagerProps> = ({
                     Editor de Niveles Formativos RBC
                   </h3>
                   <p className="text-xs text-gray-500 dark:text-neutral-400">
-                    Configura la identidad pedagógica de cada nivel y asigna qué sesiones corresponden a cada fase.
+                    Configura la identidad pedagógica y requerimientos de cada nivel formativo.
                   </p>
                 </div>
               </div>
@@ -1561,7 +1582,7 @@ export const AdminSessionsManager: React.FC<AdminSessionsManagerProps> = ({
 
                 <div>
                   <label className="block text-xs font-bold text-gray-700 dark:text-neutral-300 mb-1">
-                    Pregunta Disparadora / Prompt Ontológico Central
+                    Requerimientos para el Espacio
                   </label>
                   <textarea
                     rows={3}
@@ -1576,81 +1597,9 @@ export const AdminSessionsManager: React.FC<AdminSessionsManagerProps> = ({
                         },
                       }));
                     }}
-                    placeholder="Pregunta o reflexión guía que el coachee responderá en esta fase..."
+                    placeholder="Requerimientos, acuerdos previos, condiciones y preparación necesarios para este espacio..."
                     className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-gray-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-black dark:text-white focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
                   />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-gray-700 dark:text-neutral-300 mb-1">
-                    Enfoque y Ámbito de Observación
-                  </label>
-                  <textarea
-                    rows={2}
-                    value={editingLevels[activeLevelTab]?.focus || ''}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      setEditingLevels((prev) => ({
-                        ...prev,
-                        [activeLevelTab]: {
-                          ...prev[activeLevelTab],
-                          focus: val,
-                        },
-                      }));
-                    }}
-                    placeholder="Descripción resumida del alcance ontológico de este nivel..."
-                    className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-gray-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-black dark:text-white focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
-                  />
-                </div>
-
-                {/* Asignación de Sesiones al Nivel */}
-                <div className="pt-4 border-t border-gray-100 dark:border-neutral-800 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <label className="text-xs font-bold text-gray-700 dark:text-neutral-300">
-                      Asignación de Sesiones a este Nivel
-                    </label>
-                    <span className="text-[11px] text-gray-400">
-                      Selecciona las sesiones que pertenecen a {activeLevelTab}
-                    </span>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-48 overflow-y-auto p-1">
-                    {nodes.map((node) => {
-                      const currentAssigned = sessionLevelAssignments[node.step] || node.level || 'Nivel I';
-                      const isAssignedToThisTab = currentAssigned === activeLevelTab;
-
-                      return (
-                        <div
-                          key={node.step}
-                          onClick={() => {
-                            setSessionLevelAssignments((prev) => ({
-                              ...prev,
-                              [node.step]: activeLevelTab,
-                            }));
-                          }}
-                          className={`p-2.5 rounded-xl border transition-all cursor-pointer flex items-center justify-between gap-2 ${
-                            isAssignedToThisTab
-                              ? 'bg-indigo-50/80 dark:bg-indigo-950/40 border-indigo-300 dark:border-indigo-700 text-indigo-950 dark:text-indigo-200 font-semibold'
-                              : 'bg-gray-50/50 dark:bg-neutral-800/40 border-gray-200 dark:border-neutral-700 text-gray-600 dark:text-neutral-400 hover:bg-gray-100'
-                          }`}
-                        >
-                          <div className="flex items-center gap-2 truncate">
-                            <span className="w-5 h-5 rounded-md bg-white dark:bg-neutral-700 text-[10px] font-mono font-bold flex items-center justify-center shrink-0">
-                              {node.step}
-                            </span>
-                            <span className="text-xs truncate">{node.sessionTitle}</span>
-                          </div>
-                          <span className={`text-[10px] px-1.5 py-0.5 rounded-md shrink-0 font-mono ${
-                            isAssignedToThisTab
-                              ? 'bg-indigo-600 text-white'
-                              : 'bg-gray-200 dark:bg-neutral-700 text-gray-600 dark:text-neutral-300'
-                          }`}>
-                            {currentAssigned}
-                          </span>
-                        </div>
-                      );
-                    })}
-                  </div>
                 </div>
               </div>
             </div>
