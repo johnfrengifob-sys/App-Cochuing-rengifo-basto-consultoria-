@@ -26,6 +26,7 @@ export interface ServerDbState {
   paymentRequests: any[];
   cronogramaEvents?: CronogramaEvent[];
   programNodes?: ProgramNodeInfo[];
+  levelConfigs?: Record<string, any>;
   formsSheetsIntegrations?: FormsSheetsIntegrationPair[];
   deletedWorkshopIds?: string[];
   lastUpdated: string;
@@ -78,10 +79,12 @@ export class ServerDbSyncService {
     postSessionForms?: PostSessionForm[];
     cronogramaEvents?: CronogramaEvent[];
     programNodes?: ProgramNodeInfo[];
+    levelConfigs?: Record<string, any>;
     formsSheetsIntegrations?: FormsSheetsIntegrationPair[];
     deletedWorkshopIds?: string[];
     deletedSessionIds?: string[];
     replaceSessions?: boolean;
+    replaceProgramNodes?: boolean;
   }): Promise<ServerDbState | null> {
     if (this.isSyncing) return null;
     this.isSyncing = true;

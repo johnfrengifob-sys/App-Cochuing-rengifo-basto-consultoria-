@@ -41,6 +41,7 @@ import {
   BitacoraTallerEntry,
   UnifiedClientOntologicalCrossData,
   UnifiedSynthesis,
+  LevelConfig,
 } from '../types';
 import promotionalEventBannerImg from '../assets/images/proximo_evento_banner_1788270380574.jpg';
 import coachAvatarImg from '../assets/images/regenerated_image_1788287101599.jpg';
@@ -226,9 +227,9 @@ export let PROGRAM_NODES: ProgramNodeInfo[] = [
   },
   {
     step: 3,
-    weekLabel: 'Semanas 5-6',
-    level: 'Nivel II',
-    levelTitle: 'Corporalidad & Reencuadre',
+    weekLabel: 'Semanas 3-4',
+    level: 'Nivel I',
+    levelTitle: 'Fundamentos & Transparencia',
     sessionTitle: 'Somatización, Mandatos y Sabiduría de las Emociones',
     objective:
       'Decodificar los mensajes somáticos en el cuerpo reconociendo la sabiduría intrínseca de cada emoción (el miedo como prudencia, la culpa como auto-reparación y la exigencia como límite adaptativo).',
@@ -286,9 +287,9 @@ export let PROGRAM_NODES: ProgramNodeInfo[] = [
   },
   {
     step: 4,
-    weekLabel: 'Semanas 7-8',
-    level: 'Nivel II',
-    levelTitle: 'Corporalidad & Reencuadre',
+    weekLabel: 'Semanas 3-4',
+    level: 'Nivel I',
+    levelTitle: 'Fundamentos & Transparencia',
     sessionTitle: 'Reencuadre de Juicios, Reclamos y Promesas',
     objective:
       'Fundamentar juicios maestros limitantes y transformar la queja estéril en reclamos ontológicos y pedidos orientados a la coordinación de acciones impecables.',
@@ -346,9 +347,9 @@ export let PROGRAM_NODES: ProgramNodeInfo[] = [
   },
   {
     step: 5,
-    weekLabel: 'Semanas 9-10',
-    level: 'Nivel III',
-    levelTitle: 'Dirección & Trascendencia',
+    weekLabel: 'Semanas 5-6',
+    level: 'Nivel II',
+    levelTitle: 'Corporalidad, Relaciones & Emocionalidad',
     sessionTitle: 'Diseño de Conversaciones de Futuro y Posibilidad',
     objective:
       'Proyectar escenarios de certeza interna, construyendo ofertas irresistibles y relaciones basadas en la confianza generativa y la soberanía ontológica.',
@@ -405,9 +406,9 @@ export let PROGRAM_NODES: ProgramNodeInfo[] = [
   },
   {
     step: 6,
-    weekLabel: 'Semanas 11-12',
-    level: 'Nivel III',
-    levelTitle: 'Dirección & Trascendencia',
+    weekLabel: 'Semanas 5-6',
+    level: 'Nivel II',
+    levelTitle: 'Corporalidad, Relaciones & Emocionalidad',
     sessionTitle: 'Integración Ontológica y Compromisos Innegociables',
     objective:
       'Consolidar el nuevo observador ontológico con protocolos de auto-asistencia permanente, estándares innegociables y coherencia lingüística, emocional y corporal.',
@@ -465,9 +466,9 @@ export let PROGRAM_NODES: ProgramNodeInfo[] = [
   },
   {
     step: 7,
-    weekLabel: 'Semana 7',
+    weekLabel: 'Semanas 7-8',
     level: 'Nivel II',
-    levelTitle: 'Arquitectura Lingüística & Compromisos',
+    levelTitle: 'Corporalidad, Relaciones & Emocionalidad',
     sessionTitle: 'El Arte de la Escucha Comprometida y el Silencio Fecundo',
     objective:
       'Trascender la escucha automática para habitar la presencia atenta, desactivar la necesidad de validación inmediata y generar espacios de coordinación impecables.',
@@ -493,9 +494,9 @@ export let PROGRAM_NODES: ProgramNodeInfo[] = [
   },
   {
     step: 8,
-    weekLabel: 'Semana 8',
+    weekLabel: 'Semanas 7-8',
     level: 'Nivel II',
-    levelTitle: 'Arquitectura Lingüística & Compromisos',
+    levelTitle: 'Corporalidad, Relaciones & Emocionalidad',
     sessionTitle: 'Gestión Adaptativa de la Culpa, Miedo e Ira Directiva',
     objective:
       'Comprender la raíz ontológica de las emociones complejas para transformarlas en energía de acción lúcida y cuidado legítimo.',
@@ -521,7 +522,7 @@ export let PROGRAM_NODES: ProgramNodeInfo[] = [
   },
   {
     step: 9,
-    weekLabel: 'Semana 9',
+    weekLabel: 'Semanas 9-10',
     level: 'Nivel III',
     levelTitle: 'Dirección & Trascendencia',
     sessionTitle: 'Soberanía Relacional y Reconfiguración de Vínculos de Confianza',
@@ -549,7 +550,7 @@ export let PROGRAM_NODES: ProgramNodeInfo[] = [
   },
   {
     step: 10,
-    weekLabel: 'Semana 10',
+    weekLabel: 'Semanas 9-10',
     level: 'Nivel III',
     levelTitle: 'Dirección & Trascendencia',
     sessionTitle: 'Presencia Ejecutiva, Autoridad Serena y Arraigo Corporal',
@@ -577,7 +578,7 @@ export let PROGRAM_NODES: ProgramNodeInfo[] = [
   },
   {
     step: 11,
-    weekLabel: 'Semana 11',
+    weekLabel: 'Semanas 11-12',
     level: 'Nivel III',
     levelTitle: 'Dirección & Trascendencia',
     sessionTitle: 'Diseño de Conversaciones de Futuro y Nuevas Posibilidades',
@@ -605,7 +606,7 @@ export let PROGRAM_NODES: ProgramNodeInfo[] = [
   },
   {
     step: 12,
-    weekLabel: 'Semana 12',
+    weekLabel: 'Semanas 11-12',
     level: 'Nivel III',
     levelTitle: 'Dirección & Trascendencia',
     sessionTitle: 'Consolidación del Nuevo Observador, Carta de Innegociables y Cierre',
@@ -809,6 +810,37 @@ const STORAGE_KEYS = {
   EXPERIENCES: 'rbc_ontological_experiences_v1',
   DB_PURGED_CLEAN: 'rbc_db_purged_clean_v1',
   DELETED_WORKSHOP_IDS: 'rbc_deleted_workshop_ids_v2',
+  LEVEL_CONFIGS: 'rbc_level_configs_v3',
+};
+
+export const DEFAULT_LEVEL_CONFIGS: Record<'Nivel I' | 'Nivel II' | 'Nivel III', LevelConfig> = {
+  'Nivel I': {
+    id: 'Nivel I',
+    title: 'Nivel I: Fundamentos & Transparencia',
+    prompt: 'Registra los límites que has omitido declarar y los acuerdos tácitos que están drenando tu energía vital y directiva.',
+    focus: 'Fundamentos del observador ontológico, quiebres cotidianos, juicios automáticos y coherencia básica.',
+    description: 'Bases del observador ontológico, quiebres, juicios y coherencia básica.',
+    color: 'emerald',
+    badgeColor: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/20',
+  },
+  'Nivel II': {
+    id: 'Nivel II',
+    title: 'Nivel II: Corporalidad, Relaciones & Emocionalidad',
+    prompt: 'Observa la recurrencia de tus estados de ánimo y cómo condicionan tus conversaciones y promesas.',
+    focus: 'Diseño conversacional, gestión de emocionalidad, corporalidad y coordinación de acciones.',
+    description: 'Diseño conversacional, gestión de emocionalidad, corporalidad y coordinación de acciones.',
+    color: 'indigo',
+    badgeColor: 'bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 border-indigo-500/20',
+  },
+  'Nivel III': {
+    id: 'Nivel III',
+    title: 'Nivel III: Dirección & Trascendencia',
+    prompt: 'Evalúa la coherencia de tu visión de futuro y el impacto transformacional de tu liderazgo en tu entorno.',
+    focus: 'Liderazgo ontológico, visión compartida, maestría en la acción directiva y trascendencia.',
+    description: 'Liderazgo ontológico, visión compartida, maestría en la acción directiva y trascendencia.',
+    color: 'purple',
+    badgeColor: 'bg-purple-500/10 text-purple-700 dark:text-purple-400 border-purple-500/20',
+  },
 };
 
 export const INITIAL_AUTOMATED_TRIGGERS: AutomatedTriggerConfig[] = [
@@ -1833,6 +1865,122 @@ export class OntologicalStore {
     } catch (e) {
       console.warn('Storage error:', e);
     }
+  }
+
+  // --- NIVELES FORMATIVOS (CONFIGURACIÓN GLOBAL) ---
+  static getLevelConfigs(): Record<'Nivel I' | 'Nivel II' | 'Nivel III', LevelConfig> {
+    const saved = this.load<Record<'Nivel I' | 'Nivel II' | 'Nivel III', LevelConfig>>(
+      STORAGE_KEYS.LEVEL_CONFIGS,
+      DEFAULT_LEVEL_CONFIGS
+    );
+    return {
+      'Nivel I': { ...DEFAULT_LEVEL_CONFIGS['Nivel I'], ...(saved?.['Nivel I'] || {}) },
+      'Nivel II': { ...DEFAULT_LEVEL_CONFIGS['Nivel II'], ...(saved?.['Nivel II'] || {}) },
+      'Nivel III': { ...DEFAULT_LEVEL_CONFIGS['Nivel III'], ...(saved?.['Nivel III'] || {}) },
+    };
+  }
+
+  static saveLevelConfigs(configs: Record<'Nivel I' | 'Nivel II' | 'Nivel III', LevelConfig>): void {
+    const merged: Record<'Nivel I' | 'Nivel II' | 'Nivel III', LevelConfig> = {
+      'Nivel I': { ...DEFAULT_LEVEL_CONFIGS['Nivel I'], ...(configs?.['Nivel I'] || {}) },
+      'Nivel II': { ...DEFAULT_LEVEL_CONFIGS['Nivel II'], ...(configs?.['Nivel II'] || {}) },
+      'Nivel III': { ...DEFAULT_LEVEL_CONFIGS['Nivel III'], ...(configs?.['Nivel III'] || {}) },
+    };
+    this.save(STORAGE_KEYS.LEVEL_CONFIGS, merged);
+
+    // 1. Actualizar títulos y prompts en todos los programNodes
+    const nodes = this.getProgramNodes();
+    let nodesModified = false;
+    const updatedNodes = nodes.map((node) => {
+      const assignedLevel = (node.level as 'Nivel I' | 'Nivel II' | 'Nivel III') || (
+        (node.step <= 4) ? 'Nivel I' : (node.step <= 8) ? 'Nivel II' : 'Nivel III'
+      );
+      const lvlMeta = merged[assignedLevel];
+      if (lvlMeta) {
+        nodesModified = true;
+        return {
+          ...node,
+          level: assignedLevel,
+          levelTitle: lvlMeta.title.trim() || node.levelTitle,
+          levelPrompt: (lvlMeta.prompt && lvlMeta.prompt.trim()) || node.levelPrompt,
+        };
+      }
+      return node;
+    });
+    if (nodesModified) {
+      this.save(STORAGE_KEYS.PROGRAM_NODES, updatedNodes);
+      PROGRAM_NODES.length = 0;
+      PROGRAM_NODES.push(...updatedNodes);
+    }
+
+    // 2. Anclar y actualizar en todas las sesiones existentes en la base de datos
+    const sessions = this.getSessions();
+    let sessionsModified = false;
+    const updatedSessions = sessions.map((s) => {
+      const sLevel = (s.level as 'Nivel I' | 'Nivel II' | 'Nivel III') || (
+        (s.sessionNumber || 1) <= 4 ? 'Nivel I' : (s.sessionNumber || 1) <= 8 ? 'Nivel II' : 'Nivel III'
+      );
+      const lvlMeta = merged[sLevel];
+      if (lvlMeta && (s.levelTitle !== lvlMeta.title || s.level !== sLevel)) {
+        sessionsModified = true;
+        return {
+          ...s,
+          level: sLevel,
+          levelTitle: lvlMeta.title,
+        };
+      }
+      return s;
+    });
+    if (sessionsModified) {
+      this.save(STORAGE_KEYS.SESSIONS, updatedSessions);
+    }
+
+    // 3. Sincronizar con el servidor y endpoints dedicados
+    try {
+      fetch('/api/db/level-configs', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ levelConfigs: merged }),
+      }).catch(() => {});
+    } catch {
+      // safe fallback
+    }
+
+    try {
+      ServerDbSyncService.syncWithServer({
+        levelConfigs: merged,
+        programNodes: updatedNodes,
+        replaceProgramNodes: true,
+        sessions: updatedSessions,
+        replaceSessions: true,
+      }).catch(() => {});
+    } catch {
+      // safe fallback
+    }
+
+    try {
+      FirestoreSyncService.syncAllProgramNodes(updatedNodes).catch(() => {});
+    } catch {
+      // safe fallback
+    }
+
+    // 4. Emitir eventos reactivos para actualización instantánea en toda la interfaz
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('rbc-levels-updated', { detail: merged }));
+      window.dispatchEvent(new CustomEvent('rbc-program-nodes-updated', { detail: updatedNodes }));
+      window.dispatchEvent(new CustomEvent('rbc-sessions-updated', { detail: { sessions: updatedSessions } }));
+    }
+  }
+
+  static updateLevelConfig(levelId: 'Nivel I' | 'Nivel II' | 'Nivel III', patch: Partial<LevelConfig>): void {
+    const current = this.getLevelConfigs();
+    current[levelId] = {
+      ...current[levelId],
+      ...patch,
+      title: patch.title?.trim() || current[levelId].title,
+      prompt: patch.prompt?.trim() || current[levelId].prompt,
+    };
+    this.saveLevelConfigs(current);
   }
 
   static getProgramNodes(): ProgramNodeInfo[] {
@@ -4429,7 +4577,17 @@ export class OntologicalStore {
       safeList = safeList.filter((s) => s.clientId !== 'client-carolina');
     }
 
+    const levelConfigs = this.getLevelConfigs();
+
     safeList.forEach((s) => {
+      const sLevel = (s.level as 'Nivel I' | 'Nivel II' | 'Nivel III') || (
+        (s.sessionNumber || 1) <= 4 ? 'Nivel I' : (s.sessionNumber || 1) <= 8 ? 'Nivel II' : 'Nivel III'
+      );
+      s.level = sLevel;
+      if (!s.levelTitle || levelConfigs[sLevel]?.title) {
+        s.levelTitle = levelConfigs[sLevel]?.title || s.levelTitle;
+      }
+
       if (!s.googleSheetsUrl || s.googleSheetsUrl.includes('1RBC_')) {
         s.googleSheetsUrl = 'https://docs.google.com/spreadsheets/d/1Mm3CRZVvKYFak5APwIBmfK-vZAUfnx1zg-eq8WOLbZk/edit?usp=sharing';
       }
@@ -4468,6 +4626,8 @@ export class OntologicalStore {
     try {
       ServerDbSyncService.syncWithServer({
         sessions,
+        replaceSessions: true,
+        levelConfigs: this.getLevelConfigs(),
       }).catch(() => {});
     } catch {
       // safe fallback
@@ -4488,6 +4648,7 @@ export class OntologicalStore {
     const now = Date.now();
     const sessions: Session[] = [];
     const programNodes = this.getProgramNodes();
+    const levelConfigs = this.getLevelConfigs();
     const sessionCount = programNodes.length > 0 ? programNodes.length : 6;
 
     for (let num = 1; num <= sessionCount; num++) {
@@ -4499,6 +4660,7 @@ export class OntologicalStore {
       const nodeInfo = programNodes.find((n) => n.step === num);
 
       const lvl = num <= 4 ? 'Nivel I' : (num <= 8 ? 'Nivel II' : 'Nivel III');
+      const lvlTitle = levelConfigs[lvl]?.title || nodeInfo?.levelTitle || (lvl === 'Nivel I' ? 'Nivel I: Fundamentos & Transparencia' : lvl === 'Nivel II' ? 'Nivel II: Corporalidad, Relaciones & Emocionalidad' : 'Nivel III: Dirección & Trascendencia');
       const wk = num <= 2 ? 'Semanas 1-2' : (num <= 4 ? 'Semanas 3-4' : (num <= 6 ? 'Semanas 5-6' : (num <= 8 ? 'Semanas 7-8' : (num <= 10 ? 'Semanas 9-10' : 'Semanas 11-12'))));
       const sType: ConsultoriaSessionType = isMilestone ? 'cierre_ciclo' : 'sesion';
       const sTitle = nodeInfo?.sessionTitle 
@@ -4512,6 +4674,7 @@ export class OntologicalStore {
         title: sTitle,
         sessionType: sType,
         level: lvl,
+        levelTitle: lvlTitle,
         weekLabel: wk,
         weekNumber: num,
         date: sessionDate,

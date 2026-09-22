@@ -69,6 +69,7 @@ export const WorkshopsAndAcademicHub: React.FC = () => {
   const [topic, setTopic] = useState('Mapeo de la Transparencia, Quiebres y Límites');
   const [targetAudience, setTargetAudience] = useState('Directores Ejecutivos y Socios');
   const [selectedLevel, setSelectedLevel] = useState<'Nivel I' | 'Nivel II' | 'Nivel III'>('Nivel II');
+  const levelConfigs = OntologicalStore.getLevelConfigs();
   const [durationHours, setDurationHours] = useState(4);
   const [isGenerating, setIsGenerating] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
@@ -349,9 +350,9 @@ Rengifo Basto Consultoría Ontológica
                   onChange={(e) => setSelectedLevel(e.target.value as any)}
                   className="w-full px-3.5 py-2.5 bg-gray-50 dark:bg-neutral-900 border border-gray-200 dark:border-neutral-800 rounded-lg text-sm text-gray-900 dark:text-white focus:outline-none"
                 >
-                  <option value="Nivel I">Nivel I: Auto-observación & Quiebres</option>
-                  <option value="Nivel II">Nivel II: Corporalidad & Reencuadre</option>
-                  <option value="Nivel III">Nivel III: Soberanía & Dirección</option>
+                  <option value="Nivel I">{levelConfigs['Nivel I']?.title || 'Nivel I: Fundamentos & Transparencia'}</option>
+                  <option value="Nivel II">{levelConfigs['Nivel II']?.title || 'Nivel II: Corporalidad, Relaciones & Emocionalidad'}</option>
+                  <option value="Nivel III">{levelConfigs['Nivel III']?.title || 'Nivel III: Dirección & Trascendencia'}</option>
                 </select>
               </div>
 

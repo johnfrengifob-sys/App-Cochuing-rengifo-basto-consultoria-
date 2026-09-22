@@ -304,26 +304,14 @@ export const ParticipantTalleresModule: React.FC<ParticipantTalleresModuleProps>
               </a>
 
               <a
-                href={OFFICIAL_FORMS_SHEETS_BASE_MAP.talleres_registro.sheetUrl}
+                href={OFFICIAL_FORMS_SHEETS_BASE_MAP.talleres_registro.formUrl}
                 target="_blank"
                 rel="noreferrer"
-                className="px-3.5 py-2.5 rounded-xl border border-emerald-500/30 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-800 dark:text-emerald-300 text-xs font-semibold transition-colors inline-flex items-center gap-1.5 cursor-pointer shadow-2xs"
-                title="Ver Base de Datos de Acuerdos de Talleres en Google Sheets"
+                className="px-3.5 py-2.5 rounded-xl border border-black/15 dark:border-white/15 bg-white/70 dark:bg-neutral-800/70 hover:bg-white dark:hover:bg-neutral-700 text-neutral-800 dark:text-neutral-200 text-xs font-semibold transition-colors inline-flex items-center gap-1.5 cursor-pointer shadow-2xs"
+                title="Diligenciar Acuerdo y Registro Oficial en Google Forms"
               >
-                <Table className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                <span>Ver en Sheets (Acuerdos)</span>
-                <ExternalLink className="w-3 h-3 opacity-60" />
-              </a>
-
-              <a
-                href={OFFICIAL_FORMS_SHEETS_BASE_MAP.bitacora_talleres.sheetUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="px-3.5 py-2.5 rounded-xl border border-indigo-500/30 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-800 dark:text-indigo-300 text-xs font-semibold transition-colors inline-flex items-center gap-1.5 cursor-pointer shadow-2xs"
-                title="Ver Base de Datos de Bitácoras de Talleres en Google Sheets"
-              >
-                <Table className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
-                <span>Ver en Sheets (Bitácoras)</span>
+                <ShieldCheck className="w-4 h-4 text-emerald-500" />
+                <span>Acuerdo y Registro (Forms)</span>
                 <ExternalLink className="w-3 h-3 opacity-60" />
               </a>
 

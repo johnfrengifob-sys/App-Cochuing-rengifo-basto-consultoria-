@@ -160,6 +160,7 @@ async function startServer() {
     paymentRequests: any[];
     cronogramaEvents: any[];
     programNodes: any[];
+    levelConfigs?: Record<string, any>;
     formsSheetsIntegrations?: any[];
     deletedWorkshopIds?: string[];
     lastUpdated: string;
@@ -271,36 +272,8 @@ async function startServer() {
 
   const SEED_CRONOGRAMA_EVENTS = [
     {
-      id: 'event-1789824188701',
-      title: 'Raíz & Balance',
-      subtitle: '"El suelo puede temblar a tu paso y sacudirlo todo. Cuando la tormenta emocional pasa, el poder de reconstruir tu futuro depende de dónde pones tus raíces."',
-      category: 'Primer Taller • En Vivo',
-      eventType: 'Taller',
-      date: '2026-10-11T00:00:00.000Z',
-      displayDate: '2026-10-10',
-      time: '9:00 PM - 10:30 PM (GMT-5)',
-      mode: 'Online (Google Meet)',
-      meetUrl: 'https://meet.google.com/nzk-ccya-hsk',
-      description: 'Conversatorio ontológico y vivencial de inicio: Raíz & Balance. Espacio reflexivo para mapear quiebres y enraizamiento.',
-      showOnHome: true,
-      capacityType: 'grupal',
-      capacity: 1000,
-      totalSpots: 1000,
-      spotsLeft: 1000,
-      priceAmount: 0,
-      price: 'Acceso Libre con Pre-Registro',
-      currency: 'COP',
-      launchDate: '2026-09-30',
-      eventDate: '2026-10-11T00:00:00.000Z',
-      facilitator: 'John Fredy Rengifo Basto (Master Coach Ontológico)',
-      featured: false,
-      status: 'upcoming',
-      googleFormsUrl: 'https://forms.gle/5Hiuxwq13n3gC3zt6',
-      googleSheetsUrl: 'https://docs.google.com/spreadsheets/d/1RBC_Bitacora_Talleres_Sheets/edit',
-    },
-    {
-      id: 'event-1789824792376',
-      title: 'Taller 1: Raíz (Cuerpo, Emoción y Evolución de las Emociones).',
+      id: 'taller-1-raiz',
+      title: 'Taller 1: Raíz y Balance Ontológico (Cuerpo, Emoción y Evolución de las Emociones)',
       subtitle: 'Espacio de educación emocional y desarrollo basado en autoobservación, conversación reflexiva y diseño de acciones conscientes (No terapia, no diagnóstico clínico)',
       category: 'Primer Taller • En Vivo',
       eventType: 'Taller',
@@ -310,27 +283,27 @@ async function startServer() {
       mode: 'Online (Google Meet)',
       meetUrl: 'https://meet.google.com/nzk-ccya-hsk',
       description: 'Primer taller vivencial: Deconstrucción somática, decodificación de emociones primarias y soberanía relacional.',
-      showOnHome: false,
+      showOnHome: true,
       capacityType: 'grupal',
       capacity: 1000,
       totalSpots: 1000,
       spotsLeft: 1000,
       priceAmount: 180000,
-      price: 'Acceso Libre con Pre-Registro',
+      price: '$180.000 COP',
       currency: 'COP',
       launchDate: '2026-10-10',
       eventDate: '2026-10-18T00:00:00.000Z',
       facilitator: 'John Fredy Rengifo Basto (Master Coach Ontológico)',
-      featured: false,
+      featured: true,
       status: 'upcoming',
       googleFormsUrl: 'https://forms.gle/5Hiuxwq13n3gC3zt6',
-      googleSheetsUrl: 'https://docs.google.com/spreadsheets/d/1RBC_Bitacora_Talleres_Sheets/edit',
+      googleSheetsUrl: 'https://docs.google.com/spreadsheets/d/1DyKs4OsJDTTOa8SMSvOQdWcttrmRKJ8_vxnJH9rV5UA/edit?usp=sharing',
     },
     {
-      id: 'event-1789828629011',
-      title: 'Taller 2: Tallo (Nivel II) - Lenguaje y Juicios.',
+      id: 'taller-2-tallo',
+      title: 'Taller 2: Tallo & Soberanía Relacional (Lenguaje, Juicios y Límites)',
       subtitle: 'Espacio de educación emocional y desarrollo basado en autoobservación, conversación reflexiva y diseño de acciones conscientes. No terapia. No diagnóstico clínico.',
-      category: 'Primer Taller • En Vivo',
+      category: 'Segundo Taller • En Vivo',
       eventType: 'Taller',
       date: '2026-11-01T00:00:00.000Z',
       displayDate: '2026-10-31',
@@ -344,7 +317,7 @@ async function startServer() {
       totalSpots: 1000,
       spotsLeft: 1000,
       priceAmount: 150000,
-      price: '$150,000 COP',
+      price: '$150.000 COP',
       currency: 'COP',
       launchDate: '2026-10-17',
       eventDate: '2026-11-01T00:00:00.000Z',
@@ -352,13 +325,13 @@ async function startServer() {
       featured: false,
       status: 'upcoming',
       googleFormsUrl: 'https://forms.gle/5Hiuxwq13n3gC3zt6',
-      googleSheetsUrl: 'https://docs.google.com/spreadsheets/d/1RBC_Bitacora_Talleres_Sheets/edit',
+      googleSheetsUrl: 'https://docs.google.com/spreadsheets/d/1DyKs4OsJDTTOa8SMSvOQdWcttrmRKJ8_vxnJH9rV5UA/edit?usp=sharing',
     },
     {
-      id: 'event-1789829005266',
-      title: 'Taller 03 Nivel III: Florecimiento - Acción, Propósito y Liderazgo Coherente',
+      id: 'taller-3-florecimiento',
+      title: 'Taller 3: Florecimiento & Integración (Acción, Propósito y Liderazgo Coherente)',
       subtitle: 'Espacio de educación emocional y desarrollo basado en autoobservación, conversación reflexiva y diseño de acciones conscientes. No terapia. No diagnóstico clínico.',
-      category: 'Primer Taller • En Vivo',
+      category: 'Tercer Taller • En Vivo',
       eventType: 'Taller',
       date: '2026-11-08T00:00:00.000Z',
       displayDate: '2026-11-07',
@@ -372,7 +345,7 @@ async function startServer() {
       totalSpots: 1000,
       spotsLeft: 1000,
       priceAmount: 150000,
-      price: '$150,000 COP',
+      price: '$150.000 COP',
       currency: 'COP',
       launchDate: '2026-10-31',
       eventDate: '2026-11-08T00:00:00.000Z',
@@ -380,7 +353,7 @@ async function startServer() {
       featured: true,
       status: 'upcoming',
       googleFormsUrl: 'https://forms.gle/5Hiuxwq13n3gC3zt6',
-      googleSheetsUrl: 'https://docs.google.com/spreadsheets/d/1RBC_Bitacora_Talleres_Sheets/edit',
+      googleSheetsUrl: 'https://docs.google.com/spreadsheets/d/1DyKs4OsJDTTOa8SMSvOQdWcttrmRKJ8_vxnJH9rV5UA/edit?usp=sharing',
     },
   ];
 
@@ -501,17 +474,30 @@ async function startServer() {
           });
         }
 
+        if (!Array.isArray(data.deletedWorkshopIds)) {
+          data.deletedWorkshopIds = [];
+        }
+        // Asegurar que los 3 talleres oficiales jamás se filtren por deletedWorkshopIds
+        const officialWorkshopIds = ['taller-1-raiz', 'taller-2-tallo', 'taller-3-florecimiento'];
+        const prevDeletedCount = data.deletedWorkshopIds.length;
+        data.deletedWorkshopIds = data.deletedWorkshopIds.filter((id: string) => !officialWorkshopIds.includes(id));
+        if (data.deletedWorkshopIds.length !== prevDeletedCount) {
+          modified = true;
+        }
+
         if (!Array.isArray(data.cronogramaEvents)) {
           data.cronogramaEvents = SEED_CRONOGRAMA_EVENTS.filter(
             (e: any) => !data.deletedWorkshopIds.includes(e.id)
           );
           modified = true;
         } else {
-          const beforeFilterCount = data.cronogramaEvents.length;
+          // Purgar talleres fantasma o IDs legados y mantener exclusivamente los 3 talleres oficiales
+          const ghostIds = ['event-1789824188701', 'event-1789824792376', 'event-1789828629011', 'event-1789829005266'];
+          const beforePurge = data.cronogramaEvents.length;
           data.cronogramaEvents = data.cronogramaEvents.filter(
-            (e: any) => !data.deletedWorkshopIds.includes(e.id)
+            (e: any) => !ghostIds.includes(e.id) && !data.deletedWorkshopIds.includes(e.id)
           );
-          if (data.cronogramaEvents.length !== beforeFilterCount) {
+          if (data.cronogramaEvents.length !== beforePurge) {
             modified = true;
           }
 
@@ -733,7 +719,10 @@ async function startServer() {
       }
 
       // Merge Program Nodes (Temarios modulares de talleres)
-      if (Array.isArray(clientState.programNodes)) {
+      if (clientState.replaceProgramNodes && Array.isArray(clientState.programNodes)) {
+        currentDb.programNodes = [...clientState.programNodes];
+        changed = true;
+      } else if (Array.isArray(clientState.programNodes)) {
         if (!Array.isArray(currentDb.programNodes)) currentDb.programNodes = [];
         clientState.programNodes.forEach((node: any) => {
           if (!node || node.step === undefined) return;
@@ -746,6 +735,36 @@ async function startServer() {
             changed = true;
           }
         });
+      }
+
+      // Merge Level Configurations (Nivel I, Nivel II, Nivel III)
+      if (clientState.levelConfigs && typeof clientState.levelConfigs === 'object') {
+        currentDb.levelConfigs = {
+          ...(currentDb.levelConfigs || {}),
+          ...clientState.levelConfigs,
+        };
+        // Propagate updated level titles to all sessions in the server database
+        if (Array.isArray(currentDb.sessions)) {
+          currentDb.sessions.forEach((s: any) => {
+            const sLvl = s.level || ((s.sessionNumber || 1) <= 4 ? 'Nivel I' : (s.sessionNumber || 1) <= 8 ? 'Nivel II' : 'Nivel III');
+            if (currentDb.levelConfigs[sLvl]?.title) {
+              s.levelTitle = currentDb.levelConfigs[sLvl].title;
+            }
+          });
+        }
+        // Propagate updated level titles and prompts to program nodes
+        if (Array.isArray(currentDb.programNodes)) {
+          currentDb.programNodes.forEach((n: any) => {
+            const nLvl = n.level || ((n.step || 1) <= 4 ? 'Nivel I' : (n.step || 1) <= 8 ? 'Nivel II' : 'Nivel III');
+            if (currentDb.levelConfigs[nLvl]?.title) {
+              n.levelTitle = currentDb.levelConfigs[nLvl].title;
+              if (currentDb.levelConfigs[nLvl]?.prompt) {
+                n.levelPrompt = currentDb.levelConfigs[nLvl].prompt;
+              }
+            }
+          });
+        }
+        changed = true;
       }
 
       // Merge Forms & Sheets Integrations
@@ -1071,6 +1090,94 @@ async function startServer() {
       });
     } catch (err: any) {
       res.status(500).json({ error: err.message || 'Error al eliminar sesión' });
+    }
+  });
+
+  // API: Get Level Configurations
+  app.get('/api/db/level-configs', (req, res) => {
+    try {
+      const db = readServerDatabase();
+      const defaultConfigs = {
+        'Nivel I': {
+          id: 'Nivel I',
+          title: 'Nivel I: Fundamentos & Transparencia',
+          prompt: 'Registra los límites que has omitido declarar y los acuerdos tácitos que están drenando tu energía vital y directiva.',
+          color: 'emerald',
+          badgeColor: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/20'
+        },
+        'Nivel II': {
+          id: 'Nivel II',
+          title: 'Nivel II: Corporalidad, Relaciones & Emocionalidad',
+          prompt: 'Observa la recurrencia de tus estados de ánimo y cómo condicionan tus conversaciones y promesas.',
+          color: 'indigo',
+          badgeColor: 'bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 border-indigo-500/20'
+        },
+        'Nivel III': {
+          id: 'Nivel III',
+          title: 'Nivel III: Dirección & Trascendencia',
+          prompt: 'Evalúa la coherencia de tu visión de futuro y el impacto transformacional de tu liderazgo en tu entorno.',
+          color: 'purple',
+          badgeColor: 'bg-purple-500/10 text-purple-700 dark:text-purple-400 border-purple-500/20'
+        }
+      };
+
+      res.json({
+        success: true,
+        levelConfigs: db.levelConfigs || defaultConfigs,
+      });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message || 'Error al obtener niveles' });
+    }
+  });
+
+  // API: Update Level Configurations and propagate globally
+  app.post('/api/db/level-configs', (req, res) => {
+    try {
+      const db = readServerDatabase();
+      const { levelConfigs } = req.body;
+      if (!levelConfigs || typeof levelConfigs !== 'object') {
+        return res.status(400).json({ error: 'Configuración de niveles inválida' });
+      }
+
+      db.levelConfigs = {
+        ...(db.levelConfigs || {}),
+        ...levelConfigs,
+      };
+
+      // Propagate updated titles to all sessions
+      if (Array.isArray(db.sessions)) {
+        db.sessions.forEach((s: any) => {
+          const sLvl = s.level || ((s.sessionNumber || 1) <= 4 ? 'Nivel I' : (s.sessionNumber || 1) <= 8 ? 'Nivel II' : 'Nivel III');
+          if (db.levelConfigs[sLvl]?.title) {
+            s.levelTitle = db.levelConfigs[sLvl].title;
+          }
+        });
+      }
+
+      // Propagate updated titles and prompts to program nodes
+      if (Array.isArray(db.programNodes)) {
+        db.programNodes.forEach((n: any) => {
+          const nLvl = n.level || ((n.step || 1) <= 4 ? 'Nivel I' : (n.step || 1) <= 8 ? 'Nivel II' : 'Nivel III');
+          if (db.levelConfigs[nLvl]?.title) {
+            n.levelTitle = db.levelConfigs[nLvl].title;
+            if (db.levelConfigs[nLvl]?.prompt) {
+              n.levelPrompt = db.levelConfigs[nLvl].prompt;
+            }
+          }
+        });
+      }
+
+      writeServerDatabase(db);
+      console.log('[Server DB] Niveles actualizados y anclados globalmente en la base de datos:', db.levelConfigs);
+
+      res.json({
+        success: true,
+        message: 'Niveles formativos actualizados y propagados globalmente en la base de datos',
+        levelConfigs: db.levelConfigs,
+        sessionsCount: (db.sessions || []).length,
+      });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message || 'Error al actualizar niveles' });
     }
   });
 

@@ -3,6 +3,7 @@ import { BrandLogo } from './BrandLogo';
 import { MapPin, Phone, MessageSquare, ShieldCheck, Mail, ExternalLink } from 'lucide-react';
 import { COMPANY_INFO } from '../services/store';
 import { SocialLinksBar } from './SocialLinksBar';
+import coachAvatarImg from '../assets/images/rengifo_basto_logo_1788288004105.jpg';
 
 interface CompanyFooterProps {
   minimal?: boolean;
@@ -58,6 +59,56 @@ export const CompanyFooter: React.FC<CompanyFooterProps> = ({
   return (
     <footer className={`bg-white/60 dark:bg-[#0D0D0E]/60 backdrop-blur-xl border-t border-white/60 dark:border-white/10 py-10 px-6 sm:px-8 transition-colors ${className}`}>
       <div className="max-w-7xl mx-auto space-y-8">
+        {/* Tarjeta de Perfil Fija: Coach Ontológico */}
+        <div className="p-5 sm:p-6 rounded-3xl border border-black/10 dark:border-white/10 bg-white/40 dark:bg-neutral-950/40 backdrop-blur-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-5 shadow-xs">
+          <div className="flex items-center gap-4">
+            <div className="relative shrink-0">
+              <img
+                src={coachAvatarImg}
+                alt="John Fredy Rengifo Basto"
+                className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl object-cover border border-black/15 dark:border-white/15 shadow-xs"
+              />
+              <span className="absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-white dark:border-neutral-950 shadow-xs" />
+            </div>
+            <div className="space-y-0.5">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-[10px] uppercase tracking-wider text-emerald-600 dark:text-emerald-400 font-semibold">
+                  Canal Directo Activo
+                </span>
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
+              </div>
+              <h3 className="text-base sm:text-lg font-bold text-black dark:text-white tracking-tight">
+                John Fredy Rengifo Basto
+              </h3>
+              <p className="text-xs font-semibold text-neutral-800 dark:text-neutral-200">
+                Coach Ontológico
+              </p>
+              <p className="text-[11px] text-neutral-500 dark:text-neutral-400 font-medium">
+                Rengifo Basto Consultoría Ontológica
+              </p>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2.5 pt-1 sm:pt-0">
+            <a
+              href={COMPANY_INFO.whatsappUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold transition-all duration-200 flex items-center justify-center gap-2 shadow-xs cursor-pointer hover:shadow-md active:scale-[0.99]"
+            >
+              <MessageSquare className="w-4 h-4 text-emerald-100" />
+              <span>WhatsApp Directo</span>
+            </a>
+            <a
+              href={`mailto:${COMPANY_INFO.email}`}
+              className="px-4 py-2.5 rounded-xl border border-black/15 dark:border-white/15 bg-white/70 dark:bg-neutral-900/70 hover:bg-white dark:hover:bg-neutral-800 text-black dark:text-white text-xs font-semibold transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer shadow-xs"
+            >
+              <Mail className="w-4 h-4 text-indigo-500" />
+              <span>Correo Oficial</span>
+            </a>
+          </div>
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-start">
           {/* Logo & Manifesto */}
           <div className="space-y-3">

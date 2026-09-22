@@ -50,6 +50,7 @@ export const ConsultoriaSessionCreationModal: React.FC<ConsultoriaSessionCreatio
   defaultClientId,
 }) => {
   const clients = OntologicalStore.getClients();
+  const levelConfigs = OntologicalStore.getLevelConfigs();
 
   const normalizeInitialType = (t?: ConsultoriaSessionType): ConsultoriaSessionType => {
     if (t === 'cierre_ciclo' || t === 'recopilacion_cycle') return 'cierre_ciclo';
@@ -269,6 +270,7 @@ export const ConsultoriaSessionCreationModal: React.FC<ConsultoriaSessionCreatio
       clientId,
       sessionNumber: sessionNum,
       level,
+      levelTitle: levelConfigs[level]?.title || (level === 'Nivel I' ? 'Nivel I: Fundamentos & Transparencia' : level === 'Nivel II' ? 'Nivel II: Corporalidad, Relaciones & Emocionalidad' : 'Nivel III: Dirección & Trascendencia'),
       weekLabel,
       weekNumber: parseInt(weekLabel.replace(/\D/g, '') || String(sessionNum), 10),
       date: new Date(dateStr).toISOString(),
@@ -494,9 +496,9 @@ export const ConsultoriaSessionCreationModal: React.FC<ConsultoriaSessionCreatio
                     onChange={(e) => setLevel(e.target.value as any)}
                     className="w-full p-2 rounded-xl border border-gray-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-black dark:text-white cursor-pointer"
                   >
-                    <option value="Nivel I">Nivel I (Fundamentos)</option>
-                    <option value="Nivel II">Nivel II (Profundización)</option>
-                    <option value="Nivel III">Nivel III (Trascendencia)</option>
+                    <option value="Nivel I">{levelConfigs['Nivel I']?.title || 'Nivel I (Fundamentos & Transparencia)'}</option>
+                    <option value="Nivel II">{levelConfigs['Nivel II']?.title || 'Nivel II (Corporalidad, Relaciones & Emocionalidad)'}</option>
+                    <option value="Nivel III">{levelConfigs['Nivel III']?.title || 'Nivel III (Dirección & Trascendencia)'}</option>
                   </select>
                 </div>
 

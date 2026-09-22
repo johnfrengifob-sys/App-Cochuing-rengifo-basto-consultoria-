@@ -207,8 +207,19 @@ export interface Session {
   automationsConfig?: SessionAutomationsConfig;
   expedienteSyncStatus?: 'synced' | 'pending' | 'draft';
   level?: 'Nivel I' | 'Nivel II' | 'Nivel III' | string;
+  levelTitle?: string;
   weekLabel?: string; // Ej. "Semanas 1-2", "Semanas 3-4", "Semana 1", etc.
   weekNumber?: number; // 1 to 12
+}
+
+export interface LevelConfig {
+  id: 'Nivel I' | 'Nivel II' | 'Nivel III';
+  title: string;
+  prompt?: string;
+  focus?: string;
+  description?: string;
+  badgeColor?: string;
+  color?: string;
 }
 
 export interface PostSessionForm {

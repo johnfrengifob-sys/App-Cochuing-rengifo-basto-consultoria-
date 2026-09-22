@@ -109,26 +109,30 @@ export const AdminSessionsManager: React.FC<AdminSessionsManagerProps> = ({
   // Estado del Editor de Niveles
   const [isLevelEditorOpen, setIsLevelEditorOpen] = useState(false);
   const [activeLevelTab, setActiveLevelTab] = useState<'Nivel I' | 'Nivel II' | 'Nivel III'>('Nivel I');
+  const [liveLevelConfigs, setLiveLevelConfigs] = useState(() => OntologicalStore.getLevelConfigs());
   const [editingLevels, setEditingLevels] = useState<{
     'Nivel I': { title: string; prompt: string; focus: string };
     'Nivel II': { title: string; prompt: string; focus: string };
     'Nivel III': { title: string; prompt: string; focus: string };
-  }>({
-    'Nivel I': {
-      title: 'Fundamentos & Transparencia',
-      prompt: 'Registra los límites que has omitido declarar y los acuerdos tácitos que están drenando tu energía vital y directiva.',
-      focus: 'Fundamentos del observador ontológico, quiebres cotidianos, juicios y coherencia básica.',
-    },
-    'Nivel II': {
-      title: 'Relaciones & Emocionalidad',
-      prompt: 'Observa la recurrencia de tus estados de ánimo y cómo condicionan tus conversaciones y promesas.',
-      focus: 'Diseño conversacional, gestión de emocionalidad, corporalidad y coordinación de acciones.',
-    },
-    'Nivel III': {
-      title: 'Dirección & Trascendencia',
-      prompt: 'Evalúa la coherencia de tu visión de futuro y el impacto transformacional de tu liderazgo en tu entorno.',
-      focus: 'Liderazgo ontológico, visión compartida, maestría en la acción directiva y trascendencia.',
-    },
+  }>(() => {
+    const cfgs = OntologicalStore.getLevelConfigs();
+    return {
+      'Nivel I': {
+        title: cfgs['Nivel I']?.title || 'Nivel I: Fundamentos & Transparencia',
+        prompt: cfgs['Nivel I']?.prompt || '',
+        focus: cfgs['Nivel I']?.focus || '',
+      },
+      'Nivel II': {
+        title: cfgs['Nivel II']?.title || 'Nivel II: Corporalidad, Relaciones & Emocionalidad',
+        prompt: cfgs['Nivel II']?.prompt || '',
+        focus: cfgs['Nivel II']?.focus || '',
+      },
+      'Nivel III': {
+        title: cfgs['Nivel III']?.title || 'Nivel III: Dirección & Trascendencia',
+        prompt: cfgs['Nivel III']?.prompt || '',
+        focus: cfgs['Nivel III']?.focus || '',
+      },
+    };
   });
 
   // Filtros de búsqueda en sesiones programadas
@@ -191,6 +195,7 @@ export const AdminSessionsManager: React.FC<AdminSessionsManagerProps> = ({
     const handleSync = () => {
       const freshNodes = OntologicalStore.getProgramNodes();
       setNodes(freshNodes);
+      setLiveLevelConfigs(OntologicalStore.getLevelConfigs());
       setQuestionnaires(OntologicalStore.getQuestionnaires());
       setSessions(OntologicalStore.getSessions());
       setClients(OntologicalStore.getClients());
@@ -202,6 +207,7 @@ export const AdminSessionsManager: React.FC<AdminSessionsManagerProps> = ({
       }
     };
 
+    window.addEventListener('rbc-levels-updated', handleSync);
     window.addEventListener('rbc-program-nodes-updated', handleSync);
     window.addEventListener('rbc-questionnaires-updated', handleSync);
     window.addEventListener('rbc-sessions-updated', handleSync);
@@ -210,6 +216,7 @@ export const AdminSessionsManager: React.FC<AdminSessionsManagerProps> = ({
     window.addEventListener('storage', handleSync);
 
     return () => {
+      window.removeEventListener('rbc-levels-updated', handleSync);
       window.removeEventListener('rbc-program-nodes-updated', handleSync);
       window.removeEventListener('rbc-questionnaires-updated', handleSync);
       window.removeEventListener('rbc-sessions-updated', handleSync);
@@ -374,25 +381,23 @@ export const AdminSessionsManager: React.FC<AdminSessionsManagerProps> = ({
 
   // Abrir y configurar el Editor de Niveles
   const handleOpenLevelEditor = () => {
-    const n1 = nodes.find((n) => n.level === 'Nivel I');
-    const n2 = nodes.find((n) => n.level === 'Nivel II');
-    const n3 = nodes.find((n) => n.level === 'Nivel III');
-
+    const cfgs = OntologicalStore.getLevelConfigs();
+    setLiveLevelConfigs(cfgs);
     setEditingLevels({
       'Nivel I': {
-        title: n1?.levelTitle || 'Fundamentos & Transparencia',
-        prompt: n1?.levelPrompt || 'Registra los límites que has omitido declarar y los acuerdos tácitos que están drenando tu energía vital y directiva.',
-        focus: 'Fundamentos del observador ontológico, quiebres cotidianos, juicios automáticos y coherencia básica.',
+        title: cfgs['Nivel I']?.title || 'Nivel I: Fundamentos & Transparencia',
+        prompt: cfgs['Nivel I']?.prompt || '',
+        focus: cfgs['Nivel I']?.focus || '',
       },
       'Nivel II': {
-        title: n2?.levelTitle || 'Relaciones & Emocionalidad',
-        prompt: n2?.levelPrompt || 'Observa la recurrencia de tus estados de ánimo y cómo condicionan tus conversaciones y promesas.',
-        focus: 'Diseño conversacional, gestión de emocionalidad, corporalidad y coordinación de acciones.',
+        title: cfgs['Nivel II']?.title || 'Nivel II: Corporalidad, Relaciones & Emocionalidad',
+        prompt: cfgs['Nivel II']?.prompt || '',
+        focus: cfgs['Nivel II']?.focus || '',
       },
       'Nivel III': {
-        title: n3?.levelTitle || 'Dirección & Trascendencia',
-        prompt: n3?.levelPrompt || 'Evalúa la coherencia de tu visión de futuro y el impacto transformacional de tu liderazgo en tu entorno.',
-        focus: 'Liderazgo ontológico, visión compartida, maestría en la acción directiva y trascendencia.',
+        title: cfgs['Nivel III']?.title || 'Nivel III: Dirección & Trascendencia',
+        prompt: cfgs['Nivel III']?.prompt || '',
+        focus: cfgs['Nivel III']?.focus || '',
       },
     });
 
@@ -438,27 +443,29 @@ export const AdminSessionsManager: React.FC<AdminSessionsManagerProps> = ({
 
   // Guardar cambios del Editor de Niveles en todas las sesiones y sincronizar
   const handleSaveLevels = () => {
-    const updated = nodes.map((node) => {
-      const assignedLevel = (node.level as 'Nivel I' | 'Nivel II' | 'Nivel III') || 'Nivel I';
-      const levelMeta = editingLevels[assignedLevel];
-      return {
-        ...node,
-        level: assignedLevel,
-        levelTitle: levelMeta.title.trim() || node.levelTitle,
-        levelPrompt: levelMeta.prompt.trim() || node.levelPrompt,
-      };
-    });
+    OntologicalStore.saveLevelConfigs(editingLevels as any);
+    const updatedCfgs = OntologicalStore.getLevelConfigs();
+    setLiveLevelConfigs(updatedCfgs);
+    const updatedNodes = OntologicalStore.getProgramNodes();
+    const updatedSessions = OntologicalStore.getSessions();
+    setNodes(updatedNodes);
+    setSessions(updatedSessions);
 
-    OntologicalStore.saveProgramNodes(updated);
-    setNodes(updated);
-    try {
-      FirestoreSyncService.syncAllProgramNodes(updated);
-    } catch (e) {
-      console.warn('Sync error on level save:', e);
+    if (formData) {
+      const activeLvl = (formData.level as 'Nivel I' | 'Nivel II' | 'Nivel III') || 'Nivel I';
+      const meta = updatedCfgs[activeLvl];
+      if (meta) {
+        setFormData((prev) => prev ? ({
+          ...prev,
+          levelTitle: meta.title || prev.levelTitle,
+          levelPrompt: meta.prompt || prev.levelPrompt,
+        }) : null);
+      }
     }
+
     if (onRefreshParent) onRefreshParent();
     setIsLevelEditorOpen(false);
-    showNotification('Niveles formativos actualizados con éxito.');
+    showNotification('Nombres de niveles actualizados en toda la interfaz y anclados a las sesiones.');
   };
 
   // Guardar cambios del módulo en edición
@@ -754,79 +761,73 @@ export const AdminSessionsManager: React.FC<AdminSessionsManagerProps> = ({
     0
   );
 
-  // Configuraciones temáticas para agrupación por nivel
-  const LEVEL_CONFIGS = [
+  // Configuraciones temáticas para agrupación por nivel (dinámicas y reactivas)
+  const LEVEL_CONFIGS = useMemo(() => [
     {
       id: 'Nivel I' as const,
-      title: 'Nivel I: Fundamentos & Transparencia',
+      title: liveLevelConfigs['Nivel I']?.title || 'Nivel I: Fundamentos & Transparencia',
       weeks: 'Semanas 1 a 4',
       badgeColor: 'bg-sky-50 dark:bg-sky-950/40 text-sky-700 dark:text-sky-300 border-sky-200 dark:border-sky-800',
       dotColor: 'bg-sky-500',
       borderAccent: 'border-sky-200/80 dark:border-sky-800/60',
-      description: 'Mapeo de la transparencia cotidiana, suspensión de automatismos, quiebres ocultos y anclaje somático inicial.',
+      description: liveLevelConfigs['Nivel I']?.description || liveLevelConfigs['Nivel I']?.focus || 'Mapeo de la transparencia cotidiana, suspensión de automatismos, quiebres ocultos y anclaje somático inicial.',
     },
     {
       id: 'Nivel II' as const,
-      title: 'Nivel II: Corporalidad, Relaciones & Emocionalidad',
+      title: liveLevelConfigs['Nivel II']?.title || 'Nivel II: Corporalidad, Relaciones & Emocionalidad',
       weeks: 'Semanas 5 a 8',
       badgeColor: 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800',
       dotColor: 'bg-emerald-500',
       borderAccent: 'border-emerald-200/80 dark:border-emerald-800/60',
-      description: 'Sabiduría somático-emocional, disolución de resignaciones y resentimientos, y diseño de conversaciones de coordinación de acciones.',
+      description: liveLevelConfigs['Nivel II']?.description || liveLevelConfigs['Nivel II']?.focus || 'Sabiduría somático-emocional, disolución de resignaciones y resentimientos, y diseño de conversaciones de coordinación de acciones.',
     },
     {
       id: 'Nivel III' as const,
-      title: 'Nivel III: Dirección & Trascendencia',
+      title: liveLevelConfigs['Nivel III']?.title || 'Nivel III: Dirección & Trascendencia',
       weeks: 'Semanas 9 a 12',
       badgeColor: 'bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800',
       dotColor: 'bg-purple-500',
       borderAccent: 'border-purple-200/80 dark:border-purple-800/60',
-      description: 'Liderazgo ontológico, visión directiva compartida, maestría en la acción directiva y trascendencia transformacional.',
+      description: liveLevelConfigs['Nivel III']?.description || liveLevelConfigs['Nivel III']?.focus || 'Liderazgo ontológico, visión directiva compartida, maestría en la acción directiva y trascendencia transformacional.',
     },
-  ];
+  ], [liveLevelConfigs]);
 
-  // Configuraciones temáticas para agrupación cronológica por semanas
+  // Configuraciones temáticas para agrupación cronológica por semanas (solo semanas, sin nombres)
   const WEEK_CONFIGS = [
     {
       key: 'Semanas 1-2',
-      title: 'Semanas 1-2: Diagnóstico & Transparencia Inicial',
+      title: 'Semanas 1-2',
       level: 'Nivel I',
-      focus: 'Mapeo del observador automático, quiebres ocultos y anclaje somático inicial.',
       badgeColor: 'bg-sky-50 dark:bg-sky-950/40 text-sky-700 dark:text-sky-300 border-sky-200 dark:border-sky-800',
     },
     {
       key: 'Semanas 3-4',
-      title: 'Semanas 3-4: Declaraciones de Límites & Actos Lingüísticos',
+      title: 'Semanas 3-4',
       level: 'Nivel I',
-      focus: 'Declaración del "No" y del "Basta", pedidos y promesas con impecabilidad ontológica.',
       badgeColor: 'bg-sky-50 dark:bg-sky-950/40 text-sky-700 dark:text-sky-300 border-sky-200 dark:border-sky-800',
     },
     {
       key: 'Semanas 5-6',
-      title: 'Semanas 5-6: Sabiduría Somática & Decodificación Emocional',
+      title: 'Semanas 5-6',
       level: 'Nivel II',
-      focus: 'El cuerpo como territorio de aprendizaje y reencuadre de emociones limitantes en estados constructivos.',
       badgeColor: 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800',
     },
     {
       key: 'Semanas 7-8',
-      title: 'Semanas 7-8: Diseño Conversacional & Coordinación de Acciones',
+      title: 'Semanas 7-8',
       level: 'Nivel II',
-      focus: 'Conversaciones para posibles conversaciones, gestión de quiebres relacionales y co-creación.',
       badgeColor: 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800',
     },
     {
       key: 'Semanas 9-10',
-      title: 'Semanas 9-10: Liderazgo Ontológico & Visión Directiva',
+      title: 'Semanas 9-10',
       level: 'Nivel III',
-      focus: 'Coherencia directiva, articulación de visión y despliegue del observador transformador.',
       badgeColor: 'bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800',
     },
     {
       key: 'Semanas 11-12',
-      title: 'Semanas 11-12: Trascendencia, Cierre y Autonomía Ontológica',
+      title: 'Semanas 11-12',
       level: 'Nivel III',
-      focus: 'Evaluación de evolución, rediseño de acuerdos a largo plazo y graduación del proceso.',
       badgeColor: 'bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800',
     },
   ];
@@ -854,7 +855,7 @@ export const AdminSessionsManager: React.FC<AdminSessionsManagerProps> = ({
                     : 'bg-purple-100 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300'
                 }`}
               >
-                {node.level}
+                {node.levelTitle || liveLevelConfigs[node.level as 'Nivel I' | 'Nivel II' | 'Nivel III']?.title || node.level}
               </span>
             </div>
 
@@ -1007,7 +1008,7 @@ export const AdminSessionsManager: React.FC<AdminSessionsManagerProps> = ({
                     : 'bg-purple-100 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300'
                 }`}
               >
-                {sessLevel}
+                {sess.levelTitle || liveLevelConfigs[sessLevel as 'Nivel I' | 'Nivel II' | 'Nivel III']?.title || sessLevel}
               </span>
               <span className="text-[10px] font-medium text-gray-500 dark:text-neutral-400 bg-gray-100 dark:bg-neutral-800 px-2 py-0.5 rounded-md">
                 {sessWeek}
@@ -1370,7 +1371,7 @@ export const AdminSessionsManager: React.FC<AdminSessionsManagerProps> = ({
                           : 'bg-gray-100/70 dark:bg-neutral-800 text-gray-600 dark:text-neutral-400 hover:bg-gray-200 dark:hover:bg-neutral-700'
                       }`}
                     >
-                      <span>{lvl === 'all' ? 'Todos los Niveles' : lvl}</span>
+                      <span>{lvl === 'all' ? 'Todos los Niveles' : (liveLevelConfigs[lvl]?.title || lvl)}</span>
                       <span
                         className={`text-[10px] font-mono px-1 rounded-full ${
                           active ? 'bg-white/20 dark:bg-black/20' : 'bg-gray-200/80 dark:bg-neutral-700'
@@ -1394,12 +1395,12 @@ export const AdminSessionsManager: React.FC<AdminSessionsManagerProps> = ({
                   className="px-2.5 py-1 rounded-lg text-[11px] font-medium border border-gray-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-black dark:text-white cursor-pointer focus:ring-2 focus:ring-indigo-500 focus:outline-hidden"
                 >
                   <option value="all">Todas las semanas (1 a 12)</option>
-                  <option value="Semanas 1-2">Semanas 1-2 (Diagnóstico & Transparencia)</option>
-                  <option value="Semanas 3-4">Semanas 3-4 (Límites & Actos Lingüísticos)</option>
-                  <option value="Semanas 5-6">Semanas 5-6 (Somática & Emociones)</option>
-                  <option value="Semanas 7-8">Semanas 7-8 (Diseño Conversacional & Relaciones)</option>
-                  <option value="Semanas 9-10">Semanas 9-10 (Liderazgo & Visión Directiva)</option>
-                  <option value="Semanas 11-12">Semanas 11-12 (Trascendencia & Cierre de Ciclo)</option>
+                  <option value="Semanas 1-2">Semanas 1-2</option>
+                  <option value="Semanas 3-4">Semanas 3-4</option>
+                  <option value="Semanas 5-6">Semanas 5-6</option>
+                  <option value="Semanas 7-8">Semanas 7-8</option>
+                  <option value="Semanas 9-10">Semanas 9-10</option>
+                  <option value="Semanas 11-12">Semanas 11-12</option>
                 </select>
                 {(levelFilter !== 'all' || weekFilter !== 'all' || searchQuery) && (
                   <button
@@ -1494,9 +1495,6 @@ export const AdminSessionsManager: React.FC<AdminSessionsManagerProps> = ({
                                     {wk.level}
                                   </span>
                                 </div>
-                                <p className="text-xs text-gray-500 dark:text-neutral-400 max-w-2xl font-light">
-                                  {wk.focus}
-                                </p>
                               </div>
                               <span className="text-xs font-semibold px-2.5 py-1 rounded-xl bg-white dark:bg-neutral-800 text-gray-700 dark:text-neutral-300 border border-gray-200 dark:border-neutral-700 self-start sm:self-auto shrink-0">
                                 {weekNodes.length} {weekNodes.length === 1 ? 'Módulo' : 'Módulos'}
@@ -1620,9 +1618,6 @@ export const AdminSessionsManager: React.FC<AdminSessionsManagerProps> = ({
                                     {wk.level}
                                   </span>
                                 </div>
-                                <p className="text-xs text-gray-500 dark:text-neutral-400 font-light">
-                                  {wk.focus}
-                                </p>
                               </div>
                               <span className="text-xs font-semibold px-2.5 py-1 rounded-xl bg-white dark:bg-neutral-800 text-gray-700 dark:text-neutral-300 border border-gray-200 dark:border-neutral-700 self-start sm:self-auto shrink-0">
                                 {weekSessions.length} {weekSessions.length === 1 ? 'Sesión' : 'Sesiones'}
@@ -1802,24 +1797,33 @@ export const AdminSessionsManager: React.FC<AdminSessionsManagerProps> = ({
                     </label>
                     <select
                       value={formData.level}
-                      onChange={(e) => setFormData({ ...formData, level: e.target.value as any })}
+                      onChange={(e) => {
+                        const newLvl = e.target.value as 'Nivel I' | 'Nivel II' | 'Nivel III';
+                        const lvlMeta = liveLevelConfigs[newLvl];
+                        setFormData({
+                          ...formData,
+                          level: newLvl,
+                          levelTitle: lvlMeta?.title || formData.levelTitle,
+                          levelPrompt: lvlMeta?.prompt || formData.levelPrompt,
+                        });
+                      }}
                       className="w-full px-3 py-2 text-xs rounded-xl border border-gray-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-black dark:text-white"
                     >
-                      <option value="Nivel I">Nivel I: Fundamentos & Transparencia</option>
-                      <option value="Nivel II">Nivel II: Relaciones & Emocionalidad</option>
-                      <option value="Nivel III">Nivel III: Dirección & Trascendencia</option>
+                      <option value="Nivel I">{liveLevelConfigs['Nivel I']?.title || 'Nivel I: Fundamentos & Transparencia'}</option>
+                      <option value="Nivel II">{liveLevelConfigs['Nivel II']?.title || 'Nivel II: Corporalidad, Relaciones & Emocionalidad'}</option>
+                      <option value="Nivel III">{liveLevelConfigs['Nivel III']?.title || 'Nivel III: Dirección & Trascendencia'}</option>
                     </select>
                   </div>
 
                   <div>
                     <label className="block text-[11px] font-semibold text-black dark:text-white mb-1">
-                      Temporalidad / Ciclo
+                      Temporalidad / Semanas
                     </label>
                     <input
                       type="text"
                       value={formData.weekLabel || ''}
                       onChange={(e) => setFormData({ ...formData, weekLabel: e.target.value })}
-                      placeholder="Ej: Semanas 1-2, Ciclo Inicial"
+                      placeholder="Ej: Semanas 1-2"
                       className="w-full px-3 py-2 text-xs rounded-xl border border-gray-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-black dark:text-white"
                     />
                   </div>
@@ -2319,11 +2323,20 @@ export const AdminSessionsManager: React.FC<AdminSessionsManagerProps> = ({
             </div>
 
             {/* Contenido Desplazable de Edición de Nivel */}
-            <div className="p-5 sm:p-6 overflow-y-auto space-y-6 flex-1 text-xs">
+            <div className="p-5 sm:p-6 overflow-y-auto space-y-5 flex-1 text-xs">
+              <div className="p-3.5 rounded-2xl bg-indigo-50/70 dark:bg-indigo-950/30 border border-indigo-200/60 dark:border-indigo-800/40 text-[11px] text-indigo-900 dark:text-indigo-200">
+                <p className="font-semibold">
+                  Sincronización Global de Nivel:
+                </p>
+                <p className="text-indigo-800/80 dark:text-indigo-300/80 mt-0.5">
+                  Al modificar el nombre o descriptor de este nivel, se actualizarán y anclarán de manera automática todas las sesiones, módulos de bitácora y vistas de participantes en la base de datos oficial.
+                </p>
+              </div>
+
               <div className="space-y-4">
                 <div>
                   <label className="block text-xs font-bold text-gray-700 dark:text-neutral-300 mb-1">
-                    Título o Descriptor del {activeLevelTab}
+                    Nombre o Descriptor Oficial del {activeLevelTab}
                   </label>
                   <input
                     type="text"
@@ -2338,14 +2351,39 @@ export const AdminSessionsManager: React.FC<AdminSessionsManagerProps> = ({
                         },
                       }));
                     }}
-                    placeholder="Ej. Fundamentos & Transparencia"
+                    placeholder={`Ej. ${activeLevelTab}: Fundamentos & Transparencia`}
+                    className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-gray-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-black dark:text-white focus:outline-hidden focus:ring-2 focus:ring-indigo-500 font-medium"
+                  />
+                  <p className="text-[10px] text-neutral-500 mt-1">
+                    Este nombre se mostrará en los encabezados de sesiones, insignias y expedientes de coachees.
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 dark:text-neutral-300 mb-1">
+                    Enfoque Temático & Competencias Ontológicas
+                  </label>
+                  <input
+                    type="text"
+                    value={editingLevels[activeLevelTab]?.focus || ''}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setEditingLevels((prev) => ({
+                        ...prev,
+                        [activeLevelTab]: {
+                          ...prev[activeLevelTab],
+                          focus: val,
+                        },
+                      }));
+                    }}
+                    placeholder="Bases del observador ontológico, quiebres cotidianos, juicios y coherencia..."
                     className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-gray-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-black dark:text-white focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
                   />
                 </div>
 
                 <div>
                   <label className="block text-xs font-bold text-gray-700 dark:text-neutral-300 mb-1">
-                    Requerimientos para el Espacio
+                    Pregunta Orientadora / Requerimientos para el Espacio
                   </label>
                   <textarea
                     rows={3}
