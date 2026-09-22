@@ -7,6 +7,9 @@ import {
   Download,
   CheckCircle2,
   Sparkles,
+  Table,
+  ExternalLink,
+  ShieldCheck,
 } from 'lucide-react';
 import { Session, PostSessionForm, User } from '../../types';
 import { PROGRAM_NODES } from '../../services/store';
@@ -122,7 +125,7 @@ export const ParticipantSesionesModule: React.FC<ParticipantSesionesModuleProps>
   return (
     <div className="space-y-6">
       {/* Header Banner de Sesiones 1 a 1 */}
-      <div className="rounded-3xl border border-black/10 dark:border-white/10 bg-white/25 dark:bg-neutral-950/35 backdrop-blur-xl p-6 sm:p-7 shadow-xs space-y-5">
+      <div className="rounded-3xl border border-black/10 dark:border-white/10 bg-white/25 dark:bg-neutral-950/35 backdrop-blur-xl p-6 sm:p-7 shadow-xs space-y-5 font-sans">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center gap-3.5">
             <div className="w-12 h-12 rounded-2xl bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 border border-indigo-500/25 flex items-center justify-center shrink-0 shadow-xs">
@@ -130,10 +133,10 @@ export const ParticipantSesionesModule: React.FC<ParticipantSesionesModuleProps>
             </div>
             <div>
               <div className="flex items-center gap-2 flex-wrap">
-                <h3 className="text-base sm:text-lg font-bold text-black dark:text-white font-mono uppercase tracking-wider">
+                <h3 className="text-base sm:text-lg font-bold text-black dark:text-white uppercase tracking-wider">
                   Panel de Sesiones Ontológicas 1 a 1
                 </h3>
-                <span className="text-[10px] font-mono px-2.5 py-0.5 rounded-full bg-indigo-500/15 text-indigo-700 dark:text-indigo-300 font-semibold border border-indigo-500/30">
+                <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-indigo-500/15 text-indigo-700 dark:text-indigo-300 font-semibold border border-indigo-500/30">
                   Acompañamiento Quincenal
                 </span>
               </div>
@@ -145,20 +148,20 @@ export const ParticipantSesionesModule: React.FC<ParticipantSesionesModuleProps>
 
           {/* Métricas rápidas de sesiones */}
           <div className="flex items-center gap-2 flex-wrap">
-            <div className="px-3 py-1.5 rounded-xl bg-white/60 dark:bg-neutral-900/60 border border-black/10 dark:border-white/10 text-xs font-mono">
-              <span className="text-neutral-500 text-[10px] block">Completadas</span>
+            <div className="px-3 py-1.5 rounded-xl bg-white/60 dark:bg-neutral-900/60 border border-black/10 dark:border-white/10 text-xs">
+              <span className="text-neutral-500 text-[10px] block font-medium">Completadas</span>
               <strong className="text-emerald-600 dark:text-emerald-400 font-bold">
                 {completedCount} de 12
               </strong>
             </div>
-            <div className="px-3 py-1.5 rounded-xl bg-white/60 dark:bg-neutral-900/60 border border-black/10 dark:border-white/10 text-xs font-mono">
-              <span className="text-neutral-500 text-[10px] block">Bitácoras</span>
+            <div className="px-3 py-1.5 rounded-xl bg-white/60 dark:bg-neutral-900/60 border border-black/10 dark:border-white/10 text-xs">
+              <span className="text-neutral-500 text-[10px] block font-medium">Bitácoras</span>
               <strong className="text-indigo-600 dark:text-indigo-400 font-bold">
                 {formsFilledCount} registradas
               </strong>
             </div>
-            <div className="px-3 py-1.5 rounded-xl bg-white/60 dark:bg-neutral-900/60 border border-black/10 dark:border-white/10 text-xs font-mono">
-              <span className="text-neutral-500 text-[10px] block">Actual</span>
+            <div className="px-3 py-1.5 rounded-xl bg-white/60 dark:bg-neutral-900/60 border border-black/10 dark:border-white/10 text-xs">
+              <span className="text-neutral-500 text-[10px] block font-medium">Actual</span>
               <strong className="text-black dark:text-white font-bold">
                 E{currentSessionNumber.toString().padStart(2, '0')} (Ciclo {currentCycle})
               </strong>
@@ -166,9 +169,9 @@ export const ParticipantSesionesModule: React.FC<ParticipantSesionesModuleProps>
           </div>
         </div>
 
-        {/* Filtro por Ciclos: Todos, Ciclo 1, Ciclo 2, Ciclo 3 */}
+        {/* Filtro por Ciclos y Enlaces Directos Google Workspace */}
         <div className="flex items-center justify-between gap-3 pt-2 border-t border-black/5 dark:border-white/5 flex-wrap">
-          <div className="flex items-center gap-1.5 p-1 rounded-xl bg-white/60 dark:bg-neutral-900/60 border border-black/10 dark:border-white/10 text-xs font-mono">
+          <div className="flex items-center gap-1.5 p-1 rounded-xl bg-white/60 dark:bg-neutral-900/60 border border-black/10 dark:border-white/10 text-xs">
             {[
               { id: 0, label: 'Todas las Sesiones (1-12)' },
               { id: 1, label: 'Ciclo 1: Raíz (1-4)' },
@@ -181,9 +184,9 @@ export const ParticipantSesionesModule: React.FC<ParticipantSesionesModuleProps>
                   key={id}
                   type="button"
                   onClick={() => setSelectedCycleFilter(id)}
-                  className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer whitespace-nowrap ${
+                  className={`px-3 py-1.5 rounded-lg transition-all duration-200 cursor-pointer whitespace-nowrap font-medium ${
                     isSelected
-                      ? 'bg-black text-white dark:bg-white dark:text-black font-bold shadow-xs'
+                      ? 'bg-white/90 dark:bg-white text-black dark:text-neutral-950 font-bold shadow-md ring-1 ring-black/10 dark:ring-white/20 backdrop-blur-xl'
                       : 'text-neutral-600 dark:text-neutral-400 hover:text-black dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/5'
                   }`}
                 >
@@ -192,11 +195,36 @@ export const ParticipantSesionesModule: React.FC<ParticipantSesionesModuleProps>
               );
             })}
           </div>
+
+          <div className="flex items-center gap-2 flex-wrap">
+            <a
+              href={OFFICIAL_FORMS_SHEETS_BASE_MAP.bitacora_sesiones_b2b.sheetUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="px-3 py-1.5 rounded-xl border border-emerald-500/30 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-800 dark:text-emerald-300 text-xs font-semibold transition-colors inline-flex items-center gap-1.5 cursor-pointer shadow-2xs"
+              title="Ver Base de Datos de Bitácoras de Sesiones en Google Sheets"
+            >
+              <Table className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+              <span>Sheets (Bitácoras)</span>
+              <ExternalLink className="w-3 h-3 opacity-60" />
+            </a>
+            <a
+              href={OFFICIAL_FORMS_SHEETS_BASE_MAP.sesiones_individuales.sheetUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="px-3 py-1.5 rounded-xl border border-indigo-500/30 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-800 dark:text-indigo-300 text-xs font-semibold transition-colors inline-flex items-center gap-1.5 cursor-pointer shadow-2xs"
+              title="Ver Base de Datos de Acuerdos Co-creativos en Google Sheets"
+            >
+              <Table className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
+              <span>Sheets (Acuerdos)</span>
+              <ExternalLink className="w-3 h-3 opacity-60" />
+            </a>
+          </div>
         </div>
       </div>
 
       {/* Grid de Sesiones */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 font-sans">
         {filteredSessions.map((session) => {
           const num = session.sessionNumber || 1;
           const cycleNum = getSessionCycleNumber(num);
@@ -214,9 +242,9 @@ export const ParticipantSesionesModule: React.FC<ParticipantSesionesModuleProps>
           return (
             <div
               key={session.id}
-              className={`rounded-3xl border transition-all backdrop-blur-md overflow-hidden p-5 sm:p-6 space-y-4 shadow-xs ${
+              className={`rounded-3xl border transition-all duration-200 backdrop-blur-md overflow-hidden p-5 sm:p-6 space-y-4 shadow-xs ${
                 isCurrent
-                  ? 'border-emerald-500/40 bg-white/40 dark:bg-neutral-900/50 ring-2 ring-emerald-500/20 shadow-md'
+                  ? 'border-emerald-500/40 bg-white/45 dark:bg-neutral-900/50 ring-2 ring-emerald-500/20 shadow-md'
                   : isCompleted
                   ? 'border-black/10 dark:border-white/10 bg-white/20 dark:bg-neutral-950/30 opacity-95'
                   : 'border-black/5 dark:border-white/5 bg-white/15 dark:bg-neutral-950/20'
@@ -227,7 +255,7 @@ export const ParticipantSesionesModule: React.FC<ParticipantSesionesModuleProps>
                 <div className="space-y-1">
                   <div className="flex items-center gap-2 flex-wrap">
                     <span
-                      className={`w-7 h-7 rounded-xl flex items-center justify-center font-mono font-bold text-xs shrink-0 ${
+                      className={`w-7 h-7 rounded-xl flex items-center justify-center font-bold text-xs shrink-0 ${
                         isCurrent
                           ? 'bg-emerald-500 text-white shadow-xs'
                           : isCompleted
@@ -237,11 +265,11 @@ export const ParticipantSesionesModule: React.FC<ParticipantSesionesModuleProps>
                     >
                       {num.toString().padStart(2, '0')}
                     </span>
-                    <span className="text-[10px] font-mono uppercase tracking-wider text-neutral-500 dark:text-neutral-400">
+                    <span className="text-[10px] uppercase tracking-wider text-neutral-500 dark:text-neutral-400 font-medium">
                       Ciclo {cycleNum} • {sessionLevel} • {weekLabel}
                     </span>
                     {isMilestone && (
-                      <span className="text-[9px] font-mono px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/30 font-semibold inline-flex items-center gap-1">
+                      <span className="text-[9px] px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/30 font-semibold inline-flex items-center gap-1">
                         <Sparkles className="w-2.5 h-2.5" />
                         {num === 12 ? 'Cierre de Programa' : 'Cosecha del Ciclo'}
                       </span>
@@ -256,17 +284,17 @@ export const ParticipantSesionesModule: React.FC<ParticipantSesionesModuleProps>
                 {/* Badge de Estado */}
                 <div className="shrink-0">
                   {isCompleted ? (
-                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-mono font-bold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30">
+                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30">
                       <CheckCircle2 className="w-3 h-3 text-emerald-500" />
                       <span>Completada</span>
                     </span>
                   ) : isCurrent ? (
-                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-mono font-bold bg-emerald-500 text-white shadow-xs animate-pulse">
+                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-500 text-white shadow-xs animate-pulse">
                       <span className="w-1.5 h-1.5 rounded-full bg-white animate-ping" />
                       <span>En Curso</span>
                     </span>
                   ) : (
-                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-mono text-neutral-500 dark:text-neutral-400 bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10">
+                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] text-neutral-500 dark:text-neutral-400 bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 font-medium">
                       <Clock className="w-3 h-3" />
                       <span>Programada</span>
                     </span>
@@ -276,7 +304,7 @@ export const ParticipantSesionesModule: React.FC<ParticipantSesionesModuleProps>
 
               {/* Fecha y Objetivo */}
               <div className="space-y-2 text-xs">
-                <div className="flex items-center gap-2 text-neutral-600 dark:text-neutral-300 font-mono text-[11px]">
+                <div className="flex items-center gap-2 text-neutral-600 dark:text-neutral-300 text-[11px] font-medium">
                   <Clock className="w-3.5 h-3.5 text-neutral-400 shrink-0" />
                   <span>{formatSessionDate(session.date)}</span>
                   <span>•</span>
@@ -290,7 +318,7 @@ export const ParticipantSesionesModule: React.FC<ParticipantSesionesModuleProps>
 
               {/* Pregunta de Apertura */}
               <div className="p-3 rounded-2xl bg-white/30 dark:bg-neutral-900/40 border border-black/5 dark:border-white/5 space-y-1 text-xs">
-                <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-neutral-500 block">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-500 block">
                   Pregunta de Apertura
                 </span>
                 <p className="text-neutral-800 dark:text-neutral-200 font-medium italic">
@@ -302,10 +330,10 @@ export const ParticipantSesionesModule: React.FC<ParticipantSesionesModuleProps>
               {postForm && (
                 <div className="p-3 rounded-2xl bg-emerald-500/10 dark:bg-emerald-500/15 border border-emerald-500/25 space-y-1 text-xs">
                   <div className="flex items-center justify-between gap-2">
-                    <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-emerald-800 dark:text-emerald-300">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-800 dark:text-emerald-300">
                       Bitácora de Sesión Registrada
                     </span>
-                    <span className="text-[10px] font-mono text-emerald-700 dark:text-emerald-400">
+                    <span className="text-[10px] text-emerald-700 dark:text-emerald-400 font-medium">
                       ✓ Sincronizada
                     </span>
                   </div>
@@ -322,14 +350,14 @@ export const ParticipantSesionesModule: React.FC<ParticipantSesionesModuleProps>
                 </div>
               )}
 
-              {/* Botones de Acción */}
+              {/* Botones de Acción y Conexiones a Google Workspace */}
               <div className="pt-2 flex flex-wrap items-center gap-2">
                 {/* Botón Meet si es la sesión actual o próxima */}
                 <a
                   href={session.meetLink || 'https://meet.google.com/new'}
                   target="_blank"
                   rel="noreferrer"
-                  className={`px-3.5 py-2 rounded-xl text-xs font-semibold inline-flex items-center gap-1.5 cursor-pointer shadow-xs transition-opacity ${
+                  className={`px-3 py-2 rounded-xl text-xs font-semibold inline-flex items-center gap-1.5 cursor-pointer shadow-xs transition-opacity ${
                     isCurrent
                       ? 'bg-black text-white dark:bg-white dark:text-black hover:opacity-90'
                       : 'border border-black/15 dark:border-white/15 bg-white/50 dark:bg-neutral-800/60 text-black dark:text-white hover:bg-white/80'
@@ -339,21 +367,59 @@ export const ParticipantSesionesModule: React.FC<ParticipantSesionesModuleProps>
                   <span>Unirme por Meet</span>
                 </a>
 
-                {/* Botón Bitácora */}
+                {/* Botón Ver en Sheets */}
+                <a
+                  href={session.googleSheetsUrl || OFFICIAL_FORMS_SHEETS_BASE_MAP.bitacora_sesiones_b2b.sheetUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="px-2.5 py-2 rounded-xl border border-emerald-500/25 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-800 dark:text-emerald-300 text-xs font-semibold transition-colors inline-flex items-center gap-1 cursor-pointer shadow-2xs"
+                  title="Ver Base de Datos de Sesiones en Google Sheets"
+                >
+                  <Table className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                  <span>Ver en Sheets</span>
+                  <ExternalLink className="w-3 h-3 opacity-60" />
+                </a>
+
+                {/* Botón Bitácora Forms */}
+                <a
+                  href={session.bitacoraFormUrl || OFFICIAL_FORMS_SHEETS_BASE_MAP.bitacora_sesiones_b2b.formUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="px-2.5 py-2 rounded-xl border border-black/10 dark:border-white/10 bg-white/70 dark:bg-neutral-800/70 hover:bg-white dark:hover:bg-neutral-700 text-neutral-800 dark:text-neutral-200 text-xs font-medium transition-colors inline-flex items-center gap-1 cursor-pointer shadow-2xs"
+                  title="Abrir Formulario Oficial de Bitácora Coach"
+                >
+                  <FileText className="w-3.5 h-3.5 text-indigo-500" />
+                  <span>Bitácora Forms</span>
+                  <ExternalLink className="w-3 h-3 opacity-60" />
+                </a>
+
+                {/* Botón Acuerdo Co-creativo */}
+                <a
+                  href={session.agreementFormUrl || OFFICIAL_FORMS_SHEETS_BASE_MAP.sesiones_individuales.formUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="px-2.5 py-2 rounded-xl border border-black/10 dark:border-white/10 bg-white/50 dark:bg-neutral-800/50 hover:bg-white dark:hover:bg-neutral-700 text-neutral-700 dark:text-neutral-300 text-xs font-medium transition-colors inline-flex items-center gap-1 cursor-pointer shadow-2xs"
+                  title="Acuerdo Co-creativo en Google Forms"
+                >
+                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
+                  <span>Acuerdo</span>
+                  <ExternalLink className="w-3 h-3 opacity-60" />
+                </a>
+
+                {/* Botón Bitácora Local */}
                 <button
                   type="button"
                   onClick={() => onOpenBitacora(session)}
-                  className="px-3.5 py-2 rounded-xl border border-black/15 dark:border-white/15 bg-white/50 dark:bg-neutral-800/60 backdrop-blur-xs text-xs font-semibold text-black dark:text-white hover:bg-white/80 dark:hover:bg-neutral-700 transition-colors inline-flex items-center gap-1.5 cursor-pointer shadow-2xs"
+                  className="px-3 py-2 rounded-xl border border-black/15 dark:border-white/15 bg-white/50 dark:bg-neutral-800/60 backdrop-blur-xs text-xs font-semibold text-black dark:text-white hover:bg-white/80 dark:hover:bg-neutral-700 transition-colors inline-flex items-center gap-1 cursor-pointer shadow-2xs"
                 >
-                  <FileText className="w-3.5 h-3.5 text-indigo-500" />
-                  <span>{postForm ? 'Editar Bitácora' : 'Registrar Bitácora'}</span>
+                  <span>{postForm ? 'Editar Registro' : 'Bitácora Local'}</span>
                 </button>
 
                 {/* Botón Descargar PDF si existe formulario o sesión */}
                 <button
                   type="button"
                   onClick={() => onDownloadSessionPDF(postForm, session)}
-                  className="px-3 py-2 rounded-xl border border-black/15 dark:border-white/15 bg-white/50 dark:bg-neutral-800/60 backdrop-blur-xs text-xs font-semibold text-black dark:text-white hover:bg-white/80 dark:hover:bg-neutral-700 transition-colors inline-flex items-center gap-1.5 cursor-pointer shadow-2xs"
+                  className="px-2.5 py-2 rounded-xl border border-black/15 dark:border-white/15 bg-white/50 dark:bg-neutral-800/60 backdrop-blur-xs text-xs font-semibold text-black dark:text-white hover:bg-white/80 dark:hover:bg-neutral-700 transition-colors inline-flex items-center gap-1 cursor-pointer shadow-2xs"
                   title="Descargar Memoria de la Sesión en PDF"
                 >
                   <Download className="w-3.5 h-3.5" />

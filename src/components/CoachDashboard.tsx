@@ -66,6 +66,7 @@ import { ClientDirectoryTable } from './ClientDirectoryTable';
 import { ExecutiveMetricsBar } from './ExecutiveMetricsBar';
 import { FirebaseFirestoreMonitor } from './FirebaseFirestoreMonitor';
 import { SecurityAuditModal } from './SecurityAuditModal';
+import { ClientExportSummaryModal } from './ClientExportSummaryModal';
 import type { AcademicAdminSubTab } from './admin/AdminAcademicManager';
 import { ClientWorkstationView } from './ClientWorkstationView';
 import { GoogleWorkspaceHub } from './GoogleWorkspaceHub';
@@ -166,6 +167,7 @@ export const CoachDashboard: React.FC<CoachDashboardProps> = ({
   // New session modal state
   const [showNewSessionModal, setShowNewSessionModal] = useState(false);
   const [showSecurityAuditModal, setShowSecurityAuditModal] = useState(false);
+  const [showExportModal, setShowExportModal] = useState(false);
   const [newSessionDate, setNewSessionDate] = useState('');
   const [newSessionFocus, setNewSessionFocus] = useState('');
   const [newSessionNumber, setNewSessionNumber] = useState<number>(
@@ -431,7 +433,7 @@ export const CoachDashboard: React.FC<CoachDashboardProps> = ({
             <p className="text-xs sm:text-sm text-gray-500 dark:text-neutral-400 font-light leading-relaxed">
               Supervisión estratégica de clientes, gestión de embudo ontológico, validación financiera y facilitación directiva.
             </p>
-            <div className="pt-1 flex items-center justify-center gap-2.5">
+            <div className="pt-1 flex items-center justify-center gap-2.5 flex-wrap">
               <button
                 id="open-security-audit-btn"
                 type="button"
@@ -443,6 +445,17 @@ export const CoachDashboard: React.FC<CoachDashboardProps> = ({
                 <span className="text-[10px] px-1.5 py-0.2 rounded-full font-mono font-bold bg-emerald-600 text-white dark:bg-emerald-400 dark:text-black">
                   100% OK
                 </span>
+              </button>
+
+              <button
+                id="open-export-summary-top-btn"
+                type="button"
+                onClick={() => setShowExportModal(true)}
+                className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-neutral-900 text-white dark:bg-white dark:text-black hover:bg-neutral-800 dark:hover:bg-neutral-200 border border-neutral-700 dark:border-neutral-300 text-xs font-semibold transition-all cursor-pointer shadow-2xs group"
+                title="Exportar informe de progreso y sesiones en formato JSON o texto formateado"
+              >
+                <FileDown className="w-3.5 h-3.5 text-emerald-400 dark:text-emerald-600 group-hover:scale-110 transition-transform" />
+                <span>Exportar Informe Coachee (JSON / Texto)</span>
               </button>
             </div>
           </div>
@@ -687,14 +700,27 @@ export const CoachDashboard: React.FC<CoachDashboardProps> = ({
                   </p>
                 </div>
 
-                <button
-                  type="button"
-                  onClick={() => setClientsViewMode('pipeline')}
-                  className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-gray-100 dark:bg-neutral-800 hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black text-xs font-semibold text-gray-700 dark:text-neutral-300 transition-all cursor-pointer shadow-2xs self-start sm:self-auto"
-                >
-                  <ArrowLeft className="w-3.5 h-3.5" />
-                  <span>Volver a Clientes CRM</span>
-                </button>
+                <div className="flex items-center gap-2 self-start sm:self-auto flex-wrap">
+                  <button
+                    type="button"
+                    id="btn-export-client-summary-header"
+                    onClick={() => setShowExportModal(true)}
+                    className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-black text-white dark:bg-white dark:text-black hover:bg-neutral-800 dark:hover:bg-neutral-200 text-xs font-semibold transition-all cursor-pointer shadow-xs"
+                    title="Exportar informe de progreso y sesiones en formato JSON o texto formateado"
+                  >
+                    <FileDown className="w-3.5 h-3.5 text-emerald-400 dark:text-emerald-600" />
+                    <span>Exportar Progreso y Sesiones</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setClientsViewMode('pipeline')}
+                    className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-gray-100 dark:bg-neutral-800 hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black text-xs font-semibold text-gray-700 dark:text-neutral-300 transition-all cursor-pointer shadow-2xs"
+                  >
+                    <ArrowLeft className="w-3.5 h-3.5" />
+                    <span>Volver a Clientes CRM</span>
+                  </button>
+                </div>
               </div>
             </div>
           )}
@@ -740,6 +766,7 @@ export const CoachDashboard: React.FC<CoachDashboardProps> = ({
                 onRefreshClients={handleRefreshClientsList}
                 onSelectClient={(clientId) => handleSelectClient(clientId, true)}
                 onBackToDirectory={() => setClientsViewMode('pipeline')}
+                onOpenExportModal={() => setShowExportModal(true)}
                 onGoToEvents={(subTab) => {
                   setAcademicInitialSubTab(subTab as any || 'events');
                   setActiveMainTab('academic');
@@ -994,6 +1021,22 @@ export const CoachDashboard: React.FC<CoachDashboardProps> = ({
         onClose={() => setShowSecurityAuditModal(false)}
         onRefreshClients={handleRefreshClientsList}
       />
+
+      {/* Modal de Exportación de Informe de Progreso y Sesiones (JSON / Texto Formateado) */}
+      {showExportModal && selectedClient && (
+        <ClientExportSummaryModal
+          isOpen={showExportModal}
+          onClose={() => setShowExportModal(false)}
+          client={selectedClient}
+          clients={clients}
+          onSelectClient={(clientId) => {
+            handleSelectClient(clientId, false);
+          }}
+          sessions={sessions}
+          forms={forms}
+          insights={insights}
+        />
+      )}
     </div>
   );
 };

@@ -25,6 +25,7 @@ import { ParticipantTalleresModule, CoreWorkshopTrack } from './dashboard/Partic
 import { ParticipantSesionesModule } from './dashboard/ParticipantSesionesModule';
 import { ParticipantIntegracionesModule } from './dashboard/ParticipantIntegracionesModule';
 import { CORE_WORKSHOPS_CATALOG } from '../data/coreWorkshopsCatalog';
+import { ClientExportSummaryModal } from './ClientExportSummaryModal';
 import {
   ArrowLeft,
   Calendar,
@@ -91,6 +92,7 @@ interface ClientWorkstationViewProps {
   onAdvanceStep?: (clientId?: string) => void;
   onOpenNewSessionModal?: () => void;
   onOpenNewSession?: () => void;
+  onOpenExportModal?: () => void;
   onGenerateAIAnalysis?: (clientId?: string, customForm?: any) => void;
   onGenerateAI?: (clientId?: string, customForm?: any) => void;
   onRefreshClients?: () => void;
@@ -117,6 +119,7 @@ export const ClientWorkstationView: React.FC<ClientWorkstationViewProps> = ({
   onAdvanceStep,
   onOpenNewSessionModal,
   onOpenNewSession,
+  onOpenExportModal,
   onGenerateAIAnalysis,
   onGenerateAI,
   onRefreshClients,
@@ -147,6 +150,7 @@ export const ClientWorkstationView: React.FC<ClientWorkstationViewProps> = ({
   const [selectedWorkshopId, setSelectedWorkshopId] = useState<string>('taller-1-raiz');
   const [isTalleresExpanded, setIsTalleresExpanded] = useState<boolean>(true);
   const [downloadToastMessage, setDownloadToastMessage] = useState<string | null>(null);
+  const [isLocalExportModalOpen, setIsLocalExportModalOpen] = useState(false);
   const [isEditingBreakdown, setIsEditingBreakdown] = useState(false);
   const [tempBreakdown, setTempBreakdown] = useState(client.primaryBreakdown || '');
   const [isEditingInvested, setIsEditingInvested] = useState(false);
@@ -1050,6 +1054,20 @@ export const ClientWorkstationView: React.FC<ClientWorkstationViewProps> = ({
               <ExternalLink className="w-3 h-3 text-neutral-400" />
               <span>Google Calendar</span>
             </a>
+
+            <button
+              type="button"
+              id="btn-workstation-export-summary"
+              onClick={() => {
+                if (onOpenExportModal) onOpenExportModal();
+                else setIsLocalExportModalOpen(true);
+              }}
+              className="px-3.5 py-2 rounded-xl border border-emerald-300 dark:border-emerald-700 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
+              title="Exportar informe de progreso y sesiones en formato JSON o texto formateado"
+            >
+              <FileDown className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+              <span>Exportar Informe (JSON / Texto)</span>
+            </button>
           </div>
         </div>
 
@@ -1742,19 +1760,35 @@ export const ClientWorkstationView: React.FC<ClientWorkstationViewProps> = ({
             </p>
           </div>
 
-          <button
-            type="button"
-            onClick={handleDownloadPDF}
-            disabled={!latestInsight}
-            className={`px-6 py-3 rounded-2xl text-xs font-semibold transition-all inline-flex items-center gap-2 shadow-sm ${
-              latestInsight
-                ? 'bg-black dark:bg-white text-white dark:text-black hover:bg-neutral-800 dark:hover:bg-neutral-200 cursor-pointer'
-                : 'bg-gray-200 dark:bg-neutral-800 text-gray-400 cursor-not-allowed'
-            }`}
-          >
-            <Download className="w-4 h-4" />
-            <span>Descargar Informe PDF</span>
-          </button>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-2.5 pt-2">
+            <button
+              type="button"
+              onClick={handleDownloadPDF}
+              disabled={!latestInsight}
+              className={`px-5 py-2.5 rounded-2xl text-xs font-semibold transition-all inline-flex items-center gap-2 shadow-sm ${
+                latestInsight
+                  ? 'bg-black dark:bg-white text-white dark:text-black hover:bg-neutral-800 dark:hover:bg-neutral-200 cursor-pointer'
+                  : 'bg-gray-200 dark:bg-neutral-800 text-gray-400 cursor-not-allowed'
+              }`}
+            >
+              <Download className="w-4 h-4" />
+              <span>Descargar Informe PDF</span>
+            </button>
+
+            <button
+              type="button"
+              id="btn-report-tab-export-summary"
+              onClick={() => {
+                if (onOpenExportModal) onOpenExportModal();
+                else setIsLocalExportModalOpen(true);
+              }}
+              className="px-5 py-2.5 rounded-2xl text-xs font-semibold transition-all inline-flex items-center gap-2 shadow-sm bg-emerald-600 hover:bg-emerald-500 text-white cursor-pointer"
+              title="Exportar informe de progreso y sesiones en formato JSON o texto formateado"
+            >
+              <FileDown className="w-4 h-4" />
+              <span>Exportar Resumen (JSON / Texto)</span>
+            </button>
+          </div>
 
           <div className="pt-2">
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 text-[11px] text-emerald-800 dark:text-emerald-300">
@@ -2507,6 +2541,20 @@ export const ClientWorkstationView: React.FC<ClientWorkstationViewProps> = ({
           </div>
         </div>
       )}
+      {/* Modal de exportación resumen si se activa localmente */}
+      {isLocalExportModalOpen && (
+        <ClientExportSummaryModal
+          isOpen={isLocalExportModalOpen}
+          onClose={() => setIsLocalExportModalOpen(false)}
+          client={client}
+          clients={clients}
+          onSelectClient={onSelectClient}
+          sessions={sessions}
+          forms={forms}
+          insights={insights}
+        />
+      )}
+
       {/* Toast Notification flotante para descargas y acciones */}
       {downloadToastMessage && (
         <div className="fixed bottom-6 right-6 z-50 animate-bounce">

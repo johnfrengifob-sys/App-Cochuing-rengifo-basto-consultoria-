@@ -15,6 +15,11 @@ import {
   ShieldCheck,
   Brain,
   ArrowRight,
+  CheckCircle2,
+  Activity,
+  TrendingUp,
+  Table,
+  ExternalLink,
 } from 'lucide-react';
 import { User, Session, PostSessionForm, CronogramaEvent, ProgramNodeInfo } from '../types';
 import { OntologicalStore, COMPANY_INFO, PROGRAM_NODES, BRE_B_NU_CONFIG } from '../services/store';
@@ -51,13 +56,16 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
     setActiveUser(client);
   }, [client]);
 
-  // Estado de navegación por acordeón/toggle con los tres botones principales destacados
-  // Por defecto, las secciones de contenido detallado debajo de estos botones permanecen colapsadas (null)
+  // Estado de despliegue directo (accordion inline) para las tres secciones principales
+  // Inicia por defecto en null (todos los botones recogidos/plegados)
   const [expandedSection, setExpandedSection] = useState<'resumen' | 'talleres' | 'sesiones' | null>(null);
 
-  // Lógica de acordeón estándar: si hace clic en la sección activa, se colapsa (toggle); si hace clic en otra, se despliega fluidamente
   const toggleSection = (section: 'resumen' | 'talleres' | 'sesiones') => {
-    setExpandedSection((current) => (current === section ? null : section));
+    setExpandedSection((curr) => (curr === section ? null : section));
+  };
+
+  const openSection = (section: 'resumen' | 'talleres' | 'sesiones') => {
+    setExpandedSection(section);
   };
 
   // Estados de datos sincronizados con Store y Firestore
@@ -525,7 +533,7 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
               </div>
 
               <div>
-                <span className="text-[10px] uppercase tracking-widest text-neutral-500 dark:text-neutral-400 block font-mono">
+                <span className="text-[10px] uppercase tracking-widest text-neutral-500 dark:text-neutral-400 block font-medium">
                   Rengifo Basto Consultoría Ontológica
                 </span>
                 <h1 className="text-xl sm:text-2xl font-semibold tracking-tight text-black dark:text-white">
@@ -597,24 +605,24 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
                   />
                 </svg>
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <span className="text-[10px] font-mono font-bold text-black dark:text-white">
+                  <span className="text-[11px] font-sans font-bold text-black dark:text-white">
                     {overallProgressPercentage}%
                   </span>
                 </div>
               </div>
 
-              <div className="space-y-0.5">
+              <div className="space-y-0.5 font-sans">
                 <div className="flex items-center gap-2">
-                  <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">
                     Avance Integral
                   </span>
                   <span
-                    className={`text-[9px] font-mono px-2 py-0.5 rounded-full font-medium border ${activeCycleAccent.border} ${activeCycleAccent.softBg} ${activeCycleAccent.badgeText}`}
+                    className={`text-[10px] px-2.5 py-0.5 rounded-full font-semibold border ${activeCycleAccent.border} ${activeCycleAccent.softBg} ${activeCycleAccent.badgeText}`}
                   >
                     {isCycleMilestone ? '★ Cosecha del Ciclo' : 'Lienzo en Blanco'}
                   </span>
                 </div>
-                <div className="text-[11px] text-neutral-600 dark:text-neutral-300 font-mono">
+                <div className="text-xs text-neutral-600 dark:text-neutral-300">
                   <strong className="text-black dark:text-white font-semibold">
                     {completedJourneyItems} de {totalJourneyItems}
                   </strong>{' '}
@@ -627,438 +635,571 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
         </header>
 
         {/* ========================================================================= */}
-        {/* 1.1 CANAL DIRECTO Y ACOMPAÑAMIENTO CON EL COACH                           */}
+        {/* 2. ACORDEÓN INLINE EJECUTIVO: 3 ESPACIOS PRINCIPALES                      */}
         {/* ========================================================================= */}
         <section
-          id="superior-comunicacion-directa"
-          className="p-5 sm:p-6 rounded-3xl border border-black/10 dark:border-white/10 bg-white/30 dark:bg-neutral-950/30 backdrop-blur-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xs hover:border-black/20 dark:hover:border-white/20 transition-all"
-        >
-          <div className="flex items-center gap-4">
-            <div className="relative">
-              <img
-                src={coachAvatarImg}
-                alt="John Fredy Rengifo Basto"
-                className="w-13 h-13 sm:w-14 sm:h-14 rounded-2xl object-cover border border-black/15 dark:border-white/15 shadow-2xs"
-              />
-              <span className="absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-white dark:border-neutral-950 shadow-xs" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="text-[10px] font-mono uppercase tracking-wider text-emerald-600 dark:text-emerald-400 font-semibold">
-                  Canal Directo Activo
-                </span>
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
-              </div>
-              <h2 className="text-sm sm:text-base font-bold text-black dark:text-white">
-                John Fredy Rengifo Basto
-              </h2>
-              <p className="text-xs text-neutral-600 dark:text-neutral-400 font-light">
-                Master Coach Ontológico • Acompañamiento 1 a 1 y espacio confidencial
-              </p>
-            </div>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2.5 pt-1 sm:pt-0">
-            <a
-              href={COMPANY_INFO.whatsappUrl}
-              target="_blank"
-              rel="noreferrer"
-              className="flex-1 sm:flex-initial px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold transition-all duration-200 flex items-center justify-center gap-2 shadow-xs cursor-pointer hover:shadow-md active:scale-[0.99]"
-            >
-              <MessageCircle className="w-4 h-4 text-emerald-100" />
-              <span>WhatsApp Directo</span>
-            </a>
-            <a
-              href={currentSession.meetLink || 'https://meet.google.com/rbc-sesion'}
-              target="_blank"
-              rel="noreferrer"
-              className="px-4 py-2.5 rounded-xl border border-black/15 dark:border-white/15 bg-white/60 dark:bg-neutral-900/60 hover:bg-white dark:hover:bg-neutral-800 text-black dark:text-white text-xs font-semibold transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer shadow-xs"
-            >
-              <Video className="w-4 h-4 text-indigo-500" />
-              <span>Sala Meet 1 a 1</span>
-            </a>
-          </div>
-        </section>
-
-        {/* ========================================================================= */}
-        {/* 2. ESTRUCTURA DE DESPLIEGUE DIRECTO (ACORDEÓN INLINE CON LIQUID GLASS)    */}
-        {/* Cada botón despliega su información INMEDIATAMENTE DEBAJO de sí mismo      */}
-        {/* ========================================================================= */}
-        <section
-          id="main-navigation-inline-accordion"
+          id="client-panel-accordion-container"
+          aria-label="Espacios principales del participante"
           className="space-y-4"
         >
-          {/* ========================================================================= */}
-          {/* ITEM 1: RESUMEN GENERAL (BOTÓN + CONTENIDO INLINE)                         */}
-          {/* ========================================================================= */}
-          <div className="space-y-3" id="accordion-item-resumen">
+          {/* ----------------------------------------------------------------------- */}
+          {/* SECCIÓN 1: RESUMEN GENERAL                                              */}
+          {/* ----------------------------------------------------------------------- */}
+          <div id="accordion-item-resumen" className="space-y-3">
             <button
-              id="btn-toggle-resumen-general"
+              id="btn-accordion-resumen"
               type="button"
               onClick={() => toggleSection('resumen')}
               aria-expanded={expandedSection === 'resumen'}
-              className={`w-full group relative px-6 sm:px-8 py-5 sm:py-6 rounded-3xl text-left transition-all duration-300 cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-4 overflow-hidden border ${
+              className={`w-full p-4 sm:p-5 rounded-3xl border text-left transition-all duration-300 cursor-pointer flex items-center justify-between gap-4 select-none ${
                 expandedSection === 'resumen'
-                  ? 'bg-black text-white dark:bg-white dark:text-black border-black/40 dark:border-white shadow-xl ring-2 ring-black/15 dark:ring-white/20'
-                  : 'bg-white/35 dark:bg-neutral-950/35 backdrop-blur-2xl text-black dark:text-white border-black/10 dark:border-white/10 hover:bg-white/65 dark:hover:bg-neutral-900/65 hover:border-black/25 dark:hover:border-white/25 shadow-xs hover:shadow-md'
+                  ? 'bg-white/85 dark:bg-white/95 text-black dark:text-neutral-950 border-white/90 dark:border-white shadow-xl shadow-black/5 dark:shadow-white/10 ring-2 ring-black/10 dark:ring-white/30 backdrop-blur-2xl'
+                  : 'bg-white/40 dark:bg-neutral-950/40 backdrop-blur-xl text-neutral-800 dark:text-neutral-200 border-black/10 dark:border-white/10 hover:bg-white/65 dark:hover:bg-neutral-900/60 hover:border-black/20 dark:hover:border-white/20 shadow-xs hover:shadow-md'
               }`}
             >
-              <div className="flex items-center gap-4">
-                <span
-                  className={`text-xs font-mono font-bold px-3 py-1 rounded-xl transition-colors ${
-                    expandedSection === 'resumen'
-                      ? 'bg-white/15 dark:bg-black/15 text-white dark:text-black'
-                      : 'bg-black/5 dark:bg-white/10 text-neutral-600 dark:text-neutral-400'
-                  }`}
-                >
-                  01
-                </span>
+              <div className="flex items-center gap-3.5 sm:gap-4 min-w-0">
                 <div
-                  className={`w-11 h-11 rounded-2xl flex items-center justify-center shrink-0 transition-all duration-300 group-hover:scale-105 ${
+                  className={`w-11 h-11 sm:w-12 sm:h-12 rounded-2xl flex items-center justify-center shrink-0 transition-all duration-300 ${
                     expandedSection === 'resumen'
-                      ? 'bg-white text-black dark:bg-black dark:text-white shadow-sm'
-                      : 'bg-black/5 dark:bg-white/10 text-black dark:text-white group-hover:bg-black group-hover:text-white dark:group-hover:bg-white dark:group-hover:text-black'
+                      ? 'bg-black/10 text-neutral-950 shadow-xs'
+                      : 'bg-black/5 dark:bg-white/10 text-amber-500'
                   }`}
                 >
-                  <Sparkles className="w-5 h-5 text-amber-400" />
+                  <Sparkles className="w-5 h-5 sm:w-6 sm:h-6 text-amber-500" />
                 </div>
-                <div>
-                  <div className="flex items-center gap-2.5 flex-wrap">
-                    <h3 className="text-base sm:text-lg font-bold tracking-tight font-sans">
-                      Resumen General
-                    </h3>
+                <div className="min-w-0 font-sans">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <span
-                      className={`text-[10px] font-mono px-2.5 py-0.5 rounded-full font-semibold ${
+                      className={`text-xs font-bold px-2.5 py-0.5 rounded-xl transition-colors ${
                         expandedSection === 'resumen'
-                          ? 'bg-white/20 dark:bg-black/15 text-white dark:text-black'
+                          ? 'bg-black/10 text-neutral-900'
                           : 'bg-black/5 dark:bg-white/10 text-neutral-600 dark:text-neutral-400'
                       }`}
                     >
-                      {overallProgressPercentage}% Avance
+                      01
+                    </span>
+                    <h3 className="text-base sm:text-lg font-bold truncate tracking-tight">
+                      Resumen General
+                    </h3>
+                    <span
+                      className={`text-xs font-semibold px-2.5 py-0.5 rounded-full ${
+                        expandedSection === 'resumen'
+                          ? 'bg-black/10 text-black'
+                          : 'bg-black/5 dark:bg-white/10 text-neutral-600 dark:text-neutral-300'
+                      }`}
+                    >
+                      {overallProgressPercentage}% Avance Integral
                     </span>
                   </div>
                   <p
-                    className={`text-xs font-light mt-1 max-w-2xl ${
+                    className={`text-xs font-normal truncate mt-1 ${
                       expandedSection === 'resumen'
-                        ? 'text-neutral-300 dark:text-neutral-700'
-                        : 'text-neutral-600 dark:text-neutral-400'
+                        ? 'text-neutral-600'
+                        : 'text-neutral-500 dark:text-neutral-400'
                     }`}
                   >
-                    Métricas clave, estado del proceso, foco somático y tu momento actual.
+                    Talleres troncales, sesiones individuales y próximos hitos
                   </p>
                 </div>
               </div>
 
-              <div className="flex items-center justify-between sm:justify-end gap-3 pt-2 sm:pt-0 border-t sm:border-t-0 border-black/5 dark:border-white/5">
-                <span
-                  className={`text-[11px] font-mono uppercase tracking-wider font-bold ${
-                    expandedSection === 'resumen'
-                      ? 'text-emerald-400 dark:text-emerald-700 font-extrabold'
-                      : 'text-neutral-500 dark:text-neutral-400 group-hover:text-black dark:group-hover:text-white'
-                  }`}
-                >
-                  {expandedSection === 'resumen' ? 'Desplegado ▲' : 'Desplegar ▼'}
-                </span>
-                <div
-                  className={`w-8 h-8 rounded-full flex items-center justify-center transition-transform duration-300 shrink-0 ${
-                    expandedSection === 'resumen'
-                      ? 'rotate-180 bg-white/20 dark:bg-black/20 text-white dark:text-black'
-                      : 'bg-black/5 dark:bg-white/10 text-neutral-600 dark:text-neutral-400 group-hover:bg-black/10 dark:group-hover:bg-white/20'
-                  }`}
-                >
-                  <ChevronDown className="w-4 h-4" />
-                </div>
+              <div
+                className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 transition-transform duration-300 ${
+                  expandedSection === 'resumen'
+                    ? 'rotate-180 bg-black/10 text-black'
+                    : 'bg-black/5 dark:bg-white/10 text-neutral-600 dark:text-neutral-400'
+                }`}
+              >
+                <ChevronDown className="w-4 h-4" />
               </div>
             </button>
 
-            {/* DESPLIEGUE DIRECTO DE RESUMEN INMEDIATAMENTE DEBAJO DEL BOTÓN */}
             <AnimatePresence initial={false}>
               {expandedSection === 'resumen' && (
                 <motion.div
-                  key="accordion-resumen-inline"
+                  key="accordion-content-resumen"
                   initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: 'auto' }}
                   exit={{ opacity: 0, height: 0 }}
                   transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-                  className="overflow-hidden space-y-6 pt-1 pb-2"
+                  className="overflow-hidden space-y-5 pt-1 pb-2 font-sans"
                 >
-                  {/* Encabezado con botón para colapsar */}
-                  <div className="flex items-center justify-between px-1">
-                    <div className="flex items-center gap-2">
-                      <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
-                      <h3 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-black dark:text-white font-mono">
-                        Panel de Resumen General & Estado Actual
-                      </h3>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setExpandedSection(null)}
-                      className="text-[11px] font-mono text-neutral-500 hover:text-black dark:hover:text-white transition-colors cursor-pointer px-3 py-1 rounded-xl bg-white/40 dark:bg-neutral-900/40 border border-black/10 dark:border-white/10"
-                    >
-                      Colapsar Sección ▲
-                    </button>
-                  </div>
-
-                  {/* Tu Momento Actual */}
+                  {/* ========================================================================= */}
+                  {/* 1. PRIMERO: TALLERES TRONCALES (RAÍZ, TALLO, FLORECIMIENTO)                */}
+                  {/* ========================================================================= */}
                   <section
-                    id="panel-momento-actual"
-                    className="rounded-3xl border border-black/10 dark:border-white/10 bg-white/25 dark:bg-neutral-950/30 backdrop-blur-xl overflow-hidden shadow-xs space-y-0"
+                    id="panel-progreso-talleres-troncales"
+                    className="p-5 sm:p-7 rounded-3xl border border-black/10 dark:border-white/10 bg-white/40 dark:bg-neutral-950/40 backdrop-blur-2xl shadow-xs space-y-5"
                   >
-                    {/* Visual con fotografía curada */}
-                    <div className="relative h-48 sm:h-56 w-full overflow-hidden bg-neutral-900">
-                      <img
-                        src={CURATED_EXPERIENCE_PHOTOS[currentSessionNumber % CURATED_EXPERIENCE_PHOTOS.length].url}
-                        alt={currentNodeInfo.sessionTitle}
-                        referrerPolicy="no-referrer"
-                        className="w-full h-full object-cover transition-transform duration-700 hover:scale-102"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-black/20" />
-
-                      <div className="absolute top-4 left-4 flex flex-wrap items-center gap-2">
-                        <div className="bg-black/90 text-white px-3.5 py-1.5 text-[10px] font-bold uppercase tracking-widest rounded-full shadow-xs flex items-center gap-2 border border-white/20">
-                          <span className={`w-2 h-2 rounded-full ${activeCycleAccent.dot} animate-pulse`} />
-                          <span>Tu Momento Actual</span>
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-2xl bg-black dark:bg-white text-white dark:text-black flex items-center justify-center shadow-xs">
+                          <Award className="w-5 h-5" />
                         </div>
-                        <span className="bg-white/90 dark:bg-black/80 text-black dark:text-white px-3 py-1 text-[10px] font-bold uppercase tracking-wider rounded-full backdrop-blur-md shadow-xs border border-black/10 dark:border-white/20">
-                          Ciclo {currentCycle}: {currentCycle === 1 ? 'Raíz' : currentCycle === 2 ? 'Tallo' : 'Florecimiento'} • Sesión {currentSessionNumber} de 12
-                        </span>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-[10px] font-bold uppercase tracking-widest text-neutral-500 dark:text-neutral-400">
+                              Tronco Académico & Ontológico
+                            </span>
+                            <span className="px-2 py-0.5 rounded-full bg-black/5 dark:bg-white/10 text-neutral-700 dark:text-neutral-300 text-[10px] font-semibold">
+                              3 Ciclos RBC
+                            </span>
+                          </div>
+                          <h2 className="text-base sm:text-lg font-bold text-black dark:text-white tracking-tight">
+                            Talleres Troncales (Raíz, Tallo, Florecimiento)
+                          </h2>
+                        </div>
                       </div>
 
-                      <div className="absolute bottom-4 left-4 right-4 text-white">
-                        <div className="bg-black/60 backdrop-blur-md p-4 rounded-2xl border border-white/15 max-w-3xl">
-                          <div className="text-[10px] uppercase tracking-widest text-emerald-400 font-mono font-bold">
-                            Estación #{currentSessionNumber}: {currentNodeInfo.weekLabel}
+                      <div className="flex items-center gap-3 self-end sm:self-auto">
+                        <div className="text-right">
+                          <div className="text-[11px] text-neutral-500 dark:text-neutral-400 font-medium">
+                            {accreditedWorkshopsCount} de 3 Talleres Acreditados
                           </div>
-                          <h2 className="text-base sm:text-lg font-bold text-white mt-1 leading-snug">
-                            {currentNodeInfo.sessionTitle}
-                          </h2>
-                          <p className="text-xs font-light text-neutral-200 mt-1 leading-relaxed line-clamp-2">
-                            {currentNodeInfo.objective}
-                          </p>
+                          <div className="text-lg sm:text-xl font-extrabold text-black dark:text-white leading-tight">
+                            {Math.round((accreditedWorkshopsCount / 3) * 100)}%
+                          </div>
                         </div>
                       </div>
                     </div>
 
-                    <div className="p-6 sm:p-8 space-y-6">
-                      {/* 3 Pilares Fundamentales del Momento Actual */}
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        {/* Pilar 1: Próxima Sesión 1 a 1 */}
-                        <div className="p-5 rounded-2xl border border-black/10 dark:border-white/10 bg-white/30 dark:bg-neutral-900/40 backdrop-blur-md flex flex-col justify-between space-y-4">
-                          <div className="space-y-2">
-                            <div className="flex items-center justify-between">
-                              <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-500 dark:text-neutral-400 font-mono flex items-center gap-1.5">
-                                <Clock className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-                                Sesión Individual
-                              </span>
-                              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20">
-                                {currentSession.status === 'completed' ? 'Completada' : 'Programada'}
-                              </span>
-                            </div>
-                            <div className="text-sm font-bold text-black dark:text-white">
-                              Sesión #{currentSessionNumber} de 12
-                            </div>
-                            <p className="text-xs text-neutral-600 dark:text-neutral-400">
-                              {formatHumanDate(currentSession.date)}
-                            </p>
-                          </div>
-
-                          <div className="pt-2 flex flex-col gap-2">
-                            <a
-                              href={currentSession.meetLink || 'https://meet.google.com/new'}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="w-full px-3.5 py-2 rounded-xl bg-black text-white dark:bg-white dark:text-black text-xs font-semibold hover:opacity-90 transition-opacity flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
-                            >
-                              <Video className="w-3.5 h-3.5 text-emerald-400 dark:text-emerald-600" />
-                              <span>Unirme por Meet</span>
-                            </a>
-                            <div className="flex items-center gap-2">
-                              <a
-                                href={currentSessionGCalUrl}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="flex-1 px-2.5 py-1.5 rounded-xl border border-black/10 dark:border-white/10 bg-white/50 dark:bg-neutral-800/60 text-[11px] font-medium text-neutral-700 dark:text-neutral-200 hover:bg-white/80 dark:hover:bg-neutral-700 transition-colors text-center inline-flex items-center justify-center gap-1"
-                              >
-                                <Calendar className="w-3 h-3 text-neutral-500" />
-                                <span>Google Calendar</span>
-                              </a>
-                              <button
-                                type="button"
-                                onClick={() => toggleSection('sesiones')}
-                                className="px-2.5 py-1.5 rounded-xl border border-black/15 dark:border-white/15 bg-white/60 dark:bg-neutral-800/80 text-[11px] font-semibold text-black dark:text-white hover:bg-white dark:hover:bg-neutral-700 transition-colors cursor-pointer inline-flex items-center gap-1 shadow-2xs"
-                              >
-                                <span>Ver Sesiones</span>
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Pilar 2: Taller Troncal RBC en Curso */}
-                        <div className="p-5 rounded-2xl border border-black/10 dark:border-white/10 bg-white/30 dark:bg-neutral-900/40 backdrop-blur-md flex flex-col justify-between space-y-4">
-                          <div className="space-y-2">
-                            <div className="flex items-center justify-between">
-                              <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-500 dark:text-neutral-400 font-mono flex items-center gap-1.5">
-                                <Award className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
-                                Taller Troncal
-                              </span>
-                              <span
-                                className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
-                                  isCurrentCycleWorkshopAttended
-                                    ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-500/20'
-                                    : 'bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/20'
-                                }`}
-                              >
-                                {isCurrentCycleWorkshopAttended ? 'Acreditado ✓' : 'En Curso'}
-                              </span>
-                            </div>
-                            <div className="text-sm font-bold text-black dark:text-white line-clamp-1">
-                              {currentCycleWorkshop.title}
-                            </div>
-                            <p className="text-xs text-neutral-600 dark:text-neutral-400">
-                              Ciclo {currentCycle} ({currentCycleWorkshop.stageName}) • {currentCycleWorkshop.levelBadge}
-                            </p>
-                          </div>
-
-                          <div className="pt-2 flex flex-col gap-2">
-                            <a
-                              href={currentCycleWorkshop.meetLink || 'https://meet.google.com/rbc-conversatorio-ontologico'}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="w-full px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold transition-colors flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
-                            >
-                              <Video className="w-3.5 h-3.5 text-indigo-200" />
-                              <span>Sala del Taller (Meet)</span>
-                            </a>
-                            <button
-                              type="button"
-                              onClick={() => toggleSection('talleres')}
-                              className="w-full px-2.5 py-1.5 rounded-xl border border-black/10 dark:border-white/10 bg-white/50 dark:bg-neutral-800/60 text-[11px] font-medium text-neutral-700 dark:text-neutral-200 hover:bg-white/80 dark:hover:bg-neutral-700 transition-colors text-center inline-flex items-center justify-center gap-1 cursor-pointer"
-                            >
-                              <BookOpen className="w-3 h-3 text-neutral-500" />
-                              <span>Ver Talleres & Temario</span>
-                            </button>
-                          </div>
-                        </div>
-
-                        {/* Pilar 3: Avance Global & Cosecha Integral */}
-                        <div className="p-5 rounded-2xl border border-black/10 dark:border-white/10 bg-white/30 dark:bg-neutral-900/40 backdrop-blur-md flex flex-col justify-between space-y-4">
-                          <div className="space-y-2">
-                            <div className="flex items-center justify-between">
-                              <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-500 dark:text-neutral-400 font-mono flex items-center gap-1.5">
-                                <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-                                Avance Integral
-                              </span>
-                              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-black/10 dark:bg-white/15 text-black dark:text-white font-mono">
-                                {overallProgressPercentage}%
-                              </span>
-                            </div>
-                            <div className="text-sm font-bold text-black dark:text-white">
-                              Cosecha del Ciclo {currentCycle}
-                            </div>
-                            <p className="text-xs text-neutral-600 dark:text-neutral-400">
-                              {completedSessionsCount} de 12 sesiones • {accreditedWorkshopsCount} de 3 talleres acreditados.
-                            </p>
-                          </div>
-
-                          <div className="pt-2 flex flex-col gap-2">
-                            <button
-                              type="button"
-                              onClick={() => toggleSection('sesiones')}
-                              className="w-full px-3 py-2 rounded-xl border border-black/15 dark:border-white/15 bg-white/60 dark:bg-neutral-800/60 hover:bg-white dark:hover:bg-neutral-700 text-xs font-semibold text-black dark:text-white transition-colors flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs"
-                            >
-                              <Calendar className="w-3.5 h-3.5 text-emerald-500" />
-                              <span>Ir a las Sesiones</span>
-                            </button>
-                          </div>
-                        </div>
+                    {/* Barra de Progreso Continua de Talleres */}
+                    <div className="space-y-1.5">
+                      <div className="h-2.5 w-full rounded-full bg-black/10 dark:bg-white/10 overflow-hidden p-0.5">
+                        <div
+                          className="h-full rounded-full bg-black dark:bg-white transition-all duration-700 ease-out"
+                          style={{ width: `${Math.min(100, Math.round((accreditedWorkshopsCount / 3) * 100))}%` }}
+                        />
                       </div>
+                    </div>
 
-                      {/* Pregunta de Apertura Ontológica & Foco Somático */}
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {/* Pregunta de Apertura */}
-                        <div className="p-5 rounded-2xl bg-white/30 dark:bg-neutral-900/40 backdrop-blur-md border border-black/10 dark:border-white/10 space-y-2 shadow-xs">
-                          <span className="text-[10px] font-bold uppercase tracking-widest text-neutral-500 dark:text-neutral-400 block font-mono">
-                            Pregunta de Apertura del Momento
-                          </span>
-                          <h3 className="text-sm sm:text-base font-medium text-black dark:text-white leading-snug">
-                            «{currentNodeInfo.keyQuestion || (isCycleMilestone
-                              ? '¿Qué grandes descubrimientos o patrones has notado en estas semanas y cómo sientes que tu perspectiva ha cambiado?'
-                              : '¿Qué es importante para ti traer a este espacio hoy?')}»
-                          </h3>
-                          <p className="text-xs text-neutral-600 dark:text-neutral-400 font-light leading-relaxed">
-                            Espacio abierto al emergente. Conversamos sobre lo que hoy demanda sentido y coherencia en tus decisiones.
-                          </p>
-                        </div>
+                    {/* 3 Bloques Visuales de Talleres (Raíz, Tallo, Florecimiento) Sincronizados con Admin */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                      {CORE_WORKSHOPS.map((ws, idx) => {
+                        const isAttended = isWorkshopAttended(ws);
+                        const isCurrentCycleWs = currentCycle === idx + 1;
+                        const matchingEvt = cronogramaEvents.find(evt =>
+                          ws.matchIds.some(
+                            id =>
+                              evt.id.toLowerCase().includes(id) ||
+                              evt.title.toLowerCase().includes(ws.stageName.toLowerCase())
+                          )
+                        );
+                        const dateLabel = matchingEvt?.date ? formatHumanDate(matchingEvt.date) : ws.defaultDate;
 
-                        {/* Foco Somático & Micro-Práctica */}
-                        <div className="p-5 rounded-2xl bg-white/30 dark:bg-neutral-900/40 backdrop-blur-md border border-black/10 dark:border-white/10 space-y-2 shadow-xs">
-                          <span className="text-[10px] font-bold uppercase tracking-widest text-neutral-500 dark:text-neutral-400 block font-mono flex items-center gap-1">
-                            <Brain className="w-3 h-3 text-indigo-500" />
-                            Foco Somático & Encarnación
-                          </span>
-                          <h3 className="text-sm sm:text-base font-medium text-black dark:text-white leading-snug">
-                            {currentNodeInfo.dailyMicroPractice?.title || 'Pausa de Coherencia y Centramiento'}
-                          </h3>
-                          <p className="text-xs text-neutral-600 dark:text-neutral-400 font-light leading-relaxed">
-                            {currentNodeInfo.dailyMicroPractice?.description ||
-                              currentNodeInfo.methodology?.somatic ||
-                              'Calibración de la tensión diafragmática y presencia corporal previa a cada decisión.'}
-                          </p>
-                        </div>
-                      </div>
-
-                      {/* Cosecha de Ciclo si corresponde */}
-                      {isCycleMilestone && (
-                        <div className="p-5 rounded-2xl bg-amber-500/10 dark:bg-amber-500/15 backdrop-blur-md border border-amber-500/30 space-y-3">
-                          <div className="flex items-center gap-2">
-                            <Sparkles className="w-4 h-4 text-amber-500" />
-                            <h3 className="text-xs font-bold text-black dark:text-white uppercase tracking-wider font-mono">
-                              Cosecha del Ciclo {currentCycle} (Hito de Integración)
-                            </h3>
-                          </div>
-                          <p className="text-xs text-neutral-700 dark:text-neutral-300 leading-relaxed">
-                            Has completado las sesiones de este ciclo. Es momento de recoger las distinciones adquiridas, verificar cambios de observador y consolidar los nuevos acuerdos.
-                          </p>
-                        </div>
-                      )}
-
-                      {/* Acciones de Memoria y Bitácora de Sesión */}
-                      <div className="p-4 rounded-2xl border border-black/10 dark:border-white/10 bg-white/20 dark:bg-neutral-900/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                        <div className="flex items-center gap-3">
-                          <div className="w-9 h-9 rounded-xl bg-black dark:bg-white text-white dark:text-black flex items-center justify-center shrink-0">
-                            <FileText className="w-4 h-4" />
-                          </div>
-                          <div>
-                            <div className="text-xs font-bold text-black dark:text-white">
-                              {currentPostForm ? 'Memoria de Sesión Registrada' : 'Bitácora de Sesión Pendiente'}
-                            </div>
-                            <div className="text-[11px] text-neutral-500 dark:text-neutral-400">
-                              {currentPostForm
-                                ? `Registrada para la Sesión #${currentSessionNumber}`
-                                : `Registra el emergente y los acuerdos de la Sesión #${currentSessionNumber}`}
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="flex items-center gap-2">
-                          {currentPostForm && (
-                            <button
-                              type="button"
-                              onClick={() => handleDownloadMemory(currentPostForm, currentSession)}
-                              className="px-3.5 py-1.5 rounded-xl border border-black/15 dark:border-white/15 bg-white/50 dark:bg-black/50 text-xs font-semibold hover:bg-white/80 dark:hover:bg-neutral-800 transition-colors inline-flex items-center gap-1.5 cursor-pointer"
-                            >
-                              <Download className="w-3.5 h-3.5" />
-                              <span>Descargar PDF</span>
-                            </button>
-                          )}
-                          <button
-                            type="button"
-                            onClick={() => handleOpenBitacora(currentSession)}
-                            className="px-3.5 py-1.5 rounded-xl bg-black text-white dark:bg-white dark:text-black text-xs font-semibold hover:opacity-90 transition-opacity inline-flex items-center gap-1.5 cursor-pointer shadow-xs"
+                        return (
+                          <div
+                            key={ws.id}
+                            className={`p-4 rounded-2xl border flex flex-col justify-between gap-3 text-xs transition-all ${
+                              isAttended
+                                ? 'bg-emerald-500/10 dark:bg-emerald-500/15 border-emerald-500/25 text-neutral-900 dark:text-neutral-100 shadow-2xs'
+                                : isCurrentCycleWs
+                                ? 'bg-black/5 dark:bg-white/10 border-black/20 dark:border-white/20 text-black dark:text-white font-medium ring-1 ring-black/10 dark:ring-white/20'
+                                : 'bg-black/5 dark:bg-white/5 border-black/5 dark:border-white/5 text-neutral-500 dark:text-neutral-400 opacity-90'
+                            }`}
                           >
-                            <FileText className="w-3.5 h-3.5" />
-                            <span>{currentPostForm ? 'Editar Bitácora' : 'Registrar Bitácora'}</span>
-                          </button>
+                            <div className="space-y-2">
+                              <div className="flex items-center justify-between gap-2">
+                                <span className="text-[10px] font-bold uppercase tracking-widest text-neutral-500 dark:text-neutral-400">
+                                  Ciclo 0{idx + 1} • {ws.stageName}
+                                </span>
+                                <div>
+                                  {isAttended ? (
+                                    <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-800 dark:text-emerald-300 text-[10px] font-bold border border-emerald-500/30 flex items-center gap-1">
+                                      <CheckCircle2 className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
+                                      <span>Acreditado</span>
+                                    </span>
+                                  ) : isCurrentCycleWs ? (
+                                    <span className="px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-800 dark:text-amber-300 text-[10px] font-bold border border-amber-500/30 flex items-center gap-1">
+                                      <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping" />
+                                      <span>En Curso</span>
+                                    </span>
+                                  ) : (
+                                    <span className="px-2 py-0.5 rounded-full bg-black/5 dark:bg-white/10 text-neutral-500 dark:text-neutral-400 text-[10px] font-medium">
+                                      Programado
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+
+                              <div className="font-bold text-sm text-black dark:text-white leading-snug">
+                                {ws.title}
+                              </div>
+
+                              <p className="text-[11px] text-neutral-600 dark:text-neutral-400 line-clamp-2 leading-relaxed">
+                                {ws.thematicFocus || ws.subtitle}
+                              </p>
+                            </div>
+
+                            <div className="space-y-2 pt-2 border-t border-black/5 dark:border-white/5">
+                              <div className="flex items-center justify-between text-[11px] text-neutral-500 dark:text-neutral-400">
+                                <span className="truncate">{dateLabel}</span>
+                                <span className="shrink-0 font-medium">Facilitador: John Fredy Rengifo</span>
+                              </div>
+
+                              {/* Accesos rápidos Workspace para cada Taller */}
+                              <div className="flex items-center gap-1.5 pt-1">
+                                <a
+                                  href={OFFICIAL_FORMS_SHEETS_BASE_MAP.talleres_registro.sheetUrl}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="flex-1 px-2 py-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-800 dark:text-emerald-300 text-[10px] font-semibold flex items-center justify-center gap-1 transition-colors border border-emerald-500/20 cursor-pointer"
+                                  title="Ver Base de Datos de Acuerdos y Asistencia en Google Sheets"
+                                >
+                                  <Table className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
+                                  <span>Sheets</span>
+                                  <ExternalLink className="w-2.5 h-2.5 opacity-60" />
+                                </a>
+                                <a
+                                  href={OFFICIAL_FORMS_SHEETS_BASE_MAP.talleres_registro.formUrl}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="flex-1 px-2 py-1.5 rounded-lg bg-white/70 dark:bg-neutral-800/70 hover:bg-white dark:hover:bg-neutral-700 text-neutral-700 dark:text-neutral-200 text-[10px] font-semibold flex items-center justify-center gap-1 transition-colors border border-black/10 dark:border-white/10 cursor-pointer"
+                                  title="Acuerdo y Registro Oficial en Google Forms"
+                                >
+                                  <span>Acuerdo</span>
+                                  <ExternalLink className="w-2.5 h-2.5 opacity-60" />
+                                </a>
+                                <a
+                                  href={ws.meetLink || 'https://meet.google.com/rbc-conversatorio-ontologico'}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="px-2 py-1.5 rounded-lg bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-700 dark:text-indigo-300 text-[10px] font-semibold flex items-center justify-center gap-1 transition-colors border border-indigo-500/20 cursor-pointer"
+                                  title="Ingresar a la Sala Meet del Taller"
+                                >
+                                  <Video className="w-3 h-3 text-indigo-500" />
+                                  <span>Meet</span>
+                                </a>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    <div className="pt-2 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-t border-black/10 dark:border-white/10">
+                      <div className="text-xs text-neutral-600 dark:text-neutral-400">
+                        <span className="font-semibold text-black dark:text-white">Avance Integral Global:</span> {overallProgressPercentage}% ({completedJourneyItems} de {totalJourneyItems} hitos acreditados)
+                      </div>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <a
+                          href={OFFICIAL_FORMS_SHEETS_BASE_MAP.talleres_registro.sheetUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="px-3 py-1.5 rounded-xl border border-emerald-500/30 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-800 dark:text-emerald-300 text-xs font-semibold transition-colors flex items-center gap-1.5 cursor-pointer shadow-2xs"
+                        >
+                          <Table className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                          <span>Ver en Sheets</span>
+                          <ExternalLink className="w-3 h-3 opacity-60" />
+                        </a>
+                        <button
+                          type="button"
+                          onClick={() => openSection('talleres')}
+                          className="px-4 py-2 rounded-xl border border-black/15 dark:border-white/15 bg-white/70 dark:bg-neutral-800/80 hover:bg-white dark:hover:bg-neutral-700 text-xs font-semibold text-black dark:text-white transition-colors flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs"
+                        >
+                          <BookOpen className="w-3.5 h-3.5" />
+                          <span>Consultar Temario Completo</span>
+                          <ArrowRight className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  </section>
+
+                  {/* ========================================================================= */}
+                  {/* 2. SEGUNDO: SESIONES INDIVIDUALES 1 A 1                                   */}
+                  {/* ========================================================================= */}
+                  <section
+                    id="panel-progreso-sesiones-individuales"
+                    className="p-5 sm:p-7 rounded-3xl border border-black/10 dark:border-white/10 bg-white/40 dark:bg-neutral-950/40 backdrop-blur-2xl shadow-xs space-y-5"
+                  >
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-2xl bg-black dark:bg-white text-white dark:text-black flex items-center justify-center shadow-xs">
+                          <Clock className="w-5 h-5" />
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-[10px] font-bold uppercase tracking-widest text-neutral-500 dark:text-neutral-400">
+                              Acompañamiento Personalizado
+                            </span>
+                            <span className="px-2 py-0.5 rounded-full bg-black/5 dark:bg-white/10 text-neutral-700 dark:text-neutral-300 text-[10px] font-semibold">
+                              12 Estaciones
+                            </span>
+                          </div>
+                          <h2 className="text-base sm:text-lg font-bold text-black dark:text-white tracking-tight">
+                            Sesiones Individuales 1 a 1
+                          </h2>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-3 self-end sm:self-auto">
+                        <div className="text-right">
+                          <div className="text-[11px] text-neutral-500 dark:text-neutral-400 font-medium">
+                            {completedSessionsCount} de 12 Sesiones Acreditadas
+                          </div>
+                          <div className="text-lg sm:text-xl font-extrabold text-black dark:text-white leading-tight">
+                            {Math.round((completedSessionsCount / 12) * 100)}%
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Barra de Progreso Continua con Hitos de Ciclos */}
+                    <div className="space-y-1.5">
+                      <div className="h-2.5 w-full rounded-full bg-black/10 dark:bg-white/10 overflow-hidden p-0.5">
+                        <div
+                          className="h-full rounded-full bg-black dark:bg-white transition-all duration-700 ease-out"
+                          style={{ width: `${Math.min(100, Math.round((completedSessionsCount / 12) * 100))}%` }}
+                        />
+                      </div>
+                      <div className="flex items-center justify-between text-[10px] text-neutral-500 dark:text-neutral-400 font-medium">
+                        <span>Ciclo 1: Raíz (Estaciones 1-4)</span>
+                        <span>Ciclo 2: Tallo (Estaciones 5-8)</span>
+                        <span>Ciclo 3: Florecimiento (Estaciones 9-12)</span>
+                      </div>
+                    </div>
+
+                    {/* Gráfico Visual de las 12 Estaciones */}
+                    <div className="space-y-2.5 pt-1">
+                      <span className="text-[10px] font-bold uppercase tracking-widest text-neutral-500 dark:text-neutral-400 block">
+                        Ruta de las 12 Estaciones Ontológicas
+                      </span>
+                      <div className="grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-12 gap-2">
+                        {Array.from({ length: 12 }, (_, i) => {
+                          const stepNum = i + 1;
+                          const isCompleted = stepNum < currentSessionNumber || sessions.some(s => s.sessionNumber === stepNum && s.status === 'completed');
+                          const isCurrent = stepNum === currentSessionNumber;
+
+                          return (
+                            <div
+                              key={`station-node-${stepNum}`}
+                              title={`Estación ${stepNum}: ${PROGRAM_NODES[i]?.sessionTitle || ''}`}
+                              className={`h-11 rounded-2xl flex flex-col items-center justify-center text-[10px] font-bold transition-all relative group cursor-default border ${
+                                isCurrent
+                                  ? 'bg-black text-white dark:bg-white dark:text-black border-black dark:border-white shadow-sm ring-2 ring-emerald-500/60 scale-102'
+                                  : isCompleted
+                                  ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-500/30'
+                                  : 'bg-black/5 dark:bg-white/5 text-neutral-400 dark:text-neutral-600 border-black/5 dark:border-white/5'
+                              }`}
+                            >
+                              {isCompleted ? (
+                                <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                              ) : isCurrent ? (
+                                <span className="flex items-center justify-center">
+                                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping absolute -top-1 -right-1" />
+                                  <span>{stepNum < 10 ? `0${stepNum}` : stepNum}</span>
+                                </span>
+                              ) : (
+                                <span>{stepNum < 10 ? `0${stepNum}` : stepNum}</span>
+                              )}
+                              <span className="text-[8px] font-semibold opacity-75 mt-0.5">
+                                {isCurrent ? 'Actual' : isCompleted ? 'Listo' : `E${stepNum}`}
+                              </span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    <div className="pt-2 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-t border-black/10 dark:border-white/10">
+                      <div className="text-xs text-neutral-600 dark:text-neutral-400">
+                        <span className="font-semibold text-black dark:text-white">Estación activa:</span> #{currentSessionNumber} ({currentNodeInfo.sessionTitle})
+                      </div>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <a
+                          href={OFFICIAL_FORMS_SHEETS_BASE_MAP.bitacora_sesiones_b2b.sheetUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="px-3 py-1.5 rounded-xl border border-emerald-500/30 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-800 dark:text-emerald-300 text-xs font-semibold transition-colors flex items-center gap-1.5 cursor-pointer shadow-2xs"
+                          title="Ver Base de Datos de Bitácoras de Sesiones en Google Sheets"
+                        >
+                          <Table className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                          <span>Ver en Sheets</span>
+                          <ExternalLink className="w-3 h-3 opacity-60" />
+                        </a>
+                        <a
+                          href={OFFICIAL_FORMS_SHEETS_BASE_MAP.bitacora_sesiones_b2b.formUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="px-3 py-1.5 rounded-xl border border-black/10 dark:border-white/10 bg-white/70 dark:bg-neutral-800/80 hover:bg-white dark:hover:bg-neutral-700 text-neutral-800 dark:text-neutral-200 text-xs font-semibold transition-colors flex items-center gap-1.5 cursor-pointer shadow-2xs"
+                          title="Abrir Formulario Oficial de Bitácora Coach"
+                        >
+                          <FileText className="w-3.5 h-3.5 text-indigo-500" />
+                          <span>Bitácora Coach</span>
+                          <ExternalLink className="w-3 h-3 opacity-60" />
+                        </a>
+                        <button
+                          type="button"
+                          onClick={() => openSection('sesiones')}
+                          className="px-4 py-2 rounded-xl border border-black/15 dark:border-white/15 bg-white/70 dark:bg-neutral-800/80 hover:bg-white dark:hover:bg-neutral-700 text-xs font-semibold text-black dark:text-white transition-colors flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs"
+                        >
+                          <Calendar className="w-3.5 h-3.5" />
+                          <span>Consultar Sesiones & Expediente</span>
+                          <ArrowRight className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  </section>
+
+                  {/* ========================================================================= */}
+                  {/* 3. TERCERO: PANEL DE PRÓXIMOS HITOS CONECTADOS                            */}
+                  {/* ========================================================================= */}
+                  <section
+                    id="panel-proximos-hitos-conectados"
+                    className="p-5 sm:p-7 rounded-3xl border border-black/10 dark:border-white/10 bg-white/40 dark:bg-neutral-950/40 backdrop-blur-2xl shadow-xs space-y-5"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-2xl bg-black dark:bg-white text-white dark:text-black flex items-center justify-center shadow-xs">
+                          <TrendingUp className="w-5 h-5" />
+                        </div>
+                        <div>
+                          <span className="text-[10px] font-bold uppercase tracking-widest text-neutral-500 dark:text-neutral-400 block">
+                            Sincronizado con Panel de Administración
+                          </span>
+                          <h2 className="text-base sm:text-lg font-bold text-black dark:text-white tracking-tight">
+                            Próximos Hitos Conectados
+                          </h2>
+                        </div>
+                      </div>
+                      <span className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 text-[10px] font-bold border border-emerald-500/20">
+                        <Activity className="w-3 h-3 animate-pulse text-emerald-500" />
+                        <span>Conexión en Tiempo Real</span>
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {/* Hito A: Próxima Sesión Individual 1 a 1 */}
+                      <div className="p-5 rounded-2xl border border-black/10 dark:border-white/10 bg-white/50 dark:bg-neutral-900/50 backdrop-blur-xl flex flex-col justify-between space-y-4">
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between">
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-500 dark:text-neutral-400 flex items-center gap-1.5">
+                              <Clock className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                              <span>Próxima Sesión Individual 1 a 1</span>
+                            </span>
+                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20">
+                              {currentSession.status === 'completed' ? 'Completada ✓' : 'Agendada en Calendario'}
+                            </span>
+                          </div>
+                          <div className="text-sm sm:text-base font-bold text-black dark:text-white">
+                            Sesión #{currentSessionNumber} de 12: {currentNodeInfo.sessionTitle}
+                          </div>
+                          <p className="text-xs text-neutral-600 dark:text-neutral-400">
+                            {formatHumanDate(currentSession.date)} • Duración: {currentSession.durationMinutes || 60} minutos
+                          </p>
+                        </div>
+
+                        <div className="pt-2 flex flex-col gap-2">
+                          <a
+                            href={currentSession.meetLink || 'https://meet.google.com/new'}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="w-full px-4 py-2.5 rounded-xl bg-black text-white dark:bg-white dark:text-black text-xs font-semibold hover:opacity-90 transition-opacity flex items-center justify-center gap-2 cursor-pointer shadow-xs"
+                          >
+                            <Video className="w-3.5 h-3.5 text-emerald-400 dark:text-emerald-600" />
+                            <span>Unirme por Google Meet</span>
+                          </a>
+                          <div className="grid grid-cols-3 gap-1.5">
+                            <a
+                              href={currentSessionGCalUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="px-2 py-2 rounded-xl border border-black/10 dark:border-white/10 bg-white/60 dark:bg-neutral-800/60 text-[10px] font-medium text-neutral-700 dark:text-neutral-200 hover:bg-white dark:hover:bg-neutral-700 transition-colors text-center inline-flex items-center justify-center gap-1 cursor-pointer shadow-2xs"
+                              title="Agendar en Google Calendar"
+                            >
+                              <Calendar className="w-3 h-3 text-neutral-500" />
+                              <span>Calendar</span>
+                            </a>
+                            <a
+                              href={OFFICIAL_FORMS_SHEETS_BASE_MAP.bitacora_sesiones_b2b.sheetUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="px-2 py-2 rounded-xl border border-emerald-500/20 bg-emerald-500/10 text-[10px] font-semibold text-emerald-800 dark:text-emerald-300 hover:bg-emerald-500/20 transition-colors text-center inline-flex items-center justify-center gap-1 cursor-pointer shadow-2xs"
+                              title="Ver Base de Datos de Sesiones en Google Sheets"
+                            >
+                              <Table className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
+                              <span>Sheets</span>
+                            </a>
+                            <a
+                              href={OFFICIAL_FORMS_SHEETS_BASE_MAP.bitacora_sesiones_b2b.formUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="px-2 py-2 rounded-xl border border-black/10 dark:border-white/10 bg-white/60 dark:bg-neutral-800/60 text-[10px] font-medium text-neutral-700 dark:text-neutral-200 hover:bg-white dark:hover:bg-neutral-700 transition-colors text-center inline-flex items-center justify-center gap-1 cursor-pointer shadow-2xs"
+                              title="Abrir Formulario de Bitácora"
+                            >
+                              <FileText className="w-3 h-3 text-indigo-500" />
+                              <span>Bitácora</span>
+                            </a>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Hito B: Próximo Taller Troncal en Vivo */}
+                      <div className="p-5 rounded-2xl border border-black/10 dark:border-white/10 bg-white/50 dark:bg-neutral-900/50 backdrop-blur-xl flex flex-col justify-between space-y-4">
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between">
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-500 dark:text-neutral-400 flex items-center gap-1.5">
+                              <Award className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
+                              <span>Taller Troncal RBC en Vivo</span>
+                            </span>
+                            <span
+                              className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+                                isCurrentCycleWorkshopAttended
+                                  ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-500/20'
+                                  : 'bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/20'
+                              }`}
+                            >
+                              {isCurrentCycleWorkshopAttended ? 'Acreditado ✓' : 'En Curso'}
+                            </span>
+                          </div>
+                          <div className="text-sm sm:text-base font-bold text-black dark:text-white line-clamp-1">
+                            {currentCycleWorkshop.title}
+                          </div>
+                          <p className="text-xs text-neutral-600 dark:text-neutral-400">
+                            Ciclo {currentCycle} ({currentCycleWorkshop.stageName}) • Facilitador: John Fredy Rengifo Basto
+                          </p>
+                        </div>
+
+                        <div className="pt-2 flex flex-col gap-2">
+                          <a
+                            href={currentCycleWorkshop.meetLink || 'https://meet.google.com/rbc-conversatorio-ontologico'}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="w-full px-4 py-2.5 rounded-xl bg-black text-white dark:bg-white dark:text-black text-xs font-semibold hover:opacity-90 transition-opacity flex items-center justify-center gap-2 cursor-pointer shadow-xs"
+                          >
+                            <Video className="w-3.5 h-3.5 text-indigo-400 dark:text-indigo-600" />
+                            <span>Sala del Taller (Meet)</span>
+                          </a>
+                          <div className="grid grid-cols-3 gap-1.5">
+                            <a
+                              href={OFFICIAL_FORMS_SHEETS_BASE_MAP.talleres_registro.sheetUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="px-2 py-2 rounded-xl border border-emerald-500/20 bg-emerald-500/10 text-[10px] font-semibold text-emerald-800 dark:text-emerald-300 hover:bg-emerald-500/20 transition-colors text-center inline-flex items-center justify-center gap-1 cursor-pointer shadow-2xs"
+                              title="Ver Base de Datos de Talleres en Google Sheets"
+                            >
+                              <Table className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
+                              <span>Sheets</span>
+                            </a>
+                            <a
+                              href={OFFICIAL_FORMS_SHEETS_BASE_MAP.talleres_registro.formUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="px-2 py-2 rounded-xl border border-black/10 dark:border-white/10 bg-white/60 dark:bg-neutral-800/60 text-[10px] font-medium text-neutral-700 dark:text-neutral-200 hover:bg-white dark:hover:bg-neutral-700 transition-colors text-center inline-flex items-center justify-center gap-1 cursor-pointer shadow-2xs"
+                              title="Acuerdo de Convivencia en Google Forms"
+                            >
+                              <span>Acuerdo</span>
+                            </a>
+                            <a
+                              href={OFFICIAL_FORMS_SHEETS_BASE_MAP.bitacora_talleres.formUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="px-2 py-2 rounded-xl border border-black/10 dark:border-white/10 bg-white/60 dark:bg-neutral-800/60 text-[10px] font-medium text-neutral-700 dark:text-neutral-200 hover:bg-white dark:hover:bg-neutral-700 transition-colors text-center inline-flex items-center justify-center gap-1 cursor-pointer shadow-2xs"
+                              title="Bitácora de Cosecha del Taller"
+                            >
+                              <span>Bitácora</span>
+                            </a>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -1068,118 +1209,88 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
             </AnimatePresence>
           </div>
 
-          {/* ========================================================================= */}
-          {/* ITEM 2: TALLERES & TEMARIO (BOTÓN + CONTENIDO INLINE)                      */}
-          {/* ========================================================================= */}
-          <div className="space-y-3" id="accordion-item-talleres">
+          {/* ----------------------------------------------------------------------- */}
+          {/* SECCIÓN 2: TALLERES & TEMARIO                                           */}
+          {/* ----------------------------------------------------------------------- */}
+          <div id="accordion-item-talleres" className="space-y-3">
             <button
-              id="btn-toggle-talleres"
+              id="btn-accordion-talleres"
               type="button"
               onClick={() => toggleSection('talleres')}
               aria-expanded={expandedSection === 'talleres'}
-              className={`w-full group relative px-6 sm:px-8 py-5 sm:py-6 rounded-3xl text-left transition-all duration-300 cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-4 overflow-hidden border ${
+              className={`w-full p-4 sm:p-5 rounded-3xl border text-left transition-all duration-300 cursor-pointer flex items-center justify-between gap-4 select-none ${
                 expandedSection === 'talleres'
-                  ? 'bg-black text-white dark:bg-white dark:text-black border-black/40 dark:border-white shadow-xl ring-2 ring-black/15 dark:ring-white/20'
-                  : 'bg-white/35 dark:bg-neutral-950/35 backdrop-blur-2xl text-black dark:text-white border-black/10 dark:border-white/10 hover:bg-white/65 dark:hover:bg-neutral-900/65 hover:border-black/25 dark:hover:border-white/25 shadow-xs hover:shadow-md'
+                  ? 'bg-white/85 dark:bg-white/95 text-black dark:text-neutral-950 border-white/90 dark:border-white shadow-xl shadow-black/5 dark:shadow-white/10 ring-2 ring-black/10 dark:ring-white/30 backdrop-blur-2xl'
+                  : 'bg-white/40 dark:bg-neutral-950/40 backdrop-blur-xl text-neutral-800 dark:text-neutral-200 border-black/10 dark:border-white/10 hover:bg-white/65 dark:hover:bg-neutral-900/60 hover:border-black/20 dark:hover:border-white/20 shadow-xs hover:shadow-md'
               }`}
             >
-              <div className="flex items-center gap-4">
-                <span
-                  className={`text-xs font-mono font-bold px-3 py-1 rounded-xl transition-colors ${
-                    expandedSection === 'talleres'
-                      ? 'bg-white/15 dark:bg-black/15 text-white dark:text-black'
-                      : 'bg-black/5 dark:bg-white/10 text-neutral-600 dark:text-neutral-400'
-                  }`}
-                >
-                  02
-                </span>
+              <div className="flex items-center gap-3.5 sm:gap-4 min-w-0">
                 <div
-                  className={`w-11 h-11 rounded-2xl flex items-center justify-center shrink-0 transition-all duration-300 group-hover:scale-105 ${
+                  className={`w-11 h-11 sm:w-12 sm:h-12 rounded-2xl flex items-center justify-center shrink-0 transition-all duration-300 ${
                     expandedSection === 'talleres'
-                      ? 'bg-white text-black dark:bg-black dark:text-white shadow-sm'
-                      : 'bg-black/5 dark:bg-white/10 text-black dark:text-white group-hover:bg-black group-hover:text-white dark:group-hover:bg-white dark:group-hover:text-black'
+                      ? 'bg-black/10 text-neutral-950 shadow-xs'
+                      : 'bg-black/5 dark:bg-white/10 text-indigo-500'
                   }`}
                 >
-                  <BookOpen className="w-5 h-5 text-indigo-400" />
+                  <BookOpen className="w-5 h-5 sm:w-6 sm:h-6 text-indigo-500" />
                 </div>
-                <div>
-                  <div className="flex items-center gap-2.5 flex-wrap">
-                    <h3 className="text-base sm:text-lg font-bold tracking-tight font-sans">
-                      Talleres & Temario
-                    </h3>
+                <div className="min-w-0 font-sans">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <span
-                      className={`text-[10px] font-mono px-2.5 py-0.5 rounded-full font-semibold ${
+                      className={`text-xs font-bold px-2.5 py-0.5 rounded-xl transition-colors ${
                         expandedSection === 'talleres'
-                          ? 'bg-white/20 dark:bg-black/15 text-white dark:text-black'
+                          ? 'bg-black/10 text-neutral-900'
                           : 'bg-black/5 dark:bg-white/10 text-neutral-600 dark:text-neutral-400'
                       }`}
                     >
-                      {accreditedWorkshopsCount}/3 Acreditados
+                      02
+                    </span>
+                    <h3 className="text-base sm:text-lg font-bold truncate tracking-tight">
+                      Talleres & Temario
+                    </h3>
+                    <span
+                      className={`text-xs font-semibold px-2.5 py-0.5 rounded-full ${
+                        expandedSection === 'talleres'
+                          ? 'bg-black/10 text-black'
+                          : 'bg-black/5 dark:bg-white/10 text-neutral-600 dark:text-neutral-300'
+                      }`}
+                    >
+                      {accreditedWorkshopsCount} de 3 Acreditados
                     </span>
                   </div>
                   <p
-                    className={`text-xs font-light mt-1 max-w-2xl ${
+                    className={`text-xs font-normal truncate mt-1 ${
                       expandedSection === 'talleres'
-                        ? 'text-neutral-300 dark:text-neutral-700'
-                        : 'text-neutral-600 dark:text-neutral-400'
+                        ? 'text-neutral-600'
+                        : 'text-neutral-500 dark:text-neutral-400'
                     }`}
                   >
-                    Los 3 talleres troncales vivenciales: Raíz, Tallo y Florecimiento. Salas virtuales, bitácoras y memorias.
+                    Ruta de los 3 ciclos troncales, temario vivencial y compendio
                   </p>
                 </div>
               </div>
 
-              <div className="flex items-center justify-between sm:justify-end gap-3 pt-2 sm:pt-0 border-t sm:border-t-0 border-black/5 dark:border-white/5">
-                <span
-                  className={`text-[11px] font-mono uppercase tracking-wider font-bold ${
-                    expandedSection === 'talleres'
-                      ? 'text-indigo-400 dark:text-indigo-700 font-extrabold'
-                      : 'text-neutral-500 dark:text-neutral-400 group-hover:text-black dark:group-hover:text-white'
-                  }`}
-                >
-                  {expandedSection === 'talleres' ? 'Desplegado ▲' : 'Desplegar ▼'}
-                </span>
-                <div
-                  className={`w-8 h-8 rounded-full flex items-center justify-center transition-transform duration-300 shrink-0 ${
-                    expandedSection === 'talleres'
-                      ? 'rotate-180 bg-white/20 dark:bg-black/20 text-white dark:text-black'
-                      : 'bg-black/5 dark:bg-white/10 text-neutral-600 dark:text-neutral-400 group-hover:bg-black/10 dark:group-hover:bg-white/20'
-                  }`}
-                >
-                  <ChevronDown className="w-4 h-4" />
-                </div>
+              <div
+                className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 transition-transform duration-300 ${
+                  expandedSection === 'talleres'
+                    ? 'rotate-180 bg-black/10 text-black'
+                    : 'bg-black/5 dark:bg-white/10 text-neutral-600 dark:text-neutral-400'
+                }`}
+              >
+                <ChevronDown className="w-4 h-4" />
               </div>
             </button>
 
-            {/* DESPLIEGUE DIRECTO DE TALLERES INMEDIATAMENTE DEBAJO DEL BOTÓN */}
             <AnimatePresence initial={false}>
               {expandedSection === 'talleres' && (
                 <motion.div
-                  key="accordion-talleres-inline"
+                  key="accordion-content-talleres"
                   initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: 'auto' }}
                   exit={{ opacity: 0, height: 0 }}
                   transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-                  className="overflow-hidden space-y-6 pt-1 pb-2"
+                  className="overflow-hidden space-y-6 pt-1 pb-2 font-sans"
                 >
-                  {/* Encabezado con botón para colapsar */}
-                  <div className="flex items-center justify-between px-1">
-                    <div className="flex items-center gap-2">
-                      <span className="w-2.5 h-2.5 rounded-full bg-indigo-500 animate-pulse shrink-0" />
-                      <h3 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-black dark:text-white font-mono">
-                        Talleres Ontológicos Troncales (Raíz, Tallo & Florecimiento)
-                      </h3>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setExpandedSection(null)}
-                      className="text-[11px] font-mono text-neutral-500 hover:text-black dark:hover:text-white transition-colors cursor-pointer px-3 py-1 rounded-xl bg-white/40 dark:bg-neutral-900/40 border border-black/10 dark:border-white/10"
-                    >
-                      Colapsar Sección ▲
-                    </button>
-                  </div>
-
-                  {/* Módulo directo y simplificado de los 3 Talleres Troncales */}
                   <ParticipantTalleresModule
                     accreditedWorkshopsCount={accreditedWorkshopsCount}
                     coreWorkshops={CORE_WORKSHOPS}
@@ -1198,118 +1309,88 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
             </AnimatePresence>
           </div>
 
-          {/* ========================================================================= */}
-          {/* ITEM 3: SESIONES (BOTÓN + CONTENIDO INLINE)                                */}
-          {/* ========================================================================= */}
-          <div className="space-y-3" id="accordion-item-sesiones">
+          {/* ----------------------------------------------------------------------- */}
+          {/* SECCIÓN 3: SESIONES                                                     */}
+          {/* ----------------------------------------------------------------------- */}
+          <div id="accordion-item-sesiones" className="space-y-3">
             <button
-              id="btn-toggle-sesiones"
+              id="btn-accordion-sesiones"
               type="button"
               onClick={() => toggleSection('sesiones')}
               aria-expanded={expandedSection === 'sesiones'}
-              className={`w-full group relative px-6 sm:px-8 py-5 sm:py-6 rounded-3xl text-left transition-all duration-300 cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-4 overflow-hidden border ${
+              className={`w-full p-4 sm:p-5 rounded-3xl border text-left transition-all duration-300 cursor-pointer flex items-center justify-between gap-4 select-none ${
                 expandedSection === 'sesiones'
-                  ? 'bg-black text-white dark:bg-white dark:text-black border-black/40 dark:border-white shadow-xl ring-2 ring-black/15 dark:ring-white/20'
-                  : 'bg-white/35 dark:bg-neutral-950/35 backdrop-blur-2xl text-black dark:text-white border-black/10 dark:border-white/10 hover:bg-white/65 dark:hover:bg-neutral-900/65 hover:border-black/25 dark:hover:border-white/25 shadow-xs hover:shadow-md'
+                  ? 'bg-white/85 dark:bg-white/95 text-black dark:text-neutral-950 border-white/90 dark:border-white shadow-xl shadow-black/5 dark:shadow-white/10 ring-2 ring-black/10 dark:ring-white/30 backdrop-blur-2xl'
+                  : 'bg-white/40 dark:bg-neutral-950/40 backdrop-blur-xl text-neutral-800 dark:text-neutral-200 border-black/10 dark:border-white/10 hover:bg-white/65 dark:hover:bg-neutral-900/60 hover:border-black/20 dark:hover:border-white/20 shadow-xs hover:shadow-md'
               }`}
             >
-              <div className="flex items-center gap-4">
-                <span
-                  className={`text-xs font-mono font-bold px-3 py-1 rounded-xl transition-colors ${
-                    expandedSection === 'sesiones'
-                      ? 'bg-white/15 dark:bg-black/15 text-white dark:text-black'
-                      : 'bg-black/5 dark:bg-white/10 text-neutral-600 dark:text-neutral-400'
-                  }`}
-                >
-                  03
-                </span>
+              <div className="flex items-center gap-3.5 sm:gap-4 min-w-0">
                 <div
-                  className={`w-11 h-11 rounded-2xl flex items-center justify-center shrink-0 transition-all duration-300 group-hover:scale-105 ${
+                  className={`w-11 h-11 sm:w-12 sm:h-12 rounded-2xl flex items-center justify-center shrink-0 transition-all duration-300 ${
                     expandedSection === 'sesiones'
-                      ? 'bg-white text-black dark:bg-black dark:text-white shadow-sm'
-                      : 'bg-black/5 dark:bg-white/10 text-black dark:text-white group-hover:bg-black group-hover:text-white dark:group-hover:bg-white dark:group-hover:text-black'
+                      ? 'bg-black/10 text-neutral-950 shadow-xs'
+                      : 'bg-black/5 dark:bg-white/10 text-emerald-500'
                   }`}
                 >
-                  <Calendar className="w-5 h-5 text-emerald-400" />
+                  <Calendar className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-500" />
                 </div>
-                <div>
-                  <div className="flex items-center gap-2.5 flex-wrap">
-                    <h3 className="text-base sm:text-lg font-bold tracking-tight font-sans">
-                      Sesiones
-                    </h3>
+                <div className="min-w-0 font-sans">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <span
-                      className={`text-[10px] font-mono px-2.5 py-0.5 rounded-full font-semibold ${
+                      className={`text-xs font-bold px-2.5 py-0.5 rounded-xl transition-colors ${
                         expandedSection === 'sesiones'
-                          ? 'bg-white/20 dark:bg-black/15 text-white dark:text-black'
+                          ? 'bg-black/10 text-neutral-900'
                           : 'bg-black/5 dark:bg-white/10 text-neutral-600 dark:text-neutral-400'
                       }`}
                     >
-                      {completedSessionsCount}/12 Realizadas
+                      03
+                    </span>
+                    <h3 className="text-base sm:text-lg font-bold truncate tracking-tight">
+                      Sesiones
+                    </h3>
+                    <span
+                      className={`text-xs font-semibold px-2.5 py-0.5 rounded-full ${
+                        expandedSection === 'sesiones'
+                          ? 'bg-black/10 text-black'
+                          : 'bg-black/5 dark:bg-white/10 text-neutral-600 dark:text-neutral-300'
+                      }`}
+                    >
+                      {completedSessionsCount} de 12 Realizadas
                     </span>
                   </div>
                   <p
-                    className={`text-xs font-light mt-1 max-w-2xl ${
+                    className={`text-xs font-normal truncate mt-1 ${
                       expandedSection === 'sesiones'
-                        ? 'text-neutral-300 dark:text-neutral-700'
-                        : 'text-neutral-600 dark:text-neutral-400'
+                        ? 'text-neutral-600'
+                        : 'text-neutral-500 dark:text-neutral-400'
                     }`}
                   >
-                    Listado completo de los 12 encuentros 1 a 1, bitácoras reflexivas y acuerdos de proceso.
+                    Acompañamiento individual, bitácoras y memorias descargables
                   </p>
                 </div>
               </div>
 
-              <div className="flex items-center justify-between sm:justify-end gap-3 pt-2 sm:pt-0 border-t sm:border-t-0 border-black/5 dark:border-white/5">
-                <span
-                  className={`text-[11px] font-mono uppercase tracking-wider font-bold ${
-                    expandedSection === 'sesiones'
-                      ? 'text-emerald-400 dark:text-emerald-700 font-extrabold'
-                      : 'text-neutral-500 dark:text-neutral-400 group-hover:text-black dark:group-hover:text-white'
-                  }`}
-                >
-                  {expandedSection === 'sesiones' ? 'Desplegado ▲' : 'Desplegar ▼'}
-                </span>
-                <div
-                  className={`w-8 h-8 rounded-full flex items-center justify-center transition-transform duration-300 shrink-0 ${
-                    expandedSection === 'sesiones'
-                      ? 'rotate-180 bg-white/20 dark:bg-black/20 text-white dark:text-black'
-                      : 'bg-black/5 dark:bg-white/10 text-neutral-600 dark:text-neutral-400 group-hover:bg-black/10 dark:group-hover:bg-white/20'
-                  }`}
-                >
-                  <ChevronDown className="w-4 h-4" />
-                </div>
+              <div
+                className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 transition-transform duration-300 ${
+                  expandedSection === 'sesiones'
+                    ? 'rotate-180 bg-black/10 text-black'
+                    : 'bg-black/5 dark:bg-white/10 text-neutral-600 dark:text-neutral-400'
+                }`}
+              >
+                <ChevronDown className="w-4 h-4" />
               </div>
             </button>
 
-            {/* DESPLIEGUE DIRECTO DE SESIONES INMEDIATAMENTE DEBAJO DEL BOTÓN */}
             <AnimatePresence initial={false}>
               {expandedSection === 'sesiones' && (
                 <motion.div
-                  key="accordion-sesiones-inline"
+                  key="accordion-content-sesiones"
                   initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: 'auto' }}
                   exit={{ opacity: 0, height: 0 }}
                   transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-                  className="overflow-hidden space-y-6 pt-1 pb-2"
+                  className="overflow-hidden space-y-6 pt-1 pb-2 font-sans"
                 >
-                  {/* Encabezado con botón para colapsar */}
-                  <div className="flex items-center justify-between px-1">
-                    <div className="flex items-center gap-2">
-                      <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
-                      <h3 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-black dark:text-white font-mono">
-                        Sesiones Individuales 1 a 1 • 12 Encuentros Ontológicos
-                      </h3>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setExpandedSection(null)}
-                      className="text-[11px] font-mono text-neutral-500 hover:text-black dark:hover:text-white transition-colors cursor-pointer px-3 py-1 rounded-xl bg-white/40 dark:bg-neutral-900/40 border border-black/10 dark:border-white/10"
-                    >
-                      Colapsar Sección ▲
-                    </button>
-                  </div>
-
-                  {/* Módulo completo de Sesiones */}
                   <ParticipantSesionesModule
                     sessions={sessions}
                     postForms={postForms}
@@ -1326,34 +1407,74 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
         </section>
 
         {/* ========================================================================= */}
-        {/* FOOTER: CONTACTO DIRECTO CON EL FACILITADOR                               */}
+        {/* 3. PIE DE PÁGINA (FOOTER) INTEGRADO: PERFIL DEL COACH Y CONTACTO DIRECTO  */}
         {/* ========================================================================= */}
-        <footer className="p-5 rounded-3xl border border-black/10 dark:border-white/10 bg-white/85 dark:bg-neutral-950/80 backdrop-blur-md flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-xs shadow-xs">
-          <div className="flex items-center gap-3">
-            <img
-              src={coachAvatarImg}
-              alt="John Fredy Rengifo Basto"
-              className="w-12 h-12 rounded-full object-cover border border-black/15 dark:border-white/15 shrink-0"
-            />
-            <div>
-              <div className="font-bold text-black dark:text-white">
-                John Fredy Rengifo Basto
+        <footer
+          id="app-footer-coach"
+          aria-label="Pie de página institucional y contacto del Coach Ontológico"
+          className="pt-4 space-y-6 font-sans"
+        >
+          {/* Tarjeta de perfil y canales directos en Liquid Glass */}
+          <div className="p-5 sm:p-6 rounded-3xl border border-black/10 dark:border-white/10 bg-white/30 dark:bg-neutral-950/30 backdrop-blur-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-5 shadow-xs hover:border-black/20 dark:hover:border-white/20 transition-all">
+            <div className="flex items-center gap-4">
+              <div className="relative shrink-0">
+                <img
+                  src={coachAvatarImg}
+                  alt="John Fredy Rengifo Basto"
+                  className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl object-cover border border-black/15 dark:border-white/15 shadow-sm"
+                />
+                <span className="absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-white dark:border-neutral-950 shadow-xs" />
               </div>
-              <div className="text-[11px] text-neutral-600 dark:text-neutral-400 font-light">
-                Master Coach Ontológico • Acompañamiento entre encuentros
+              <div className="space-y-0.5">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-[10px] uppercase tracking-wider text-emerald-600 dark:text-emerald-400 font-semibold">
+                    Canal Directo Activo
+                  </span>
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
+                </div>
+                <h2 className="text-base sm:text-lg font-bold text-black dark:text-white tracking-tight">
+                  John Fredy Rengifo Basto
+                </h2>
+                <p className="text-xs font-semibold text-neutral-800 dark:text-neutral-200">
+                  Coach Ontológico
+                </p>
+                <p className="text-[11px] text-neutral-500 dark:text-neutral-400 font-medium">
+                  Rengifo Basto Consultoría Ontológica
+                </p>
               </div>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2.5 pt-1 sm:pt-0">
+              <a
+                href={COMPANY_INFO.whatsappUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="flex-1 sm:flex-initial px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold transition-all duration-200 flex items-center justify-center gap-2 shadow-xs cursor-pointer hover:shadow-md active:scale-[0.99]"
+              >
+                <MessageCircle className="w-4 h-4 text-emerald-100" />
+                <span>WhatsApp Directo</span>
+              </a>
+              <a
+                href={currentSession.meetLink || 'https://meet.google.com/rbc-sesion'}
+                target="_blank"
+                rel="noreferrer"
+                className="px-4 py-2.5 rounded-xl border border-black/15 dark:border-white/15 bg-white/70 dark:bg-neutral-900/70 hover:bg-white dark:hover:bg-neutral-800 text-black dark:text-white text-xs font-semibold transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer shadow-xs"
+              >
+                <Video className="w-4 h-4 text-indigo-500" />
+                <span>Sala Meet 1 a 1</span>
+              </a>
             </div>
           </div>
 
-          <a
-            href={COMPANY_INFO.whatsappUrl}
-            target="_blank"
-            rel="noreferrer"
-            className="px-4 py-2.5 rounded-xl bg-black text-white dark:bg-white dark:text-black font-semibold text-xs hover:opacity-90 transition-opacity inline-flex items-center gap-2 self-start sm:self-auto cursor-pointer shadow-xs"
-          >
-            <MessageCircle className="w-3.5 h-3.5 text-emerald-400 dark:text-emerald-500" />
-            <span>Mensaje directo por WhatsApp</span>
-          </a>
+          {/* Cierre institucional de confidencialidad */}
+          <div className="pb-4 text-center text-xs text-neutral-500 dark:text-neutral-400 font-light border-t border-black/5 dark:border-white/5 pt-4 space-y-1">
+            <div className="font-semibold text-black dark:text-white">
+              Rengifo Basto Consultoría Ontológica
+            </div>
+            <p className="text-[11px] opacity-75">
+              Espacio confidencial y transformacional de acompañamiento ontológico ejecutivo
+            </p>
+          </div>
         </footer>
       </div>
 
