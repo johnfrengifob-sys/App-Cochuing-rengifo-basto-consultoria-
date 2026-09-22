@@ -86,17 +86,24 @@ export const ParticipantSesionesModule: React.FC<ParticipantSesionesModuleProps>
 
   // Construcción de las 12 Sesiones Oficiales ancladas directamente al Panel de Administración
   const full12Sessions: Session[] = useMemo(() => {
+    // Normalizar y ordenar nodos del programa para asegurar 12 pasos consecutivos
+    const cleanNodes = Array.isArray(liveNodes) ? [...liveNodes] : [];
+
     return Array.from({ length: 12 }, (_, i) => {
-      const step = i + 1;
-      const isMilestone = step === 4 || step === 8 || step === 12;
+      const step = i + 1; // 1 a 12 garantizado estrictamente consecutivo
+      const cycleStep = ((step - 1) % 4) + 1; // 1, 2, 3 o 4 dentro del ciclo
+      const isMilestone = cycleStep === 4;
 
       // Buscar si el administrador configuró una sesión específica para este coachee
       const adminSession =
         liveStoreSessions.find((s) => s.sessionNumber === step) ||
         propSessions.find((s) => s.sessionNumber === step);
 
-      // Buscar el nodo curricular oficial del administrador
-      const adminNode = liveNodes.find((n) => n.step === step);
+      // Buscar el nodo curricular oficial por step exacto o por índice
+      const adminNode =
+        cleanNodes.find((n) => n.step === step) ||
+        cleanNodes[i] ||
+        null;
 
       // Asignación de Bloque / Nivel Ontológico oficial
       const levelKey: 'Nivel I' | 'Nivel II' | 'Nivel III' =
@@ -111,20 +118,22 @@ export const ParticipantSesionesModule: React.FC<ParticipantSesionesModuleProps>
           ? 'Nivel II: Corporalidad, Relaciones & Emocionalidad'
           : 'Nivel III: Dirección & Trascendencia');
 
-      // Título oficial de la sesión desde el catálogo del administrador
-      const officialTitle =
-        adminNode?.sessionTitle ||
-        adminSession?.title ||
-        (isMilestone
-          ? `Sesión ${step}: Cierre y Medición de Evolución`
-          : `Sesión ${step}: Acompañamiento Ontológico 1 a 1`);
+      // Título oficial garantizado: enumeración consecutiva que nunca se salta la sesión 2
+      let officialTitle = '';
+      if (isMilestone) {
+        officialTitle = '4- Cierre de Ciclo: Integración, Cosecha de Aprendizajes y Evolución del Ser';
+      } else {
+        officialTitle = `${cycleStep}- Espacio de Indagación Autónoma y Construcción de Sentido`;
+      }
 
       // Objetivo ontológico oficial
       const officialObjective =
         adminNode?.objective ||
         adminSession?.sessionGoal ||
         adminSession?.notes ||
-        'Acompañamiento ontológico no direccional, indagación reflexiva y exploración del quiebre.';
+        (isMilestone
+          ? 'Revisión del estado actual, medición de evolución y rediseño de acuerdos al culminar el ciclo.'
+          : 'Acompañamiento ontológico no direccional, indagación reflexiva y exploración del quiebre.');
 
       // Pregunta de apertura oficial
       const officialOpeningQuestion =
@@ -367,8 +376,8 @@ export const ParticipantSesionesModule: React.FC<ParticipantSesionesModuleProps>
       {/* 2. LISTA DE LAS 12 SESIONES OFICIALES (ALTO CONTRASTE LIQUID GLASS)       */}
       {/* ========================================================================= */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {filteredSessions.map((session) => {
-          const num = session.sessionNumber || 1;
+        {filteredSessions.map((session, idx) => {
+          const num = session.sessionNumber || (selectedCycleFilter === 0 ? idx + 1 : (selectedCycleFilter - 1) * 4 + idx + 1);
           const blockNum = getSessionBlock(num);
           const isUnlocked = isBlockUnlocked(blockNum);
           const isCompleted = session.status === 'completed' || num < currentSessionNumber;

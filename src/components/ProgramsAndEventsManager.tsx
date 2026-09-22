@@ -714,10 +714,23 @@ export const ProgramsAndEventsManager: React.FC<ProgramsAndEventsManagerProps> =
                       </div>
                     </div>
 
-                    {/* Barra de Acciones Inferior */}
-                    <div className="p-4 bg-gray-50/70 dark:bg-neutral-800/30 border-t border-gray-100 dark:border-neutral-800 flex items-center justify-between gap-2">
-                      <div className="flex items-center gap-1.5">
-                        {evt.googleFormsUrl ? (
+                    {/* Barra de Acciones Inferior: Google Meet, Forms, Sheets, AutoCrat y Administración */}
+                    <div className="p-4 bg-gray-50/70 dark:bg-neutral-800/30 border-t border-gray-100 dark:border-neutral-800 flex flex-wrap items-center justify-between gap-2.5">
+                      <div className="flex flex-wrap items-center gap-2">
+                        {evt.meetUrl && (
+                          <a
+                            href={evt.meetUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            title="Ingresar a la Sala Virtual de Google Meet"
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-neutral-900 hover:bg-black text-white dark:bg-white dark:text-black dark:hover:bg-neutral-200 text-xs font-semibold cursor-pointer transition-all shadow-xs"
+                          >
+                            <Video className="w-3.5 h-3.5 text-emerald-400 dark:text-emerald-600" />
+                            <span>Google Meet</span>
+                          </a>
+                        )}
+
+                        {evt.googleFormsUrl && (
                           <a
                             href={evt.googleFormsUrl}
                             target="_blank"
@@ -726,22 +739,35 @@ export const ProgramsAndEventsManager: React.FC<ProgramsAndEventsManagerProps> =
                             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold cursor-pointer transition-all shadow-xs"
                           >
                             <FileText className="w-3.5 h-3.5" />
-                            <span>Formulario Evaluación</span>
+                            <span>Google Forms</span>
                           </a>
-                        ) : null}
+                        )}
 
-                        {evt.googleSheetsUrl ? (
+                        {evt.googleSheetsUrl && (
                           <a
                             href={evt.googleSheetsUrl}
                             target="_blank"
                             rel="noopener noreferrer"
-                            title="Abrir Hoja de Cálculo para Expedientes y Respuestas (Google Sheets)"
+                            title="Abrir Hoja de Cálculo para Respuestas y Expedientes (Google Sheets)"
                             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold cursor-pointer transition-all shadow-xs"
                           >
                             <FileSpreadsheet className="w-3.5 h-3.5" />
-                            <span>Expedientes (Sheets)</span>
+                            <span>Google Sheets</span>
                           </a>
-                        ) : null}
+                        )}
+
+                        {(evt.autocratMergeUrl || evt.googleDriveFolderUrl) && (
+                          <a
+                            href={evt.autocratMergeUrl || evt.googleDriveFolderUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            title="Abrir Carpeta de Automatizaciones y Expedientes de AutoCrat en Google Drive"
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold cursor-pointer transition-all shadow-xs"
+                          >
+                            <Sparkles className="w-3.5 h-3.5" />
+                            <span>AutoCrat & Drive</span>
+                          </a>
+                        )}
 
                         {!evt.googleFormsUrl && !evt.googleSheetsUrl && (
                           <button

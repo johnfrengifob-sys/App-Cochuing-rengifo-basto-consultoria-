@@ -273,15 +273,15 @@ async function startServer() {
   const SEED_CRONOGRAMA_EVENTS = [
     {
       id: 'taller-1-raiz',
-      title: 'Taller 1: Raíz y Balance Ontológico (Cuerpo, Emoción y Evolución de las Emociones)',
-      subtitle: 'Espacio de educación emocional y desarrollo basado en autoobservación, conversación reflexiva y diseño de acciones conscientes (No terapia, no diagnóstico clínico)',
+      title: 'Taller 1: Raíz (Nivel I) – Deconstrucción Somática & Sabiduría Emocional',
+      subtitle: 'Reconocer la raíz: Corporalidad, límites y descodificación de las emociones fundamentales.',
       category: 'Primer Taller • En Vivo',
       eventType: 'Taller',
-      date: '2026-10-18T00:00:00.000Z',
-      displayDate: '2026-10-17',
-      time: '9:00 am - 10:30 am (GMT-5)',
+      date: '2026-09-19T19:00:00.000-05:00',
+      displayDate: 'Sábado, 19 de Septiembre de 2026',
+      time: '7:00 PM - 8:30 PM (GMT-5)',
       mode: 'Online (Google Meet)',
-      meetUrl: 'https://meet.google.com/nzk-ccya-hsk',
+      meetUrl: 'https://meet.google.com/rbc-conversatorio-ontologico',
       description: 'Primer taller vivencial: Deconstrucción somática, decodificación de emociones primarias y soberanía relacional.',
       showOnHome: true,
       capacityType: 'grupal',
@@ -291,69 +291,93 @@ async function startServer() {
       priceAmount: 180000,
       price: '$180.000 COP',
       currency: 'COP',
-      launchDate: '2026-10-10',
-      eventDate: '2026-10-18T00:00:00.000Z',
+      launchDate: '2026-09-05',
+      eventDate: '2026-09-19T19:00:00.000-05:00',
       facilitator: 'John Fredy Rengifo Basto (Master Coach Ontológico)',
       featured: true,
       status: 'upcoming',
-      googleFormsUrl: 'https://forms.gle/5Hiuxwq13n3gC3zt6',
-      googleSheetsUrl: 'https://docs.google.com/spreadsheets/d/1DyKs4OsJDTTOa8SMSvOQdWcttrmRKJ8_vxnJH9rV5UA/edit?usp=sharing',
+      formsIntegrationId: 'talleres_registro',
+      googleFormsUrl: 'https://forms.gle/H5gLF1KBzPnKsBWq7',
+      googleSheetsUrl: 'https://docs.google.com/spreadsheets/d/1e2nOINJkZCHBoz0nTA40BmHsH5wfYn4l9yBkZ-zKRl4/edit?usp=sharing',
+      agreementFormUrl: 'https://forms.gle/H5gLF1KBzPnKsBWq7',
+      agreementSheetUrl: 'https://docs.google.com/spreadsheets/d/1e2nOINJkZCHBoz0nTA40BmHsH5wfYn4l9yBkZ-zKRl4/edit?usp=sharing',
+      bitacoraFormUrl: 'https://forms.gle/5Hiuxwq13n3gC3zt6',
+      bitacoraSheetUrl: 'https://docs.google.com/spreadsheets/d/1DyKs4OsJDTTOa8SMSvOQdWcttrmRKJ8_vxnJH9rV5UA/edit?usp=sharing',
+      autocratUrl: 'https://docs.google.com/spreadsheets/d/1e2nOINJkZCHBoz0nTA40BmHsH5wfYn4l9yBkZ-zKRl4/edit?usp=sharing',
+      autocratMergeUrl: 'https://drive.google.com/drive/folders/15laHG-2cFXvLiVoLp6GxJBWIBdXLB6bz?usp=drive_link',
+      googleDriveFolderUrl: 'https://drive.google.com/drive/folders/15laHG-2cFXvLiVoLp6GxJBWIBdXLB6bz?usp=drive_link',
     },
     {
       id: 'taller-2-tallo',
-      title: 'Taller 2: Tallo & Soberanía Relacional (Lenguaje, Juicios y Límites)',
-      subtitle: 'Espacio de educación emocional y desarrollo basado en autoobservación, conversación reflexiva y diseño de acciones conscientes. No terapia. No diagnóstico clínico.',
-      category: 'Segundo Taller • En Vivo',
+      title: 'Taller 2: Nivel II - Lenguaje y Juicios',
+      subtitle: 'Transformar desde el lenguaje: Deconstrucción de juicios, actos lingüísticos y rediseño de observadores.',
+      category: 'Taller Vivencial • Nivel II',
       eventType: 'Taller',
-      date: '2026-11-01T00:00:00.000Z',
-      displayDate: '2026-10-31',
-      time: '9:00 AM - 1:30 PM (GMT-5)',
+      date: '2026-09-26T19:00:00.000-05:00',
+      displayDate: 'Sábado, 26 de Septiembre de 2026',
+      time: '7:00 PM - 8:30 PM (GMT-5)',
       mode: 'Online (Google Meet)',
-      meetUrl: 'https://meet.google.com/nzk-ccya-hsk',
+      meetUrl: 'https://meet.google.com/rbc-conversatorio-ontologico',
       description: 'Segundo taller vivencial: Lenguaje, juicios limitantes, actos del habla y diseño de conversaciones de frontera.',
-      showOnHome: false,
+      showOnHome: true,
       capacityType: 'grupal',
       capacity: 1000,
       totalSpots: 1000,
       spotsLeft: 1000,
-      priceAmount: 150000,
-      price: '$150.000 COP',
+      priceAmount: 180000,
+      price: '$180.000 COP',
       currency: 'COP',
-      launchDate: '2026-10-17',
-      eventDate: '2026-11-01T00:00:00.000Z',
+      launchDate: '2026-09-13',
+      eventDate: '2026-09-26T19:00:00.000-05:00',
       facilitator: 'John Fredy Rengifo Basto (Master Coach Ontológico)',
-      featured: false,
+      featured: true,
       status: 'upcoming',
+      formsIntegrationId: 'bitacora_talleres',
       googleFormsUrl: 'https://forms.gle/5Hiuxwq13n3gC3zt6',
       googleSheetsUrl: 'https://docs.google.com/spreadsheets/d/1DyKs4OsJDTTOa8SMSvOQdWcttrmRKJ8_vxnJH9rV5UA/edit?usp=sharing',
+      agreementFormUrl: 'https://forms.gle/H5gLF1KBzPnKsBWq7',
+      agreementSheetUrl: 'https://docs.google.com/spreadsheets/d/1e2nOINJkZCHBoz0nTA40BmHsH5wfYn4l9yBkZ-zKRl4/edit?usp=sharing',
+      bitacoraFormUrl: 'https://forms.gle/5Hiuxwq13n3gC3zt6',
+      bitacoraSheetUrl: 'https://docs.google.com/spreadsheets/d/1DyKs4OsJDTTOa8SMSvOQdWcttrmRKJ8_vxnJH9rV5UA/edit?usp=sharing',
+      autocratUrl: 'https://docs.google.com/spreadsheets/d/1DyKs4OsJDTTOa8SMSvOQdWcttrmRKJ8_vxnJH9rV5UA/edit?usp=sharing',
+      autocratMergeUrl: 'https://drive.google.com/drive/folders/15laHG-2cFXvLiVoLp6GxJBWIBdXLB6bz?usp=drive_link',
+      googleDriveFolderUrl: 'https://drive.google.com/drive/folders/15laHG-2cFXvLiVoLp6GxJBWIBdXLB6bz?usp=drive_link',
     },
     {
       id: 'taller-3-florecimiento',
-      title: 'Taller 3: Florecimiento & Integración (Acción, Propósito y Liderazgo Coherente)',
-      subtitle: 'Espacio de educación emocional y desarrollo basado en autoobservación, conversación reflexiva y diseño de acciones conscientes. No terapia. No diagnóstico clínico.',
-      category: 'Tercer Taller • En Vivo',
+      title: 'Taller 3: Florecimiento (Nivel III) – Acción, Propósito y Coherencia',
+      subtitle: 'Encarnar la transformación: Mapa de decisiones conscientes, diseño de futuros y contribución relacional.',
+      category: 'Conversatorio de Cierre • Nivel III',
       eventType: 'Taller',
-      date: '2026-11-08T00:00:00.000Z',
-      displayDate: '2026-11-07',
-      time: '9:00 AM - 1:30 PM (GMT-5)',
+      date: '2026-10-03T19:00:00.000-05:00',
+      displayDate: 'Sábado, 3 de Octubre de 2026',
+      time: '7:00 PM - 8:30 PM (GMT-5)',
       mode: 'Online (Google Meet)',
-      meetUrl: 'https://meet.google.com/nzk-ccya-hsk',
+      meetUrl: 'https://meet.google.com/rbc-conversatorio-ontologico',
       description: 'Tercer taller vivencial: Cosecha, nuevo observador, manifestación de coherencia y liderazgo directivo.',
       showOnHome: true,
       capacityType: 'grupal',
       capacity: 1000,
       totalSpots: 1000,
       spotsLeft: 1000,
-      priceAmount: 150000,
-      price: '$150.000 COP',
+      priceAmount: 180000,
+      price: '$180.000 COP',
       currency: 'COP',
-      launchDate: '2026-10-31',
-      eventDate: '2026-11-08T00:00:00.000Z',
+      launchDate: '2026-09-20',
+      eventDate: '2026-10-03T19:00:00.000-05:00',
       facilitator: 'John Fredy Rengifo Basto (Master Coach Ontológico)',
       featured: true,
       status: 'upcoming',
+      formsIntegrationId: 'bitacora_talleres',
       googleFormsUrl: 'https://forms.gle/5Hiuxwq13n3gC3zt6',
       googleSheetsUrl: 'https://docs.google.com/spreadsheets/d/1DyKs4OsJDTTOa8SMSvOQdWcttrmRKJ8_vxnJH9rV5UA/edit?usp=sharing',
+      agreementFormUrl: 'https://forms.gle/H5gLF1KBzPnKsBWq7',
+      agreementSheetUrl: 'https://docs.google.com/spreadsheets/d/1e2nOINJkZCHBoz0nTA40BmHsH5wfYn4l9yBkZ-zKRl4/edit?usp=sharing',
+      bitacoraFormUrl: 'https://forms.gle/5Hiuxwq13n3gC3zt6',
+      bitacoraSheetUrl: 'https://docs.google.com/spreadsheets/d/1DyKs4OsJDTTOa8SMSvOQdWcttrmRKJ8_vxnJH9rV5UA/edit?usp=sharing',
+      autocratUrl: 'https://docs.google.com/spreadsheets/d/1DyKs4OsJDTTOa8SMSvOQdWcttrmRKJ8_vxnJH9rV5UA/edit?usp=sharing',
+      autocratMergeUrl: 'https://drive.google.com/drive/folders/15laHG-2cFXvLiVoLp6GxJBWIBdXLB6bz?usp=drive_link',
+      googleDriveFolderUrl: 'https://drive.google.com/drive/folders/15laHG-2cFXvLiVoLp6GxJBWIBdXLB6bz?usp=drive_link',
     },
   ];
 
@@ -492,7 +516,13 @@ async function startServer() {
           modified = true;
         } else {
           // Purgar talleres fantasma o IDs legados y mantener exclusivamente los 3 talleres oficiales
-          const ghostIds = ['event-1789824188701', 'event-1789824792376', 'event-1789828629011', 'event-1789829005266'];
+          const ghostIds = [
+            'event-1790112367917',
+            'event-1789824188701',
+            'event-1789824792376',
+            'event-1789828629011',
+            'event-1789829005266'
+          ];
           const beforePurge = data.cronogramaEvents.length;
           data.cronogramaEvents = data.cronogramaEvents.filter(
             (e: any) => !ghostIds.includes(e.id) && !data.deletedWorkshopIds.includes(e.id)
@@ -503,10 +533,42 @@ async function startServer() {
 
           SEED_CRONOGRAMA_EVENTS.forEach((seedEvt) => {
             if (data.deletedWorkshopIds.includes(seedEvt.id)) return;
-            const exists = data.cronogramaEvents.some((e: any) => e.id === seedEvt.id);
-            if (!exists) {
+            const index = data.cronogramaEvents.findIndex((e: any) => e.id === seedEvt.id);
+            if (index === -1) {
               data.cronogramaEvents.push(seedEvt);
               modified = true;
+            } else {
+              // Reconciliar enlaces y títulos canónicos si faltan o están desactualizados
+              const current = data.cronogramaEvents[index];
+              if (
+                current.title !== seedEvt.title ||
+                !current.googleFormsUrl ||
+                !current.googleSheetsUrl ||
+                !current.autocratUrl ||
+                !current.autocratMergeUrl ||
+                !current.formsIntegrationId
+              ) {
+                data.cronogramaEvents[index] = {
+                  ...current,
+                  title: seedEvt.title,
+                  subtitle: seedEvt.subtitle,
+                  category: seedEvt.category,
+                  meetUrl: seedEvt.meetUrl,
+                  formsIntegrationId: seedEvt.formsIntegrationId,
+                  googleFormsUrl: seedEvt.googleFormsUrl,
+                  googleSheetsUrl: seedEvt.googleSheetsUrl,
+                  agreementFormUrl: seedEvt.agreementFormUrl,
+                  agreementSheetUrl: seedEvt.agreementSheetUrl,
+                  bitacoraFormUrl: seedEvt.bitacoraFormUrl,
+                  bitacoraSheetUrl: seedEvt.bitacoraSheetUrl,
+                  autocratUrl: seedEvt.autocratUrl,
+                  autocratMergeUrl: seedEvt.autocratMergeUrl,
+                  googleDriveFolderUrl: seedEvt.googleDriveFolderUrl,
+                  showOnHome: true,
+                  featured: true,
+                };
+                modified = true;
+              }
             }
           });
         }
@@ -2121,7 +2183,7 @@ Debes responder en JSON con este formato exacto:
       category: 'Talleres',
       moduleTarget: 'workshops',
       formUrl: 'https://forms.gle/H5gLF1KBzPnKsBWq7',
-      sheetUrl: 'https://docs.google.com/spreadsheets/d/1RBC_Talleres_Registro_General_2026/edit',
+      sheetUrl: 'https://docs.google.com/spreadsheets/d/1e2nOINJkZCHBoz0nTA40BmHsH5wfYn4l9yBkZ-zKRl4/edit?usp=sharing',
       sheetGid: '0',
       sheetHeaders: [
         'Marca temporal',
@@ -2144,7 +2206,7 @@ Debes responder en JSON con este formato exacto:
       category: 'Sesiones Individuales',
       moduleTarget: 'sessions',
       formUrl: 'https://forms.gle/dfStXtTyb1MW6W5K9',
-      sheetUrl: 'https://docs.google.com/spreadsheets/d/1RBC_Sesiones_Individuales_Acuerdo_2026/edit',
+      sheetUrl: 'https://docs.google.com/spreadsheets/d/1PCwxfgI0WdV2eMyEjLY_iYkYv5c4DNh5i43lNDvPT88/edit?usp=sharing',
       sheetGid: '0',
       sheetHeaders: [
         'Marca temporal',
@@ -2174,7 +2236,7 @@ Debes responder en JSON con este formato exacto:
       category: 'Bitácora B2B',
       moduleTarget: 'sessions',
       formUrl: 'https://forms.gle/APUFto8sGbJt322WA',
-      sheetUrl: 'https://docs.google.com/spreadsheets/d/1RBC_Bitacora_Sesiones_B2B_2026/edit',
+      sheetUrl: 'https://docs.google.com/spreadsheets/d/1Mm3CRZVvKYFak5APwIBmfK-vZAUfnx1zg-eq8WOLbZk/edit?usp=sharing',
       sheetGid: '0',
       sheetHeaders: [
         'Marca temporal',
@@ -2202,7 +2264,7 @@ Debes responder en JSON con este formato exacto:
       category: 'Bitácora Talleres',
       moduleTarget: 'workshops',
       formUrl: 'https://forms.gle/5Hiuxwq13n3gC3zt6',
-      sheetUrl: 'https://docs.google.com/spreadsheets/d/1RBC_Bitacora_Talleres_2026/edit',
+      sheetUrl: 'https://docs.google.com/spreadsheets/d/1DyKs4OsJDTTOa8SMSvOQdWcttrmRKJ8_vxnJH9rV5UA/edit?usp=sharing',
       sheetGid: '0',
       sheetHeaders: [
         'Marca temporal',
@@ -2249,17 +2311,360 @@ Debes responder en JSON con este formato exacto:
     });
   });
 
+  // Procesamiento automatizado de formularios de Google Forms y Google Sheets
   app.post('/api/integrations/forms-sheets/ingest/:sourceKey', (req, res) => {
-    const { sourceKey } = req.params;
-    const payload = req.body;
-    console.log(`[RBC Integrations] Ingesta de datos recibida para ${sourceKey}:`, payload);
+    try {
+      const { sourceKey } = req.params;
+      const payload = req.body || {};
+      console.log(`[RBC Integrations] Ingesta automatizada recibida para ${sourceKey}:`, payload);
 
-    res.json({
-      success: true,
-      sourceKey,
-      message: 'Fila recibida y registrada en la base de datos de Rengifo Basto.',
-      timestamp: new Date().toISOString(),
-    });
+      const db = readServerDatabase();
+      if (!Array.isArray((db as any).tallerRegistros)) (db as any).tallerRegistros = [];
+      if (!Array.isArray((db as any).bitacorasTalleres)) (db as any).bitacorasTalleres = [];
+      if (!Array.isArray((db as any).sesionIndividualAcuerdos)) (db as any).sesionIndividualAcuerdos = [];
+      if (!Array.isArray((db as any).bitacorasSesionesB2B)) (db as any).bitacorasSesionesB2B = [];
+
+      // Extracción unificada y tolerante a mayúsculas/acentos
+      const email = String(
+        payload.email ||
+        payload['Dirección de correo electrónico'] ||
+        payload['Correo electrónico'] ||
+        payload['Email'] ||
+        payload.participantEmail ||
+        ''
+      ).trim().toLowerCase();
+
+      const name = String(
+        payload.name ||
+        payload['Nombre del Participante'] ||
+        payload['Nombre completo y Apellidos'] ||
+        payload['Tu Nombre'] ||
+        payload['Cuál es tu Nombre completo'] ||
+        payload.fullName ||
+        (email ? email.split('@')[0] : 'Participante RBC')
+      ).trim();
+
+      const phone = String(
+        payload.phone ||
+        payload['Teléfono / WhatsApp'] ||
+        payload['Número de contacto / WhatsApp'] ||
+        ''
+      ).trim();
+
+      const timestamp = String(
+        payload.timestamp ||
+        payload['Marca temporal'] ||
+        new Date().toISOString()
+      );
+
+      let processedSummary = {
+        sourceKey,
+        email,
+        name,
+        action: 'received',
+      };
+
+      // 1. Talleres (Registro General)
+      if (sourceKey === 'talleres_registro') {
+        const matchedWorkshopId = String(payload.matchedWorkshopId || 'taller-1-raiz');
+        const entry = {
+          id: `tr-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+          timestamp,
+          email,
+          participantName: name,
+          phone,
+          confidentialityAccepted: true,
+          aiConsentAccepted: true,
+          conductAgreed: true,
+          matchedWorkshopId,
+          matchedWorkshopTitle:
+            matchedWorkshopId === 'taller-2-tallo'
+              ? 'Taller 2: Nivel II - Lenguaje y Juicios'
+              : matchedWorkshopId === 'taller-3-florecimiento'
+              ? 'Taller 3: Florecimiento'
+              : 'Taller 1: Raíz',
+          matchedDate: '2026-09-19',
+        };
+        (db as any).tallerRegistros.unshift(entry);
+
+        // Actualizar o crear usuario cliente
+        if (email) {
+          let user = db.users.find((u: any) => u.email && u.email.toLowerCase() === email);
+          if (user) {
+            user.hasWorkshopsAccess = true;
+            if (!Array.isArray(user.enrolledWorkshopIds)) user.enrolledWorkshopIds = [];
+            if (!user.enrolledWorkshopIds.includes(matchedWorkshopId)) {
+              user.enrolledWorkshopIds.push(matchedWorkshopId);
+            }
+          } else {
+            const newUser = {
+              uid: `client-${Date.now()}`,
+              name,
+              email,
+              phone,
+              role: 'client',
+              title: 'Participante Activo • Membresía Verificada',
+              status: 'active',
+              hasWorkshopsAccess: true,
+              hasSessionsAccess: false,
+              transformationSpacesEnabled: true,
+              enrolledWorkshopIds: [matchedWorkshopId],
+              completedWorkshopIds: [],
+              joinedAt: new Date().toISOString().split('T')[0],
+              programProgress: 1,
+              programStep: 1,
+              programName: 'Certeza, Fronteras & Dirección Personal',
+            };
+            db.users.push(newUser as any);
+          }
+
+          // Registrar en eventRegistrations
+          const regExists = db.eventRegistrations.some((r: any) => r.email && r.email.toLowerCase() === email);
+          if (!regExists) {
+            db.eventRegistrations.push({
+              id: `reg-${Date.now()}`,
+              ticketCode: `RBC-${Math.random().toString(36).substring(2, 7).toUpperCase()}-2026`,
+              eventId: matchedWorkshopId,
+              name,
+              email,
+              phone,
+              attended: false,
+              registeredAt: timestamp,
+              userUid: `client-${email.split('@')[0]}`,
+              status: 'confirmed',
+            });
+          }
+        }
+        processedSummary.action = 'taller_registro_enrolled';
+      }
+
+      // 2. Bitácora Talleres
+      else if (sourceKey === 'bitacora_talleres') {
+        const workshopLevel = String(payload['Nivel Taller'] || payload.workshopLevel || 'Taller 1: Raíz');
+        const personalChallenge = String(
+          payload['¿Qué tema, situación o reto personal quieres poner sobre la mesa en este espacio?'] ||
+          payload.personalChallenge ||
+          payload.challenge ||
+          ''
+        );
+        const predominantEmotion = String(
+          payload['¿Qué emoción predominante traes al espacio y qué te está diciendo?'] ||
+          payload.predominantEmotion ||
+          payload.emotion ||
+          ''
+        );
+        const limitingBeliefs = String(
+          payload['¿Qué ideas o "verdades" sobre ti o sobre esta situación te estás repitiendo con más fuerza?'] ||
+          payload.limitingBeliefs ||
+          ''
+        );
+        const newPerspective = String(
+          payload['¿Qué nueva perspectiva o "descubrimiento" te llevas de ti mismo tras esta exploración?'] ||
+          payload.newPerspective ||
+          ''
+        );
+        const balanceMessage = String(
+          payload['Si esta situación fuera un mensaje sobre lo que necesitas equilibrar en tu vida, ¿cuál dirías que es?'] ||
+          payload.balanceMessage ||
+          ''
+        );
+        const valuableLearning = String(
+          payload['¿Cuál es el aprendizaje más valioso que te regalas de este espacio?'] ||
+          payload.valuableLearning ||
+          ''
+        );
+        const concreteChallengeAction = String(
+          payload['¿Qué acción concreta, sencilla pero retadora, te comprometes a realizar antes de nuestro próximo encuentro?'] ||
+          payload.concreteChallengeAction ||
+          payload.commitments ||
+          ''
+        );
+        const digitalValidationSignatureAndId = String(
+          payload['Para validar digitalmente la lectura de esta information por nuestro equipo...'] ||
+          payload.digitalValidationSignatureAndId ||
+          name
+        );
+
+        let matchedId = 'taller-1-raiz';
+        const levelLower = workshopLevel.toLowerCase();
+        if (levelLower.includes('nivel ii') || levelLower.includes('2') || levelLower.includes('lenguaje') || levelLower.includes('tallo')) {
+          matchedId = 'taller-2-tallo';
+        } else if (levelLower.includes('nivel iii') || levelLower.includes('3') || levelLower.includes('florecimiento')) {
+          matchedId = 'taller-3-florecimiento';
+        }
+
+        const entry = {
+          id: `bt-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+          timestamp,
+          workshopLevel,
+          fullName: name,
+          city: String(payload['Ciudad'] || payload.city || 'Bogotá'),
+          email,
+          personalChallenge,
+          predominantEmotion,
+          limitingBeliefs,
+          newPerspective,
+          balanceMessage,
+          valuableLearning,
+          concreteChallengeAction,
+          digitalValidationSignatureAndId,
+        };
+        (db as any).bitacorasTalleres.unshift(entry);
+
+        // Actualizar usuario: marcar taller como completado y actualizar memoria
+        if (email) {
+          let user = db.users.find((u: any) => u.email && u.email.toLowerCase() === email);
+          if (user) {
+            if (!Array.isArray(user.completedWorkshopIds)) user.completedWorkshopIds = [];
+            if (!user.completedWorkshopIds.includes(matchedId)) {
+              user.completedWorkshopIds.push(matchedId);
+            }
+            if (!user.workshopMemories) user.workshopMemories = {};
+            user.workshopMemories[matchedId] = {
+              completedAt: timestamp,
+              keyBreakthrough: newPerspective || personalChallenge,
+              commitments: concreteChallengeAction,
+            };
+          }
+
+          // Registrar entrega en workbookSubmissions del taller
+          const workshop = db.cronogramaEvents.find((w: any) => w.id === matchedId);
+          if (workshop) {
+            if (!Array.isArray(workshop.workbookSubmissions)) workshop.workbookSubmissions = [];
+            workshop.workbookSubmissions.push({
+              id: `sub-${Date.now()}`,
+              userUid: email,
+              participantName: name,
+              participantEmail: email,
+              submittedAt: timestamp,
+              answers: {
+                quiebre: personalChallenge,
+                emocion: predominantEmotion,
+                juicios: limitingBeliefs,
+                observador: newPerspective,
+                aprendizaje: valuableLearning,
+                compromiso: concreteChallengeAction,
+              },
+            });
+          }
+        }
+        processedSummary.action = 'bitacora_taller_recorded';
+      }
+
+      // 3. Sesiones Individuales (Acuerdo Co-creativo)
+      else if (sourceKey === 'sesiones_individuales') {
+        const entry = {
+          id: `sa-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+          timestamp,
+          email,
+          fullName: name,
+          phone,
+          therapyExclusionAccepted: true,
+          commitmentResponsibilityAccepted: true,
+          aiTechToolsAccepted: true,
+          aiDecisionLimitsAccepted: true,
+          confidentialityAccepted: true,
+          digitalValidationSignatureAndId: String(payload['Para validar digitalmente este acuerdo...'] || name),
+          mergedDocId: String(payload['Merged Doc ID - Acuerdo Co-creativo de Trabajo Sesiones'] || ''),
+          mergedDocUrl: String(payload['Merged Doc URL - Acuerdo Co-creativo de Trabajo Sesiones'] || payload.mergedDocUrl || ''),
+          documentMergeStatus: 'Completado • AutoCrat',
+        };
+        (db as any).sesionIndividualAcuerdos.unshift(entry);
+
+        if (email) {
+          let user = db.users.find((u: any) => u.email && u.email.toLowerCase() === email);
+          if (user) {
+            user.hasSessionsAccess = true;
+          }
+        }
+        processedSummary.action = 'sesion_acuerdo_recorded';
+      }
+
+      // 4. Bitácora Sesiones B2B
+      else if (sourceKey === 'bitacora_sesiones_b2b') {
+        const entry = {
+          id: `b2b-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+          timestamp,
+          email,
+          fullName: name,
+          city: String(payload['Ciudad'] || 'Bogotá'),
+          centralChallenge: String(payload['¿Cuál es el desafío, situación o tema central que eliges trabajar en nuestra sesión de hoy?'] || payload.challenge || ''),
+          primaryEmotion: String(payload['¿Qué emoción principal estuvo presente al abordar este tema y qué mensaje sientes que te traía?'] || payload.emotion || ''),
+          limitingJudgments: String(payload['¿Qué ideas, juicios o historias repetitivas sobre ti o sobre esta situación descubriste que te están limitando?'] || payload.judgments || ''),
+          realizationBreakthrough: String(payload['¿Qué "darse cuenta" (descubrimiento o nueva perspectiva) te llevas de ti mismo tras esta conversación?'] || payload.breakthrough || ''),
+          balanceAttentionNeeded: String(payload['Si miras este proceso como un llamado a encontrar equilibrio, ¿qué parte de ti o de tu entorno necesita mayor atención hoy?'] || ''),
+          mostValuableLearning: String(payload['¿Cuál es el aprendizaje más valioso que te regalas al finalizar este espacio?'] || ''),
+          concreteActionCommitment: String(payload['¿Qué acción concreta, alineada con tus compromisos, te llevarás para realizar antes de nuestra próxima sesión?'] || payload.action || ''),
+          digitalValidationAgreed: true,
+        };
+        (db as any).bitacorasSesionesB2B.unshift(entry);
+        processedSummary.action = 'bitacora_b2b_recorded';
+      }
+
+      writeServerDatabase(db);
+
+      res.json({
+        success: true,
+        sourceKey,
+        message: 'Fila procesada y sincronizada exitosamente en la base de datos de Rengifo Basto Consultoría.',
+        processedSummary,
+        timestamp: new Date().toISOString(),
+      });
+    } catch (err: any) {
+      console.error('[RBC Ingest Error]:', err);
+      res.status(500).json({ error: err.message || 'Error procesando datos del formulario' });
+    }
+  });
+
+  // Endpoint para obtener el expediente de un participante extraído de formularios y bitácoras
+  app.get('/api/client/extracted-expediente/:email', (req, res) => {
+    try {
+      const emailQuery = String(req.params.email || '').trim().toLowerCase();
+      if (!emailQuery) {
+        return res.status(400).json({ error: 'Se requiere el correo del participante' });
+      }
+
+      const db = readServerDatabase();
+      const user = db.users.find((u: any) => u.email && u.email.toLowerCase() === emailQuery);
+
+      const tallerRegistros = ((db as any).tallerRegistros || []).filter(
+        (r: any) => r.email && r.email.toLowerCase() === emailQuery
+      );
+      const bitacorasTalleres = ((db as any).bitacorasTalleres || []).filter(
+        (r: any) => r.email && r.email.toLowerCase() === emailQuery
+      );
+      const sesionIndividualAcuerdos = ((db as any).sesionIndividualAcuerdos || []).filter(
+        (r: any) => r.email && r.email.toLowerCase() === emailQuery
+      );
+      const bitacorasSesionesB2B = ((db as any).bitacorasSesionesB2B || []).filter(
+        (r: any) => r.email && r.email.toLowerCase() === emailQuery
+      );
+      const registrations = (db.eventRegistrations || []).filter(
+        (r: any) => r.email && r.email.toLowerCase() === emailQuery
+      );
+
+      res.json({
+        success: true,
+        email: emailQuery,
+        participant: user || null,
+        expediente: {
+          tallerRegistros,
+          bitacorasTalleres,
+          sesionIndividualAcuerdos,
+          bitacorasSesionesB2B,
+          registrations,
+          totalSubmissions:
+            tallerRegistros.length +
+            bitacorasTalleres.length +
+            sesionIndividualAcuerdos.length +
+            bitacorasSesionesB2B.length,
+          lastUpdated: new Date().toISOString(),
+        },
+      });
+    } catch (err: any) {
+      console.error('[RBC Expediente Error]:', err);
+      res.status(500).json({ error: err.message || 'Error consultando expediente' });
+    }
   });
 
   // ==========================================

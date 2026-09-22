@@ -35,6 +35,14 @@ export interface CoreWorkshopTrack {
   defaultDate: string;
   defaultBreakthrough: string;
   defaultCommitments: string;
+  googleFormsUrl?: string;
+  googleSheetsUrl?: string;
+  autocratUrl?: string;
+  autocratFolderUrl?: string;
+  agreementFormUrl?: string;
+  agreementSheetUrl?: string;
+  bitacoraFormUrl?: string;
+  bitacoraSheetUrl?: string;
 }
 
 interface ParticipantTalleresModuleProps {
@@ -291,7 +299,7 @@ export const ParticipantTalleresModule: React.FC<ParticipantTalleresModuleProps>
               </div>
             </div>
 
-            {/* Acciones del Taller: Sala Meet, Memoria PDF y Accesos Google Workspace */}
+            {/* Acciones del Taller: Sala Meet, Formularios, Sheets, AutoCrat y Memoria PDF */}
             <div className="flex flex-wrap items-center gap-2.5 pt-1">
               <a
                 href={activeWorkshop.meetLink}
@@ -300,18 +308,43 @@ export const ParticipantTalleresModule: React.FC<ParticipantTalleresModuleProps>
                 className="px-4 py-2.5 rounded-xl bg-black text-white dark:bg-white dark:text-black font-semibold text-xs hover:opacity-90 transition-opacity inline-flex items-center gap-2 cursor-pointer shadow-xs"
               >
                 <Video className="w-4 h-4 text-emerald-400 dark:text-emerald-600" />
-                <span>Ingresar a Sala Virtual (Meet)</span>
+                <span>Google Meet en Vivo</span>
+                <ExternalLink className="w-3 h-3 opacity-60" />
               </a>
 
               <a
-                href={OFFICIAL_FORMS_SHEETS_BASE_MAP.talleres_registro.formUrl}
+                href={activeWorkshop.googleFormsUrl || activeWorkshop.bitacoraFormUrl || OFFICIAL_FORMS_SHEETS_BASE_MAP.bitacora_talleres.formUrl}
                 target="_blank"
                 rel="noreferrer"
                 className="px-3.5 py-2.5 rounded-xl border border-black/15 dark:border-white/15 bg-white/70 dark:bg-neutral-800/70 hover:bg-white dark:hover:bg-neutral-700 text-neutral-800 dark:text-neutral-200 text-xs font-semibold transition-colors inline-flex items-center gap-1.5 cursor-pointer shadow-2xs"
-                title="Diligenciar Acuerdo y Registro Oficial en Google Forms"
+                title="Diligenciar Formulario / Bitácora Oficial en Google Forms"
               >
-                <ShieldCheck className="w-4 h-4 text-emerald-500" />
-                <span>Acuerdo y Registro (Forms)</span>
+                <FileText className="w-4 h-4 text-purple-500" />
+                <span>Google Forms</span>
+                <ExternalLink className="w-3 h-3 opacity-60" />
+              </a>
+
+              <a
+                href={activeWorkshop.googleSheetsUrl || activeWorkshop.bitacoraSheetUrl || OFFICIAL_FORMS_SHEETS_BASE_MAP.bitacora_talleres.sheetUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="px-3.5 py-2.5 rounded-xl border border-black/15 dark:border-white/15 bg-white/70 dark:bg-neutral-800/70 hover:bg-white dark:hover:bg-neutral-700 text-neutral-800 dark:text-neutral-200 text-xs font-semibold transition-colors inline-flex items-center gap-1.5 cursor-pointer shadow-2xs"
+                title="Consultar Respuestas y Expedientes en Google Sheets"
+              >
+                <Table className="w-4 h-4 text-emerald-600" />
+                <span>Google Sheets</span>
+                <ExternalLink className="w-3 h-3 opacity-60" />
+              </a>
+
+              <a
+                href={activeWorkshop.autocratFolderUrl || OFFICIAL_FORMS_SHEETS_BASE_MAP.bitacora_talleres.driveFolderUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="px-3.5 py-2.5 rounded-xl border border-black/15 dark:border-white/15 bg-white/70 dark:bg-neutral-800/70 hover:bg-white dark:hover:bg-neutral-700 text-neutral-800 dark:text-neutral-200 text-xs font-semibold transition-colors inline-flex items-center gap-1.5 cursor-pointer shadow-2xs"
+                title="Acceder a Automatizaciones y Expedientes Generados con AutoCrat en Google Drive"
+              >
+                <Sparkles className="w-4 h-4 text-amber-500" />
+                <span>AutoCrat Expedientes</span>
                 <ExternalLink className="w-3 h-3 opacity-60" />
               </a>
 
@@ -325,14 +358,14 @@ export const ParticipantTalleresModule: React.FC<ParticipantTalleresModuleProps>
               </button>
             </div>
 
-            {/* Formularios Oficiales del Taller (Registro y Bitácora) */}
+            {/* Enlaces a Formularios Oficiales (Acuerdo y Bitácora) */}
             <div className="p-4 rounded-2xl bg-white/40 dark:bg-neutral-900/50 border border-black/10 dark:border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div className="flex items-center gap-2.5 flex-wrap">
                 <span className="text-[11px] font-bold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">
                   Google Workspace Oficial:
                 </span>
                 <a
-                  href={OFFICIAL_FORMS_SHEETS_BASE_MAP.talleres_registro.formUrl}
+                  href={activeWorkshop.agreementFormUrl || OFFICIAL_FORMS_SHEETS_BASE_MAP.talleres_registro.formUrl}
                   target="_blank"
                   rel="noreferrer"
                   className="px-3 py-1.5 rounded-lg bg-white/70 dark:bg-neutral-800/70 border border-black/10 dark:border-white/10 text-neutral-700 dark:text-neutral-300 hover:text-black dark:hover:text-white text-[11px] font-medium inline-flex items-center gap-1.5 transition-colors cursor-pointer"
@@ -344,21 +377,21 @@ export const ParticipantTalleresModule: React.FC<ParticipantTalleresModuleProps>
                 </a>
 
                 <a
-                  href={OFFICIAL_FORMS_SHEETS_BASE_MAP.bitacora_talleres.formUrl}
+                  href={activeWorkshop.bitacoraFormUrl || OFFICIAL_FORMS_SHEETS_BASE_MAP.bitacora_talleres.formUrl}
                   target="_blank"
                   rel="noreferrer"
                   className="px-3 py-1.5 rounded-lg bg-white/70 dark:bg-neutral-800/70 border border-black/10 dark:border-white/10 text-neutral-700 dark:text-neutral-300 hover:text-black dark:hover:text-white text-[11px] font-medium inline-flex items-center gap-1.5 transition-colors cursor-pointer"
                   title="Bitácora Oficial de Cosecha del Taller"
                 >
                   <Brain className="w-3.5 h-3.5 text-indigo-500" />
-                  <span>Bitácora Coach (Forms)</span>
+                  <span>Bitácora Taller (Forms)</span>
                   <ExternalLink className="w-3 h-3 opacity-60" />
                 </a>
               </div>
 
               <div className="text-neutral-500 dark:text-neutral-400 inline-flex items-center gap-1 text-[10px] select-none font-medium">
                 <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
-                <span>Expediente Confidencial RBC</span>
+                <span>Expediente Confidencial RBC & AutoCrat</span>
               </div>
             </div>
           </div>

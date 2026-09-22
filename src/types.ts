@@ -538,6 +538,9 @@ export interface CronogramaEvent {
   googleFormsUrl?: string;
   googleSheetsUrl?: string;
   googleDriveFolderUrl?: string;
+  autocratUrl?: string;
+  autocratMergeUrl?: string;
+  autocratFolderUrl?: string;
   triggersEnabled?: boolean;
   triggerNotificationTemplate?: string;
   immediateConfirmation?: boolean;
@@ -857,6 +860,8 @@ export interface TallerRegistroEntry {
   matchedEventId?: string;
   matchedEventTitle?: string;
   matchedDate?: string;
+  workshopTitle?: string;
+  agreedEthics?: boolean;
   updatedAt?: string;
   rawSource?: Record<string, any>;
 }
@@ -920,6 +925,12 @@ export interface BitacoraTallerEntry {
   valuableLearning: string; // ¿Cuál es el aprendizaje más valioso que te regalas de este espacio?
   concreteChallengeAction: string; // ¿Qué acción concreta, sencilla pero retadora, te comprometes a realizar antes de nuestro próximo encuentro?
   digitalValidationSignatureAndId: string; // Para validar digitalmente la lectura de esta information por nuestro equipo...
+  workshopTitle?: string;
+  somaticEmotion?: string;
+  breakthrough?: string;
+  limitingBelief?: string;
+  newObserver?: string;
+  actionCommitment?: string;
   rawSource?: Record<string, any>;
 }
 
@@ -952,6 +963,9 @@ export interface UnifiedClientOntologicalCrossData {
   bitacorasTalleres: BitacoraTallerEntry[];
   summary: UnifiedSynthesis;
   // Aliases for unified components
+  talleres: TallerRegistroEntry[];
+  acuerdos: SesionIndividualAcuerdoEntry[];
+  b2b: BitacoraSesionB2BEntry[];
   workshopRegistrations: TallerRegistroEntry[];
   individualSessionAgreements: SesionIndividualAcuerdoEntry[];
   b2bSessionLogs: BitacoraSesionB2BEntry[];

@@ -2211,7 +2211,12 @@ export class OntologicalStore {
   static deleteProgramNode(step: number): boolean {
     const nodes = this.getProgramNodes();
     if (nodes.length <= 1) return false;
-    const filtered = nodes.filter((n) => n.step !== step);
+    const filtered = nodes
+      .filter((n) => n.step !== step)
+      .map((n, idx) => ({
+        ...n,
+        step: idx + 1,
+      }));
     this.saveProgramNodes(filtered);
     try {
       FirestoreSyncService.deleteSession(String(step));
@@ -2512,29 +2517,54 @@ export class OntologicalStore {
       INITIAL_CRONOGRAMA_EVENTS
     );
 
-    const deletedIds = this.getDeletedWorkshopIds();
+    const canonicalIds = ['taller-1-raiz', 'taller-2-tallo', 'taller-3-florecimiento'];
+    let deletedIds = this.getDeletedWorkshopIds().filter((id) => !canonicalIds.includes(id));
+    const ghostIds = ['event-1790112367917', 'event-1789824188701', 'event-1789824792376', 'event-1789828629011', 'event-1789829005266'];
 
     if (!Array.isArray(list)) {
-      const initialFiltered = INITIAL_CRONOGRAMA_EVENTS.filter((e) => !deletedIds.includes(e.id));
+      const initialFiltered = INITIAL_CRONOGRAMA_EVENTS.filter((e) => !deletedIds.includes(e.id) && !ghostIds.includes(e.id));
       this.saveCronogramaEvents(initialFiltered);
       return initialFiltered;
     }
 
-    // Filtrar talleres que hayan sido eliminados
-    const filtered = list.filter((e) => !deletedIds.includes(e.id));
+    // Filtrar talleres que hayan sido eliminados o sean IDs fantasma
+    const filtered = list.filter((e) => !deletedIds.includes(e.id) && !ghostIds.includes(e.id));
 
-    // Asegurar que taller-1-raiz posea el afiche oficial de alta resolución y fechas vigentes
+    // Asegurar que los 3 talleres canónicos siempre estén presentes
     let needsResave = filtered.length !== list.length;
+    INITIAL_CRONOGRAMA_EVENTS.forEach((seedEvt) => {
+      if (deletedIds.includes(seedEvt.id)) return;
+      if (!filtered.some((e) => e.id === seedEvt.id)) {
+        filtered.push(seedEvt);
+        needsResave = true;
+      }
+    });
+
     const sanitized = filtered.map((evt) => {
       let changed = false;
       const copy = { ...evt };
-      if (!copy.googleSheetsUrl || copy.googleSheetsUrl.includes('1RBC_')) {
-        copy.googleSheetsUrl = 'https://docs.google.com/spreadsheets/d/1DyKs4OsJDTTOa8SMSvOQdWcttrmRKJ8_vxnJH9rV5UA/edit?usp=sharing';
-        changed = true;
-      }
-      if (!copy.googleFormsUrl) {
-        copy.googleFormsUrl = 'https://forms.gle/5Hiuxwq13n3gC3zt6';
-        changed = true;
+      const seedMatch = INITIAL_CRONOGRAMA_EVENTS.find((s) => s.id === evt.id);
+      if (seedMatch) {
+        if (!copy.googleSheetsUrl || copy.googleSheetsUrl.includes('1RBC_')) {
+          copy.googleSheetsUrl = seedMatch.googleSheetsUrl;
+          changed = true;
+        }
+        if (!copy.googleFormsUrl) {
+          copy.googleFormsUrl = seedMatch.googleFormsUrl;
+          changed = true;
+        }
+        if (!copy.autocratUrl) {
+          copy.autocratUrl = seedMatch.autocratUrl;
+          changed = true;
+        }
+        if (!copy.autocratMergeUrl) {
+          copy.autocratMergeUrl = seedMatch.autocratMergeUrl;
+          changed = true;
+        }
+        if (!copy.formsIntegrationId) {
+          copy.formsIntegrationId = seedMatch.formsIntegrationId;
+          changed = true;
+        }
       }
       if (evt.id === 'taller-1-raiz' && (evt.imageUrl?.includes('unsplash') || !evt.imageUrl)) {
         copy.imageUrl = promotionalEventBannerImg;
@@ -7304,6 +7334,49 @@ Rengifo Basto Consultoría Ontológica`;
     };
   }
 
+  /**
+   * Consulta el expediente procesado en tiempo real desde el servidor
+   * y alimenta el almacén local si hay nuevas bitácoras o acuerdos.
+   */
+  public static async fetchServerExtractedExpediente(email: string): Promise<any> {
+    if (!email) return null;
+    try {
+      const res = await fetch(`/api/client/extracted-expediente/${encodeURIComponent(email)}`);
+      if (!res.ok) return null;
+      const data = await res.json();
+      if (data && data.success && data.expediente) {
+        if (Array.isArray(data.expediente.tallerRegistros) && data.expediente.tallerRegistros.length > 0) {
+          const local = this.getTallerRegistros();
+          const merged = [...local];
+          data.expediente.tallerRegistros.forEach((item: any) => {
+            if (!merged.some((m) => m.id === item.id)) merged.unshift(item);
+          });
+          this.save('rbc_taller_registros', merged);
+        }
+        if (Array.isArray(data.expediente.bitacorasTalleres) && data.expediente.bitacorasTalleres.length > 0) {
+          const local = this.getBitacorasTalleres();
+          const merged = [...local];
+          data.expediente.bitacorasTalleres.forEach((item: any) => {
+            if (!merged.some((m) => m.id === item.id)) merged.unshift(item);
+          });
+          this.save('rbc_bitacoras_talleres', merged);
+        }
+        if (Array.isArray(data.expediente.sesionIndividualAcuerdos) && data.expediente.sesionIndividualAcuerdos.length > 0) {
+          const local = this.getSesionIndividualAcuerdos();
+          const merged = [...local];
+          data.expediente.sesionIndividualAcuerdos.forEach((item: any) => {
+            if (!merged.some((m) => m.id === item.id)) merged.unshift(item);
+          });
+          this.save('rbc_sesion_individual_acuerdos', merged);
+        }
+        return data.expediente;
+      }
+    } catch (err) {
+      console.warn('fetchServerExtractedExpediente notice:', err);
+    }
+    return null;
+  }
+
   // =========================================================================
   // CRUCE INTEGRAL DE DATOS (CRM - 4 FUENTES UNIFICADAS)
   // =========================================================================
@@ -7408,6 +7481,9 @@ Rengifo Basto Consultoría Ontológica`;
       bitacorasSesionesB2B: b2b,
       bitacorasTalleres: bTalleres,
       summary: synthesis,
+      talleres,
+      acuerdos,
+      b2b,
       workshopRegistrations: talleres,
       individualSessionAgreements: acuerdos,
       b2bSessionLogs: b2b,

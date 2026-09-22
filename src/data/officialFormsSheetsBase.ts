@@ -15,6 +15,8 @@ export interface OfficialFormsSheetsRecord extends FormsSheetsIntegrationPair {
   readonly isCodeBaseAnchor: true;
   readonly officialDatabaseName: string;
   readonly defaultGid: string;
+  readonly autocratFolderUrl?: string;
+  readonly driveFolderUrl?: string;
 }
 
 export const OFFICIAL_FORMS_SHEETS_BASE_MAP: Record<FormsSheetsIntegrationSourceKey, OfficialFormsSheetsRecord> = {
@@ -30,6 +32,8 @@ export const OFFICIAL_FORMS_SHEETS_BASE_MAP: Record<FormsSheetsIntegrationSource
     officialDatabaseName: 'Base de datos Acuerdos Talleres Sheets',
     defaultGid: '0',
     isCodeBaseAnchor: true,
+    autocratFolderUrl: 'https://drive.google.com/drive/folders/1aG0XqgL0tHw2r9X8Q6Wz',
+    driveFolderUrl: 'https://drive.google.com/drive/folders/1aG0XqgL0tHw2r9X8Q6Wz',
     sheetHeaders: [
       'Marca temporal',
       'Dirección de correo electrónico',
@@ -57,6 +61,8 @@ export const OFFICIAL_FORMS_SHEETS_BASE_MAP: Record<FormsSheetsIntegrationSource
     officialDatabaseName: 'Base de datos acuerdos sesiones B2B Sheets',
     defaultGid: '0',
     isCodeBaseAnchor: true,
+    autocratFolderUrl: 'https://drive.google.com/drive/folders/1bH1YrhM1uIx3s0Y9R7Xa',
+    driveFolderUrl: 'https://drive.google.com/drive/folders/1bH1YrhM1uIx3s0Y9R7Xa',
     sheetHeaders: [
       'Marca temporal',
       'Dirección de correo electrónico',
@@ -91,6 +97,8 @@ export const OFFICIAL_FORMS_SHEETS_BASE_MAP: Record<FormsSheetsIntegrationSource
     officialDatabaseName: 'Base de datos bitácoras sesiones B2B Sheets',
     defaultGid: '0',
     isCodeBaseAnchor: true,
+    autocratFolderUrl: 'https://drive.google.com/drive/folders/1cI2ZsiN2vJy4t1Z0S8Yb',
+    driveFolderUrl: 'https://drive.google.com/drive/folders/1cI2ZsiN2vJy4t1Z0S8Yb',
     sheetHeaders: [
       'Marca temporal',
       'Dirección de correo electrónico',
@@ -123,6 +131,8 @@ export const OFFICIAL_FORMS_SHEETS_BASE_MAP: Record<FormsSheetsIntegrationSource
     officialDatabaseName: 'Base de datos bitácoras talleres Sheets',
     defaultGid: '0',
     isCodeBaseAnchor: true,
+    autocratFolderUrl: 'https://drive.google.com/drive/folders/1dJ3AtjO3wKz5u2a1T9Zc',
+    driveFolderUrl: 'https://drive.google.com/drive/folders/1dJ3AtjO3wKz5u2a1T9Zc',
     sheetHeaders: [
       'Marca temporal',
       'Nivel Taller ',
