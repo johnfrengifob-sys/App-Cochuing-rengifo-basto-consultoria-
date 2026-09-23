@@ -401,7 +401,7 @@ export const AdminAutomationsManager: React.FC<AdminAutomationsManagerProps> = (
                 type="button"
                 onClick={handleRunInboundTest}
                 disabled={isTestingInbound}
-                className="w-full py-2.5 rounded-xl bg-black dark:bg-white text-white dark:text-black font-semibold hover:bg-neutral-800 transition-all cursor-pointer flex items-center justify-center gap-1.5 mt-2"
+                className="w-full py-2.5 rounded-xl bg-white dark:bg-neutral-800 text-neutral-900 dark:text-white border border-amber-500/40 hover:bg-amber-50/50 dark:hover:bg-amber-950/30 hover:border-amber-500 font-semibold transition-all cursor-pointer flex items-center justify-center gap-1.5 mt-2 shadow-xs"
               >
                 {isTestingInbound ? (
                   <RefreshCw className="w-3.5 h-3.5 animate-spin" />

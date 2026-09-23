@@ -19,6 +19,7 @@ import {
   X,
   ShieldCheck,
   Zap,
+  Trash2,
 } from 'lucide-react';
 import {
   Session,
@@ -37,6 +38,7 @@ interface ConsultoriaSessionCreationModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSessionCreated?: (session: Session) => void;
+  onSessionDeleted?: (sessionId: string) => void;
   initialSession?: Session | null;
   defaultClientId?: string;
   onOpenAutomationsPanel?: () => void;
@@ -46,6 +48,7 @@ export const ConsultoriaSessionCreationModal: React.FC<ConsultoriaSessionCreatio
   isOpen,
   onClose,
   onSessionCreated,
+  onSessionDeleted,
   initialSession,
   defaultClientId,
 }) => {
@@ -153,50 +156,95 @@ export const ConsultoriaSessionCreationModal: React.FC<ConsultoriaSessionCreatio
   // Copiado
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
   const [saveSuccess, setSaveSuccess] = useState<boolean>(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState<boolean>(false);
 
-  // Sincronizar dinámicamente el título y tipo sugerido cuando cambia el coachee
+  // Sincronizar todos los campos de estado cuando se abre el modal o cambia la sesión inicial
   useEffect(() => {
-    if (!initialSession && clientId) {
-      const clientSessions = OntologicalStore.getSessions().filter(
-        (s) => s.clientId === clientId
+    if (!isOpen) {
+      setShowDeleteConfirm(false);
+      return;
+    }
+
+    if (initialSession) {
+      setSessionType(normalizeInitialType(initialSession.sessionType));
+      setClientId(initialSession.clientId || defaultClientId || clients[0]?.uid || '');
+      setTitle(initialSession.title || 'Sesión de Consultoría Ontológica 1 a 1');
+      setSessionNumber(initialSession.sessionNumber || 1);
+      setLevel((initialSession.level as 'Nivel I' | 'Nivel II' | 'Nivel III') || 'Nivel I');
+      setWeekLabel(initialSession.weekLabel || 'Semanas 1-2');
+      setScheduledDate(
+        initialSession.scheduledDate ||
+          (initialSession.date ? initialSession.date.split('T')[0] : new Date().toISOString().split('T')[0])
       );
+      setScheduledTime(initialSession.scheduledTime || '10:00');
+      setDurationMinutes(initialSession.durationMinutes || 60);
+      setMeetLink(initialSession.meetLink || generateMeetLink());
+      setSessionGoal(initialSession.sessionGoal || '');
+      setOpeningQuestion(
+        initialSession.openingQuestion ||
+          (initialSession.sessionType === 'cierre_ciclo' || initialSession.sessionType === 'recopilacion_cycle'
+            ? defaultOpeningCycle
+            : defaultOpeningNormal)
+      );
+      setSomaticFocus(initialSession.conversationalGuide?.somaticEmotionalExploration || '');
+      setActionAgreement(initialSession.conversationalGuide?.consciousActionCoCreation || '');
+      setProgressEvaluation(initialSession.cycleReviewAxes?.progressEvaluation || '');
+      setNextLegRedesign(initialSession.cycleReviewAxes?.nextLegRedesign || '');
+      setFormsPresetKey(
+        (initialSession.formsIntegrationId as FormsSheetsIntegrationSourceKey) || 'bitacora_sesiones_b2b'
+      );
+      setCustomFormUrl(initialSession.googleFormsUrl || '');
+      setCustomSheetUrl(initialSession.googleSheetsUrl || '');
+      setGuideUrl(initialSession.guideUrl || '');
+      setGuideTitle(initialSession.guideTitle || '');
+      setVideoUrl(initialSession.videoUrl || '');
+      setVideoTitle(initialSession.videoTitle || '');
+      setTriggersEnabled(initialSession.automationsConfig?.triggersEnabled ?? true);
+      setShowDeleteConfirm(false);
+    } else {
+      const targetClientId = defaultClientId || clients[0]?.uid || '';
+      setClientId(targetClientId);
+      const clientSessions = targetClientId
+        ? OntologicalStore.getSessions().filter((s) => s.clientId === targetClientId)
+        : [];
       const nextNumber = clientSessions.length + 1;
       setSessionNumber(nextNumber);
-
-      if (nextNumber <= 2) {
-        setLevel('Nivel I');
-        setWeekLabel('Semanas 1-2');
-      } else if (nextNumber <= 4) {
-        setLevel('Nivel I');
-        setWeekLabel('Semanas 3-4');
-      } else if (nextNumber <= 6) {
-        setLevel('Nivel II');
-        setWeekLabel('Semanas 5-6');
-      } else if (nextNumber <= 8) {
-        setLevel('Nivel II');
-        setWeekLabel('Semanas 7-8');
-      } else if (nextNumber <= 10) {
-        setLevel('Nivel III');
-        setWeekLabel('Semanas 9-10');
-      } else {
-        setLevel('Nivel III');
-        setWeekLabel('Semanas 11-12');
-      }
-
-      const isCycleClose = nextNumber % 4 === 0;
-      if (isCycleClose) {
-        setSessionType('cierre_ciclo');
-        setOpeningQuestion(defaultOpeningCycle);
-        setTitle(`Sesión #${nextNumber}: Cierre de Ciclo y Revisión de Avance`);
-        setSessionGoal('Revisión del estado actual, medición de evolución y rediseño del siguiente tramo.');
-      } else {
-        setSessionType('sesion');
-        setOpeningQuestion(defaultOpeningNormal);
-        setTitle(`Sesión #${nextNumber}: Consultoría Ontológica 1 a 1`);
-        setSessionGoal('Acompañamiento ontológico no direccional y exploración libre del quiebre.');
-      }
+      setSessionType('sesion');
+      setTitle(`Sesión #${nextNumber}: Consultoría Ontológica 1 a 1`);
+      setSessionGoal('Acompañamiento ontológico no direccional y exploración libre del quiebre.');
+      setOpeningQuestion(defaultOpeningNormal);
+      const d = new Date(Date.now() + 1000 * 60 * 60 * 24 * 2);
+      setScheduledDate(d.toISOString().split('T')[0]);
+      setScheduledTime('10:00');
+      setDurationMinutes(60);
+      setMeetLink(generateMeetLink());
+      setSomaticFocus('');
+      setActionAgreement('');
+      setProgressEvaluation('');
+      setNextLegRedesign('');
+      setFormsPresetKey('bitacora_sesiones_b2b');
+      setCustomFormUrl('');
+      setCustomSheetUrl('');
+      setGuideUrl('');
+      setGuideTitle('');
+      setVideoUrl('');
+      setVideoTitle('');
+      setTriggersEnabled(true);
+      setShowDeleteConfirm(false);
     }
-  }, [clientId, initialSession]);
+  }, [isOpen, initialSession, defaultClientId]);
+
+  // Manejo de eliminación definitiva de la sesión
+  const handleDeleteThisSession = () => {
+    if (!initialSession?.id) return;
+    OntologicalStore.deleteSession(initialSession.id);
+    FirestoreSyncService.deleteSession(initialSession.id).catch(() => {});
+    if (onSessionDeleted) {
+      onSessionDeleted(initialSession.id);
+    }
+    setShowDeleteConfirm(false);
+    onClose();
+  };
 
   const handleSessionTypeChange = (type: ConsultoriaSessionType) => {
     setSessionType(type);
@@ -847,9 +895,47 @@ export const ConsultoriaSessionCreationModal: React.FC<ConsultoriaSessionCreatio
 
           {/* Pie del Formulario y Botones */}
           <div className="pt-3 border-t border-gray-100 dark:border-neutral-800 flex flex-col sm:flex-row items-center justify-between gap-3 shrink-0">
-            <div className="text-[11px] text-gray-500 dark:text-neutral-400 flex items-center gap-1.5">
-              <ShieldCheck className="w-4 h-4 text-emerald-600" />
-              <span>Sincronización en Firebase Firestore y Google Sheets</span>
+            <div className="flex items-center gap-2">
+              {initialSession && !showDeleteConfirm && (
+                <button
+                  type="button"
+                  onClick={() => setShowDeleteConfirm(true)}
+                  className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 text-xs font-semibold cursor-pointer transition-colors"
+                  title="Eliminar esta sesión de la base de datos"
+                >
+                  <Trash2 className="w-3.5 h-3.5 text-rose-500" />
+                  <span>Eliminar Sesión</span>
+                </button>
+              )}
+
+              {initialSession && showDeleteConfirm && (
+                <div className="flex items-center gap-2 p-1.5 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 animate-fade-in">
+                  <span className="text-[11px] font-bold text-rose-700 dark:text-rose-300 pl-1">
+                    ¿Eliminar definitivamente?
+                  </span>
+                  <button
+                    type="button"
+                    onClick={handleDeleteThisSession}
+                    className="px-2.5 py-1 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-[11px] font-bold cursor-pointer transition-colors shadow-xs"
+                  >
+                    Sí, eliminar
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowDeleteConfirm(false)}
+                    className="px-2 py-1 rounded-lg text-neutral-600 dark:text-neutral-300 hover:bg-white/60 text-[11px] font-medium cursor-pointer"
+                  >
+                    Cancelar
+                  </button>
+                </div>
+              )}
+
+              {!initialSession && (
+                <div className="text-[11px] text-gray-500 dark:text-neutral-400 flex items-center gap-1.5">
+                  <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                  <span>Sincronización en Firebase Firestore y Google Sheets</span>
+                </div>
+              )}
             </div>
 
             <div className="flex items-center gap-2.5 w-full sm:w-auto">

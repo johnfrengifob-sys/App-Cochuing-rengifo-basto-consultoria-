@@ -131,13 +131,11 @@ export const ExperienceEditorManager: React.FC<ExperienceEditorManagerProps> = (
 
   // Eliminar experiencia
   const handleDeleteExperience = (id: string) => {
-    if (confirm('¿Estás seguro de eliminar este formato de experiencia?')) {
-      OntologicalStore.deleteExperience(id);
-      const remaining = experiences.filter((e) => e.id !== id);
-      setExperiences(remaining);
-      if (selectedExpId === id && remaining.length > 0) {
-        setSelectedExpId(remaining[0].id);
-      }
+    OntologicalStore.deleteExperience(id);
+    const remaining = experiences.filter((e) => e.id !== id);
+    setExperiences(remaining);
+    if (selectedExpId === id && remaining.length > 0) {
+      setSelectedExpId(remaining[0].id);
     }
   };
 

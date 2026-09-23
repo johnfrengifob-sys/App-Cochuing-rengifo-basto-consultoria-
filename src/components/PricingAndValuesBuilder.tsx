@@ -87,10 +87,8 @@ export const PricingAndValuesBuilder: React.FC = () => {
   };
 
   const handleDeletePackage = (id: string) => {
-    if (confirm('¿Deseas eliminar esta tarifa comercial?')) {
-      OntologicalStore.deletePricingPackage(id);
-      setPackages(OntologicalStore.getPricingPackages());
-    }
+    OntologicalStore.deletePricingPackage(id);
+    setPackages(OntologicalStore.getPricingPackages());
   };
 
   // Calculations for current selected package

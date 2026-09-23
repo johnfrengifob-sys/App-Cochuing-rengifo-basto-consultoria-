@@ -433,31 +433,6 @@ export const CoachDashboard: React.FC<CoachDashboardProps> = ({
             <p className="text-xs sm:text-sm text-gray-500 dark:text-neutral-400 font-light leading-relaxed">
               Supervisión estratégica de clientes, gestión de embudo ontológico, validación financiera y facilitación directiva.
             </p>
-            <div className="pt-1 flex items-center justify-center gap-2.5 flex-wrap">
-              <button
-                id="open-security-audit-btn"
-                type="button"
-                onClick={() => setShowSecurityAuditModal(true)}
-                className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 text-xs font-semibold transition-all cursor-pointer shadow-2xs group"
-              >
-                <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 group-hover:scale-110 transition-transform" />
-                <span>Auditoría de Seguridad & Seguimiento (Regla 30 Días)</span>
-                <span className="text-[10px] px-1.5 py-0.2 rounded-full font-mono font-bold bg-emerald-600 text-white dark:bg-emerald-400 dark:text-black">
-                  100% OK
-                </span>
-              </button>
-
-              <button
-                id="open-export-summary-top-btn"
-                type="button"
-                onClick={() => setShowExportModal(true)}
-                className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-neutral-900 text-white dark:bg-white dark:text-black hover:bg-neutral-800 dark:hover:bg-neutral-200 border border-neutral-700 dark:border-neutral-300 text-xs font-semibold transition-all cursor-pointer shadow-2xs group"
-                title="Exportar informe de progreso y sesiones en formato JSON o texto formateado"
-              >
-                <FileDown className="w-3.5 h-3.5 text-emerald-400 dark:text-emerald-600 group-hover:scale-110 transition-transform" />
-                <span>Exportar Informe Coachee (JSON / Texto)</span>
-              </button>
-            </div>
           </div>
 
           {/* Funciones de la Consola: 4 Botones Principales Unificados */}
@@ -472,13 +447,13 @@ export const CoachDashboard: React.FC<CoachDashboardProps> = ({
                 }}
                 className={`group px-3 py-2 sm:py-2.5 rounded-xl transition-all cursor-pointer text-left flex items-center gap-2.5 w-full ${
                   activeMainTab === 'clients' || activeMainTab === 'crm'
-                    ? 'bg-black text-white dark:bg-white dark:text-black shadow-sm ring-1 ring-black/10 dark:ring-white/20'
+                    ? 'bg-white dark:bg-[#1E1E24] text-neutral-900 dark:text-white shadow-md ring-2 ring-emerald-500/50 border border-emerald-500/30 font-bold'
                     : 'glass-panel-opal hover:bg-white/90 dark:hover:bg-[#202026] text-neutral-800 dark:text-neutral-200 border border-white/60 dark:border-white/10 shadow-2xs hover:border-black/20 dark:hover:border-white/20'
                 }`}
               >
                 <div className={`p-1.5 rounded-lg shrink-0 ${
                   activeMainTab === 'clients' || activeMainTab === 'crm'
-                    ? 'bg-white/20 dark:bg-black/20 text-white dark:text-black'
+                    ? 'bg-emerald-600 text-white shadow-xs'
                     : 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400'
                 }`}>
                   <Users className="w-3.5 h-3.5" />
@@ -488,14 +463,14 @@ export const CoachDashboard: React.FC<CoachDashboardProps> = ({
                     <span className="text-xs font-semibold truncate leading-tight">Clientes CRM</span>
                     <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono font-bold shrink-0 ${
                       activeMainTab === 'clients' || activeMainTab === 'crm'
-                        ? 'bg-white/20 dark:bg-black/20 text-white dark:text-black'
+                        ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-300'
                         : 'bg-emerald-100 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-200'
                     }`}>
                       {clients.length} Act.
                     </span>
                   </div>
                   <span className={`text-[10px] block truncate font-light leading-tight mt-0.5 ${
-                    activeMainTab === 'clients' || activeMainTab === 'crm' ? 'text-white/80 dark:text-black/70' : 'text-gray-500 dark:text-neutral-400'
+                    activeMainTab === 'clients' || activeMainTab === 'crm' ? 'text-neutral-600 dark:text-neutral-300' : 'text-gray-500 dark:text-neutral-400'
                   }`}>
                     Pipeline ({prospects.length}) & Directorio
                   </span>
@@ -512,13 +487,13 @@ export const CoachDashboard: React.FC<CoachDashboardProps> = ({
                 }}
                 className={`group px-3 py-2 sm:py-2.5 rounded-xl transition-all cursor-pointer text-left flex items-center gap-2.5 w-full ${
                   activeMainTab === 'events' || activeMainTab === 'academic' || activeMainTab === 'events_sessions'
-                    ? 'bg-black text-white dark:bg-white dark:text-black shadow-sm ring-1 ring-black/10 dark:ring-white/20'
+                    ? 'bg-white dark:bg-[#1E1E24] text-neutral-900 dark:text-white shadow-md ring-2 ring-rose-500/50 border border-rose-500/30 font-bold'
                     : 'glass-panel-opal hover:bg-white/90 dark:hover:bg-[#202026] text-neutral-800 dark:text-neutral-200 border border-white/60 dark:border-white/10 shadow-2xs hover:border-black/20 dark:hover:border-white/20'
                 }`}
               >
                 <div className={`p-1.5 rounded-lg shrink-0 ${
                   activeMainTab === 'events' || activeMainTab === 'academic' || activeMainTab === 'events_sessions'
-                    ? 'bg-white/20 dark:bg-black/20 text-white dark:text-black'
+                    ? 'bg-rose-500 text-white shadow-xs'
                     : 'bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400'
                 }`}>
                   <Calendar className="w-3.5 h-3.5" />
@@ -528,14 +503,14 @@ export const CoachDashboard: React.FC<CoachDashboardProps> = ({
                     <span className="text-xs font-semibold truncate leading-tight">Eventos y Talleres</span>
                     <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono font-bold shrink-0 ${
                       activeMainTab === 'events' || activeMainTab === 'academic' || activeMainTab === 'events_sessions'
-                        ? 'bg-white/20 dark:bg-black/20 text-white dark:text-black'
+                        ? 'bg-rose-100 text-rose-800 dark:bg-rose-950/80 dark:text-rose-300'
                         : 'bg-rose-100 dark:bg-rose-900/60 text-rose-800 dark:text-rose-200'
                     }`}>
                       {cronogramaEvents.length} En Vivo
                     </span>
                   </div>
                   <span className={`text-[10px] block truncate font-light leading-tight mt-0.5 ${
-                    activeMainTab === 'events' || activeMainTab === 'academic' || activeMainTab === 'events_sessions' ? 'text-white/80 dark:text-black/70' : 'text-gray-500 dark:text-neutral-400'
+                    activeMainTab === 'events' || activeMainTab === 'academic' || activeMainTab === 'events_sessions' ? 'text-neutral-600 dark:text-neutral-300' : 'text-gray-500 dark:text-neutral-400'
                   }`}>
                     Afiche, Catálogo & Forms
                   </span>
@@ -549,13 +524,13 @@ export const CoachDashboard: React.FC<CoachDashboardProps> = ({
                 onClick={() => setActiveMainTab('payments')}
                 className={`group px-3 py-2 sm:py-2.5 rounded-xl transition-all cursor-pointer text-left flex items-center gap-2.5 w-full ${
                   activeMainTab === 'payments'
-                    ? 'bg-black text-white dark:bg-white dark:text-black shadow-sm ring-1 ring-black/10 dark:ring-white/20'
+                    ? 'bg-white dark:bg-[#1E1E24] text-neutral-900 dark:text-white shadow-md ring-2 ring-amber-500/50 border border-amber-500/30 font-bold'
                     : 'glass-panel-opal hover:bg-white/90 dark:hover:bg-[#202026] text-neutral-800 dark:text-neutral-200 border border-white/60 dark:border-white/10 shadow-2xs hover:border-black/20 dark:hover:border-white/20'
                 }`}
               >
                 <div className={`p-1.5 rounded-lg shrink-0 ${
                   activeMainTab === 'payments'
-                    ? 'bg-white/20 dark:bg-black/20 text-white dark:text-black'
+                    ? 'bg-amber-500 text-white shadow-xs'
                     : 'bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400'
                 }`}>
                   <Banknote className="w-3.5 h-3.5" />
@@ -570,7 +545,7 @@ export const CoachDashboard: React.FC<CoachDashboardProps> = ({
                     ) : (
                       <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono font-bold shrink-0 ${
                         activeMainTab === 'payments'
-                          ? 'bg-white/20 dark:bg-black/20 text-white dark:text-black'
+                          ? 'bg-amber-100 text-amber-800 dark:bg-amber-950/80 dark:text-amber-300'
                           : 'bg-amber-100 dark:bg-amber-900/60 text-amber-800 dark:text-amber-200'
                       }`}>
                         {paymentRequests.length}
@@ -578,7 +553,7 @@ export const CoachDashboard: React.FC<CoachDashboardProps> = ({
                     )}
                   </div>
                   <span className={`text-[10px] block truncate font-light leading-tight mt-0.5 ${
-                    activeMainTab === 'payments' ? 'text-white/80 dark:text-black/70' : 'text-gray-500 dark:text-neutral-400'
+                    activeMainTab === 'payments' ? 'text-neutral-600 dark:text-neutral-300' : 'text-gray-500 dark:text-neutral-400'
                   }`}>
                     Bre-B Nu & Efectivo
                   </span>
@@ -592,13 +567,13 @@ export const CoachDashboard: React.FC<CoachDashboardProps> = ({
                 onClick={() => setActiveMainTab('gemini')}
                 className={`group px-3 py-2 sm:py-2.5 rounded-xl transition-all cursor-pointer text-left flex items-center gap-2.5 w-full ${
                   activeMainTab === 'gemini'
-                    ? 'bg-black text-white dark:bg-white dark:text-black shadow-sm ring-1 ring-black/10 dark:ring-white/20'
+                    ? 'bg-white dark:bg-[#1E1E24] text-neutral-900 dark:text-white shadow-md ring-2 ring-purple-500/50 border border-purple-500/30 font-bold'
                     : 'glass-panel-opal hover:bg-white/90 dark:hover:bg-[#202026] text-neutral-800 dark:text-neutral-200 border border-white/60 dark:border-white/10 shadow-2xs hover:border-black/20 dark:hover:border-white/20'
                 }`}
               >
                 <div className={`p-1.5 rounded-lg shrink-0 ${
                   activeMainTab === 'gemini'
-                    ? 'bg-white/20 dark:bg-black/20 text-white dark:text-black'
+                    ? 'bg-purple-600 text-white shadow-xs'
                     : 'bg-purple-50 dark:bg-purple-950/50 text-purple-600 dark:text-purple-400'
                 }`}>
                   <Sparkles className="w-3.5 h-3.5" />
@@ -608,14 +583,14 @@ export const CoachDashboard: React.FC<CoachDashboardProps> = ({
                     <span className="text-xs font-semibold truncate leading-tight">Gemini 3.7</span>
                     <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono font-bold shrink-0 ${
                       activeMainTab === 'gemini'
-                        ? 'bg-white/20 dark:bg-black/20 text-white dark:text-black'
+                        ? 'bg-purple-100 text-purple-800 dark:bg-purple-950/80 dark:text-purple-300'
                         : 'bg-purple-100 dark:bg-purple-900/60 text-purple-800 dark:text-purple-200'
                     }`}>
                       IA Flash
                     </span>
                   </div>
                   <span className={`text-[10px] block truncate font-light leading-tight mt-0.5 ${
-                    activeMainTab === 'gemini' ? 'text-white/80 dark:text-black/70' : 'text-gray-500 dark:text-neutral-400'
+                    activeMainTab === 'gemini' ? 'text-neutral-600 dark:text-neutral-300' : 'text-gray-500 dark:text-neutral-400'
                   }`}>
                     Copiloto Ontológico
                   </span>
@@ -705,17 +680,17 @@ export const CoachDashboard: React.FC<CoachDashboardProps> = ({
                     type="button"
                     id="btn-export-client-summary-header"
                     onClick={() => setShowExportModal(true)}
-                    className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-black text-white dark:bg-white dark:text-black hover:bg-neutral-800 dark:hover:bg-neutral-200 text-xs font-semibold transition-all cursor-pointer shadow-xs"
+                    className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white dark:bg-neutral-800 text-neutral-900 dark:text-white border border-gray-200 dark:border-neutral-700 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 hover:border-emerald-500/40 text-xs font-semibold transition-all cursor-pointer shadow-2xs"
                     title="Exportar informe de progreso y sesiones en formato JSON o texto formateado"
                   >
-                    <FileDown className="w-3.5 h-3.5 text-emerald-400 dark:text-emerald-600" />
+                    <FileDown className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
                     <span>Exportar Progreso y Sesiones</span>
                   </button>
 
                   <button
                     type="button"
                     onClick={() => setClientsViewMode('pipeline')}
-                    className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-gray-100 dark:bg-neutral-800 hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black text-xs font-semibold text-gray-700 dark:text-neutral-300 transition-all cursor-pointer shadow-2xs"
+                    className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 border border-gray-200 dark:border-neutral-700 hover:bg-gray-50 dark:hover:bg-neutral-700 hover:text-black dark:hover:text-white text-xs font-semibold transition-all cursor-pointer shadow-2xs"
                   >
                     <ArrowLeft className="w-3.5 h-3.5" />
                     <span>Volver a Clientes CRM</span>

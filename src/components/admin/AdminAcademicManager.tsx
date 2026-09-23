@@ -161,15 +161,15 @@ export const AdminAcademicManager: React.FC<AdminAcademicManagerProps> = ({
           onClick={() => setCurrentTab('events')}
           className={`flex items-center justify-center gap-2.5 px-4 py-3 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
             currentTab === 'events'
-              ? 'bg-black text-white dark:bg-white dark:text-black shadow-xs'
+              ? 'bg-white dark:bg-neutral-800 text-neutral-950 dark:text-white shadow-md ring-2 ring-rose-500/40 border border-rose-500/30'
               : 'text-neutral-600 dark:text-neutral-400 hover:text-black dark:hover:text-white hover:bg-white/80 dark:hover:bg-neutral-800/80'
           }`}
         >
           <Calendar className="w-4 h-4 text-rose-500" />
           <span>Eventos y Talleres</span>
-          <span className={`text-[11px] px-2 py-0.5 rounded-full font-mono ${
+          <span className={`text-[11px] px-2 py-0.5 rounded-full font-mono font-bold ${
             currentTab === 'events'
-              ? 'bg-white/20 text-white dark:bg-black/20 dark:text-black'
+              ? 'bg-rose-100 text-rose-800 dark:bg-rose-950/70 dark:text-rose-300'
               : 'bg-neutral-200/80 dark:bg-neutral-700/80 text-neutral-800 dark:text-neutral-200'
           }`}>
             {rawEvents.length}
@@ -182,15 +182,15 @@ export const AdminAcademicManager: React.FC<AdminAcademicManagerProps> = ({
           onClick={() => setCurrentTab('sessions')}
           className={`flex items-center justify-center gap-2.5 px-4 py-3 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
             currentTab === 'sessions'
-              ? 'bg-black text-white dark:bg-white dark:text-black shadow-xs'
+              ? 'bg-white dark:bg-neutral-800 text-neutral-950 dark:text-white shadow-md ring-2 ring-emerald-500/40 border border-emerald-500/30'
               : 'text-neutral-600 dark:text-neutral-400 hover:text-black dark:hover:text-white hover:bg-white/80 dark:hover:bg-neutral-800/80'
           }`}
         >
-          <BookOpen className="w-4 h-4 text-emerald-500" />
+          <BookOpen className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
           <span>Sesiones</span>
-          <span className={`text-[11px] px-2 py-0.5 rounded-full font-mono ${
+          <span className={`text-[11px] px-2 py-0.5 rounded-full font-mono font-bold ${
             currentTab === 'sessions'
-              ? 'bg-white/20 text-white dark:bg-black/20 dark:text-black'
+              ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/70 dark:text-emerald-300'
               : 'bg-emerald-100/80 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300'
           }`}>
             {programNodes.length} Sesiones
@@ -203,15 +203,15 @@ export const AdminAcademicManager: React.FC<AdminAcademicManagerProps> = ({
           onClick={() => setCurrentTab('forms_sheets')}
           className={`flex items-center justify-center gap-2.5 px-4 py-3 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
             currentTab === 'forms_sheets'
-              ? 'bg-black text-white dark:bg-white dark:text-black shadow-xs'
+              ? 'bg-white dark:bg-neutral-800 text-neutral-950 dark:text-white shadow-md ring-2 ring-emerald-500/40 border border-emerald-500/30'
               : 'text-neutral-600 dark:text-neutral-400 hover:text-black dark:hover:text-white hover:bg-white/80 dark:hover:bg-neutral-800/80'
           }`}
         >
-          <FileSpreadsheet className="w-4 h-4 text-emerald-500" />
+          <FileSpreadsheet className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
           <span>Google Forms & Sheets</span>
-          <span className={`text-[11px] px-2 py-0.5 rounded-full font-mono ${
+          <span className={`text-[11px] px-2 py-0.5 rounded-full font-mono font-bold ${
             currentTab === 'forms_sheets'
-              ? 'bg-white/20 text-white dark:bg-black/20 dark:text-black'
+              ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/70 dark:text-emerald-300'
               : 'bg-emerald-100/80 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300'
           }`}>
             4 Fuentes
@@ -224,15 +224,15 @@ export const AdminAcademicManager: React.FC<AdminAcademicManagerProps> = ({
           onClick={() => setCurrentTab('automations')}
           className={`flex items-center justify-center gap-2.5 px-4 py-3 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
             currentTab === 'automations'
-              ? 'bg-black text-white dark:bg-white dark:text-black shadow-xs'
+              ? 'bg-white dark:bg-neutral-800 text-neutral-950 dark:text-white shadow-md ring-2 ring-amber-500/40 border border-amber-500/30'
               : 'text-neutral-600 dark:text-neutral-400 hover:text-black dark:hover:text-white hover:bg-white/80 dark:hover:bg-neutral-800/80'
           }`}
         >
           <Zap className="w-4 h-4 text-amber-500" />
           <span>Automatizaciones</span>
-          <span className={`text-[11px] px-2 py-0.5 rounded-full font-mono ${
+          <span className={`text-[11px] px-2 py-0.5 rounded-full font-mono font-bold ${
             currentTab === 'automations'
-              ? 'bg-white/20 text-white dark:bg-black/20 dark:text-black'
+              ? 'bg-amber-100 text-amber-800 dark:bg-amber-950/70 dark:text-amber-300'
               : 'bg-amber-100/80 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300'
           }`}>
             Make & Logs

@@ -389,6 +389,17 @@ export class FirestoreSyncService {
     }
   }
 
+  // Delete program node from Firestore
+  static async deleteProgramNode(step: number): Promise<void> {
+    const collectionPath = 'programNodes';
+    try {
+      const nodeRef = doc(db, collectionPath, String(step));
+      await deleteDoc(nodeRef);
+    } catch (error) {
+      console.warn('Firestore deleteProgramNode notice:', error);
+    }
+  }
+
   // Synchronize post-session form (Cuestionario Posterior / Bitácora) to Firestore
   static async syncPostSessionForm(form: PostSessionForm): Promise<void> {
     const collectionPath = 'postSessionForms';
@@ -1768,6 +1779,23 @@ export class FirestoreSyncService {
 
   static async syncAllProgramNodes(nodes: ProgramNodeInfo[]): Promise<number> {
     let count = 0;
+    const collectionPath = 'programNodes';
+    try {
+      const snap = await getDocs(collection(db, collectionPath));
+      const activeSteps = new Set(nodes.map((n) => String(n.step)));
+      for (const d of snap.docs) {
+        if (!activeSteps.has(d.id)) {
+          try {
+            await deleteDoc(d.ref);
+          } catch {
+            // continue
+          }
+        }
+      }
+    } catch {
+      // safe fallback
+    }
+
     for (const node of nodes) {
       try {
         await this.syncProgramNode(node);

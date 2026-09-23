@@ -436,27 +436,27 @@ async function startServer() {
   ];
 
   function sanitizeServerProgramNodes(rawNodes: any[]): any[] {
-    const list = Array.isArray(rawNodes) ? rawNodes : [];
-    return Array.from({ length: 12 }, (_, i) => {
-      const step = i + 1; // 1 to 12
+    const list = Array.isArray(rawNodes) && rawNodes.length > 0 ? rawNodes : [];
+    return list.map((candidate: any, i: number) => {
+      const step = candidate.step || (i + 1);
       const cycleStep = ((step - 1) % 4) + 1; // 1, 2, 3, 4
       const isMilestone = cycleStep === 4;
-      const level = step <= 4 ? 'Nivel I' : step <= 8 ? 'Nivel II' : 'Nivel III';
-      const weekLabel = step <= 2 ? 'Semanas 1-2' : step <= 4 ? 'Semanas 3-4' : step <= 6 ? 'Semanas 5-6' : step <= 8 ? 'Semanas 7-8' : step <= 10 ? 'Semanas 9-10' : 'Semanas 11-12';
+      const defaultLevel = step <= 4 ? 'Nivel I' : step <= 8 ? 'Nivel II' : 'Nivel III';
+      const defaultWeekLabel = step <= 2 ? 'Semanas 1-2' : step <= 4 ? 'Semanas 3-4' : step <= 6 ? 'Semanas 5-6' : step <= 8 ? 'Semanas 7-8' : step <= 10 ? 'Semanas 9-10' : 'Semanas 11-12';
 
-      const candidate = list.find((n: any) => n.step === step) || list[i] || {};
+      const level = candidate.level || defaultLevel;
+      const levelTitle = candidate.levelTitle || level;
+      const weekLabel = candidate.weekLabel || defaultWeekLabel;
       const fallbackTitle = isMilestone
         ? 'Cierre de Ciclo: Integración, Cosecha de Aprendizajes y Evolución del Ser'
-        : 'Espacio de Indagación Autónoma y Construcción de Sentido';
-      const sessionTitle = candidate.sessionTitle && !candidate.sessionTitle.includes('Espacio de Indagación Autónoma')
-        ? candidate.sessionTitle
-        : (candidate.sessionTitle || fallbackTitle);
+        : `Módulo ${step}: Espacio de Indagación Autónoma`;
+      const sessionTitle = candidate.sessionTitle?.trim() || fallbackTitle;
 
       return {
         ...candidate,
         step,
         level,
-        levelTitle: level,
+        levelTitle,
         weekLabel,
         sessionTitle,
         updatedAt: candidate.updatedAt || new Date().toISOString(),
@@ -1265,6 +1265,71 @@ async function startServer() {
       });
     } catch (err: any) {
       res.status(500).json({ error: err.message || 'Error al actualizar niveles' });
+    }
+  });
+
+  // API: Get program nodes
+  app.get('/api/db/program-nodes', (req, res) => {
+    try {
+      const db = readServerDatabase();
+      res.json({
+        success: true,
+        programNodes: db.programNodes || [],
+      });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message || 'Error al obtener nodos de programa' });
+    }
+  });
+
+  // API: Save / replace program nodes
+  app.put('/api/db/program-nodes', (req, res) => {
+    try {
+      const db = readServerDatabase();
+      const { programNodes } = req.body;
+      if (!Array.isArray(programNodes)) {
+        return res.status(400).json({ error: 'Lista de módulos inválida' });
+      }
+      db.programNodes = sanitizeServerProgramNodes(programNodes);
+      db.lastUpdated = new Date().toISOString();
+      writeServerDatabase(db);
+      res.json({
+        success: true,
+        message: 'Módulos actualizados con éxito en la base de datos del servidor',
+        programNodes: db.programNodes,
+      });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message || 'Error al guardar módulos' });
+    }
+  });
+
+  // API: Delete a program node by step and re-index
+  app.delete('/api/db/program-nodes/:step', (req, res) => {
+    try {
+      const db = readServerDatabase();
+      const step = parseInt(req.params.step, 10);
+      if (isNaN(step)) {
+        return res.status(400).json({ error: 'Número de paso inválido' });
+      }
+      const existing = Array.isArray(db.programNodes) ? db.programNodes : [];
+      if (existing.length <= 1) {
+        return res.status(400).json({ error: 'Debe existir al menos un módulo activo' });
+      }
+      const filtered = existing
+        .filter((n: any) => n.step !== step)
+        .map((n: any, idx: number) => ({
+          ...n,
+          step: idx + 1,
+        }));
+      db.programNodes = sanitizeServerProgramNodes(filtered);
+      db.lastUpdated = new Date().toISOString();
+      writeServerDatabase(db);
+      res.json({
+        success: true,
+        message: `Módulo ${step} eliminado y reindexado`,
+        programNodes: db.programNodes,
+      });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message || 'Error al eliminar módulo' });
     }
   });
 

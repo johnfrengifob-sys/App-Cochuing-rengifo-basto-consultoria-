@@ -335,11 +335,11 @@ export const AdminFormsSheetsIntegrationPanel: React.FC = () => {
           onClick={() => setActiveTab('console')}
           className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-bold transition-all cursor-pointer ${
             activeTab === 'console'
-              ? 'bg-black text-white dark:bg-white dark:text-black shadow-sm'
+              ? 'bg-white dark:bg-neutral-800 text-neutral-950 dark:text-white shadow-xs border border-emerald-500/40 ring-1 ring-emerald-500/20'
               : 'bg-black/5 dark:bg-white/5 text-neutral-600 dark:text-neutral-400 hover:text-black dark:hover:text-white'
           }`}
         >
-          <FileSpreadsheet className="w-3.5 h-3.5" />
+          <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
           <span>Fuentes & Hojas de Cálculo</span>
         </button>
 
@@ -348,11 +348,11 @@ export const AdminFormsSheetsIntegrationPanel: React.FC = () => {
           onClick={() => setActiveTab('hub')}
           className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-bold transition-all cursor-pointer ${
             activeTab === 'hub'
-              ? 'bg-black text-white dark:bg-white dark:text-black shadow-sm'
+              ? 'bg-white dark:bg-neutral-800 text-neutral-950 dark:text-white shadow-xs border border-emerald-500/40 ring-1 ring-emerald-500/20'
               : 'bg-black/5 dark:bg-white/5 text-neutral-600 dark:text-neutral-400 hover:text-black dark:hover:text-white'
           }`}
         >
-          <Sparkles className="w-3.5 h-3.5" />
+          <Sparkles className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
           <span>Hub de Enlaces Workspace & AutoCrat</span>
         </button>
 
@@ -361,11 +361,11 @@ export const AdminFormsSheetsIntegrationPanel: React.FC = () => {
           onClick={() => setActiveTab('expedientes')}
           className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-bold transition-all cursor-pointer ${
             activeTab === 'expedientes'
-              ? 'bg-black text-white dark:bg-white dark:text-black shadow-sm'
+              ? 'bg-white dark:bg-neutral-800 text-neutral-950 dark:text-white shadow-xs border border-emerald-500/40 ring-1 ring-emerald-500/20'
               : 'bg-black/5 dark:bg-white/5 text-neutral-600 dark:text-neutral-400 hover:text-black dark:hover:text-white'
           }`}
         >
-          <UserCheck className="w-3.5 h-3.5" />
+          <UserCheck className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
           <span>Expediente Unificado por Participante</span>
         </button>
       </div>
@@ -534,9 +534,9 @@ export const AdminFormsSheetsIntegrationPanel: React.FC = () => {
               type="button"
               onClick={() => handleSyncSource(currentPair.id)}
               disabled={syncingSource === currentPair.id}
-              className="px-4 py-2 rounded-xl bg-black dark:bg-white text-white dark:text-black text-xs font-bold hover:bg-neutral-800 dark:hover:bg-neutral-200 transition-all flex items-center gap-1.5 cursor-pointer shadow-xs"
+              className="px-4 py-2 rounded-xl bg-white dark:bg-neutral-800 text-neutral-900 dark:text-white border border-emerald-500/40 hover:bg-emerald-50/50 dark:hover:bg-emerald-950/30 hover:border-emerald-500 text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-xs"
             >
-              <RefreshCw className={`w-3.5 h-3.5 ${syncingSource === currentPair.id ? 'animate-spin' : ''}`} />
+              <RefreshCw className={`w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 ${syncingSource === currentPair.id ? 'animate-spin' : ''}`} />
               <span>Sincronizar Sheet</span>
             </button>
           </div>

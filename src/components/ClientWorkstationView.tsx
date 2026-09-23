@@ -367,10 +367,8 @@ export const ClientWorkstationView: React.FC<ClientWorkstationViewProps> = ({
   };
 
   const handleDeleteFormSubmission = (formId: string) => {
-    if (window.confirm('¿Confirmas eliminar este registro de formulario?')) {
-      OntologicalStore.deleteForm(formId);
-      setLocalForms(OntologicalStore.getFormsForClient(client.uid));
-    }
+    OntologicalStore.deleteForm(formId);
+    setLocalForms(OntologicalStore.getFormsForClient(client.uid));
   };
 
   const handleOpenEditSession = (sess: Session) => {
@@ -413,10 +411,8 @@ export const ClientWorkstationView: React.FC<ClientWorkstationViewProps> = ({
   };
 
   const handleDeleteSessionItem = (sessionId: string) => {
-    if (window.confirm('¿Confirmas eliminar esta sesión del registro?')) {
-      OntologicalStore.deleteSession(sessionId);
-      setLocalSessions(OntologicalStore.getSessionsForClient(client.uid));
-    }
+    OntologicalStore.deleteSession(sessionId);
+    setLocalSessions(OntologicalStore.getSessionsForClient(client.uid));
   };
 
   const handleOpenWorkbookForSession = (sess: Session) => {
@@ -653,7 +649,7 @@ export const ClientWorkstationView: React.FC<ClientWorkstationViewProps> = ({
           <button
             type="button"
             onClick={onBackToDirectory}
-            className="inline-flex items-center gap-2 px-3.5 py-2 rounded-2xl bg-gray-100 dark:bg-neutral-800 hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black text-xs font-semibold text-gray-700 dark:text-neutral-300 transition-all cursor-pointer shadow-2xs"
+            className="inline-flex items-center gap-2 px-3.5 py-2 rounded-2xl bg-white dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 border border-gray-200 dark:border-neutral-700 hover:bg-gray-50 dark:hover:bg-neutral-700 hover:text-black dark:hover:text-white text-xs font-semibold transition-all cursor-pointer shadow-2xs"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
             <span>Volver al Pipeline CRM</span>
@@ -948,7 +944,7 @@ export const ClientWorkstationView: React.FC<ClientWorkstationViewProps> = ({
                   key={node.step}
                   className={`p-2.5 rounded-2xl border text-center transition-all ${
                     isCurrent
-                      ? 'bg-black text-white dark:bg-white dark:text-black border-transparent shadow-xs'
+                      ? 'bg-white dark:bg-neutral-800 text-neutral-950 dark:text-white border-2 border-emerald-500 shadow-xs font-bold'
                       : isDone
                       ? 'bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800/60'
                       : 'bg-gray-50 dark:bg-neutral-900 text-gray-400 dark:text-neutral-500 border-gray-100 dark:border-neutral-800'
@@ -1029,9 +1025,9 @@ export const ClientWorkstationView: React.FC<ClientWorkstationViewProps> = ({
                 });
                 setIsNewSessionModalOpen(true);
               }}
-              className="px-3.5 py-2 rounded-xl bg-black text-white dark:bg-white dark:text-black hover:bg-neutral-800 dark:hover:bg-neutral-200 text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer shadow-xs"
+              className="px-3.5 py-2 rounded-xl bg-white dark:bg-neutral-800 text-neutral-900 dark:text-white border border-emerald-500/40 hover:bg-emerald-50/50 dark:hover:bg-emerald-950/30 hover:border-emerald-500 text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer shadow-xs"
             >
-              <Plus className="w-3.5 h-3.5" />
+              <Plus className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
               <span>+ Programar Nueva Sesión</span>
             </button>
 
@@ -1530,10 +1526,10 @@ export const ClientWorkstationView: React.FC<ClientWorkstationViewProps> = ({
                             PDFGenerator.generateSessionWorkbookPDF(postForm, client, activeNodeSession);
                           }
                         }}
-                        className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-black dark:bg-white text-white dark:text-black text-xs font-bold hover:bg-neutral-800 dark:hover:bg-neutral-200 transition-all cursor-pointer shadow-xs"
+                        className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-white dark:bg-neutral-800 text-neutral-900 dark:text-white border border-emerald-500/40 hover:bg-emerald-50/50 dark:hover:bg-emerald-950/30 hover:border-emerald-500 text-xs font-bold transition-all cursor-pointer shadow-xs"
                         title="Descargar Cuaderno de Trabajo en formato PDF"
                       >
-                        <Download className="w-3.5 h-3.5 text-emerald-400 dark:text-emerald-600" />
+                        <Download className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
                         <span>Cuaderno PDF</span>
                       </button>
                     ) : (
@@ -1846,9 +1842,9 @@ export const ClientWorkstationView: React.FC<ClientWorkstationViewProps> = ({
             <button
               type="button"
               onClick={() => setIsNewSessionModalOpen(true)}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-black text-white dark:bg-white dark:text-black text-xs font-bold shadow-xs hover:bg-neutral-800 dark:hover:bg-neutral-200 cursor-pointer"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white dark:bg-neutral-800 text-neutral-900 dark:text-white border border-emerald-500/40 hover:bg-emerald-50/50 dark:hover:bg-emerald-950/30 hover:border-emerald-500 text-xs font-bold shadow-xs transition-all cursor-pointer"
             >
-              <Plus className="w-3.5 h-3.5" />
+              <Plus className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
               <span>Programar Sesión</span>
             </button>
           </div>
@@ -2261,21 +2257,39 @@ export const ClientWorkstationView: React.FC<ClientWorkstationViewProps> = ({
                 />
               </div>
 
-              <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-100 dark:border-neutral-800">
-                <button
-                  type="button"
-                  onClick={() => setIsEditSessionModalOpen(false)}
-                  className="px-4 py-2 rounded-xl border border-gray-200 dark:border-neutral-700 text-xs font-medium text-gray-600 dark:text-neutral-400 hover:bg-gray-50 dark:hover:bg-neutral-800"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  className="px-5 py-2 rounded-xl bg-black text-white dark:bg-white dark:text-black text-xs font-bold shadow-md hover:bg-neutral-800 dark:hover:bg-neutral-200 inline-flex items-center gap-2 cursor-pointer"
-                >
-                  <Save className="w-3.5 h-3.5" />
-                  <span>Guardar Sesión</span>
-                </button>
+              <div className="flex items-center justify-between gap-3 pt-4 border-t border-gray-100 dark:border-neutral-800">
+                {sessionToEdit ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      handleDeleteSessionItem(sessionToEdit.id);
+                      setIsEditSessionModalOpen(false);
+                      setSessionToEdit(null);
+                    }}
+                    className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 text-xs font-semibold cursor-pointer transition-colors"
+                    title="Eliminar esta sesión de la base de datos"
+                  >
+                    <Trash2 className="w-3.5 h-3.5 text-rose-500" />
+                    <span>Eliminar Sesión</span>
+                  </button>
+                ) : <div />}
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setIsEditSessionModalOpen(false)}
+                    className="px-4 py-2 rounded-xl border border-gray-200 dark:border-neutral-700 text-xs font-medium text-gray-600 dark:text-neutral-400 hover:bg-gray-50 dark:hover:bg-neutral-800"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-5 py-2 rounded-xl bg-black text-white dark:bg-white dark:text-black text-xs font-bold shadow-md hover:bg-neutral-800 dark:hover:bg-neutral-200 inline-flex items-center gap-2 cursor-pointer"
+                  >
+                    <Save className="w-3.5 h-3.5" />
+                    <span>Guardar Sesión</span>
+                  </button>
+                </div>
               </div>
             </form>
           </div>

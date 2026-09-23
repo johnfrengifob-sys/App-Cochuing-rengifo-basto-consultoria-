@@ -175,9 +175,9 @@ export const PaymentValidationManager: React.FC<PaymentValidationManagerProps> =
         <button
           type="button"
           onClick={() => setShowDirectCashModal(true)}
-          className="px-4 py-2.5 rounded-2xl bg-black dark:bg-white text-white dark:text-black hover:bg-neutral-800 dark:hover:bg-neutral-200 text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer shadow-xs shrink-0"
+          className="px-4 py-2.5 rounded-2xl bg-white dark:bg-neutral-800 text-neutral-900 dark:text-white border border-amber-500/40 hover:bg-amber-50/50 dark:hover:bg-amber-950/30 hover:border-amber-500 text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer shadow-xs shrink-0"
         >
-          <Banknote className="w-4 h-4 text-amber-400 dark:text-amber-600" />
+          <Banknote className="w-4 h-4 text-amber-500" />
           <span>Registrar Pago en Efectivo Directo</span>
         </button>
       </div>
@@ -773,7 +773,7 @@ export const PaymentValidationManager: React.FC<PaymentValidationManagerProps> =
               </button>
               <button
                 type="submit"
-                className="px-5 py-2.5 rounded-xl bg-black dark:bg-white text-white dark:text-black hover:bg-neutral-800 text-xs font-bold flex items-center gap-2 cursor-pointer shadow-md"
+                className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold flex items-center gap-2 cursor-pointer shadow-md transition-all"
               >
                 <Check className="w-4 h-4" />
                 <span>Confirmar y Desbloquear Nivel</span>

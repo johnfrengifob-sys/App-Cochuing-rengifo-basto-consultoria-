@@ -176,18 +176,41 @@ export const AdminSessionsManager: React.FC<AdminSessionsManagerProps> = ({
 
   // Safe modal state for deleting session modules (avoids blocked window.confirm in iframes)
   const [deleteModuleTarget, setDeleteModuleTarget] = useState<{ step: number; title: string } | null>(null);
+  // Safe modal state for deleting 1-on-1 scheduled sessions
+  const [deleteScheduledSessionTarget, setDeleteScheduledSessionTarget] = useState<{
+    id: string;
+    title: string;
+    clientName: string;
+  } | null>(null);
 
   const confirmDeleteModule = () => {
     if (!deleteModuleTarget) return;
     const { step } = deleteModuleTarget;
-    OntologicalStore.deleteProgramNode(step);
-    refreshAll();
-    showNotification(`Módulo ${step} eliminado.`);
-    if (viewMode === 'editor' && formData?.step === step) {
-      setViewMode('catalog');
-      setFormData(null);
+    const ok = OntologicalStore.deleteProgramNode(step);
+    if (ok) {
+      const freshNodes = OntologicalStore.getProgramNodes();
+      setNodes(freshNodes);
+      showNotification(`Módulo ${step} eliminado con éxito de la base de datos.`);
+      if (viewMode === 'editor') {
+        setViewMode('catalog');
+        setFormData(null);
+      }
+      onRefreshParent?.();
+    } else {
+      showNotification('No se puede eliminar el módulo (debe existir al menos un módulo activo).');
     }
     setDeleteModuleTarget(null);
+  };
+
+  const confirmDeleteScheduledSession = () => {
+    if (!deleteScheduledSessionTarget) return;
+    const { id, title } = deleteScheduledSessionTarget;
+    OntologicalStore.deleteSession(id);
+    FirestoreSyncService.deleteSession(id).catch(() => {});
+    setSessions(OntologicalStore.getSessions());
+    showNotification(`Sesión "${title}" eliminada de la base de datos y Firestore.`);
+    setDeleteScheduledSessionTarget(null);
+    if (onRefreshParent) onRefreshParent();
   };
 
   // Sincronización con eventos de la aplicación
@@ -201,10 +224,6 @@ export const AdminSessionsManager: React.FC<AdminSessionsManagerProps> = ({
       setClients(OntologicalStore.getClients());
       setSesionAcuerdos(OntologicalStore.getSesionIndividualAcuerdos());
       setBitacorasB2B(OntologicalStore.getBitacorasSesionesB2B());
-      if (formData) {
-        const updatedTarget = freshNodes.find((n) => n.step === formData.step);
-        if (updatedTarget) setFormData(updatedTarget);
-      }
     };
 
     window.addEventListener('rbc-levels-updated', handleSync);
@@ -224,7 +243,7 @@ export const AdminSessionsManager: React.FC<AdminSessionsManagerProps> = ({
       window.removeEventListener('rbc-forms-sheets-data-updated', handleSync);
       window.removeEventListener('storage', handleSync);
     };
-  }, [formData]);
+  }, []);
 
   const showNotification = (msg: string) => {
     setFeedbackMsg(msg);
@@ -473,9 +492,31 @@ export const AdminSessionsManager: React.FC<AdminSessionsManagerProps> = ({
     if (e) e.preventDefault();
     if (!formData) return;
 
-    OntologicalStore.updateProgramNode(formData.step, formData);
-    refreshAll();
+    OntologicalStore.updateProgramNode(activeStep, formData);
+    setActiveStep(formData.step);
+    const freshNodes = OntologicalStore.getProgramNodes();
+    setNodes(freshNodes);
+    setFormData({ ...formData });
     showNotification(`Módulo ${formData.step}: "${formData.sessionTitle}" guardado correctamente.`);
+    onRefreshParent?.();
+  };
+
+  // Crear un nuevo módulo curricular desde el administrador
+  const handleAddNewModule = () => {
+    const currentNodes = OntologicalStore.getProgramNodes();
+    const nextStep = currentNodes.length + 1;
+    const added = OntologicalStore.addProgramNode({
+      sessionTitle: `Módulo ${nextStep}: Nueva Sesión Formativa`,
+      objective: 'Definir el objetivo ontológico de transformación para este módulo.',
+      level: nextStep <= 4 ? 'Nivel I' : nextStep <= 8 ? 'Nivel II' : 'Nivel III',
+      weekLabel: nextStep <= 2 ? 'Semanas 1-2' : nextStep <= 4 ? 'Semanas 3-4' : nextStep <= 6 ? 'Semanas 5-6' : nextStep <= 8 ? 'Semanas 7-8' : nextStep <= 10 ? 'Semanas 9-10' : 'Semanas 11-12',
+    });
+    const freshNodes = OntologicalStore.getProgramNodes();
+    setNodes(freshNodes);
+    if (added) {
+      showNotification(`Módulo ${added.step} creado exitosamente.`);
+      handleOpenEditor(added.step, 'general');
+    }
   };
 
   // Adaptador de eventos para EventEvaluationAndTriggersSection en el Módulo de Sesión
@@ -1138,11 +1179,11 @@ export const AdminSessionsManager: React.FC<AdminSessionsManagerProps> = ({
           <button
             type="button"
             onClick={() => {
-              if (confirm('¿Eliminar esta sesión de consultoría?')) {
-                OntologicalStore.deleteSession(sess.id);
-                setSessions(OntologicalStore.getSessions());
-                showNotification('Sesión eliminada');
-              }
+              setDeleteScheduledSessionTarget({
+                id: sess.id,
+                title: sess.title || `Sesión #${sess.sessionNumber || 1}`,
+                clientName,
+              });
             }}
             className="p-1.5 rounded-lg text-gray-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors cursor-pointer"
             title="Eliminar sesión"
@@ -1189,13 +1230,17 @@ export const AdminSessionsManager: React.FC<AdminSessionsManagerProps> = ({
                 onClick={() => setCatalogSubTab('modules')}
                 className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${
                   catalogSubTab === 'modules'
-                    ? 'bg-neutral-950 text-white dark:bg-white dark:text-neutral-950 shadow-sm'
+                    ? 'bg-white dark:bg-neutral-800 text-neutral-950 dark:text-white shadow-xs border border-emerald-500/40 ring-1 ring-emerald-500/20'
                     : 'bg-gray-100 dark:bg-neutral-800/80 text-gray-600 dark:text-neutral-400 hover:text-black dark:hover:text-white'
                 }`}
               >
-                <BookOpen className="w-3.5 h-3.5" />
+                <BookOpen className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
                 <span>Malla Curricular (12 Semanas)</span>
-                <span className="text-[10px] px-1.5 py-0.2 rounded-full font-mono bg-white/20 dark:bg-black/20">
+                <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono font-bold ${
+                  catalogSubTab === 'modules'
+                    ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/70 dark:text-emerald-300'
+                    : 'bg-white/20 dark:bg-black/20'
+                }`}>
                   {nodes.length}
                 </span>
               </button>
@@ -1205,7 +1250,7 @@ export const AdminSessionsManager: React.FC<AdminSessionsManagerProps> = ({
                 onClick={() => setCatalogSubTab('scheduled')}
                 className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${
                   catalogSubTab === 'scheduled'
-                    ? 'bg-neutral-950 text-white dark:bg-white dark:text-neutral-950 shadow-sm'
+                    ? 'bg-white dark:bg-neutral-800 text-neutral-950 dark:text-white shadow-xs border border-indigo-500/40 ring-1 ring-indigo-500/20'
                     : 'bg-gray-100 dark:bg-neutral-800/80 text-gray-600 dark:text-neutral-400 hover:text-black dark:hover:text-white'
                 }`}
               >
@@ -1250,6 +1295,18 @@ export const AdminSessionsManager: React.FC<AdminSessionsManagerProps> = ({
                 <Layers className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400 shrink-0" />
                 <span>Editor de Niveles</span>
               </button>
+
+              {catalogSubTab === 'modules' && (
+                <button
+                  type="button"
+                  onClick={handleAddNewModule}
+                  className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-xs cursor-pointer transition-all active:scale-[0.98]"
+                  title="Crear un nuevo módulo curricular de sesión ontológica"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Nuevo Módulo</span>
+                </button>
+              )}
 
               <button
                 type="button"
@@ -1367,14 +1424,14 @@ export const AdminSessionsManager: React.FC<AdminSessionsManagerProps> = ({
                       onClick={() => setLevelFilter(lvl)}
                       className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
                         active
-                          ? 'bg-neutral-950 dark:bg-white text-white dark:text-neutral-950 shadow-2xs'
+                          ? 'bg-white dark:bg-neutral-850 text-neutral-950 dark:text-white shadow-2xs border border-emerald-500/40 ring-1 ring-emerald-500/20 font-bold'
                           : 'bg-gray-100/70 dark:bg-neutral-800 text-gray-600 dark:text-neutral-400 hover:bg-gray-200 dark:hover:bg-neutral-700'
                       }`}
                     >
                       <span>{lvl === 'all' ? 'Todos los Niveles' : (liveLevelConfigs[lvl]?.title || lvl)}</span>
                       <span
                         className={`text-[10px] font-mono px-1 rounded-full ${
-                          active ? 'bg-white/20 dark:bg-black/20' : 'bg-gray-200/80 dark:bg-neutral-700'
+                          active ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-300 font-bold' : 'bg-gray-200/80 dark:bg-neutral-700'
                         }`}
                       >
                         {count}
@@ -1711,6 +1768,16 @@ export const AdminSessionsManager: React.FC<AdminSessionsManagerProps> = ({
               <div className="flex items-center gap-2 shrink-0">
                 <button
                   type="button"
+                  onClick={(e) => handleDelete(formData.step, e)}
+                  className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white dark:bg-neutral-800 border border-rose-200 dark:border-rose-900/60 hover:bg-rose-50 dark:hover:bg-rose-950/40 text-rose-600 dark:text-rose-400 text-xs font-semibold shadow-2xs cursor-pointer transition-all active:scale-[0.98]"
+                  title="Eliminar este módulo de sesión permanentemente"
+                >
+                  <Trash2 className="w-3.5 h-3.5 text-rose-500 shrink-0" />
+                  <span>Eliminar Módulo</span>
+                </button>
+
+                <button
+                  type="button"
                   onClick={handleDuplicateFromEditor}
                   className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 hover:border-indigo-300 dark:hover:border-indigo-700 text-gray-700 dark:text-neutral-200 hover:text-indigo-600 dark:hover:text-indigo-400 text-xs font-semibold shadow-2xs cursor-pointer transition-all active:scale-[0.98]"
                   title="Duplicar este tablero con su contenido actual"
@@ -1903,10 +1970,10 @@ export const AdminSessionsManager: React.FC<AdminSessionsManagerProps> = ({
                   <button
                     type="button"
                     onClick={() => setEditorTab('integrations')}
-                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-black dark:bg-white text-white dark:text-black hover:bg-neutral-800 dark:hover:bg-neutral-200 text-xs font-bold shadow-xs cursor-pointer transition-all"
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white dark:bg-neutral-800 text-neutral-900 dark:text-white border border-gray-200 dark:border-neutral-700 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 hover:border-emerald-500/40 text-xs font-bold shadow-xs cursor-pointer transition-all"
                   >
                     <span>Siguiente: Automatizaciones & Evaluación (Paso 2)</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
+                    <ArrowRight className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
                   </button>
                 ) : (
                   <button
@@ -2213,7 +2280,7 @@ export const AdminSessionsManager: React.FC<AdminSessionsManagerProps> = ({
                     <button
                       type="button"
                       onClick={() => setIsPreviewModalOpen(false)}
-                      className="px-5 py-2 rounded-xl bg-black dark:bg-white text-white dark:text-black text-xs font-bold cursor-pointer"
+                      className="px-5 py-2 rounded-xl bg-white dark:bg-neutral-800 text-neutral-900 dark:text-white border border-gray-200 dark:border-neutral-700 hover:bg-gray-50 dark:hover:bg-neutral-700 text-xs font-bold cursor-pointer shadow-2xs transition-all"
                     >
                       Cerrar Vista Previa
                     </button>
@@ -2261,6 +2328,51 @@ export const AdminSessionsManager: React.FC<AdminSessionsManagerProps> = ({
                 className="px-4 py-2 rounded-xl text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 transition-colors shadow-sm cursor-pointer"
               >
                 Sí, eliminar módulo
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de confirmación para eliminar sesión agendada 1 a 1 */}
+      {deleteScheduledSessionTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+          <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4">
+            <div className="flex items-center gap-3 text-rose-600">
+              <div className="p-2.5 rounded-2xl bg-rose-50 dark:bg-rose-950/40">
+                <Trash2 className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-neutral-900 dark:text-neutral-100">
+                  ¿Eliminar Sesión?
+                </h3>
+                <p className="text-xs text-neutral-500">Acción permanente</p>
+              </div>
+            </div>
+            <p className="text-sm text-neutral-600 dark:text-neutral-300 leading-relaxed">
+              ¿Estás seguro de que deseas eliminar permanentemente la sesión{' '}
+              <strong className="text-neutral-900 dark:text-white font-semibold">
+                "{deleteScheduledSessionTarget.title}"
+              </strong>{' '}
+              del coachee{' '}
+              <strong className="text-neutral-900 dark:text-white font-semibold">
+                {deleteScheduledSessionTarget.clientName}
+              </strong>? Se eliminará de la base de datos local y de Firebase Firestore.
+            </p>
+            <div className="flex items-center justify-end gap-2.5 pt-2">
+              <button
+                type="button"
+                onClick={() => setDeleteScheduledSessionTarget(null)}
+                className="px-4 py-2 rounded-xl text-xs font-semibold text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={confirmDeleteScheduledSession}
+                className="px-4 py-2 rounded-xl text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 transition-colors shadow-sm cursor-pointer"
+              >
+                Sí, eliminar sesión
               </button>
             </div>
           </div>
@@ -2442,6 +2554,12 @@ export const AdminSessionsManager: React.FC<AdminSessionsManagerProps> = ({
           showNotification(
             `Sesión "${newOrUpdatedSession.title || 'Consultoría'}" programada con éxito en el Generador de Sesiones.`
           );
+          if (onRefreshParent) onRefreshParent();
+        }}
+        onSessionDeleted={(deletedSessionId) => {
+          setSessions(OntologicalStore.getSessions());
+          refreshAll();
+          showNotification('Sesión eliminada de la base de datos y Firestore.');
           if (onRefreshParent) onRefreshParent();
         }}
         onOpenAutomationsPanel={() => {

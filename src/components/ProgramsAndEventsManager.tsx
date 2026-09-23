@@ -557,9 +557,9 @@ export const ProgramsAndEventsManager: React.FC<ProgramsAndEventsManagerProps> =
               <button
                 type="button"
                 onClick={handleOpenCreateEvent}
-                className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-neutral-950 dark:bg-white text-white dark:text-neutral-950 hover:bg-neutral-800 dark:hover:bg-neutral-100 text-xs font-bold cursor-pointer shadow-xs transition-all active:scale-[0.98]"
+                className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-white dark:bg-neutral-800 text-neutral-900 dark:text-white border border-rose-500/40 hover:bg-rose-50/50 dark:hover:bg-rose-950/30 hover:border-rose-500 text-xs font-bold cursor-pointer shadow-xs transition-all active:scale-[0.98]"
               >
-                <span className="w-5 h-5 rounded-lg bg-emerald-500/20 dark:bg-emerald-500/30 text-emerald-400 dark:text-emerald-700 flex items-center justify-center shrink-0">
+                <span className="w-5 h-5 rounded-lg bg-rose-500/10 dark:bg-rose-500/20 text-rose-600 dark:text-rose-400 flex items-center justify-center shrink-0">
                   <Plus className="w-3.5 h-3.5" />
                 </span>
                 <span>Crear Taller / Evento</span>
@@ -753,9 +753,9 @@ export const ProgramsAndEventsManager: React.FC<ProgramsAndEventsManagerProps> =
                             target="_blank"
                             rel="noopener noreferrer"
                             title="Ingresar a la Sala Virtual de Google Meet"
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-neutral-900 hover:bg-black text-white dark:bg-white dark:text-black dark:hover:bg-neutral-200 text-xs font-semibold cursor-pointer transition-all shadow-xs"
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white dark:bg-neutral-800 text-neutral-900 dark:text-white border border-gray-200 dark:border-neutral-700 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 hover:border-emerald-500/40 text-xs font-semibold cursor-pointer transition-all shadow-2xs"
                           >
-                            <Video className="w-3.5 h-3.5 text-emerald-400 dark:text-emerald-600" />
+                            <Video className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
                             <span>Google Meet</span>
                           </a>
                         )}
@@ -851,7 +851,7 @@ export const ProgramsAndEventsManager: React.FC<ProgramsAndEventsManagerProps> =
                           type="button"
                           onClick={() => handleOpenEditEvent(evt)}
                           title="Editar configuración completa"
-                          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-black dark:bg-white text-white dark:text-black text-xs font-semibold hover:bg-neutral-800 dark:hover:bg-neutral-200 cursor-pointer"
+                          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-white dark:bg-neutral-800 text-neutral-900 dark:text-white border border-gray-200 dark:border-neutral-700 hover:border-black/30 dark:hover:border-white/30 text-xs font-semibold hover:bg-gray-50 dark:hover:bg-neutral-700 cursor-pointer shadow-2xs transition-all"
                         >
                           <Edit3 className="w-3.5 h-3.5" />
                           <span>Editar</span>

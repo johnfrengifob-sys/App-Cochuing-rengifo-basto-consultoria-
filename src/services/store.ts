@@ -1987,34 +1987,35 @@ export class OntologicalStore {
 
   static sanitizeProgramNodes(rawNodes: ProgramNodeInfo[]): ProgramNodeInfo[] {
     const list = Array.isArray(rawNodes) && rawNodes.length > 0 ? rawNodes : PROGRAM_NODES;
-    return Array.from({ length: 12 }, (_, i) => {
-      const step = i + 1; // 1 to 12
+    return list.map((candidate: Partial<ProgramNodeInfo>, i: number) => {
+      const step = candidate.step || (i + 1);
       const cycleStep = ((step - 1) % 4) + 1; // 1, 2, 3, 4
       const isMilestone = cycleStep === 4;
-      const level: 'Nivel I' | 'Nivel II' | 'Nivel III' = step <= 4 ? 'Nivel I' : step <= 8 ? 'Nivel II' : 'Nivel III';
-      const weekLabel = step <= 2 ? 'Semanas 1-2' : step <= 4 ? 'Semanas 3-4' : step <= 6 ? 'Semanas 5-6' : step <= 8 ? 'Semanas 7-8' : step <= 10 ? 'Semanas 9-10' : 'Semanas 11-12';
+      const defaultLevel: 'Nivel I' | 'Nivel II' | 'Nivel III' = step <= 4 ? 'Nivel I' : step <= 8 ? 'Nivel II' : 'Nivel III';
+      const defaultWeekLabel = step <= 2 ? 'Semanas 1-2' : step <= 4 ? 'Semanas 3-4' : step <= 6 ? 'Semanas 5-6' : step <= 8 ? 'Semanas 7-8' : step <= 10 ? 'Semanas 9-10' : 'Semanas 11-12';
 
-      const candidate: Partial<ProgramNodeInfo> = list.find((n) => n.step === step) || list[i] || {};
-      const officialNode: Partial<ProgramNodeInfo> = PROGRAM_NODES[i] || {};
+      const level = (candidate.level as 'Nivel I' | 'Nivel II' | 'Nivel III') || defaultLevel;
+      const levelTitle = candidate.levelTitle || level;
+      const weekLabel = candidate.weekLabel || defaultWeekLabel;
       const fallbackTitle = isMilestone
         ? 'Cierre de Ciclo: Integración, Cosecha de Aprendizajes y Evolución del Ser'
-        : 'Espacio de Indagación Autónoma y Construcción de Sentido';
-      const sessionTitle = candidate.sessionTitle && !candidate.sessionTitle.includes('Espacio de Indagación Autónoma')
-        ? candidate.sessionTitle
-        : (officialNode.sessionTitle || candidate.sessionTitle || fallbackTitle);
+        : `Módulo ${step}: Espacio de Indagación Autónoma`;
+      const sessionTitle = candidate.sessionTitle?.trim() || fallbackTitle;
 
       return {
         ...candidate,
         step,
         level,
-        levelTitle: level,
+        levelTitle,
         weekLabel,
         sessionTitle,
         roadmapSteps: candidate.roadmapSteps?.length ? candidate.roadmapSteps : (DEFAULT_ROADMAP_STEPS[step] || []),
-        googleSheetsUrl: candidate.googleSheetsUrl && !candidate.googleSheetsUrl.includes('1RBC_')
+        googleSheetsUrl: candidate.googleSheetsUrl !== undefined
           ? candidate.googleSheetsUrl
           : 'https://docs.google.com/spreadsheets/d/1Mm3CRZVvKYFak5APwIBmfK-vZAUfnx1zg-eq8WOLbZk/edit?usp=sharing',
-        googleFormsUrl: candidate.googleFormsUrl || 'https://forms.gle/APUFto8sGbJt322WA',
+        googleFormsUrl: candidate.googleFormsUrl !== undefined
+          ? candidate.googleFormsUrl
+          : 'https://forms.gle/APUFto8sGbJt322WA',
       } as ProgramNodeInfo;
     });
   }
@@ -2046,6 +2047,16 @@ export class OntologicalStore {
     try {
       ServerDbSyncService.syncWithServer({
         programNodes: nodes,
+        replaceProgramNodes: true,
+      }).catch(() => {});
+    } catch {
+      // safe fallback
+    }
+    try {
+      fetch('/api/db/program-nodes', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ programNodes: nodes }),
       }).catch(() => {});
     } catch {
       // safe fallback
@@ -2059,25 +2070,11 @@ export class OntologicalStore {
 
   static mergeProgramNodesFromFirestore(remoteNodes: ProgramNodeInfo[]): void {
     if (!Array.isArray(remoteNodes) || remoteNodes.length === 0) return;
-    const current = this.getProgramNodes();
-    const map = new Map<number, ProgramNodeInfo>();
-    remoteNodes.forEach((n) => map.set(n.step, n));
-    current.forEach((c) => {
-      if (!map.has(c.step)) map.set(c.step, c);
-    });
-    const merged = Array.from(map.values()).sort((a, b) => a.step - b.step);
-    merged.forEach((node) => {
-      if (
-        node.keyQuestion &&
-        (node.keyQuestion.includes('nueva identidad pública y profesional') ||
-          node.keyQuestion.includes('próximos trimestres'))
-      ) {
-        node.keyQuestion = '';
-      }
-    });
-    this.save(STORAGE_KEYS.PROGRAM_NODES, merged);
+    const sortedRemote = [...remoteNodes].sort((a, b) => (a.step || 0) - (b.step || 0));
+    const sanitized = this.sanitizeProgramNodes(sortedRemote);
+    this.save(STORAGE_KEYS.PROGRAM_NODES, sanitized);
     PROGRAM_NODES.length = 0;
-    PROGRAM_NODES.push(...merged);
+    PROGRAM_NODES.push(...sanitized);
     try {
       window.dispatchEvent(new CustomEvent('rbc-program-nodes-updated'));
     } catch {
@@ -2230,6 +2227,7 @@ export class OntologicalStore {
   static deleteProgramNode(step: number): boolean {
     const nodes = this.getProgramNodes();
     if (nodes.length <= 1) return false;
+    const oldTotal = nodes.length;
     const filtered = nodes
       .filter((n) => n.step !== step)
       .map((n, idx) => ({
@@ -2238,9 +2236,17 @@ export class OntologicalStore {
       }));
     this.saveProgramNodes(filtered);
     try {
-      FirestoreSyncService.deleteSession(String(step));
+      FirestoreSyncService.deleteProgramNode(step);
+      for (let s = filtered.length + 1; s <= oldTotal + 2; s++) {
+        FirestoreSyncService.deleteProgramNode(s);
+      }
     } catch (e) {
-      console.warn('Firestore delete session error:', e);
+      console.warn('Firestore delete program node error:', e);
+    }
+    try {
+      fetch(`/api/db/program-nodes/${step}`, { method: 'DELETE' }).catch(() => {});
+    } catch {
+      // safe fallback
     }
     return true;
   }
@@ -2264,7 +2270,11 @@ export class OntologicalStore {
     let updatedNode: ProgramNodeInfo | null = null;
     const updated = nodes.map((n) => {
       if (n.step === step) {
-        updatedNode = { ...n, ...updates };
+        updatedNode = {
+          ...n,
+          ...updates,
+          sessionTitle: updates.sessionTitle !== undefined ? updates.sessionTitle.trim() : n.sessionTitle,
+        };
         return updatedNode;
       }
       return n;
@@ -4966,6 +4976,13 @@ export class OntologicalStore {
 
     for (const id of toDelete) {
       ServerDbSyncService.deleteSession(id).catch(() => {});
+    }
+
+    try {
+      const currentNodes = this.getProgramNodes();
+      FirestoreSyncService.syncAllProgramNodes(currentNodes).catch(() => {});
+    } catch {
+      // safe fallback
     }
 
     if (typeof window !== 'undefined') {

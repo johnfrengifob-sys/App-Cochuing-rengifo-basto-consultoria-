@@ -269,16 +269,16 @@ export const GeminiOntologicalCopilot: React.FC<GeminiOntologicalCopilotProps> =
         </div>
 
         {/* Tab Navigation */}
-        <div className="flex items-center gap-1 bg-white/60 dark:bg-neutral-900/80 border border-black/5 dark:border-white/10 p-1 rounded-2xl overflow-x-auto">
+        <div className="flex items-center gap-1 bg-white/70 dark:bg-neutral-900/80 border border-black/5 dark:border-white/10 p-1 rounded-2xl overflow-x-auto">
           <button
             onClick={() => setActiveTab('chat')}
             className={`px-3 py-1.5 rounded-xl text-xs font-medium transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${
               activeTab === 'chat'
-                ? 'bg-black text-white dark:bg-white dark:text-black shadow-2xs font-semibold'
+                ? 'bg-white dark:bg-neutral-800 text-neutral-950 dark:text-white shadow-xs ring-2 ring-purple-500/40 border border-purple-500/30 font-bold'
                 : 'text-gray-500 dark:text-neutral-400 hover:text-black dark:hover:text-white'
             }`}
           >
-            <MessageSquare className="w-3.5 h-3.5" />
+            <MessageSquare className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />
             <span>Copiloto</span>
           </button>
 
@@ -286,11 +286,11 @@ export const GeminiOntologicalCopilot: React.FC<GeminiOntologicalCopilotProps> =
             onClick={() => setActiveTab('roleplay')}
             className={`px-3 py-1.5 rounded-xl text-xs font-medium transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${
               activeTab === 'roleplay'
-                ? 'bg-black text-white dark:bg-white dark:text-black shadow-2xs font-semibold'
+                ? 'bg-white dark:bg-neutral-800 text-neutral-950 dark:text-white shadow-xs ring-2 ring-purple-500/40 border border-purple-500/30 font-bold'
                 : 'text-gray-500 dark:text-neutral-400 hover:text-black dark:hover:text-white'
             }`}
           >
-            <Zap className="w-3.5 h-3.5" />
+            <Zap className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />
             <span>Simulador</span>
           </button>
 
@@ -298,11 +298,11 @@ export const GeminiOntologicalCopilot: React.FC<GeminiOntologicalCopilotProps> =
             onClick={() => setActiveTab('diagnose')}
             className={`px-3 py-1.5 rounded-xl text-xs font-medium transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${
               activeTab === 'diagnose'
-                ? 'bg-black text-white dark:bg-white dark:text-black shadow-2xs font-semibold'
+                ? 'bg-white dark:bg-neutral-800 text-neutral-950 dark:text-white shadow-xs ring-2 ring-purple-500/40 border border-purple-500/30 font-bold'
                 : 'text-gray-500 dark:text-neutral-400 hover:text-black dark:hover:text-white'
             }`}
           >
-            <BrainCircuit className="w-3.5 h-3.5" />
+            <BrainCircuit className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />
             <span>Diagnóstico</span>
           </button>
 
@@ -311,11 +311,11 @@ export const GeminiOntologicalCopilot: React.FC<GeminiOntologicalCopilotProps> =
               onClick={() => setActiveTab('marketing')}
               className={`px-3 py-1.5 rounded-xl text-xs font-medium transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${
                 activeTab === 'marketing'
-                  ? 'bg-black text-white dark:bg-white dark:text-black shadow-2xs font-semibold'
+                  ? 'bg-white dark:bg-neutral-800 text-neutral-950 dark:text-white shadow-xs ring-2 ring-purple-500/40 border border-purple-500/30 font-bold'
                   : 'text-gray-500 dark:text-neutral-400 hover:text-black dark:hover:text-white'
               }`}
             >
-              <FileText className="w-3.5 h-3.5" />
+              <FileText className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />
               <span>Marketing IA</span>
             </button>
           )}
@@ -325,11 +325,11 @@ export const GeminiOntologicalCopilot: React.FC<GeminiOntologicalCopilotProps> =
               onClick={() => setActiveTab('workspace_docs')}
               className={`px-3 py-1.5 rounded-xl text-xs font-medium transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${
                 activeTab === 'workspace_docs'
-                  ? 'bg-purple-600 text-white shadow-2xs font-semibold'
+                  ? 'bg-white dark:bg-neutral-800 text-purple-800 dark:text-purple-200 shadow-xs ring-2 ring-purple-500/40 border border-purple-500/30 font-bold'
                   : 'text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-950/40 font-semibold'
               }`}
             >
-              <FileSpreadsheet className="w-3.5 h-3.5" />
+              <FileSpreadsheet className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />
               <span>Docs Workspace</span>
             </button>
           )}
@@ -478,7 +478,7 @@ export const GeminiOntologicalCopilot: React.FC<GeminiOntologicalCopilotProps> =
               <button
                 type="submit"
                 disabled={!inputText.trim() || isLoading}
-                className="p-3 rounded-2xl bg-black dark:bg-white text-white dark:text-black hover:opacity-90 disabled:opacity-40 transition-all cursor-pointer shadow-xs shrink-0"
+                className="p-3 rounded-2xl bg-white dark:bg-neutral-800 text-purple-600 dark:text-purple-400 border border-purple-300 dark:border-purple-700 hover:bg-purple-50 dark:hover:bg-purple-950/40 disabled:opacity-40 transition-all cursor-pointer shadow-xs shrink-0"
               >
                 <Send className="w-4 h-4" />
               </button>
@@ -581,7 +581,7 @@ export const GeminiOntologicalCopilot: React.FC<GeminiOntologicalCopilotProps> =
               type="button"
               onClick={handleRoleplaySubmit}
               disabled={!roleplayInput.trim() || roleplayLoading}
-              className="px-5 py-3 rounded-2xl bg-black dark:bg-white text-white dark:text-black text-xs font-semibold hover:opacity-90 disabled:opacity-40 cursor-pointer shadow-xs"
+              className="px-5 py-3 rounded-2xl bg-white dark:bg-neutral-800 text-purple-700 dark:text-purple-300 border border-purple-300 dark:border-purple-700 hover:bg-purple-50 dark:hover:bg-purple-950/40 text-xs font-bold disabled:opacity-40 cursor-pointer shadow-xs transition-all"
             >
               Responder
             </button>
@@ -624,9 +624,9 @@ export const GeminiOntologicalCopilot: React.FC<GeminiOntologicalCopilotProps> =
             <button
               onClick={handleGenerateDiagnosis}
               disabled={diagLoading}
-              className="w-full sm:w-auto px-6 py-3 rounded-2xl bg-black dark:bg-white text-white dark:text-black text-xs font-bold hover:opacity-90 disabled:opacity-50 transition-all flex items-center justify-center gap-2 cursor-pointer shadow-xs"
+              className="w-full sm:w-auto px-6 py-3 rounded-2xl bg-white dark:bg-neutral-800 text-purple-700 dark:text-purple-300 border border-purple-300 dark:border-purple-700 hover:bg-purple-50 dark:hover:bg-purple-950/40 text-xs font-bold disabled:opacity-50 transition-all flex items-center justify-center gap-2 cursor-pointer shadow-xs"
             >
-              <Sparkles className={`w-4 h-4 ${diagLoading ? 'animate-spin' : ''}`} />
+              <Sparkles className={`w-4 h-4 text-purple-600 dark:text-purple-400 ${diagLoading ? 'animate-spin' : ''}`} />
               <span>{diagLoading ? 'Generando Diagnóstico con Gemini 3.7...' : 'Generar Diagnóstico Ontológico Gemini'}</span>
             </button>
           </div>
@@ -715,9 +715,9 @@ export const GeminiOntologicalCopilot: React.FC<GeminiOntologicalCopilotProps> =
             <button
               onClick={handleGenerateMarketing}
               disabled={mktLoading}
-              className="px-5 py-2.5 rounded-xl bg-black dark:bg-white text-white dark:text-black text-xs font-bold hover:opacity-90 disabled:opacity-50 cursor-pointer shadow-xs flex items-center gap-2"
+              className="px-5 py-2.5 rounded-xl bg-white dark:bg-neutral-800 text-purple-700 dark:text-purple-300 border border-purple-300 dark:border-purple-700 hover:bg-purple-50 dark:hover:bg-purple-950/40 text-xs font-bold disabled:opacity-50 cursor-pointer shadow-xs flex items-center gap-2 transition-all"
             >
-              <Sparkles className="w-3.5 h-3.5" />
+              <Sparkles className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />
               <span>{mktLoading ? 'Redactando con Gemini...' : 'Generar Copys de Captación'}</span>
             </button>
           </div>
