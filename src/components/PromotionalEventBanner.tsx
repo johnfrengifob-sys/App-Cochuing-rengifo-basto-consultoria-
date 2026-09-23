@@ -26,6 +26,8 @@ import {
   Download,
   Award,
   BookOpen,
+  MessageCircle,
+  Mail,
 } from 'lucide-react';
 import promotionalEventBannerImg from '../assets/images/proximo_evento_banner_1788270380574.jpg';
 
@@ -58,6 +60,8 @@ export const PromotionalEventBanner: React.FC<PromotionalEventBannerProps> = ({
   const [copiedMeetNotice, setCopiedMeetNotice] = useState(false);
   const [spotsLeft, setSpotsLeft] = useState(event.spotsLeft);
   const [showImageModal, setShowImageModal] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [copiedShareKey, setCopiedShareKey] = useState<string | null>(null);
 
   // Synchronize when initialEventProp changes
   useEffect(() => {
@@ -94,13 +98,35 @@ export const PromotionalEventBanner: React.FC<PromotionalEventBannerProps> = ({
     [event.meetUrl]
   );
 
-  // Afiche gráfico oficial de alta resolución
+  // Identificador de taller Raíz (Nivel I / Presentación)
+  const isRaizWorkshop = useMemo(() => {
+    const id = (event.id || '').toLowerCase();
+    const title = (event.title || '').toLowerCase();
+    return (
+      id === 'taller-1-raiz' ||
+      id.includes('raiz') ||
+      id.includes('taller-1') ||
+      title.includes('raíz') ||
+      title.includes('raiz') ||
+      title.includes('taller 1') ||
+      title.includes('taller i')
+    );
+  }, [event.id, event.title]);
+
+  // Afiche gráfico oficial de alta resolución:
+  // Desvincula cualquier caché residual de la Masterclass anterior o imagen placeholder de Unsplash
   const eventImageUrl = useMemo(() => {
-    if (!event.imageUrl || event.imageUrl.includes('unsplash') || event.id === 'taller-1-raiz') {
+    if (
+      isRaizWorkshop ||
+      !event.imageUrl ||
+      event.imageUrl.includes('unsplash') ||
+      event.imageUrl.toLowerCase().includes('masterclass') ||
+      event.imageUrl.startsWith('blob:')
+    ) {
       return promotionalEventBannerImg;
     }
     return event.imageUrl;
-  }, [event.imageUrl, event.id]);
+  }, [event.imageUrl, isRaizWorkshop]);
 
   // Dynamic live countdown calculation
   const [timeLeft, setTimeLeft] = useState(() => {
@@ -140,13 +166,14 @@ export const PromotionalEventBanner: React.FC<PromotionalEventBannerProps> = ({
   // Handle ESC key to close modal
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && showImageModal) {
-        setShowImageModal(false);
+      if (e.key === 'Escape') {
+        if (showShareModal) setShowShareModal(false);
+        if (showImageModal) setShowImageModal(false);
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [showImageModal]);
+  }, [showImageModal, showShareModal]);
 
   const handleRegister = () => {
     setIsRegistered(true);
@@ -162,20 +189,61 @@ export const PromotionalEventBanner: React.FC<PromotionalEventBannerProps> = ({
     setTimeout(() => setCopiedMeetNotice(false), 3000);
   };
 
-  const handleShare = async () => {
+  const handleToggleShare = (e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    setShowShareModal((prev) => !prev);
+  };
+
+  const handleShareWhatsApp = () => {
+    const portalUrl = getPublicPortalUrl('registro');
+    const msg = `🌿 *${event.title}*\n_${event.subtitle || 'Formación y Acompañamiento Ontológico'}_\n\n📅 *Fecha:* ${event.displayDate || 'Próximamente'}\n⏰ *Hora:* ${event.time || '7:00 PM (GMT-5)'}\n💻 *Sala Virtual Google Meet:* ${meetUrl}\n\n👉 *Inscripción y Acceso:* ${portalUrl}`;
+    window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`, '_blank', 'noopener,noreferrer');
+  };
+
+  const handleCopyDirectLink = async () => {
+    const portalUrl = getPublicPortalUrl('registro');
+    await safeCopyToClipboard(portalUrl);
+    setCopiedShareKey('link');
+    setShowShareNotice(true);
+    setTimeout(() => {
+      setCopiedShareKey(null);
+      setShowShareNotice(false);
+    }, 2500);
+  };
+
+  const handleCopyFullInvitation = async () => {
+    const portalUrl = getPublicPortalUrl('registro');
+    const fullText = `*${event.title}*\n${event.subtitle || 'Formación Ontológica RBC'}\n\n• Fecha: ${event.displayDate}\n• Hora: ${event.time}\n• Modalidad: Google Meet (${meetUrl})\n• Portal de Registro y Temario: ${portalUrl}\n\nFacilita: John Fredy Rengifo Basto (Master Coach Ontológico)`;
+    await safeCopyToClipboard(fullText);
+    setCopiedShareKey('full');
+    setShowShareNotice(true);
+    setTimeout(() => {
+      setCopiedShareKey(null);
+      setShowShareNotice(false);
+    }, 2500);
+  };
+
+  const handleShareEmail = () => {
+    const portalUrl = getPublicPortalUrl('registro');
+    const subject = encodeURIComponent(`Invitación al ${event.title}`);
+    const body = encodeURIComponent(
+      `Te comparto la invitación oficial al taller ontológico:\n\n${event.title}\n${event.subtitle || ''}\n\nFecha: ${event.displayDate}\nHora: ${event.time}\nSala Google Meet: ${meetUrl}\n\nPuedes ver el afiche oficial, temario y registrar tu cupo aquí:\n${portalUrl}\n\nFacilitador: John Fredy Rengifo Basto`
+    );
+    window.location.href = `mailto:?subject=${subject}&body=${body}`;
+  };
+
+  const handleShareNative = async () => {
     const portalUrl = getPublicPortalUrl('registro');
     if (navigator.share) {
-      navigator.share({
-        title: event.title,
-        text: `Próximo taller ontológico: ${event.title} - ${event.subtitle}. Enlace a Meet: ${meetUrl}`,
-        url: portalUrl,
-      }).catch(() => {});
+      try {
+        await navigator.share({
+          title: event.title,
+          text: `${event.title} - ${event.subtitle || 'Taller Ontológico RBC'}. Sala Google Meet: ${meetUrl}`,
+          url: portalUrl,
+        });
+      } catch {}
     } else {
-      await safeCopyToClipboard(
-        `Próximo taller ontológico: ${event.title} - ${event.displayDate} a las ${event.time}. Sala Meet: ${meetUrl} • Registro: ${portalUrl}`
-      );
-      setShowShareNotice(true);
-      setTimeout(() => setShowShareNotice(false), 2500);
+      await handleCopyDirectLink();
     }
   };
 
@@ -201,6 +269,190 @@ export const PromotionalEventBanner: React.FC<PromotionalEventBannerProps> = ({
           <span className="text-white">{String(timeLeft.minutes).padStart(2, '0')}</span>
           <span className="text-white/60 font-light">:</span>
           <span className="text-emerald-400 animate-pulse">{String(timeLeft.seconds).padStart(2, '0')}</span>
+        </div>
+      </div>
+    );
+  };
+
+  // Modal para compartir con previsualización fidedigna del afiche oficial
+  const renderShareModal = () => {
+    if (!showShareModal) return null;
+
+    return (
+      <div
+        className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 sm:p-6 animate-fade-in"
+        onClick={() => setShowShareModal(false)}
+      >
+        <div
+          className="relative max-w-xl w-full bg-white dark:bg-[#151518] border border-gray-200 dark:border-neutral-700/80 rounded-3xl overflow-hidden shadow-2xl text-left"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {/* Modal Header */}
+          <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-neutral-800">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-full bg-emerald-500/10 dark:bg-emerald-500/20 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
+                <Share2 className="w-4 h-4" />
+              </div>
+              <div>
+                <h3 className="text-sm sm:text-base font-bold text-gray-900 dark:text-white">
+                  Compartir Taller Oficial
+                </h3>
+                <p className="text-[11px] text-gray-500 dark:text-neutral-400">
+                  Difusión oficial • {event.title}
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowShareModal(false)}
+              className="p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-neutral-800 text-gray-500 dark:text-neutral-400 hover:text-black dark:hover:text-white transition-colors cursor-pointer"
+              title="Cerrar (Esc)"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+
+          <div className="p-6 space-y-5 max-h-[80vh] overflow-y-auto">
+            {/* Live Preview Card with Correct Graphic Asset */}
+            <div className="rounded-2xl border border-gray-200 dark:border-neutral-800 overflow-hidden bg-gray-50/70 dark:bg-neutral-900/60 p-3 sm:p-4 flex gap-4 items-center">
+              <div className="relative w-28 sm:w-36 h-20 sm:h-24 rounded-xl overflow-hidden shrink-0 border border-black/10 dark:border-white/10 bg-black">
+                <img
+                  src={eventImageUrl}
+                  alt={event.title}
+                  referrerPolicy="no-referrer"
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute top-1.5 left-1.5">
+                  <span className="px-1.5 py-0.5 rounded-md bg-black/75 backdrop-blur-xs text-[9px] font-mono text-emerald-300 font-bold">
+                    Afiche HD
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex-1 min-w-0 space-y-1">
+                <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
+                  {event.category || 'Taller Oficial'}
+                </span>
+                <h4 className="text-xs sm:text-sm font-bold text-gray-900 dark:text-white line-clamp-2 leading-tight">
+                  {event.title}
+                </h4>
+                <p className="text-[11px] text-gray-600 dark:text-neutral-300 font-medium">
+                  {event.displayDate} • {event.time}
+                </p>
+                <p className="text-[10px] text-gray-500 dark:text-neutral-400 font-mono truncate">
+                  Sala Meet: {meetUrl}
+                </p>
+              </div>
+            </div>
+
+            {/* Share Options Grid */}
+            <div className="space-y-2.5">
+              <div className="text-[11px] font-semibold text-gray-500 dark:text-neutral-400 uppercase tracking-wider">
+                Canales directos de difusión
+              </div>
+
+              {/* WhatsApp */}
+              <button
+                type="button"
+                onClick={handleShareWhatsApp}
+                className="w-full flex items-center justify-between p-3 rounded-2xl bg-emerald-50 dark:bg-emerald-950/30 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 border border-emerald-200 dark:border-emerald-800/60 text-emerald-900 dark:text-emerald-200 transition-all cursor-pointer group"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-xl bg-emerald-500 text-white flex items-center justify-center shrink-0">
+                    <MessageCircle className="w-4 h-4" />
+                  </div>
+                  <div className="text-left">
+                    <div className="text-xs font-bold text-gray-900 dark:text-white">Compartir por WhatsApp</div>
+                    <div className="text-[11px] text-emerald-700 dark:text-emerald-400">Envío directo con enlace y detalles al chat</div>
+                  </div>
+                </div>
+                <ExternalLink className="w-4 h-4 text-emerald-600 dark:text-emerald-400 group-hover:translate-x-0.5 transition-transform" />
+              </button>
+
+              {/* Copiar Enlace Directo */}
+              <button
+                type="button"
+                onClick={handleCopyDirectLink}
+                className="w-full flex items-center justify-between p-3 rounded-2xl bg-gray-50 dark:bg-neutral-800/60 hover:bg-gray-100 dark:hover:bg-neutral-800 border border-gray-200 dark:border-neutral-700 text-gray-900 dark:text-white transition-all cursor-pointer"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-xl bg-blue-500 text-white flex items-center justify-center shrink-0">
+                    <Copy className="w-4 h-4" />
+                  </div>
+                  <div className="text-left">
+                    <div className="text-xs font-bold">Copiar Enlace de Registro</div>
+                    <div className="text-[11px] text-gray-500 dark:text-neutral-400">Enlace público para apartar cupo</div>
+                  </div>
+                </div>
+                {copiedShareKey === 'link' ? (
+                  <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-600 dark:text-emerald-400">
+                    <Check className="w-4 h-4" /> Copiado
+                  </span>
+                ) : (
+                  <Copy className="w-4 h-4 text-gray-400" />
+                )}
+              </button>
+
+              {/* Copiar Invitación Completa */}
+              <button
+                type="button"
+                onClick={handleCopyFullInvitation}
+                className="w-full flex items-center justify-between p-3 rounded-2xl bg-gray-50 dark:bg-neutral-800/60 hover:bg-gray-100 dark:hover:bg-neutral-800 border border-gray-200 dark:border-neutral-700 text-gray-900 dark:text-white transition-all cursor-pointer"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-xl bg-purple-500 text-white flex items-center justify-center shrink-0">
+                    <BookOpen className="w-4 h-4" />
+                  </div>
+                  <div className="text-left">
+                    <div className="text-xs font-bold">Copiar Invitación Completa</div>
+                    <div className="text-[11px] text-gray-500 dark:text-neutral-400">Incluye temario, horario, sala Meet y formulario</div>
+                  </div>
+                </div>
+                {copiedShareKey === 'full' ? (
+                  <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-600 dark:text-emerald-400">
+                    <Check className="w-4 h-4" /> Copiado
+                  </span>
+                ) : (
+                  <Copy className="w-4 h-4 text-gray-400" />
+                )}
+              </button>
+
+              {/* Compartir por Correo */}
+              <button
+                type="button"
+                onClick={handleShareEmail}
+                className="w-full flex items-center justify-between p-3 rounded-2xl bg-gray-50 dark:bg-neutral-800/60 hover:bg-gray-100 dark:hover:bg-neutral-800 border border-gray-200 dark:border-neutral-700 text-gray-900 dark:text-white transition-all cursor-pointer"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-xl bg-amber-500 text-white flex items-center justify-center shrink-0">
+                    <Mail className="w-4 h-4" />
+                  </div>
+                  <div className="text-left">
+                    <div className="text-xs font-bold">Compartir por Correo</div>
+                    <div className="text-[11px] text-gray-500 dark:text-neutral-400">Abre tu cliente de email con el mensaje redactado</div>
+                  </div>
+                </div>
+                <ExternalLink className="w-4 h-4 text-gray-400" />
+              </button>
+
+              {/* Botón nativo de compartir en móvil */}
+              <button
+                type="button"
+                onClick={handleShareNative}
+                className="w-full py-2.5 px-4 rounded-xl bg-neutral-900 hover:bg-black dark:bg-white dark:hover:bg-gray-100 text-white dark:text-black text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-2"
+              >
+                <Share2 className="w-3.5 h-3.5" />
+                <span>Compartir en el dispositivo / Redes</span>
+              </button>
+            </div>
+
+            {copiedShareKey && (
+              <div className="p-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300 text-xs font-medium flex items-center justify-center gap-2 animate-fade-in">
+                <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                <span>¡Copiado con éxito al portapapeles!</span>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     );
@@ -350,6 +602,16 @@ export const PromotionalEventBanner: React.FC<PromotionalEventBannerProps> = ({
                   <span>Ampliar afiche</span>
                 </button>
 
+                <button
+                  type="button"
+                  onClick={handleToggleShare}
+                  className="inline-flex items-center gap-1.5 px-3 py-2 rounded-full bg-emerald-500/10 hover:bg-emerald-500/20 dark:bg-emerald-500/20 dark:hover:bg-emerald-500/30 border border-emerald-500/30 text-emerald-800 dark:text-emerald-300 text-xs font-medium transition-colors cursor-pointer"
+                  title="Compartir taller y afiche oficial"
+                >
+                  <Share2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                  <span>Compartir</span>
+                </button>
+
                 {copiedMeetNotice && (
                   <span className="text-[11px] font-medium text-emerald-300 bg-black/70 px-3 py-1 rounded-full border border-emerald-500/30 animate-fade-in">
                     ✓ Enlace de Meet copiado
@@ -438,6 +700,8 @@ export const PromotionalEventBanner: React.FC<PromotionalEventBannerProps> = ({
             </div>
           </div>
         )}
+
+        {renderShareModal()}
       </>
     );
   }
@@ -566,11 +830,12 @@ export const PromotionalEventBanner: React.FC<PromotionalEventBannerProps> = ({
 
               <button
                 type="button"
-                onClick={handleShare}
-                className="p-3 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 text-white text-xs transition-colors cursor-pointer"
-                title="Compartir taller"
+                onClick={handleToggleShare}
+                className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-full bg-emerald-500/15 hover:bg-emerald-500/25 dark:bg-emerald-500/20 dark:hover:bg-emerald-500/30 border border-emerald-500/30 text-emerald-800 dark:text-emerald-300 text-xs font-semibold transition-colors cursor-pointer"
+                title="Compartir taller y afiche oficial"
               >
-                <Share2 className="w-4 h-4 text-gray-200" />
+                <Share2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                <span>Compartir</span>
               </button>
             </div>
 
@@ -667,6 +932,8 @@ export const PromotionalEventBanner: React.FC<PromotionalEventBannerProps> = ({
           </div>
         </div>
       )}
+
+      {renderShareModal()}
     </>
   );
 };

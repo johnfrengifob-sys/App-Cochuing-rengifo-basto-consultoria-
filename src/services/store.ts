@@ -1983,36 +1983,49 @@ export class OntologicalStore {
     this.saveLevelConfigs(current);
   }
 
+  static sanitizeProgramNodes(rawNodes: ProgramNodeInfo[]): ProgramNodeInfo[] {
+    const list = Array.isArray(rawNodes) && rawNodes.length > 0 ? rawNodes : PROGRAM_NODES;
+    return Array.from({ length: 12 }, (_, i) => {
+      const step = i + 1; // 1 to 12
+      const cycleStep = ((step - 1) % 4) + 1; // 1, 2, 3, 4
+      const isMilestone = cycleStep === 4;
+      const level: 'Nivel I' | 'Nivel II' | 'Nivel III' = step <= 4 ? 'Nivel I' : step <= 8 ? 'Nivel II' : 'Nivel III';
+      const weekLabel = step <= 2 ? 'Semanas 1-2' : step <= 4 ? 'Semanas 3-4' : step <= 6 ? 'Semanas 5-6' : step <= 8 ? 'Semanas 7-8' : step <= 10 ? 'Semanas 9-10' : 'Semanas 11-12';
+
+      const candidate: Partial<ProgramNodeInfo> = list.find((n) => n.step === step) || list[i] || {};
+      const sessionTitle = isMilestone
+        ? '4- Cierre de Ciclo: Integración, Cosecha de Aprendizajes y Evolución del Ser'
+        : `${cycleStep}- Espacio de Indagación Autónoma y Construcción de Sentido`;
+
+      return {
+        ...candidate,
+        step,
+        level,
+        levelTitle: level,
+        weekLabel,
+        sessionTitle,
+        roadmapSteps: candidate.roadmapSteps?.length ? candidate.roadmapSteps : (DEFAULT_ROADMAP_STEPS[step] || []),
+        googleSheetsUrl: candidate.googleSheetsUrl && !candidate.googleSheetsUrl.includes('1RBC_')
+          ? candidate.googleSheetsUrl
+          : 'https://docs.google.com/spreadsheets/d/1Mm3CRZVvKYFak5APwIBmfK-vZAUfnx1zg-eq8WOLbZk/edit?usp=sharing',
+        googleFormsUrl: candidate.googleFormsUrl || 'https://forms.gle/APUFto8sGbJt322WA',
+      } as ProgramNodeInfo;
+    });
+  }
+
   static getProgramNodes(): ProgramNodeInfo[] {
     const list = this.load<ProgramNodeInfo[]>(
       STORAGE_KEYS.PROGRAM_NODES,
       PROGRAM_NODES
     );
-    const safe = Array.isArray(list) && list.length > 0 ? list : PROGRAM_NODES;
-    let modified = false;
-    safe.forEach((node) => {
-      if (
-        node.keyQuestion &&
-        (node.keyQuestion.includes('nueva identidad pública y profesional') ||
-          node.keyQuestion.includes('próximos trimestres'))
-      ) {
-        node.keyQuestion = '';
-        modified = true;
-      }
-      if (!node.roadmapSteps || node.roadmapSteps.length === 0) {
-        node.roadmapSteps = DEFAULT_ROADMAP_STEPS[node.step] || [];
-      }
-      if (!node.googleSheetsUrl || node.googleSheetsUrl.includes('1RBC_')) {
-        node.googleSheetsUrl = 'https://docs.google.com/spreadsheets/d/1Mm3CRZVvKYFak5APwIBmfK-vZAUfnx1zg-eq8WOLbZk/edit?usp=sharing';
-      }
-      if (!node.googleFormsUrl) {
-        node.googleFormsUrl = 'https://forms.gle/APUFto8sGbJt322WA';
-      }
-    });
-    if (modified) {
-      this.save(STORAGE_KEYS.PROGRAM_NODES, safe);
+    const sanitized = this.sanitizeProgramNodes(list);
+    const prevJson = JSON.stringify(list);
+    if (prevJson !== JSON.stringify(sanitized)) {
+      this.save(STORAGE_KEYS.PROGRAM_NODES, sanitized);
+      PROGRAM_NODES.length = 0;
+      PROGRAM_NODES.push(...sanitized);
     }
-    return safe;
+    return sanitized;
   }
 
   static saveProgramNodes(nodes: ProgramNodeInfo[]): void {
@@ -2566,12 +2579,21 @@ export class OntologicalStore {
           changed = true;
         }
       }
-      if (evt.id === 'taller-1-raiz' && (evt.imageUrl?.includes('unsplash') || !evt.imageUrl)) {
-        copy.imageUrl = promotionalEventBannerImg;
-        copy.coverImage = promotionalEventBannerImg;
-        copy.date = '2026-09-19T19:00:00.000-05:00';
-        copy.displayDate = 'Sábado, 19 de Septiembre de 2026';
-        changed = true;
+      const isRaizWorkshop = evt.id === 'taller-1-raiz' ||
+        evt.id?.toLowerCase().includes('raiz') ||
+        evt.title?.toLowerCase().includes('raíz') ||
+        evt.title?.toLowerCase().includes('raiz');
+      if (isRaizWorkshop) {
+        if (copy.imageUrl !== promotionalEventBannerImg || copy.coverImage !== promotionalEventBannerImg) {
+          copy.imageUrl = promotionalEventBannerImg;
+          copy.coverImage = promotionalEventBannerImg;
+          changed = true;
+        }
+        if (!copy.date || copy.date.startsWith('2026-09-12')) {
+          copy.date = '2026-09-19T19:00:00.000-05:00';
+          copy.displayDate = 'Sábado, 19 de Septiembre de 2026';
+          changed = true;
+        }
       }
       if (changed) {
         needsResave = true;
@@ -3729,6 +3751,10 @@ export class OntologicalStore {
       });
 
       if (serverState) {
+        if (Array.isArray(serverState.programNodes) && serverState.programNodes.length > 0) {
+          const sanitizedNodes = this.sanitizeProgramNodes(serverState.programNodes);
+          this.saveProgramNodes(sanitizedNodes);
+        }
         if (Array.isArray(serverState.users) && serverState.users.length > 0) {
           this.mergeUsersFromFirestore(serverState.users);
         }

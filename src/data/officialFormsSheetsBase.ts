@@ -17,6 +17,7 @@ export interface OfficialFormsSheetsRecord extends FormsSheetsIntegrationPair {
   readonly defaultGid: string;
   readonly autocratFolderUrl?: string;
   readonly driveFolderUrl?: string;
+  readonly meetUrl?: string;
 }
 
 export const OFFICIAL_FORMS_SHEETS_BASE_MAP: Record<FormsSheetsIntegrationSourceKey, OfficialFormsSheetsRecord> = {
@@ -34,6 +35,7 @@ export const OFFICIAL_FORMS_SHEETS_BASE_MAP: Record<FormsSheetsIntegrationSource
     isCodeBaseAnchor: true,
     autocratFolderUrl: 'https://drive.google.com/drive/folders/1aG0XqgL0tHw2r9X8Q6Wz',
     driveFolderUrl: 'https://drive.google.com/drive/folders/1aG0XqgL0tHw2r9X8Q6Wz',
+    meetUrl: 'https://meet.google.com/rbc-conversatorio-ontologico',
     sheetHeaders: [
       'Marca temporal',
       'Dirección de correo electrónico',
@@ -63,6 +65,7 @@ export const OFFICIAL_FORMS_SHEETS_BASE_MAP: Record<FormsSheetsIntegrationSource
     isCodeBaseAnchor: true,
     autocratFolderUrl: 'https://drive.google.com/drive/folders/1bH1YrhM1uIx3s0Y9R7Xa',
     driveFolderUrl: 'https://drive.google.com/drive/folders/1bH1YrhM1uIx3s0Y9R7Xa',
+    meetUrl: 'https://meet.google.com/rbc-sesion',
     sheetHeaders: [
       'Marca temporal',
       'Dirección de correo electrónico',

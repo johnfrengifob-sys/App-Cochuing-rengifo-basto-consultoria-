@@ -435,6 +435,32 @@ async function startServer() {
     },
   ];
 
+  function sanitizeServerProgramNodes(rawNodes: any[]): any[] {
+    const list = Array.isArray(rawNodes) ? rawNodes : [];
+    return Array.from({ length: 12 }, (_, i) => {
+      const step = i + 1; // 1 to 12
+      const cycleStep = ((step - 1) % 4) + 1; // 1, 2, 3, 4
+      const isMilestone = cycleStep === 4;
+      const level = step <= 4 ? 'Nivel I' : step <= 8 ? 'Nivel II' : 'Nivel III';
+      const weekLabel = step <= 2 ? 'Semanas 1-2' : step <= 4 ? 'Semanas 3-4' : step <= 6 ? 'Semanas 5-6' : step <= 8 ? 'Semanas 7-8' : step <= 10 ? 'Semanas 9-10' : 'Semanas 11-12';
+
+      const candidate = list.find((n: any) => n.step === step) || list[i] || {};
+      const sessionTitle = isMilestone
+        ? '4- Cierre de Ciclo: Integración, Cosecha de Aprendizajes y Evolución del Ser'
+        : `${cycleStep}- Espacio de Indagación Autónoma y Construcción de Sentido`;
+
+      return {
+        ...candidate,
+        step,
+        level,
+        levelTitle: level,
+        weekLabel,
+        sessionTitle,
+        updatedAt: candidate.updatedAt || new Date().toISOString(),
+      };
+    });
+  }
+
   function readServerDatabase(): AppDatabase {
     try {
       const dir = path.dirname(DB_FILE);
@@ -482,7 +508,11 @@ async function startServer() {
         if (!Array.isArray(data.aiInsights)) data.aiInsights = [];
         if (!Array.isArray(data.prospects)) data.prospects = [];
         if (!Array.isArray(data.paymentRequests)) data.paymentRequests = [];
-        if (!Array.isArray(data.programNodes)) data.programNodes = [];
+        const prevNodesJson = JSON.stringify(data.programNodes);
+        data.programNodes = sanitizeServerProgramNodes(data.programNodes);
+        if (JSON.stringify(data.programNodes) !== prevNodesJson) {
+          modified = true;
+        }
         if (!Array.isArray(data.deletedWorkshopIds)) data.deletedWorkshopIds = [];
 
         if (!Array.isArray(data.formsSheetsIntegrations)) {
@@ -782,21 +812,13 @@ async function startServer() {
 
       // Merge Program Nodes (Temarios modulares de talleres)
       if (clientState.replaceProgramNodes && Array.isArray(clientState.programNodes)) {
-        currentDb.programNodes = [...clientState.programNodes];
+        currentDb.programNodes = sanitizeServerProgramNodes(clientState.programNodes);
         changed = true;
-      } else if (Array.isArray(clientState.programNodes)) {
-        if (!Array.isArray(currentDb.programNodes)) currentDb.programNodes = [];
-        clientState.programNodes.forEach((node: any) => {
-          if (!node || node.step === undefined) return;
-          const idx = currentDb.programNodes.findIndex((n: any) => n.step === node.step);
-          if (idx >= 0) {
-            currentDb.programNodes[idx] = { ...currentDb.programNodes[idx], ...node };
-            changed = true;
-          } else {
-            currentDb.programNodes.push(node);
-            changed = true;
-          }
-        });
+      } else if (Array.isArray(clientState.programNodes) && clientState.programNodes.length > 0) {
+        currentDb.programNodes = sanitizeServerProgramNodes(clientState.programNodes);
+        changed = true;
+      } else {
+        currentDb.programNodes = sanitizeServerProgramNodes(currentDb.programNodes);
       }
 
       // Merge Level Configurations (Nivel I, Nivel II, Nivel III)

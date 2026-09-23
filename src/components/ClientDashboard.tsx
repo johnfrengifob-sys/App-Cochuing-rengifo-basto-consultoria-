@@ -60,13 +60,13 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
 
   // Estado de despliegue directo (accordion inline) para los espacios principales
   // Inicia por defecto en null (todos los botones recogidos/plegados)
-  const [expandedSection, setExpandedSection] = useState<'resumen' | 'talleres' | 'sesiones' | 'expediente' | null>(null);
+  const [expandedSection, setExpandedSection] = useState<'resumen' | 'talleres' | 'sesiones' | null>(null);
 
-  const toggleSection = (section: 'resumen' | 'talleres' | 'sesiones' | 'expediente') => {
+  const toggleSection = (section: 'resumen' | 'talleres' | 'sesiones') => {
     setExpandedSection((curr) => (curr === section ? null : section));
   };
 
-  const openSection = (section: 'resumen' | 'talleres' | 'sesiones' | 'expediente') => {
+  const openSection = (section: 'resumen' | 'talleres' | 'sesiones') => {
     setExpandedSection(section);
   };
 
@@ -80,31 +80,9 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
   const [cronogramaEvents, setCronogramaEvents] = useState<CronogramaEvent[]>(() =>
     OntologicalStore.getCronogramaEvents()
   );
-
-  // Expediente unificado extraído de Formularios y Hojas de Cálculo
-  const [clientCrossData, setClientCrossData] = useState(() =>
-    OntologicalStore.getUnifiedClientOntologicalCrossData(activeUser.email, activeUser.uid, activeUser.name)
+  const [programNodes, setProgramNodes] = useState<ProgramNodeInfo[]>(() =>
+    OntologicalStore.getProgramNodes()
   );
-  const [isSyncingExpediente, setIsSyncingExpediente] = useState<boolean>(false);
-  const [expedienteSyncSuccess, setExpedienteSyncSuccess] = useState<string | null>(null);
-
-  const handleSyncExpedienteLive = async () => {
-    setIsSyncingExpediente(true);
-    setExpedienteSyncSuccess(null);
-    try {
-      if (activeUser.email) {
-        await OntologicalStore.fetchServerExtractedExpediente(activeUser.email);
-      }
-      const refreshed = OntologicalStore.getUnifiedClientOntologicalCrossData(activeUser.email, activeUser.uid, activeUser.name);
-      setClientCrossData(refreshed);
-      setExpedienteSyncSuccess('Expediente y bitácoras sincronizados exitosamente con Google Workspace en tiempo real.');
-    } catch (e) {
-      console.warn('Error syncing expediente live:', e);
-    } finally {
-      setIsSyncingExpediente(false);
-      setTimeout(() => setExpedienteSyncSuccess(null), 4000);
-    }
-  };
 
   // Modal para edición/registro de bitácora
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
@@ -135,6 +113,7 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
       setSessions(currentSessions);
       setPostForms(currentForms);
       setCronogramaEvents(currentEvents);
+      setProgramNodes(OntologicalStore.getProgramNodes());
       if (updatedUser) {
         setActiveUser(updatedUser);
       }
@@ -144,6 +123,7 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
     window.addEventListener('rbc-forms-updated', reloadData);
     window.addEventListener('rbc-workshops-updated', reloadData);
     window.addEventListener('rbc-user-updated', reloadData);
+    window.addEventListener('rbc-program-nodes-updated', reloadData);
     window.addEventListener('storage', reloadData);
 
     // Suscripciones activas en tiempo real a Google Cloud Firestore
@@ -185,6 +165,7 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
       window.removeEventListener('rbc-forms-updated', reloadData);
       window.removeEventListener('rbc-workshops-updated', reloadData);
       window.removeEventListener('rbc-user-updated', reloadData);
+      window.removeEventListener('rbc-program-nodes-updated', reloadData);
       window.removeEventListener('storage', reloadData);
       unsubSessions();
       unsubForms();
@@ -376,11 +357,28 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
 
   // Estación del programa actual (1 a 12)
   const currentNodeInfo: ProgramNodeInfo = useMemo(() => {
-    return (
-      PROGRAM_NODES.find((n) => n.step === currentSessionNumber) ||
-      PROGRAM_NODES[0]
-    );
-  }, [currentSessionNumber]);
+    const cycleStep = ((currentSessionNumber - 1) % 4) + 1;
+    const isMilestone = cycleStep === 4;
+    const fallbackTitle = isMilestone
+      ? '4- Cierre de Ciclo: Integración, Cosecha de Aprendizajes y Evolución del Ser'
+      : `${cycleStep}- Espacio de Indagación Autónoma y Construcción de Sentido`;
+
+    const matched = programNodes.find((n) => n.step === currentSessionNumber) || programNodes[currentSessionNumber - 1];
+    return matched || {
+      step: currentSessionNumber,
+      level: currentSessionNumber <= 4 ? 'Nivel I' : currentSessionNumber <= 8 ? 'Nivel II' : 'Nivel III',
+      levelTitle: currentSessionNumber <= 4 ? 'Nivel I' : currentSessionNumber <= 8 ? 'Nivel II' : 'Nivel III',
+      sessionTitle: fallbackTitle,
+      weekLabel: currentSessionNumber <= 2 ? 'Semanas 1-2' : currentSessionNumber <= 4 ? 'Semanas 3-4' : 'Semanas 5-6',
+      objective: 'Acompañamiento ontológico no direccional, indagación reflexiva y exploración del quiebre.',
+      tangibleOutcomes: [],
+      keyQuestion: '¿Qué es importante para ti traer a este espacio reflexivo hoy?',
+      levelPrompt: '',
+      methodology: { linguistic: '', somatic: '', emotional: '' },
+      dailyMicroPractice: { title: '', description: '', frequency: '' },
+      studyMaterials: [],
+    };
+  }, [currentSessionNumber, programNodes]);
 
   // Taller Troncal correspondiente al Ciclo en curso
   const currentCycleWorkshop: CoreWorkshopTrack = useMemo(() => {
@@ -1034,13 +1032,19 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
                       <div className="grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-12 gap-2">
                         {Array.from({ length: 12 }, (_, i) => {
                           const stepNum = i + 1;
+                          const cycleStep = ((stepNum - 1) % 4) + 1;
+                          const isMilestone = cycleStep === 4;
+                          const fallbackTitle = isMilestone
+                            ? '4- Cierre de Ciclo: Integración, Cosecha de Aprendizajes y Evolución del Ser'
+                            : `${cycleStep}- Espacio de Indagación Autónoma y Construcción de Sentido`;
+                          const nodeTitle = programNodes.find((n) => n.step === stepNum)?.sessionTitle || programNodes[i]?.sessionTitle || fallbackTitle;
                           const isCompleted = stepNum < currentSessionNumber || sessions.some(s => s.sessionNumber === stepNum && s.status === 'completed');
                           const isCurrent = stepNum === currentSessionNumber;
 
                           return (
                             <div
                               key={`station-node-${stepNum}`}
-                              title={`Estación ${stepNum}: ${PROGRAM_NODES[i]?.sessionTitle || ''}`}
+                              title={`Estación ${stepNum}: ${nodeTitle}`}
                               className={`h-11 rounded-2xl flex flex-col items-center justify-center text-[10px] font-bold transition-all relative group cursor-default border ${
                                 isCurrent
                                   ? 'bg-black text-white dark:bg-white dark:text-black border-black dark:border-white shadow-sm ring-2 ring-emerald-500/60 scale-102'
@@ -1444,398 +1448,6 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
             </AnimatePresence>
           </div>
 
-          {/* ----------------------------------------------------------------------- */}
-          {/* SECCIÓN 4: EXPEDIENTE ONTOLÓGICO, BITÁCORAS & AUTOMATIZACIONES (WORKSPACE) */}
-          {/* ----------------------------------------------------------------------- */}
-          <div id="accordion-item-expediente" className="space-y-3">
-            <button
-              id="btn-accordion-expediente"
-              type="button"
-              onClick={() => toggleSection('expediente')}
-              aria-expanded={expandedSection === 'expediente'}
-              className={`w-full p-4 sm:p-5 rounded-3xl border text-left transition-all duration-300 cursor-pointer flex items-center justify-between gap-4 select-none ${
-                expandedSection === 'expediente'
-                  ? 'bg-purple-500/10 dark:bg-purple-500/15 border-purple-500/30 text-black dark:text-white shadow-xs'
-                  : 'bg-white/40 dark:bg-neutral-900/40 border-black/10 dark:border-white/10 hover:border-black/20 dark:hover:border-white/20 text-black dark:text-white'
-              }`}
-            >
-              <div className="flex items-center gap-3.5 min-w-0">
-                <div
-                  className={`w-10 h-10 sm:w-11 sm:h-11 rounded-2xl flex items-center justify-center shrink-0 border transition-colors ${
-                    expandedSection === 'expediente'
-                      ? 'bg-purple-600 text-white border-purple-600'
-                      : 'bg-black/5 dark:bg-white/5 border-black/10 dark:border-white/10 text-neutral-700 dark:text-neutral-300'
-                  }`}
-                >
-                  <FileSpreadsheet className="w-5 h-5" />
-                </div>
-
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span
-                      className={`text-[11px] font-mono font-bold px-2 py-0.5 rounded-full ${
-                        expandedSection === 'expediente'
-                          ? 'bg-purple-500/20 text-purple-900 dark:text-purple-200'
-                          : 'bg-black/5 dark:bg-white/10 text-neutral-600 dark:text-neutral-400'
-                      }`}
-                    >
-                      04
-                    </span>
-                    <h3 className="text-base sm:text-lg font-bold truncate tracking-tight">
-                      Expediente en Vivo & Workspace
-                    </h3>
-                    <span
-                      className={`text-xs font-semibold px-2.5 py-0.5 rounded-full ${
-                        expandedSection === 'expediente'
-                          ? 'bg-purple-500/20 text-purple-900 dark:text-purple-200'
-                          : 'bg-black/5 dark:bg-white/10 text-neutral-600 dark:text-neutral-300'
-                      }`}
-                    >
-                      {clientCrossData.talleres.length + clientCrossData.bitacorasTalleres.length + clientCrossData.acuerdos.length + clientCrossData.b2b.length} Registros
-                    </span>
-                  </div>
-                  <p
-                    className={`text-xs font-normal truncate mt-1 ${
-                      expandedSection === 'expediente'
-                        ? 'text-neutral-700 dark:text-neutral-300'
-                        : 'text-neutral-500 dark:text-neutral-400'
-                    }`}
-                  >
-                    Google Meet, Forms, Sheets, expedientes procesados y automatizaciones AutoCrat
-                  </p>
-                </div>
-              </div>
-
-              <div
-                className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 transition-transform duration-300 ${
-                  expandedSection === 'expediente'
-                    ? 'rotate-180 bg-black/10 text-black dark:text-white'
-                    : 'bg-black/5 dark:bg-white/10 text-neutral-600 dark:text-neutral-400'
-                }`}
-              >
-                <ChevronDown className="w-4 h-4" />
-              </div>
-            </button>
-
-            <AnimatePresence initial={false}>
-              {expandedSection === 'expediente' && (
-                <motion.div
-                  key="accordion-content-expediente"
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: 'auto' }}
-                  exit={{ opacity: 0, height: 0 }}
-                  transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-                  className="overflow-hidden space-y-6 pt-1 pb-2 font-sans"
-                >
-                  <div className="p-5 sm:p-6 rounded-3xl border border-black/10 dark:border-white/10 bg-white/50 dark:bg-neutral-900/50 backdrop-blur-xl space-y-6">
-                    {/* Barra Superior de Sincronización en Tiempo Real */}
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-2xl bg-purple-500/10 border border-purple-500/20">
-                      <div className="flex items-center gap-3">
-                        <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
-                        <div>
-                          <div className="text-xs font-bold text-black dark:text-white flex items-center gap-1.5">
-                            <span>Sincronización en Tiempo Real Activa</span>
-                            <span className="text-[10px] font-mono px-1.5 py-0.5 rounded-md bg-emerald-500/20 text-emerald-800 dark:text-emerald-300 border border-emerald-500/30">
-                              Google Workspace & AutoCrat
-                            </span>
-                          </div>
-                          <p className="text-[11px] text-neutral-600 dark:text-neutral-400 mt-0.5">
-                            Tus respuestas en formularios de Google Forms y hojas de cálculo se integran instantáneamente a tu expediente.
-                          </p>
-                        </div>
-                      </div>
-
-                      <button
-                        type="button"
-                        onClick={handleSyncExpedienteLive}
-                        disabled={isSyncingExpediente}
-                        className="inline-flex items-center justify-center gap-2 px-3.5 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold transition-all shadow-xs cursor-pointer disabled:opacity-50 shrink-0"
-                      >
-                        <RefreshCw className={`w-3.5 h-3.5 ${isSyncingExpediente ? 'animate-spin' : ''}`} />
-                        <span>{isSyncingExpediente ? 'Sincronizando...' : 'Actualizar Expediente'}</span>
-                      </button>
-                    </div>
-
-                    {expedienteSyncSuccess && (
-                      <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/25 text-emerald-800 dark:text-emerald-300 text-xs font-medium flex items-center gap-2">
-                        <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
-                        <span>{expedienteSyncSuccess}</span>
-                      </div>
-                    )}
-
-                    {/* Botonera de Enlaces Oficiales de Google Workspace */}
-                    <div className="space-y-3">
-                      <h4 className="text-xs font-bold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">
-                        Enlaces Directos de Acceso y Formularios Oficiales
-                      </h4>
-
-                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                        {/* 1. Salas Virtuales Google Meet */}
-                        <div className="p-3.5 rounded-2xl border border-black/10 dark:border-white/10 bg-white/70 dark:bg-neutral-800/70 space-y-2">
-                          <div className="flex items-center gap-2 text-xs font-bold text-black dark:text-white">
-                            <Video className="w-4 h-4 text-emerald-500" />
-                            <span>Salas Google Meet</span>
-                          </div>
-                          <p className="text-[11px] text-neutral-600 dark:text-neutral-400">
-                            Acceso directo a las salas virtuales de encuentros y talleres en vivo.
-                          </p>
-                          <div className="pt-1 flex flex-col gap-1.5">
-                            <a
-                              href={currentSession.meetLink || 'https://meet.google.com/rbc-sesion'}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="px-2.5 py-1.5 rounded-lg bg-neutral-900 hover:bg-black text-white dark:bg-white dark:text-black text-[11px] font-semibold flex items-center justify-between"
-                            >
-                              <span>Sala Sesión #{currentSessionNumber}</span>
-                              <ExternalLink className="w-3 h-3 opacity-70" />
-                            </a>
-                            <a
-                              href={currentCycleWorkshop.meetLink || 'https://meet.google.com/rbc-conversatorio-ontologico'}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="px-2.5 py-1.5 rounded-lg bg-indigo-500/15 hover:bg-indigo-500/25 text-indigo-700 dark:text-indigo-300 text-[11px] font-semibold flex items-center justify-between"
-                            >
-                              <span>Sala Taller ({currentCycleWorkshop.stageName})</span>
-                              <ExternalLink className="w-3 h-3 opacity-70" />
-                            </a>
-                          </div>
-                        </div>
-
-                        {/* 2. Formularios Oficiales Google Forms */}
-                        <div className="p-3.5 rounded-2xl border border-black/10 dark:border-white/10 bg-white/70 dark:bg-neutral-800/70 space-y-2">
-                          <div className="flex items-center gap-2 text-xs font-bold text-purple-700 dark:text-purple-400">
-                            <FileText className="w-4 h-4" />
-                            <span>Google Forms</span>
-                          </div>
-                          <p className="text-[11px] text-neutral-600 dark:text-neutral-400">
-                            Diligencia o actualiza tus acuerdos y bitácoras de cosecha vivencial.
-                          </p>
-                          <div className="pt-1 flex flex-col gap-1.5">
-                            <a
-                              href={OFFICIAL_FORMS_SHEETS_BASE_MAP.talleres_registro.formUrl}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="px-2.5 py-1.5 rounded-lg bg-purple-500/10 hover:bg-purple-500/20 text-purple-700 dark:text-purple-300 text-[11px] font-semibold flex items-center justify-between"
-                            >
-                              <span>Registro a Talleres</span>
-                              <ExternalLink className="w-3 h-3 opacity-70" />
-                            </a>
-                            <a
-                              href={OFFICIAL_FORMS_SHEETS_BASE_MAP.bitacora_talleres.formUrl}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="px-2.5 py-1.5 rounded-lg bg-purple-500/10 hover:bg-purple-500/20 text-purple-700 dark:text-purple-300 text-[11px] font-semibold flex items-center justify-between"
-                            >
-                              <span>Bitácora de Talleres</span>
-                              <ExternalLink className="w-3 h-3 opacity-70" />
-                            </a>
-                            <a
-                              href={OFFICIAL_FORMS_SHEETS_BASE_MAP.sesiones_individuales.formUrl}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="px-2.5 py-1.5 rounded-lg bg-purple-500/10 hover:bg-purple-500/20 text-purple-700 dark:text-purple-300 text-[11px] font-semibold flex items-center justify-between"
-                            >
-                              <span>Acuerdo Co-creativo 1 a 1</span>
-                              <ExternalLink className="w-3 h-3 opacity-70" />
-                            </a>
-                          </div>
-                        </div>
-
-                        {/* 3. Hojas de Cálculo Google Sheets */}
-                        <div className="p-3.5 rounded-2xl border border-black/10 dark:border-white/10 bg-white/70 dark:bg-neutral-800/70 space-y-2">
-                          <div className="flex items-center gap-2 text-xs font-bold text-emerald-700 dark:text-emerald-400">
-                            <FileSpreadsheet className="w-4 h-4" />
-                            <span>Google Sheets</span>
-                          </div>
-                          <p className="text-[11px] text-neutral-600 dark:text-neutral-400">
-                            Hojas maestras con respuestas, marcas temporales y registro estructurado.
-                          </p>
-                          <div className="pt-1 flex flex-col gap-1.5">
-                            <a
-                              href={OFFICIAL_FORMS_SHEETS_BASE_MAP.talleres_registro.sheetUrl}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="px-2.5 py-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 text-[11px] font-semibold flex items-center justify-between"
-                            >
-                              <span>Hojas Talleres (1 a 1)</span>
-                              <ExternalLink className="w-3 h-3 opacity-70" />
-                            </a>
-                            <a
-                              href={OFFICIAL_FORMS_SHEETS_BASE_MAP.bitacora_talleres.sheetUrl}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="px-2.5 py-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 text-[11px] font-semibold flex items-center justify-between"
-                            >
-                              <span>Hojas Bitácoras Cosecha</span>
-                              <ExternalLink className="w-3 h-3 opacity-70" />
-                            </a>
-                            <a
-                              href={OFFICIAL_FORMS_SHEETS_BASE_MAP.sesiones_individuales.sheetUrl}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="px-2.5 py-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 text-[11px] font-semibold flex items-center justify-between"
-                            >
-                              <span>Hojas Acuerdos 1 a 1</span>
-                              <ExternalLink className="w-3 h-3 opacity-70" />
-                            </a>
-                          </div>
-                        </div>
-
-                        {/* 4. Google Drive & Automatizaciones AutoCrat */}
-                        <div className="p-3.5 rounded-2xl border border-black/10 dark:border-white/10 bg-white/70 dark:bg-neutral-800/70 space-y-2">
-                          <div className="flex items-center gap-2 text-xs font-bold text-amber-700 dark:text-amber-400">
-                            <Sparkles className="w-4 h-4" />
-                            <span>AutoCrat & Drive</span>
-                          </div>
-                          <p className="text-[11px] text-neutral-600 dark:text-neutral-400">
-                            Carpeta de expedientes, acuerdos combinados y constancias generadas en PDF.
-                          </p>
-                          <div className="pt-1 flex flex-col gap-1.5">
-                            <a
-                              href={OFFICIAL_FORMS_SHEETS_BASE_MAP.talleres_registro.autocratFolderUrl || 'https://drive.google.com/drive/folders/1aG0XqgL0tHw2r9X8Q6Wz'}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="px-2.5 py-1.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 dark:text-amber-300 text-[11px] font-semibold flex items-center justify-between"
-                            >
-                              <span>Carpeta AutoCrat Drive</span>
-                              <ExternalLink className="w-3 h-3 opacity-70" />
-                            </a>
-                            <a
-                              href={OFFICIAL_FORMS_SHEETS_BASE_MAP.sesiones_individuales.autocratFolderUrl || 'https://drive.google.com/drive/folders/1bH1YrhM1uIx3s0Y9R7Xa'}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="px-2.5 py-1.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 dark:text-amber-300 text-[11px] font-semibold flex items-center justify-between"
-                            >
-                              <span>Expedientes Acuerdos</span>
-                              <ExternalLink className="w-3 h-3 opacity-70" />
-                            </a>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Resumen del Expediente Registrado en Tiempo Real */}
-                    <div className="space-y-4 pt-2 border-t border-black/10 dark:border-white/10">
-                      <div className="flex items-center justify-between gap-2">
-                        <h4 className="text-xs font-bold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">
-                          Bitácoras Vivenciales y Registros del Participante
-                        </h4>
-                        <span className="text-[11px] text-neutral-500 dark:text-neutral-400">
-                          {clientCrossData.bitacorasTalleres.length} bitácora(s) de taller procesada(s)
-                        </span>
-                      </div>
-
-                      {clientCrossData.bitacorasTalleres.length > 0 ? (
-                        <div className="space-y-3">
-                          {clientCrossData.bitacorasTalleres.map((bt) => (
-                            <div
-                              key={bt.id}
-                              className="p-4 rounded-2xl border border-black/10 dark:border-white/10 bg-white/80 dark:bg-neutral-800/80 space-y-3 text-xs"
-                            >
-                              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 pb-2 border-b border-black/5 dark:border-white/5">
-                                <div className="flex items-center gap-2">
-                                  <span className="px-2 py-0.5 rounded-md bg-purple-500/20 text-purple-900 dark:text-purple-300 font-bold text-[10px]">
-                                    {bt.workshopTitle || 'Taller Ontológico RBC'}
-                                  </span>
-                                  <span className="text-[11px] text-neutral-500 dark:text-neutral-400">
-                                    {bt.timestamp ? new Date(bt.timestamp).toLocaleDateString('es-CO', { year: 'numeric', month: 'short', day: 'numeric' }) : 'Fecha registrada'}
-                                  </span>
-                                </div>
-                                {bt.somaticEmotion && (
-                                  <span className="px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-800 dark:text-emerald-300 text-[10px] font-semibold border border-emerald-500/20">
-                                    Emoción: {bt.somaticEmotion}
-                                  </span>
-                                )}
-                              </div>
-
-                              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-[11px]">
-                                {bt.breakthrough && (
-                                  <div className="p-2.5 rounded-xl bg-black/5 dark:bg-white/5 space-y-1">
-                                    <span className="font-bold text-neutral-700 dark:text-neutral-300 uppercase text-[9px] block">
-                                      Quiebre / Situación
-                                    </span>
-                                    <p className="text-neutral-800 dark:text-neutral-200">{bt.breakthrough}</p>
-                                  </div>
-                                )}
-                                {bt.limitingBelief && (
-                                  <div className="p-2.5 rounded-xl bg-black/5 dark:bg-white/5 space-y-1">
-                                    <span className="font-bold text-neutral-700 dark:text-neutral-300 uppercase text-[9px] block">
-                                      Juicio Limitante
-                                    </span>
-                                    <p className="text-neutral-800 dark:text-neutral-200">{bt.limitingBelief}</p>
-                                  </div>
-                                )}
-                                {bt.newObserver && (
-                                  <div className="p-2.5 rounded-xl bg-black/5 dark:bg-white/5 space-y-1">
-                                    <span className="font-bold text-neutral-700 dark:text-neutral-300 uppercase text-[9px] block">
-                                      Nuevo Observador
-                                    </span>
-                                    <p className="text-neutral-800 dark:text-neutral-200">{bt.newObserver}</p>
-                                  </div>
-                                )}
-                                {bt.actionCommitment && (
-                                  <div className="p-2.5 rounded-xl bg-black/5 dark:bg-white/5 space-y-1">
-                                    <span className="font-bold text-neutral-700 dark:text-neutral-300 uppercase text-[9px] block">
-                                      Compromiso y Acción
-                                    </span>
-                                    <p className="text-neutral-800 dark:text-neutral-200">{bt.actionCommitment}</p>
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <div className="p-4 rounded-2xl border border-dashed border-black/15 dark:border-white/15 text-center space-y-2">
-                          <p className="text-xs text-neutral-600 dark:text-neutral-400">
-                            Aún no hay bitácoras vivenciales registradas desde los formularios de Google Forms para tu correo electrónico.
-                          </p>
-                          <a
-                            href={OFFICIAL_FORMS_SHEETS_BASE_MAP.bitacora_talleres.formUrl}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold"
-                          >
-                            <FileText className="w-3.5 h-3.5" />
-                            <span>Diligenciar Bitácora de Cosecha Ahora</span>
-                          </a>
-                        </div>
-                      )}
-
-                      {/* Registro a Talleres Confirmado */}
-                      {clientCrossData.talleres.length > 0 && (
-                        <div className="space-y-2 pt-2">
-                          <span className="text-[11px] font-bold text-neutral-700 dark:text-neutral-300 block">
-                            Inscripciones de Taller Confirmadas:
-                          </span>
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                            {clientCrossData.talleres.map((t) => (
-                              <div
-                                key={t.id}
-                                className="p-3 rounded-xl border border-black/10 dark:border-white/10 bg-black/5 dark:bg-white/5 flex items-center justify-between text-xs"
-                              >
-                                <div className="space-y-0.5">
-                                  <div className="font-semibold text-black dark:text-white">
-                                    {t.workshopTitle || 'Taller RBC'}
-                                  </div>
-                                  <div className="text-[10px] text-neutral-500">
-                                    {t.timestamp ? new Date(t.timestamp).toLocaleDateString() : 'Registrado'} • {t.agreedEthics ? 'Ética Aceptada' : 'Confirmado'}
-                                  </div>
-                                </div>
-                                <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-800 dark:text-emerald-300 text-[10px] font-bold">
-                                  Activo ✓
-                                </span>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
         </section>
 
         {/* ========================================================================= */}

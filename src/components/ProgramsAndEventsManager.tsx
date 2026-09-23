@@ -53,6 +53,7 @@ import { EventContentSyllabusSection } from './admin/events/EventContentSyllabus
 import { EventEvaluationAndTriggersSection } from './admin/events/EventEvaluationAndTriggersSection';
 import { PromotionalEventBanner } from './PromotionalEventBanner';
 import { PublicPortalMultiActionButton } from './admin/PublicPortalMultiActionButton';
+import promotionalEventBannerImg from '../assets/images/proximo_evento_banner_1788270380574.jpg';
 
 interface ProgramsAndEventsManagerProps {
   cronogramaEvents: CronogramaEvent[];
@@ -548,7 +549,14 @@ export const ProgramsAndEventsManager: React.FC<ProgramsAndEventsManagerProps> =
                 const capacity = evt.capacity || evt.totalSpots || 25;
                 const capacityType = evt.capacityType || (capacity === 1 ? 'individual' : 'grupal');
                 const priceFormatted = evt.price || (evt.priceAmount ? `$${evt.priceAmount.toLocaleString()} COP` : 'Acceso Libre');
-                const cover = evt.coverImage || evt.imageUrl || 'https://images.unsplash.com/photo-1518531933037-91b2f5f229cc?w=1000&auto=format&fit=crop&q=80';
+                const isRaiz = evt.id === 'taller-1-raiz' ||
+                  evt.id?.toLowerCase().includes('raiz') ||
+                  evt.title?.toLowerCase().includes('raíz') ||
+                  evt.title?.toLowerCase().includes('raiz');
+                const rawCover = evt.coverImage || evt.imageUrl;
+                const cover = (isRaiz || !rawCover || rawCover.includes('unsplash') || rawCover.toLowerCase().includes('masterclass'))
+                  ? promotionalEventBannerImg
+                  : rawCover;
                 const submissionsCount = evt.workbookSubmissions?.length || 0;
 
                 return (

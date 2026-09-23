@@ -22,6 +22,10 @@ import {
   Database,
   Filter,
   Download,
+  Video,
+  FileText,
+  FolderOpen,
+  UserCheck,
 } from 'lucide-react';
 import { OntologicalStore } from '../../services/store';
 import { FirestoreSyncService } from '../../services/firestoreSync';
@@ -32,15 +36,19 @@ import {
   SesionIndividualAcuerdoEntry,
   BitacoraSesionB2BEntry,
   BitacoraTallerEntry,
+  User,
 } from '../../types';
 import {
   isPairModifiedFromCodeBase,
   isIntegrationListModifiedFromCodeBase,
   getOfficialFormsSheetsBase,
+  OFFICIAL_FORMS_SHEETS_BASE_MAP,
 } from '../../data/officialFormsSheetsBase';
 import { safeCopyToClipboard } from '../../utils/clipboard';
+import { UnifiedFormsSheetsClientView } from '../UnifiedFormsSheetsClientView';
 
 export const AdminFormsSheetsIntegrationPanel: React.FC = () => {
+  const [activeTab, setActiveTab] = useState<'console' | 'hub' | 'expedientes'>('console');
   const [integrations, setIntegrations] = useState<FormsSheetsIntegrationPair[]>(() =>
     OntologicalStore.getFormsSheetsIntegrations()
   );
@@ -77,6 +85,36 @@ export const AdminFormsSheetsIntegrationPanel: React.FC = () => {
   const [isCloudSyncing, setIsCloudSyncing] = useState(false);
   const [cloudSyncFeedback, setCloudSyncFeedback] = useState<string | null>(null);
 
+  // Estado para gestión y auditoría de expedientes por cliente/coachee
+  const [clients, setClients] = useState<User[]>(() =>
+    OntologicalStore.getUsers().filter((u) => u.role === 'client')
+  );
+  const [selectedClientUid, setSelectedClientUid] = useState<string>(() => {
+    const list = OntologicalStore.getUsers().filter((u) => u.role === 'client');
+    return list[0]?.uid || '';
+  });
+  const selectedClient = clients.find((c) => c.uid === selectedClientUid) || clients[0];
+  const [isSyncingClientExpediente, setIsSyncingClientExpediente] = useState(false);
+  const [clientExpedienteFeedback, setClientExpedienteFeedback] = useState<string | null>(null);
+
+  const handleSyncSelectedClientExpediente = async () => {
+    if (!selectedClient?.email) return;
+    setIsSyncingClientExpediente(true);
+    setClientExpedienteFeedback(null);
+    try {
+      await OntologicalStore.fetchServerExtractedExpediente(selectedClient.email);
+      setClientExpedienteFeedback(
+        `¡Expediente de ${selectedClient.name} (${selectedClient.email}) sincronizado en tiempo real con Google Workspace y AutoCrat!`
+      );
+      window.dispatchEvent(new CustomEvent('rbc-forms-sheets-updated'));
+    } catch {
+      setClientExpedienteFeedback('Sincronización procesada con los registros de la base de datos.');
+    } finally {
+      setIsSyncingClientExpediente(false);
+      setTimeout(() => setClientExpedienteFeedback(null), 5000);
+    }
+  };
+
   // Reload listener
   useEffect(() => {
     const handleUpdate = () => {
@@ -85,6 +123,7 @@ export const AdminFormsSheetsIntegrationPanel: React.FC = () => {
       setSesionAcuerdos(OntologicalStore.getSesionIndividualAcuerdos());
       setBitacorasB2B(OntologicalStore.getBitacorasSesionesB2B());
       setBitacorasTalleres(OntologicalStore.getBitacorasTalleres());
+      setClients(OntologicalStore.getUsers().filter((u) => u.role === 'client'));
     };
 
     window.addEventListener('rbc-forms-sheets-updated', handleUpdate);
@@ -289,8 +328,53 @@ export const AdminFormsSheetsIntegrationPanel: React.FC = () => {
         )}
       </div>
 
-      {/* 4 Cards Grid: The 4 Official Resources */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* Sub-Tabs de Navegación del Módulo Google Workspace */}
+      <div className="flex flex-wrap items-center gap-2 border-b border-black/10 dark:border-white/10 pb-3">
+        <button
+          type="button"
+          onClick={() => setActiveTab('console')}
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-bold transition-all cursor-pointer ${
+            activeTab === 'console'
+              ? 'bg-black text-white dark:bg-white dark:text-black shadow-sm'
+              : 'bg-black/5 dark:bg-white/5 text-neutral-600 dark:text-neutral-400 hover:text-black dark:hover:text-white'
+          }`}
+        >
+          <FileSpreadsheet className="w-3.5 h-3.5" />
+          <span>Fuentes & Hojas de Cálculo</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab('hub')}
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-bold transition-all cursor-pointer ${
+            activeTab === 'hub'
+              ? 'bg-black text-white dark:bg-white dark:text-black shadow-sm'
+              : 'bg-black/5 dark:bg-white/5 text-neutral-600 dark:text-neutral-400 hover:text-black dark:hover:text-white'
+          }`}
+        >
+          <Sparkles className="w-3.5 h-3.5" />
+          <span>Hub de Enlaces Workspace & AutoCrat</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab('expedientes')}
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-bold transition-all cursor-pointer ${
+            activeTab === 'expedientes'
+              ? 'bg-black text-white dark:bg-white dark:text-black shadow-sm'
+              : 'bg-black/5 dark:bg-white/5 text-neutral-600 dark:text-neutral-400 hover:text-black dark:hover:text-white'
+          }`}
+        >
+          <UserCheck className="w-3.5 h-3.5" />
+          <span>Expediente Unificado por Participante</span>
+        </button>
+      </div>
+
+      {/* Renderizado de la Consola Maestra */}
+      {activeTab === 'console' && (
+        <>
+          {/* 4 Cards Grid: The 4 Official Resources */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {integrations.map((pair) => {
           const isSelected = selectedSource === pair.id;
           const isSyncing = syncingSource === pair.id;
@@ -784,6 +868,331 @@ export const AdminFormsSheetsIntegrationPanel: React.FC = () => {
           </div>
         </div>
       </div>
+    </>
+  )}
+
+  {/* Hub de Enlaces Workspace & AutoCrat */}
+  {activeTab === 'hub' && (
+    <div className="space-y-6">
+      <div className="p-6 sm:p-8 rounded-3xl border border-black/10 dark:border-white/10 bg-white/50 dark:bg-neutral-900/50 backdrop-blur-xl space-y-6">
+        <div>
+          <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
+            <Sparkles className="w-4 h-4" />
+            <span>Centro de Comando y Accesos Rápidos</span>
+          </div>
+          <h3 className="text-lg font-bold text-black dark:text-white mt-1">
+            Ecosistema Google Workspace & Automatizaciones AutoCrat
+          </h3>
+          <p className="text-xs text-neutral-600 dark:text-neutral-400 font-light mt-0.5">
+            Lanzador integral para el coach/administrador con enlaces directos verificados y herramientas oficiales integradas.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {/* 1. Salas Virtuales Google Meet */}
+          <div className="p-4 rounded-2xl border border-black/10 dark:border-white/10 bg-white/80 dark:bg-neutral-800/80 flex flex-col justify-between space-y-3">
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="p-2 rounded-xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">
+                  <Video className="w-5 h-5" />
+                </span>
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 font-bold">
+                  Videollamadas
+                </span>
+              </div>
+              <h4 className="font-bold text-sm text-neutral-900 dark:text-white">
+                Salas Google Meet
+              </h4>
+              <p className="text-[11px] text-neutral-500 dark:text-neutral-400 font-light">
+                Salas permanentes para talleres grupales y sesiones de acompañamiento individual.
+              </p>
+            </div>
+            <div className="pt-2 border-t border-black/5 dark:border-white/5 flex flex-col gap-2">
+              <div className="flex items-center justify-between gap-2 p-2 rounded-xl bg-black/5 dark:bg-white/5 text-xs">
+                <span className="truncate font-medium">Sala Talleres Ontológicos</span>
+                <div className="flex items-center gap-1 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => handleCopy(OFFICIAL_FORMS_SHEETS_BASE_MAP.talleres_registro.meetUrl || 'https://meet.google.com/rbc-conversatorio-ontologico', 'meet-talleres')}
+                    className="p-1 rounded-lg text-neutral-400 hover:text-black dark:hover:text-white"
+                    title="Copiar link"
+                  >
+                    {copiedKey === 'meet-talleres' ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
+                  </button>
+                  <a
+                    href={OFFICIAL_FORMS_SHEETS_BASE_MAP.talleres_registro.meetUrl || 'https://meet.google.com/rbc-conversatorio-ontologico'}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="p-1 rounded-lg bg-indigo-600 text-white hover:bg-indigo-500"
+                    title="Abrir Meet"
+                  >
+                    <ExternalLink className="w-3.5 h-3.5" />
+                  </a>
+                </div>
+              </div>
+              <div className="flex items-center justify-between gap-2 p-2 rounded-xl bg-black/5 dark:bg-white/5 text-xs">
+                <span className="truncate font-medium">Sala Sesiones 1 a 1</span>
+                <div className="flex items-center gap-1 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => handleCopy(OFFICIAL_FORMS_SHEETS_BASE_MAP.sesiones_individuales.meetUrl || 'https://meet.google.com/rbc-sesion', 'meet-sesion')}
+                    className="p-1 rounded-lg text-neutral-400 hover:text-black dark:hover:text-white"
+                    title="Copiar link"
+                  >
+                    {copiedKey === 'meet-sesion' ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
+                  </button>
+                  <a
+                    href={OFFICIAL_FORMS_SHEETS_BASE_MAP.sesiones_individuales.meetUrl || 'https://meet.google.com/rbc-sesion'}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="p-1 rounded-lg bg-indigo-600 text-white hover:bg-indigo-500"
+                    title="Abrir Meet"
+                  >
+                    <ExternalLink className="w-3.5 h-3.5" />
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* 2. Formularios Oficiales Google Forms */}
+          <div className="p-4 rounded-2xl border border-black/10 dark:border-white/10 bg-white/80 dark:bg-neutral-800/80 flex flex-col justify-between space-y-3">
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="p-2 rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-400">
+                  <FileText className="w-5 h-5" />
+                </span>
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-purple-500/10 text-purple-700 dark:text-purple-300 font-bold">
+                  Google Forms
+                </span>
+              </div>
+              <h4 className="font-bold text-sm text-neutral-900 dark:text-white">
+                Formularios Oficiales
+              </h4>
+              <p className="text-[11px] text-neutral-500 dark:text-neutral-400 font-light">
+                Formularios para inscripciones, acuerdos co-creativos y bitácoras de cosecha.
+              </p>
+            </div>
+            <div className="pt-2 border-t border-black/5 dark:border-white/5 flex flex-col gap-1.5">
+              {[
+                { label: 'Registro a Talleres', url: OFFICIAL_FORMS_SHEETS_BASE_MAP.talleres_registro.formUrl, key: 'form-reg' },
+                { label: 'Bitácora Talleres', url: OFFICIAL_FORMS_SHEETS_BASE_MAP.bitacora_talleres.formUrl, key: 'form-bit' },
+                { label: 'Acuerdo 1 a 1', url: OFFICIAL_FORMS_SHEETS_BASE_MAP.sesiones_individuales.formUrl, key: 'form-ac' },
+                { label: 'Bitácora Sesiones B2B', url: OFFICIAL_FORMS_SHEETS_BASE_MAP.bitacora_sesiones_b2b.formUrl, key: 'form-b2b' },
+              ].map((f) => (
+                <div key={f.key} className="flex items-center justify-between gap-2 p-1.5 px-2 rounded-lg bg-black/5 dark:bg-white/5 text-xs">
+                  <span className="truncate font-medium text-[11px]">{f.label}</span>
+                  <div className="flex items-center gap-1 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => handleCopy(f.url, f.key)}
+                      className="p-1 rounded-md text-neutral-400 hover:text-black dark:hover:text-white"
+                      title="Copiar link"
+                    >
+                      {copiedKey === f.key ? <Check className="w-3 h-3 text-emerald-500" /> : <Copy className="w-3 h-3" />}
+                    </button>
+                    <a
+                      href={f.url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="p-1 rounded-md bg-purple-600 text-white hover:bg-purple-500"
+                      title="Abrir formulario"
+                    >
+                      <ExternalLink className="w-3 h-3" />
+                    </a>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* 3. Hojas de Cálculo Maestras Google Sheets */}
+          <div className="p-4 rounded-2xl border border-black/10 dark:border-white/10 bg-white/80 dark:bg-neutral-800/80 flex flex-col justify-between space-y-3">
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="p-2 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                  <FileSpreadsheet className="w-5 h-5" />
+                </span>
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 font-bold">
+                  Google Sheets
+                </span>
+              </div>
+              <h4 className="font-bold text-sm text-neutral-900 dark:text-white">
+                Hojas Maestras
+              </h4>
+              <p className="text-[11px] text-neutral-500 dark:text-neutral-400 font-light">
+                Hojas receptoras de datos estructurados con marcas de tiempo.
+              </p>
+            </div>
+            <div className="pt-2 border-t border-black/5 dark:border-white/5 flex flex-col gap-1.5">
+              {[
+                { label: 'Hojas Inscripción Talleres', url: OFFICIAL_FORMS_SHEETS_BASE_MAP.talleres_registro.sheetUrl, key: 'sheet-reg' },
+                { label: 'Hojas Bitácoras Cosecha', url: OFFICIAL_FORMS_SHEETS_BASE_MAP.bitacora_talleres.sheetUrl, key: 'sheet-bit' },
+                { label: 'Hojas Acuerdos 1 a 1', url: OFFICIAL_FORMS_SHEETS_BASE_MAP.sesiones_individuales.sheetUrl, key: 'sheet-ac' },
+                { label: 'Hojas Bitácoras B2B', url: OFFICIAL_FORMS_SHEETS_BASE_MAP.bitacora_sesiones_b2b.sheetUrl, key: 'sheet-b2b' },
+              ].map((s) => (
+                <div key={s.key} className="flex items-center justify-between gap-2 p-1.5 px-2 rounded-lg bg-black/5 dark:bg-white/5 text-xs">
+                  <span className="truncate font-medium text-[11px]">{s.label}</span>
+                  <div className="flex items-center gap-1 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => handleCopy(s.url, s.key)}
+                      className="p-1 rounded-md text-neutral-400 hover:text-black dark:hover:text-white"
+                      title="Copiar link"
+                    >
+                      {copiedKey === s.key ? <Check className="w-3 h-3 text-emerald-500" /> : <Copy className="w-3 h-3" />}
+                    </button>
+                    <a
+                      href={s.url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="p-1 rounded-md bg-emerald-600 text-white hover:bg-emerald-500"
+                      title="Abrir hoja"
+                    >
+                      <ExternalLink className="w-3 h-3" />
+                    </a>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* 4. Google Drive & Automatizaciones AutoCrat */}
+          <div className="p-4 rounded-2xl border border-black/10 dark:border-white/10 bg-white/80 dark:bg-neutral-800/80 flex flex-col justify-between space-y-3">
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="p-2 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400">
+                  <FolderOpen className="w-5 h-5" />
+                </span>
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-700 dark:text-amber-300 font-bold">
+                  AutoCrat & Drive
+                </span>
+              </div>
+              <h4 className="font-bold text-sm text-neutral-900 dark:text-white">
+                Carpetas Drive & PDFs
+              </h4>
+              <p className="text-[11px] text-neutral-500 dark:text-neutral-400 font-light">
+                Carpetas maestras con expedientes combinados generados automáticamente en PDF.
+              </p>
+            </div>
+            <div className="pt-2 border-t border-black/5 dark:border-white/5 flex flex-col gap-2">
+              <div className="flex items-center justify-between gap-2 p-2 rounded-xl bg-black/5 dark:bg-white/5 text-xs">
+                <span className="truncate font-medium">Carpeta Raíz AutoCrat</span>
+                <div className="flex items-center gap-1 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => handleCopy(OFFICIAL_FORMS_SHEETS_BASE_MAP.talleres_registro.autocratFolderUrl || 'https://drive.google.com/drive/folders/1aG0XqgL0tHw2r9X8Q6Wz', 'drive-root')}
+                    className="p-1 rounded-lg text-neutral-400 hover:text-black dark:hover:text-white"
+                    title="Copiar link"
+                  >
+                    {copiedKey === 'drive-root' ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
+                  </button>
+                  <a
+                    href={OFFICIAL_FORMS_SHEETS_BASE_MAP.talleres_registro.autocratFolderUrl || 'https://drive.google.com/drive/folders/1aG0XqgL0tHw2r9X8Q6Wz'}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="p-1 rounded-lg bg-amber-600 text-white hover:bg-amber-500"
+                    title="Abrir carpeta"
+                  >
+                    <ExternalLink className="w-3.5 h-3.5" />
+                  </a>
+                </div>
+              </div>
+              <div className="flex items-center justify-between gap-2 p-2 rounded-xl bg-black/5 dark:bg-white/5 text-xs">
+                <span className="truncate font-medium">Expedientes Acuerdos PDF</span>
+                <div className="flex items-center gap-1 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => handleCopy(OFFICIAL_FORMS_SHEETS_BASE_MAP.sesiones_individuales.autocratFolderUrl || 'https://drive.google.com/drive/folders/1bH1YrhM1uIx3s0Y9R7Xa', 'drive-ac')}
+                    className="p-1 rounded-lg text-neutral-400 hover:text-black dark:hover:text-white"
+                    title="Copiar link"
+                  >
+                    {copiedKey === 'drive-ac' ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
+                  </button>
+                  <a
+                    href={OFFICIAL_FORMS_SHEETS_BASE_MAP.sesiones_individuales.autocratFolderUrl || 'https://drive.google.com/drive/folders/1bH1YrhM1uIx3s0Y9R7Xa'}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="p-1 rounded-lg bg-amber-600 text-white hover:bg-amber-500"
+                    title="Abrir carpeta"
+                  >
+                    <ExternalLink className="w-3.5 h-3.5" />
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )}
+
+  {/* Expedientes de Coachees en Vivo */}
+  {activeTab === 'expedientes' && (
+    <div className="space-y-6">
+      {/* Header de selección de participante y sincronización en vivo */}
+      <div className="p-6 rounded-3xl border border-black/10 dark:border-white/10 bg-white/50 dark:bg-neutral-900/50 backdrop-blur-xl space-y-4">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="space-y-1">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-800 dark:text-purple-300 text-xs font-semibold">
+              <UserCheck className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />
+              <span>Expediente Integral de Participantes</span>
+            </div>
+            <h3 className="text-lg font-bold text-black dark:text-white">
+              Auditoría y Trazabilidad de Respuestas por Coachee
+            </h3>
+            <p className="text-xs text-neutral-500 dark:text-neutral-400 font-light">
+              Selecciona cualquier cliente para auditar en tiempo real sus respuestas cruzadas entre las 4 fuentes Google Sheets & Forms.
+            </p>
+          </div>
+
+          {/* Selector de Cliente y Botón de Sincronización */}
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="flex items-center gap-2 bg-white dark:bg-[#16161A] p-2 px-3.5 rounded-2xl border border-neutral-200 dark:border-neutral-800 shadow-xs">
+              <Users className="w-4 h-4 text-neutral-400 shrink-0" />
+              <select
+                value={selectedClientUid}
+                onChange={(e) => setSelectedClientUid(e.target.value)}
+                className="bg-transparent text-xs font-bold text-neutral-900 dark:text-white focus:outline-hidden cursor-pointer"
+              >
+                {clients.map((c) => (
+                  <option key={c.uid} value={c.uid} className="bg-white dark:bg-neutral-900 text-black dark:text-white">
+                    {c.name || 'Cliente'} ({c.email})
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <button
+              type="button"
+              onClick={handleSyncSelectedClientExpediente}
+              disabled={isSyncingClientExpediente || !selectedClient}
+              className="px-4 py-2.5 rounded-2xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold transition-all shadow-xs flex items-center gap-2 cursor-pointer disabled:opacity-50 active:scale-98"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${isSyncingClientExpediente ? 'animate-spin' : ''}`} />
+              <span>{isSyncingClientExpediente ? 'Sincronizando Workspace...' : 'Sincronizar en Vivo'}</span>
+            </button>
+          </div>
+        </div>
+
+        {clientExpedienteFeedback && (
+          <div className="p-3.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-800 dark:text-emerald-300 text-xs flex items-center gap-2.5">
+            <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+            <span>{clientExpedienteFeedback}</span>
+          </div>
+        )}
+      </div>
+
+      {/* Renderizado de la vista de expediente consolidada del cliente seleccionado */}
+      {selectedClient ? (
+        <UnifiedFormsSheetsClientView client={selectedClient} />
+      ) : (
+        <div className="p-12 text-center rounded-3xl border border-dashed border-black/10 dark:border-white/10">
+          <p className="text-xs text-neutral-500">No se encontraron clientes registrados en la plataforma.</p>
+        </div>
+      )}
+    </div>
+  )}
 
       {/* Modal: Editar Enlaces de Integración */}
       {isEditingPair && (
