@@ -249,7 +249,7 @@ export const DynamicSpacesHub: React.FC<DynamicSpacesHubProps> = ({
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredIndividual.map((node) => (
             <div
-              key={node.step}
+              key={`dynamic-space-node-${node.step}`}
               className="glass-panel-opal rounded-2xl border border-white/60 dark:border-white/10 shadow-2xs hover:shadow-xs transition-all p-4 sm:p-5 flex flex-col justify-between"
             >
               <div>

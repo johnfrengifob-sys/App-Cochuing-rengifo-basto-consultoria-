@@ -710,7 +710,7 @@ export const PaymentValidationManager: React.FC<PaymentValidationManagerProps> =
                     className="w-full p-2.5 rounded-xl border border-gray-200 dark:border-neutral-700 bg-gray-50 dark:bg-[#202024] text-black dark:text-white"
                   >
                     {PROGRAM_NODES.map((n) => (
-                      <option key={n.step} value={n.step}>
+                      <option key={`pay-unlock-step-${n.step}`} value={n.step}>
                         Sesión {n.step}: {n.level} ({n.sessionTitle})
                       </option>
                     ))}

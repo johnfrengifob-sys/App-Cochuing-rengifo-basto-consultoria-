@@ -5,8 +5,12 @@ import {
   BookOpen,
   FileSpreadsheet,
   Zap,
+  ExternalLink,
+  Copy,
+  Check,
 } from 'lucide-react';
 import { OntologicalStore } from '../../services/store';
+import { safeCopyToClipboard } from '../../utils/clipboard';
 import {
   CronogramaEvent,
   OntologicalProgram,
@@ -61,6 +65,8 @@ export const AdminAcademicManager: React.FC<AdminAcademicManagerProps> = ({
   });
 
   const [version, setVersion] = useState(0);
+  const [copiedCalendar, setCopiedCalendar] = useState(false);
+  const calendarSessionsUrl = OntologicalStore.getCalendarUrl(); // https://calendar.app.google/b5h9YrYnyjME7LbD7
 
   useEffect(() => {
     if (initialSubTab === 'sessions') {
@@ -105,6 +111,42 @@ export const AdminAcademicManager: React.FC<AdminAcademicManagerProps> = ({
               <p className="text-xs md:text-sm text-neutral-600 dark:text-neutral-300 font-light leading-relaxed">
                 Consola para gestionar talleres ontológicos en vivo, catálogo formativo de sesiones organizadas por niveles y sincronización con Google Forms & Sheets.
               </p>
+            </div>
+
+            {/* Acceso Directo a Agenda Google Calendar para Sesiones */}
+            <div className="flex flex-col items-start sm:items-end gap-2 shrink-0 bg-white/70 dark:bg-neutral-900/70 p-3 rounded-2xl border border-emerald-500/20 shadow-2xs backdrop-blur-md">
+              <div className="flex items-center gap-1.5">
+                <a
+                  href={calendarSessionsUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-xs transition-all active:scale-[0.98]"
+                  title="Abrir página de reservas en Google Calendar"
+                >
+                  <Calendar className="w-3.5 h-3.5" />
+                  <span>Agenda Sesiones</span>
+                  <ExternalLink className="w-3 h-3 opacity-80" />
+                </a>
+                <button
+                  type="button"
+                  onClick={() => {
+                    safeCopyToClipboard(calendarSessionsUrl);
+                    setCopiedCalendar(true);
+                    setTimeout(() => setCopiedCalendar(false), 2500);
+                  }}
+                  className="p-2 rounded-xl border border-gray-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 hover:bg-gray-50 text-gray-700 dark:text-neutral-300 transition-all cursor-pointer"
+                  title="Copiar enlace de Google Calendar"
+                >
+                  {copiedCalendar ? (
+                    <Check className="w-4 h-4 text-emerald-600" />
+                  ) : (
+                    <Copy className="w-4 h-4" />
+                  )}
+                </button>
+              </div>
+              <span className="text-[10px] text-gray-500 dark:text-neutral-400 font-mono truncate max-w-[220px]">
+                {calendarSessionsUrl}
+              </span>
             </div>
           </div>
 

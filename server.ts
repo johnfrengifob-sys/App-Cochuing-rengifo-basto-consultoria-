@@ -4,6 +4,7 @@ import fs from 'fs';
 import { createServer as createViteServer } from 'vite';
 import { GoogleGenAI } from '@google/genai';
 import dotenv from 'dotenv';
+import { OFFICIAL_PROGRAM_NODES, DEFAULT_CALENDAR_URL, generateOfficialSessions } from './src/data/officialProgramNodes';
 
 dotenv.config();
 
@@ -436,30 +437,125 @@ async function startServer() {
   ];
 
   function sanitizeServerProgramNodes(rawNodes: any[]): any[] {
-    const list = Array.isArray(rawNodes) && rawNodes.length > 0 ? rawNodes : [];
-    return list.map((candidate: any, i: number) => {
+    const list = Array.isArray(rawNodes) && rawNodes.length > 0 ? rawNodes : OFFICIAL_PROGRAM_NODES;
+    const seenSteps = new Set<number>();
+    const uniqueList: any[] = [];
+    for (const candidate of list) {
+      const step = candidate.step || (uniqueList.length + 1);
+      if (!seenSteps.has(step)) {
+        seenSteps.add(step);
+        uniqueList.push({
+          ...candidate,
+          id: candidate.id || `program-node-${step}`,
+          step,
+        });
+      }
+    }
+    // Asegurar que los 12 nodos oficiales siempre existan en el sistema
+    OFFICIAL_PROGRAM_NODES.forEach((offNode) => {
+      if (!seenSteps.has(offNode.step)) {
+        seenSteps.add(offNode.step);
+        uniqueList.push({ ...offNode });
+      }
+    });
+    uniqueList.sort((a, b) => (a.step || 0) - (b.step || 0));
+
+    return uniqueList.map((candidate: any, i: number) => {
       const step = candidate.step || (i + 1);
+      const officialNode = OFFICIAL_PROGRAM_NODES.find((o) => o.step === step);
       const cycleStep = ((step - 1) % 4) + 1; // 1, 2, 3, 4
       const isMilestone = cycleStep === 4;
       const defaultLevel = step <= 4 ? 'Nivel I' : step <= 8 ? 'Nivel II' : 'Nivel III';
       const defaultWeekLabel = step <= 2 ? 'Semanas 1-2' : step <= 4 ? 'Semanas 3-4' : step <= 6 ? 'Semanas 5-6' : step <= 8 ? 'Semanas 7-8' : step <= 10 ? 'Semanas 9-10' : 'Semanas 11-12';
 
-      const level = candidate.level || defaultLevel;
-      const levelTitle = candidate.levelTitle || level;
-      const weekLabel = candidate.weekLabel || defaultWeekLabel;
-      const fallbackTitle = isMilestone
-        ? 'Cierre de Ciclo: Integración, Cosecha de Aprendizajes y Evolución del Ser'
-        : `Módulo ${step}: Espacio de Indagación Autónoma`;
-      const sessionTitle = candidate.sessionTitle?.trim() || fallbackTitle;
+      const level = candidate.level || officialNode?.level || defaultLevel;
+      const levelTitle = candidate.levelTitle || officialNode?.levelTitle || level;
+      const weekLabel = candidate.weekLabel || officialNode?.weekLabel || defaultWeekLabel;
+
+      let sessionTitle = candidate.sessionTitle?.trim() || '';
+      if (!sessionTitle || sessionTitle.includes('Espacio de Exploración') || sessionTitle.includes('Nueva Sesión Formativa')) {
+        sessionTitle = officialNode?.sessionTitle || (isMilestone
+          ? 'Cierre de Ciclo: Integración, Cosecha de Aprendizajes y Evolución del Ser'
+          : `Módulo ${step}: Espacio de Indagación Autónoma`);
+      }
 
       return {
+        ...(officialNode || {}),
         ...candidate,
+        id: candidate.id || `program-node-${step}`,
         step,
         level,
         levelTitle,
         weekLabel,
         sessionTitle,
+        objective: (!candidate.objective || candidate.objective.includes('Definir el objetivo')) && officialNode
+          ? officialNode.objective
+          : candidate.objective || officialNode?.objective || '',
+        tangibleOutcomes: candidate.tangibleOutcomes?.length ? candidate.tangibleOutcomes : officialNode?.tangibleOutcomes || [],
+        keyQuestion: candidate.keyQuestion || officialNode?.keyQuestion || '',
+        levelPrompt: candidate.levelPrompt || officialNode?.levelPrompt || '',
+        methodology: candidate.methodology || officialNode?.methodology,
+        dailyMicroPractice: candidate.dailyMicroPractice || officialNode?.dailyMicroPractice,
+        reinforcementPack: candidate.reinforcementPack || officialNode?.reinforcementPack,
+        studyMaterials: candidate.studyMaterials?.length ? candidate.studyMaterials : officialNode?.studyMaterials,
+        googleSheetsUrl: candidate.googleSheetsUrl || 'https://docs.google.com/spreadsheets/d/1Mm3CRZVvKYFak5APwIBmfK-vZAUfnx1zg-eq8WOLbZk/edit?usp=sharing',
+        googleFormsUrl: candidate.googleFormsUrl || 'https://forms.gle/APUFto8sGbJt322WA',
+        agreementSheetUrl: candidate.agreementSheetUrl || 'https://docs.google.com/spreadsheets/d/1PCwxfgI0WdV2eMyEjLY_iYkYv5c4DNh5i43lNDvPT88/edit?usp=sharing',
+        agreementFormUrl: candidate.agreementFormUrl || 'https://forms.gle/dfStXtTyb1MW6W5K9',
+        bitacoraSheetUrl: candidate.bitacoraSheetUrl || 'https://docs.google.com/spreadsheets/d/1Mm3CRZVvKYFak5APwIBmfK-vZAUfnx1zg-eq8WOLbZk/edit?usp=sharing',
+        bitacoraFormUrl: candidate.bitacoraFormUrl || 'https://forms.gle/APUFto8sGbJt322WA',
+        formsIntegrationId: candidate.formsIntegrationId || 'bitacora_sesiones_b2b',
         updatedAt: candidate.updatedAt || new Date().toISOString(),
+      };
+    });
+  }
+
+  function sanitizeServerSessions(rawSessions: any[], programNodes: any[]): any[] {
+    let list = Array.isArray(rawSessions) ? rawSessions : [];
+    if (list.length === 0) {
+      return generateOfficialSessions('client-legadobarber2026');
+    }
+    const validSteps = new Set(programNodes.map((n: any) => n.step));
+    list = list.filter((s: any) => s && s.clientId !== 'client-carolina' && (!s.programNodeStep || validSteps.has(s.programNodeStep)));
+
+    const nodeMap = new Map<number, any>();
+    programNodes.forEach((n: any) => nodeMap.set(n.step, n));
+
+    return list.map((s: any, idx: number) => {
+      const step = s.sessionNumber || s.programNodeStep || (idx + 1);
+      const node = nodeMap.get(step);
+      const isCierre = step % 4 === 0;
+
+      let title = s.title?.trim() || '';
+      if (!title || title.includes('1- Mapeo') || title.includes('Espacio de Exploración') || title.includes('Sesión #') || title.startsWith(`Sesión ${step}: ${step}-`)) {
+        title = node ? `Sesión ${step}: ${node.sessionTitle}` : `Sesión ${step}: Consultoría Ontológica 1 a 1`;
+      }
+
+      return {
+        ...s,
+        id: s.id || `sess-client-legadobarber2026-${step}`,
+        clientId: s.clientId || 'client-legadobarber2026',
+        sessionNumber: step,
+        programNodeStep: step,
+        title,
+        sessionType: s.sessionType || (isCierre ? 'cierre_ciclo' : 'sesion'),
+        level: s.level || node?.level || (step <= 4 ? 'Nivel I' : step <= 8 ? 'Nivel II' : 'Nivel III'),
+        levelTitle: s.levelTitle || node?.levelTitle || s.level,
+        weekLabel: s.weekLabel || node?.weekLabel || (step <= 2 ? 'Semanas 1-2' : step <= 4 ? 'Semanas 3-4' : step <= 6 ? 'Semanas 5-6' : step <= 8 ? 'Semanas 7-8' : step <= 10 ? 'Semanas 9-10' : 'Semanas 11-12'),
+        calendarLink: s.calendarLink || DEFAULT_CALENDAR_URL,
+        meetLink: s.meetLink || 'https://meet.google.com/rbc-conversatorio-ontologico',
+        sessionGoal: s.sessionGoal || node?.objective || 'Acompañamiento ontológico no direccional y exploración libre del quiebre.',
+        openingQuestion: s.openingQuestion || node?.keyQuestion || '¿Qué es importante para ti traer a este espacio hoy?',
+        ontologicalFocus: s.ontologicalFocus || node?.sessionTitle || title,
+        notes: s.notes || `Sesión ${step}: ${s.level || ''} • ${node?.sessionTitle || title}`,
+        googleSheetsUrl: s.googleSheetsUrl || 'https://docs.google.com/spreadsheets/d/1Mm3CRZVvKYFak5APwIBmfK-vZAUfnx1zg-eq8WOLbZk/edit?usp=sharing',
+        googleFormsUrl: s.googleFormsUrl || 'https://forms.gle/APUFto8sGbJt322WA',
+        agreementFormUrl: s.agreementFormUrl || 'https://forms.gle/dfStXtTyb1MW6W5K9',
+        agreementSheetUrl: s.agreementSheetUrl || 'https://docs.google.com/spreadsheets/d/1PCwxfgI0WdV2eMyEjLY_iYkYv5c4DNh5i43lNDvPT88/edit?usp=sharing',
+        bitacoraFormUrl: s.bitacoraFormUrl || 'https://forms.gle/APUFto8sGbJt322WA',
+        bitacoraSheetUrl: s.bitacoraSheetUrl || 'https://docs.google.com/spreadsheets/d/1Mm3CRZVvKYFak5APwIBmfK-vZAUfnx1zg-eq8WOLbZk/edit?usp=sharing',
+        formsIntegrationId: s.formsIntegrationId || 'bitacora_sesiones_b2b',
+        expedienteSyncStatus: s.expedienteSyncStatus || 'synced',
       };
     });
   }
@@ -514,6 +610,12 @@ async function startServer() {
         const prevNodesJson = JSON.stringify(data.programNodes);
         data.programNodes = sanitizeServerProgramNodes(data.programNodes);
         if (JSON.stringify(data.programNodes) !== prevNodesJson) {
+          modified = true;
+        }
+
+        const prevSessionsJson = JSON.stringify(data.sessions);
+        data.sessions = sanitizeServerSessions(data.sessions, data.programNodes);
+        if (JSON.stringify(data.sessions) !== prevSessionsJson) {
           modified = true;
         }
         if (!Array.isArray(data.deletedWorkshopIds)) data.deletedWorkshopIds = [];
@@ -618,14 +720,14 @@ async function startServer() {
     const initial: AppDatabase = {
       users: [...SEED_USERS],
       eventRegistrations: [...SEED_EVENT_REGISTRATIONS],
-      sessions: [],
+      sessions: generateOfficialSessions('client-legadobarber2026'),
       forms: [],
       postSessionForms: [],
       aiInsights: [],
       prospects: [],
       paymentRequests: [],
       cronogramaEvents: [...SEED_CRONOGRAMA_EVENTS],
-      programNodes: [],
+      programNodes: [...OFFICIAL_PROGRAM_NODES],
       formsSheetsIntegrations: [...SEED_FORMS_SHEETS_INTEGRATIONS],
       deletedWorkshopIds: [],
       lastUpdated: new Date().toISOString(),
@@ -750,6 +852,9 @@ async function startServer() {
             changed = true;
           }
         });
+      }
+      if (Array.isArray(currentDb.sessions)) {
+        currentDb.sessions = sanitizeServerSessions(currentDb.sessions, currentDb.programNodes || []);
       }
 
       // Merge Forms

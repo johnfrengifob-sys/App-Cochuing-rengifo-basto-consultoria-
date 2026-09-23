@@ -313,7 +313,7 @@ export const ParticipantSesionesModule: React.FC<ParticipantSesionesModuleProps>
               const isLocked = cycle > 0 && !isBlockUnlocked(cycle);
               return (
                 <button
-                  key={id}
+                  key={`cycle-filter-${id}`}
                   type="button"
                   onClick={() => setSelectedCycleFilter(id)}
                   className={`px-3.5 py-2 rounded-xl transition-all duration-200 cursor-pointer whitespace-nowrap text-xs font-semibold inline-flex items-center gap-2 ${
@@ -403,7 +403,7 @@ export const ParticipantSesionesModule: React.FC<ParticipantSesionesModuleProps>
 
           return (
             <div
-              key={session.id || num}
+              key={session.id || `participant-session-${num}`}
               className={`rounded-3xl border transition-all duration-300 backdrop-blur-xl p-5 sm:p-6 space-y-4 shadow-xs flex flex-col justify-between ${
                 !isUnlocked
                   ? 'border-black/5 dark:border-white/5 bg-neutral-100/40 dark:bg-neutral-900/30 opacity-70'

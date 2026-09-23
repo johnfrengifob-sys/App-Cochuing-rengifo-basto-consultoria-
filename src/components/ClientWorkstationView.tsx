@@ -941,7 +941,7 @@ export const ClientWorkstationView: React.FC<ClientWorkstationViewProps> = ({
 
               return (
                 <div
-                  key={node.step}
+                  key={`workstation-node-${node.step}`}
                   className={`p-2.5 rounded-2xl border text-center transition-all ${
                     isCurrent
                       ? 'bg-white dark:bg-neutral-800 text-neutral-950 dark:text-white border-2 border-emerald-500 shadow-xs font-bold'
@@ -1989,7 +1989,7 @@ export const ClientWorkstationView: React.FC<ClientWorkstationViewProps> = ({
                     className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 dark:border-neutral-700 bg-gray-50/50 dark:bg-[#151518] text-xs font-medium text-black dark:text-white focus:outline-hidden"
                   >
                     {PROGRAM_NODES.map((node) => (
-                      <option key={node.step} value={node.step}>
+                      <option key={`progress-opt-node-${node.step}`} value={node.step}>
                         Nodo {node.step}: {node.sessionTitle}
                       </option>
                     ))}

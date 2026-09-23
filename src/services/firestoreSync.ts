@@ -351,6 +351,7 @@ export class FirestoreSyncService {
           sessionNumber: session.sessionNumber || 1,
           date: session.date,
           meetLink: session.meetLink,
+          calendarLink: session.calendarLink || 'https://calendar.app.google/b5h9YrYnyjME7LbD7',
           status: session.status,
           notes: session.notes || '',
           isPaid: Boolean(session.isPaid),
@@ -1782,9 +1783,9 @@ export class FirestoreSyncService {
     const collectionPath = 'programNodes';
     try {
       const snap = await getDocs(collection(db, collectionPath));
-      const activeSteps = new Set(nodes.map((n) => String(n.step)));
+      const activeDocIds = new Set(nodes.map((n) => `step-${n.step}`));
       for (const d of snap.docs) {
-        if (!activeSteps.has(d.id)) {
+        if (!activeDocIds.has(d.id)) {
           try {
             await deleteDoc(d.ref);
           } catch {
@@ -1812,9 +1813,17 @@ export class FirestoreSyncService {
     try {
       const snap = await getDocs(collection(db, collectionPath));
       if (snap.empty) return [];
-      return snap.docs
-        .map((d) => d.data() as ProgramNodeInfo)
-        .sort((a, b) => (a.step || 0) - (b.step || 0));
+      const stepMap = new Map<number, ProgramNodeInfo>();
+      snap.docs.forEach((d) => {
+        const data = d.data() as ProgramNodeInfo;
+        if (data && typeof data.step === 'number') {
+          stepMap.set(data.step, {
+            ...data,
+            id: data.id || `step-${data.step}`,
+          });
+        }
+      });
+      return Array.from(stepMap.values()).sort((a, b) => (a.step || 0) - (b.step || 0));
     } catch (error) {
       console.warn('Firestore fetchProgramNodes notice:', error);
       return [];
@@ -1829,9 +1838,17 @@ export class FirestoreSyncService {
       const unsubscribe = onSnapshot(
         collection(db, collectionPath),
         (snap) => {
-          const nodes = snap.docs
-            .map((d) => d.data() as ProgramNodeInfo)
-            .sort((a, b) => (a.step || 0) - (b.step || 0));
+          const stepMap = new Map<number, ProgramNodeInfo>();
+          snap.docs.forEach((d) => {
+            const data = d.data() as ProgramNodeInfo;
+            if (data && typeof data.step === 'number') {
+              stepMap.set(data.step, {
+                ...data,
+                id: data.id || `step-${data.step}`,
+              });
+            }
+          });
+          const nodes = Array.from(stepMap.values()).sort((a, b) => (a.step || 0) - (b.step || 0));
           onUpdate(nodes);
         },
         (error) => {

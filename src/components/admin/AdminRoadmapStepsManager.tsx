@@ -185,7 +185,7 @@ export const AdminRoadmapStepsManager: React.FC<AdminRoadmapStepsManagerProps> =
           const count = (n.roadmapSteps || []).length;
           return (
             <button
-              key={n.step}
+              key={`roadmap-step-${n.step}`}
               onClick={() => setSelectedStep(n.step)}
               className={`px-4 py-2.5 rounded-2xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 shrink-0 border ${
                 isSelected

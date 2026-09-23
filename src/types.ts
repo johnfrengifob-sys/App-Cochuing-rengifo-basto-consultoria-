@@ -167,6 +167,7 @@ export interface Session {
   sessionNumber?: number; // 1 to 12
   date: string; // ISO string
   meetLink: string;
+  calendarLink?: string; // Enlace oficial de agendamiento en Google Calendar (Agenda de Citas)
   status: SessionStatus;
   title?: string;
   sessionGoal?: string;
@@ -302,6 +303,7 @@ export interface WorkshopRoadmapStep {
 }
 
 export interface ProgramNodeInfo {
+  id?: string;
   step: number; // 1 to 6
   weekLabel: string; // "Semanas 1-2", "Semanas 3-4", etc.
   level: 'Nivel I' | 'Nivel II' | 'Nivel III';

@@ -178,7 +178,7 @@ export const WorkshopRegistrySection: React.FC<WorkshopRegistrySectionProps> = (
 
           return (
             <div
-              key={node.step}
+              key={`workshop-reg-node-${node.step}`}
               className={`p-5 sm:p-6 rounded-3xl border transition-all space-y-4 ${
                 isViewed
                   ? 'bg-white dark:bg-[#18181B] border-gray-200/90 dark:border-neutral-800 shadow-2xs'

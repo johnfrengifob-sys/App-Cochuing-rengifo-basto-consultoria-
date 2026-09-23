@@ -739,17 +739,27 @@ export const EventGeneralConfigSection: React.FC<EventGeneralConfigSectionProps>
               </span>
             </div>
 
-            {/* Sala Virtual Google Meet */}
+            {/* Sala Virtual Google Meet / Agenda */}
             <div>
-              <label className="block text-[11px] font-medium text-gray-700 dark:text-neutral-300 mb-1 flex items-center gap-1.5">
-                <Video className="w-3.5 h-3.5 text-indigo-500" />
-                <span>Enlace de Sala Virtual Google Meet</span>
-              </label>
+              <div className="flex items-center justify-between mb-1">
+                <label className="text-[11px] font-medium text-gray-700 dark:text-neutral-300 flex items-center gap-1.5">
+                  <Video className="w-3.5 h-3.5 text-indigo-500" />
+                  <span>Enlace de Sala Virtual / Agenda Google</span>
+                </label>
+                <button
+                  type="button"
+                  onClick={() => onChange({ meetUrl: 'https://calendar.app.google/b5h9YrYnyjME7LbD7' })}
+                  className="text-[10px] text-emerald-600 dark:text-emerald-400 hover:underline font-semibold cursor-pointer"
+                  title="Insertar enlace oficial de Google Calendar"
+                >
+                  Usar Calendar Oficial
+                </button>
+              </div>
               <input
                 type="url"
                 value={event.meetUrl || ''}
                 onChange={(e) => onChange({ meetUrl: e.target.value })}
-                placeholder="https://meet.google.com/..."
+                placeholder="https://calendar.app.google/b5h9YrYnyjME7LbD7 o https://meet.google.com/..."
                 className="w-full px-3 py-2 text-xs rounded-xl border border-gray-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-black dark:text-white focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
               />
             </div>

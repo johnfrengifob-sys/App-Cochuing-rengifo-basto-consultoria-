@@ -317,7 +317,7 @@ export const AdminQuestionnairesManager: React.FC<AdminQuestionnairesManagerProp
                   <div className="flex items-center gap-1.5">
                     {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((num) => (
                       <button
-                        key={num}
+                        key={`admin-q-scale-${q.id}-${num}`}
                         type="button"
                         className="w-8 h-8 rounded-lg border border-gray-200 dark:border-neutral-700 text-xs font-bold hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black transition-colors"
                       >

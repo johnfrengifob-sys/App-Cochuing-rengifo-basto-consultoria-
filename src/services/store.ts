@@ -57,6 +57,11 @@ import {
   isIntegrationListModifiedFromCodeBase,
   isPairModifiedFromCodeBase,
 } from '../data/officialFormsSheetsBase';
+import {
+  OFFICIAL_PROGRAM_NODES,
+  DEFAULT_CALENDAR_URL,
+  generateOfficialSessions,
+} from '../data/officialProgramNodes';
 import { getEmailAvatarUrl } from '../utils/avatar';
 import { formatFriendlySpanishDate, getDateOnlyString } from '../utils/dateHelper';
 
@@ -1059,11 +1064,11 @@ export const INITIAL_SYSTEM_LINK_BINDINGS: SystemLinkBinding[] = [
   {
     id: 'link-calendar-agenda',
     functionKey: 'calendar_agenda',
-    functionTitle: 'Agenda Pública de Citas 20 min (Google Calendar)',
+    functionTitle: 'Agenda de Citas & Sesiones Oficiales (Google Calendar)',
     category: 'Google Workspace',
-    targetUrl: 'https://calendar.google.com/calendar/appointments/schedules/AcZssZ2026RBC_Agenda',
+    targetUrl: 'https://calendar.app.google/b5h9YrYnyjME7LbD7',
     status: 'active',
-    notes: 'Enlace de auto-agendamiento para sesiones de diagnóstico y valoración de 20 minutos.',
+    notes: 'Enlace oficial de auto-agendamiento para sesiones de consultoría ontológica individual, eventos y talleres.',
     syncFrequency: 'Instantáneo',
     iconName: 'Calendar',
   },
@@ -1808,7 +1813,7 @@ export const DEFAULT_NEXT_LEVEL_PAYMENT_URL =
   'https://checkout.wompi.co/l/raiz-y-balance-next-level';
 
 export const DEFAULT_CALENDAR_URL =
-  'https://calendar.app.google/UYJSud4znEcyUo717';
+  'https://calendar.app.google/b5h9YrYnyjME7LbD7';
 
 export const DEFAULT_MATRIX_URL =
   'https://drive.google.com/file/d/rbc-matriz-raiz-y-balance.pdf';
@@ -1986,29 +1991,67 @@ export class OntologicalStore {
   }
 
   static sanitizeProgramNodes(rawNodes: ProgramNodeInfo[]): ProgramNodeInfo[] {
-    const list = Array.isArray(rawNodes) && rawNodes.length > 0 ? rawNodes : PROGRAM_NODES;
-    return list.map((candidate: Partial<ProgramNodeInfo>, i: number) => {
+    const list = Array.isArray(rawNodes) && rawNodes.length > 0 ? rawNodes : OFFICIAL_PROGRAM_NODES;
+    const seenSteps = new Set<number>();
+    const uniqueList: Partial<ProgramNodeInfo>[] = [];
+    for (const candidate of list) {
+      const step = candidate.step || (uniqueList.length + 1);
+      if (!seenSteps.has(step)) {
+        seenSteps.add(step);
+        uniqueList.push({
+          ...candidate,
+          id: candidate.id || `program-node-${step}`,
+          step,
+        });
+      }
+    }
+    // Asegurar los 12 módulos formativos oficiales
+    OFFICIAL_PROGRAM_NODES.forEach((offNode) => {
+      if (!seenSteps.has(offNode.step)) {
+        seenSteps.add(offNode.step);
+        uniqueList.push({ ...offNode });
+      }
+    });
+    uniqueList.sort((a, b) => (a.step || 0) - (b.step || 0));
+
+    return uniqueList.map((candidate: Partial<ProgramNodeInfo>, i: number) => {
       const step = candidate.step || (i + 1);
+      const officialNode = OFFICIAL_PROGRAM_NODES.find((o) => o.step === step);
       const cycleStep = ((step - 1) % 4) + 1; // 1, 2, 3, 4
       const isMilestone = cycleStep === 4;
       const defaultLevel: 'Nivel I' | 'Nivel II' | 'Nivel III' = step <= 4 ? 'Nivel I' : step <= 8 ? 'Nivel II' : 'Nivel III';
       const defaultWeekLabel = step <= 2 ? 'Semanas 1-2' : step <= 4 ? 'Semanas 3-4' : step <= 6 ? 'Semanas 5-6' : step <= 8 ? 'Semanas 7-8' : step <= 10 ? 'Semanas 9-10' : 'Semanas 11-12';
 
-      const level = (candidate.level as 'Nivel I' | 'Nivel II' | 'Nivel III') || defaultLevel;
-      const levelTitle = candidate.levelTitle || level;
-      const weekLabel = candidate.weekLabel || defaultWeekLabel;
-      const fallbackTitle = isMilestone
-        ? 'Cierre de Ciclo: Integración, Cosecha de Aprendizajes y Evolución del Ser'
-        : `Módulo ${step}: Espacio de Indagación Autónoma`;
-      const sessionTitle = candidate.sessionTitle?.trim() || fallbackTitle;
+      const level = (candidate.level as 'Nivel I' | 'Nivel II' | 'Nivel III') || officialNode?.level || defaultLevel;
+      const levelTitle = candidate.levelTitle || officialNode?.levelTitle || level;
+      const weekLabel = candidate.weekLabel || officialNode?.weekLabel || defaultWeekLabel;
+
+      let sessionTitle = candidate.sessionTitle?.trim() || '';
+      if (!sessionTitle || sessionTitle.includes('Espacio de Exploración') || sessionTitle.includes('Nueva Sesión Formativa')) {
+        sessionTitle = officialNode?.sessionTitle || (isMilestone
+          ? 'Cierre de Ciclo: Integración, Cosecha de Aprendizajes y Evolución del Ser'
+          : `Módulo ${step}: Espacio de Indagación Autónoma`);
+      }
 
       return {
+        ...(officialNode || {}),
         ...candidate,
+        id: candidate.id || `program-node-${step}`,
         step,
         level,
         levelTitle,
         weekLabel,
         sessionTitle,
+        objective: (!candidate.objective || candidate.objective.includes('Definir el objetivo')) && officialNode
+          ? officialNode.objective
+          : candidate.objective || officialNode?.objective || '',
+        tangibleOutcomes: candidate.tangibleOutcomes?.length ? candidate.tangibleOutcomes : officialNode?.tangibleOutcomes || [],
+        keyQuestion: candidate.keyQuestion || officialNode?.keyQuestion || '',
+        levelPrompt: candidate.levelPrompt || officialNode?.levelPrompt || '',
+        methodology: candidate.methodology || officialNode?.methodology,
+        dailyMicroPractice: candidate.dailyMicroPractice || officialNode?.dailyMicroPractice,
+        reinforcementPack: candidate.reinforcementPack || officialNode?.reinforcementPack,
+        studyMaterials: candidate.studyMaterials?.length ? candidate.studyMaterials : officialNode?.studyMaterials,
         roadmapSteps: candidate.roadmapSteps?.length ? candidate.roadmapSteps : (DEFAULT_ROADMAP_STEPS[step] || []),
         googleSheetsUrl: candidate.googleSheetsUrl !== undefined
           ? candidate.googleSheetsUrl
@@ -2016,6 +2059,11 @@ export class OntologicalStore {
         googleFormsUrl: candidate.googleFormsUrl !== undefined
           ? candidate.googleFormsUrl
           : 'https://forms.gle/APUFto8sGbJt322WA',
+        agreementSheetUrl: candidate.agreementSheetUrl || 'https://docs.google.com/spreadsheets/d/1PCwxfgI0WdV2eMyEjLY_iYkYv5c4DNh5i43lNDvPT88/edit?usp=sharing',
+        agreementFormUrl: candidate.agreementFormUrl || 'https://forms.gle/dfStXtTyb1MW6W5K9',
+        bitacoraSheetUrl: candidate.bitacoraSheetUrl || 'https://docs.google.com/spreadsheets/d/1Mm3CRZVvKYFak5APwIBmfK-vZAUfnx1zg-eq8WOLbZk/edit?usp=sharing',
+        bitacoraFormUrl: candidate.bitacoraFormUrl || 'https://forms.gle/APUFto8sGbJt322WA',
+        formsIntegrationId: candidate.formsIntegrationId || 'bitacora_sesiones_b2b',
       } as ProgramNodeInfo;
     });
   }
@@ -5396,7 +5444,12 @@ export class OntologicalStore {
 
   static getCalendarUrl(): string {
     const stored = localStorage.getItem(STORAGE_KEYS.CALENDAR_URL);
-    if (!stored || stored.includes('rbc-sesion-20min')) {
+    if (
+      !stored ||
+      stored.includes('rbc-sesion-20min') ||
+      stored.includes('UYJSud4znEcyUo717') ||
+      stored.includes('AcZssZ2026RBC_Agenda')
+    ) {
       localStorage.setItem(STORAGE_KEYS.CALENDAR_URL, DEFAULT_CALENDAR_URL);
       return DEFAULT_CALENDAR_URL;
     }

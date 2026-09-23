@@ -108,6 +108,13 @@ export const ConsultoriaSessionCreationModal: React.FC<ConsultoriaSessionCreatio
     return generateMeetLink();
   });
 
+  // Calendar Agenda Link (Google Calendar Agenda Oficial)
+  const officialCalendarUrl = OntologicalStore.getCalendarUrl();
+  const [calendarLink, setCalendarLink] = useState<string>(() => {
+    if (initialSession?.calendarLink) return initialSession.calendarLink;
+    return officialCalendarUrl;
+  });
+
   // 2. Enfoque Ontológico y Preguntas
   const defaultOpeningNormal = '¿Qué te gustaría trabajar el día de hoy? / ¿Cuál es el quiebre que trae tu atención?';
   const defaultOpeningCycle = 'Sesión de Cierre de Ciclo: Revisión del estado actual, aprendizajes consolidados y rediseño del siguiente tramo.';
@@ -179,6 +186,7 @@ export const ConsultoriaSessionCreationModal: React.FC<ConsultoriaSessionCreatio
       setScheduledTime(initialSession.scheduledTime || '10:00');
       setDurationMinutes(initialSession.durationMinutes || 60);
       setMeetLink(initialSession.meetLink || generateMeetLink());
+      setCalendarLink(initialSession.calendarLink || officialCalendarUrl);
       setSessionGoal(initialSession.sessionGoal || '');
       setOpeningQuestion(
         initialSession.openingQuestion ||
@@ -326,6 +334,7 @@ export const ConsultoriaSessionCreationModal: React.FC<ConsultoriaSessionCreatio
       scheduledTime,
       durationMinutes,
       meetLink: meetLink.trim() || generateMeetLink(),
+      calendarLink: calendarLink.trim() || officialCalendarUrl,
       status: initialSession?.status || 'scheduled',
       title: title.trim(),
       sessionGoal: sessionGoal.trim(),
@@ -637,13 +646,24 @@ export const ConsultoriaSessionCreationModal: React.FC<ConsultoriaSessionCreatio
                     <Video className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
                     <span>Sala de Google Meet</span>
                   </label>
-                  <button
-                    type="button"
-                    onClick={() => setMeetLink(generateMeetLink())}
-                    className="text-[10px] font-semibold text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer"
-                  >
-                    Generar nuevo enlace
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setMeetLink(calendarLink || officialCalendarUrl)}
+                      className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 hover:underline cursor-pointer"
+                      title="Asignar el enlace de Google Calendar como sala principal"
+                    >
+                      Usar link de Agenda
+                    </button>
+                    <span className="text-gray-300 dark:text-neutral-700">•</span>
+                    <button
+                      type="button"
+                      onClick={() => setMeetLink(generateMeetLink())}
+                      className="text-[10px] font-semibold text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer"
+                    >
+                      Generar nuevo Meet
+                    </button>
+                  </div>
                 </div>
                 <div className="flex items-center gap-2">
                   <input
@@ -673,6 +693,56 @@ export const ConsultoriaSessionCreationModal: React.FC<ConsultoriaSessionCreatio
                     </a>
                   )}
                 </div>
+              </div>
+
+              {/* Agenda Google Calendar (Citas Oficiales 1 a 1) */}
+              <div className="p-3.5 rounded-2xl bg-emerald-50/50 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-900/40 space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-bold text-emerald-950 dark:text-emerald-200 flex items-center gap-1.5">
+                    <Calendar className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                    <span>Agenda Google Calendar (Citas de Sesiones Creadas)</span>
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setCalendarLink(officialCalendarUrl)}
+                    className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 hover:underline cursor-pointer"
+                    title="Restablecer enlace oficial de Google Calendar"
+                  >
+                    Restablecer Oficial
+                  </button>
+                </div>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="url"
+                    value={calendarLink}
+                    onChange={(e) => setCalendarLink(e.target.value)}
+                    placeholder="https://calendar.app.google/b5h9YrYnyjME7LbD7"
+                    className="w-full p-2.5 rounded-xl border border-emerald-200 dark:border-emerald-800 bg-white dark:bg-neutral-800 text-black dark:text-white font-mono text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-hidden"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => handleCopy(calendarLink, 'calendar-agenda')}
+                    className="p-2.5 rounded-xl border border-gray-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 hover:bg-gray-50 text-gray-700 dark:text-neutral-300 shrink-0 cursor-pointer"
+                    title="Copiar enlace de agenda Google Calendar"
+                  >
+                    {copiedKey === 'calendar-agenda' ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4" />}
+                  </button>
+                  {calendarLink && (
+                    <a
+                      href={calendarLink}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="p-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white shrink-0"
+                      title="Abrir página de reservas en Google Calendar"
+                    >
+                      <ExternalLink className="w-4 h-4" />
+                    </a>
+                  )}
+                </div>
+                <p className="text-[10px] text-gray-500 dark:text-neutral-400 flex items-center gap-1">
+                  <span>Enlace oficial vinculado:</span>
+                  <code className="font-mono text-emerald-700 dark:text-emerald-300">https://calendar.app.google/b5h9YrYnyjME7LbD7</code>
+                </p>
               </div>
             </div>
           )}

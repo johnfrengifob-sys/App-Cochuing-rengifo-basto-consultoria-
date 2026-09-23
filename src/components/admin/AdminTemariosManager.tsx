@@ -143,7 +143,7 @@ export const AdminTemariosManager: React.FC<AdminTemariosManagerProps> = ({ onRe
           const isSelected = n.step === selectedStep;
           return (
             <button
-              key={n.step}
+              key={`temario-step-${n.step}`}
               onClick={() => handleSelectNode(n.step)}
               className={`px-4 py-2.5 rounded-2xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 shrink-0 border ${
                 isSelected

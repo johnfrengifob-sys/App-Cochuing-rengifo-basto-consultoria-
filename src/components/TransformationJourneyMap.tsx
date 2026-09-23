@@ -552,7 +552,7 @@ export const TransformationJourneyMap: React.FC<TransformationJourneyMapProps> =
 
               return (
                 <div
-                  key={node.step}
+                  key={`journey-node-${node.step}`}
                   id={`session-card-${node.step}`}
                   onClick={() => {
                     setSelectedSessionStep(node.step);

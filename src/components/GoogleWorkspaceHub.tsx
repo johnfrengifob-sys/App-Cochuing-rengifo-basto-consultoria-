@@ -1053,7 +1053,7 @@ export const GoogleWorkspaceHub: React.FC<GoogleWorkspaceHubProps> = ({
                     className="w-full text-xs p-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white"
                   >
                     {[1, 2, 3, 4, 5, 6].map((num) => (
-                      <option key={num} value={num}>
+                      <option key={`gw-session-opt-${num}`} value={num}>
                         Sesión {num} de 6
                       </option>
                     ))}

@@ -815,16 +815,25 @@ export const AdminMeetWorkshopsManager: React.FC<AdminMeetWorkshopsManagerProps>
               </div>
 
               <div className="space-y-1">
-                <label className="font-semibold text-black dark:text-white flex items-center gap-1.5">
-                  <Video className="w-3.5 h-3.5 text-indigo-500" />
-                  <span>Enlace Google Meet para este taller</span>
-                </label>
+                <div className="flex items-center justify-between">
+                  <label className="font-semibold text-black dark:text-white flex items-center gap-1.5">
+                    <Video className="w-3.5 h-3.5 text-indigo-500" />
+                    <span>Enlace Google Meet / Agenda para este taller</span>
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setEventForm({ ...eventForm, meetUrl: 'https://calendar.app.google/b5h9YrYnyjME7LbD7' })}
+                    className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 hover:underline cursor-pointer"
+                  >
+                    Usar Calendar Oficial
+                  </button>
+                </div>
                 <input
                   type="url"
                   required
                   value={eventForm.meetUrl}
                   onChange={(e) => setEventForm({ ...eventForm, meetUrl: e.target.value })}
-                  placeholder="https://meet.google.com/..."
+                  placeholder="https://calendar.app.google/b5h9YrYnyjME7LbD7 o https://meet.google.com/..."
                   className="w-full p-2.5 rounded-xl bg-gray-50 dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 text-black dark:text-white focus:outline-none focus:ring-1 focus:ring-black"
                 />
               </div>

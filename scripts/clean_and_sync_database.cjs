@@ -9,8 +9,9 @@ console.log('--- RBC Database Sanitizer & Synchronization Engine ---');
 // 1. Extract official PROGRAM_NODES from store.ts
 const storeContent = fs.readFileSync(STORE_PATH, 'utf8');
 const lines = storeContent.split('\n');
-const programLines = lines.slice(107, 636);
-const code = programLines.join('\n').replace(/^export let PROGRAM_NODES: ProgramNodeInfo\[\] = /, '');
+const startIdx = lines.findIndex(l => l.startsWith('export let PROGRAM_NODES'));
+const endIdx = lines.findIndex((l, idx) => idx > startIdx && l.startsWith('];'));
+const code = lines.slice(startIdx, endIdx + 1).join('\n').replace(/^export let PROGRAM_NODES: ProgramNodeInfo\[\] = /, '');
 const officialProgramNodes = eval(code);
 
 console.log(`[1] Extracted ${officialProgramNodes.length} official Program Nodes from curriculum source.`);
@@ -109,6 +110,7 @@ const cleanedSessions = cleanedProgramNodes.map((node, idx) => {
     scheduledDate,
     scheduledTime: '10:00',
     meetLink: `https://meet.google.com/rbc-conversatorio-ontologico`,
+    calendarLink: 'https://calendar.app.google/b5h9YrYnyjME7LbD7',
     status: node.step === 1 ? 'completed' : 'scheduled',
     isPaid: true,
     durationMinutes: 60,

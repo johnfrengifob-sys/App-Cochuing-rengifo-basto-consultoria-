@@ -447,7 +447,7 @@ export const UnifiedWorkbookSpace: React.FC<UnifiedWorkbookSpaceProps> = ({
 
                   return (
                     <button
-                      key={node.step}
+                      key={`wb-node-step-${node.step}`}
                       type="button"
                       onClick={() => onStepChange(node.step)}
                       className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer flex flex-col justify-between min-h-[64px] ${
@@ -855,7 +855,7 @@ export const UnifiedWorkbookSpace: React.FC<UnifiedWorkbookSpaceProps> = ({
                                 const isSelected = dynamicAnswers[q.id] === num;
                                 return (
                                   <button
-                                    key={num}
+                                    key={`rating-${q.id}-${num}`}
                                     type="button"
                                     onClick={() =>
                                       setDynamicAnswers({ ...dynamicAnswers, [q.id]: num })
@@ -956,7 +956,7 @@ export const UnifiedWorkbookSpace: React.FC<UnifiedWorkbookSpaceProps> = ({
 
                   return (
                     <button
-                      key={num}
+                      key={`session-selector-${num}`}
                       type="button"
                       onClick={() => setSelectedSessionNumber(num)}
                       className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer flex flex-col justify-between min-h-[64px] ${
@@ -1402,7 +1402,7 @@ export const UnifiedWorkbookSpace: React.FC<UnifiedWorkbookSpaceProps> = ({
 
                     return (
                       <div
-                        key={node.step}
+                        key={`wb-summary-node-${node.step}`}
                         className="p-3 rounded-xl bg-white dark:bg-[#18181B] border border-gray-200/70 dark:border-neutral-700/60 flex items-center justify-between gap-2"
                       >
                         <div className="min-w-0">

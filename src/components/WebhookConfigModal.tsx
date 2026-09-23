@@ -431,7 +431,7 @@ export const WebhookConfigModal: React.FC<WebhookConfigModalProps> = ({
                     type="url"
                     value={calendarUrl}
                     onChange={(e) => setCalendarUrl(e.target.value)}
-                    placeholder="https://calendar.app.google/UYJSud4znEcyUo717"
+                    placeholder="https://calendar.app.google/b5h9YrYnyjME7LbD7"
                     className="w-full px-4 py-3 rounded-2xl bg-[#F9F9F9] dark:bg-[#202024] border border-gray-200 dark:border-neutral-700 text-xs text-black dark:text-white font-mono focus:outline-none focus:ring-1 focus:ring-black dark:focus:ring-white"
                   />
                 </div>

@@ -940,7 +940,7 @@ export const CoachDashboard: React.FC<CoachDashboardProps> = ({
                   className="w-full px-4 py-3 rounded-2xl bg-[#F9F9F9] dark:bg-[#202024] border border-gray-200 dark:border-neutral-700 text-xs text-black dark:text-white font-light focus:outline-none focus:ring-1 focus:ring-black dark:focus:ring-white"
                 >
                   {PROGRAM_NODES.map((n) => (
-                    <option key={n.step} value={n.step} className="bg-white dark:bg-[#202024] text-black dark:text-white">
+                    <option key={`coach-session-node-${n.step}`} value={n.step} className="bg-white dark:bg-[#202024] text-black dark:text-white">
                       Sesión {n.step}: {n.sessionTitle} ({n.level})
                     </option>
                   ))}
