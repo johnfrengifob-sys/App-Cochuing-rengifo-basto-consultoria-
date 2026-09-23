@@ -1995,7 +1995,7 @@ export class OntologicalStore {
       const weekLabel = step <= 2 ? 'Semanas 1-2' : step <= 4 ? 'Semanas 3-4' : step <= 6 ? 'Semanas 5-6' : step <= 8 ? 'Semanas 7-8' : step <= 10 ? 'Semanas 9-10' : 'Semanas 11-12';
 
       const candidate: Partial<ProgramNodeInfo> = list.find((n) => n.step === step) || list[i] || {};
-      const officialNode = PROGRAM_NODES[i] || {};
+      const officialNode: Partial<ProgramNodeInfo> = PROGRAM_NODES[i] || {};
       const fallbackTitle = isMilestone
         ? 'Cierre de Ciclo: Integración, Cosecha de Aprendizajes y Evolución del Ser'
         : 'Espacio de Indagación Autónoma y Construcción de Sentido';
