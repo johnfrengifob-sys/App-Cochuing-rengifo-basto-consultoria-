@@ -1,9 +1,12 @@
 {
-  "projectId": "rengifo-basto-consultoria",
-  "appId": "1:857201102660:web:rengifobastoconsultoria",
-  "apiKey": "AIzaSyDummyKeyForRengifoBastoPlatform2026",
-  "authDomain": "rengifo-basto-consultoria.firebaseapp.com",
-  "storageBucket": "rengifo-basto-consultoria.appspot.com",
-  "messagingSenderId": "857201102660",
-  "firestoreDatabaseId": "(default)"
+  "projectId": "responsive-line-9gtt6",
+  "appId": "1:716817796848:web:0184ece12df03b22b9fc35",
+  "apiKey": "AIzaSyC5rz0f-hquOhm54hXJdEbLX5JKddRIa6E",
+  "authDomain": "responsive-line-9gtt6.firebaseapp.com",
+  "firestoreDatabaseId": "ai-studio-appcochuingrengi-0001ed08-e370-4c67-8055-615ddf9e7ac1",
+  "storageBucket": "responsive-line-9gtt6.firebasestorage.app",
+  "messagingSenderId": "716817796848",
+  "measurementId": "",
+  "oAuthClientId": "716817796848-lb5713ga2rgkbhfsbnra1qrser58f09t.apps.googleusercontent.com",
+  "recaptchaSiteKey": ""
 }

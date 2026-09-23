@@ -757,6 +757,85 @@
         }
       },
       "required": ["id", "title", "formUrl", "sheetUrl", "status"]
+    },
+    "ProgramNode": {
+      "title": "ProgramNode",
+      "description": "Nodo y temario de sesión ontológica formativa (1 a 12)",
+      "type": "object",
+      "properties": {
+        "step": {
+          "type": "number"
+        },
+        "weekLabel": {
+          "type": "string",
+          "maxLength": 100
+        },
+        "level": {
+          "type": "string",
+          "maxLength": 50
+        },
+        "levelTitle": {
+          "type": "string",
+          "maxLength": 150
+        },
+        "sessionTitle": {
+          "type": "string",
+          "maxLength": 200
+        },
+        "objective": {
+          "type": "string",
+          "maxLength": 1000
+        },
+        "keyQuestion": {
+          "type": "string",
+          "maxLength": 500
+        },
+        "levelPrompt": {
+          "type": "string",
+          "maxLength": 500
+        },
+        "googleFormsUrl": {
+          "type": "string",
+          "maxLength": 500
+        },
+        "googleSheetsUrl": {
+          "type": "string",
+          "maxLength": 500
+        },
+        "updatedAt": {
+          "type": "string",
+          "maxLength": 50
+        }
+      },
+      "required": ["step", "sessionTitle", "level"]
+    },
+    "WorkspaceDocument": {
+      "title": "WorkspaceDocument",
+      "description": "Documento de Google Workspace (Docs, Sheets, Drive) vinculado a la plataforma",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "name": {
+          "type": "string",
+          "maxLength": 200
+        },
+        "mimeType": {
+          "type": "string",
+          "maxLength": 150
+        },
+        "webViewLink": {
+          "type": "string",
+          "maxLength": 500
+        },
+        "createdAt": {
+          "type": "string",
+          "maxLength": 50
+        }
+      },
+      "required": ["id", "name"]
     }
   },
   "firestore": {
