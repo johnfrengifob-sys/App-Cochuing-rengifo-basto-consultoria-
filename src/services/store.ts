@@ -58,6 +58,7 @@ import {
   isPairModifiedFromCodeBase,
 } from '../data/officialFormsSheetsBase';
 import { getEmailAvatarUrl } from '../utils/avatar';
+import { formatFriendlySpanishDate, getDateOnlyString } from '../utils/dateHelper';
 
 export { getEmailAvatarUrl };
 
@@ -83,6 +84,7 @@ export const ADMIN_EMAIL = 'rengifobastoco@gmail.com';
 export const ADMIN_EMAILS: string[] = [
   'rengifobastoco@gmail.com',
   'johnfrengifob@gmail.com',
+  'legadobarber2026@gmail.com',
 ];
 
 export const isAdminEmail = (email?: string | null): boolean => {
@@ -1993,9 +1995,13 @@ export class OntologicalStore {
       const weekLabel = step <= 2 ? 'Semanas 1-2' : step <= 4 ? 'Semanas 3-4' : step <= 6 ? 'Semanas 5-6' : step <= 8 ? 'Semanas 7-8' : step <= 10 ? 'Semanas 9-10' : 'Semanas 11-12';
 
       const candidate: Partial<ProgramNodeInfo> = list.find((n) => n.step === step) || list[i] || {};
-      const sessionTitle = isMilestone
-        ? '4- Cierre de Ciclo: Integración, Cosecha de Aprendizajes y Evolución del Ser'
-        : `${cycleStep}- Espacio de Indagación Autónoma y Construcción de Sentido`;
+      const officialNode = PROGRAM_NODES[i] || {};
+      const fallbackTitle = isMilestone
+        ? 'Cierre de Ciclo: Integración, Cosecha de Aprendizajes y Evolución del Ser'
+        : 'Espacio de Indagación Autónoma y Construcción de Sentido';
+      const sessionTitle = candidate.sessionTitle && !candidate.sessionTitle.includes('Espacio de Indagación Autónoma')
+        ? candidate.sessionTitle
+        : (officialNode.sessionTitle || candidate.sessionTitle || fallbackTitle);
 
       return {
         ...candidate,
@@ -2584,14 +2590,47 @@ export class OntologicalStore {
         evt.title?.toLowerCase().includes('raíz') ||
         evt.title?.toLowerCase().includes('raiz');
       if (isRaizWorkshop) {
-        if (copy.imageUrl !== promotionalEventBannerImg || copy.coverImage !== promotionalEventBannerImg) {
+        // Fallback to official poster ONLY if neither imageUrl nor coverImage has been provided
+        if (!copy.imageUrl && !copy.coverImage) {
           copy.imageUrl = promotionalEventBannerImg;
           copy.coverImage = promotionalEventBannerImg;
           changed = true;
+        } else {
+          // Keep imageUrl and coverImage synchronized with the user's custom choice
+          const chosenImage = copy.coverImage || copy.imageUrl;
+          if (copy.imageUrl !== chosenImage || copy.coverImage !== chosenImage) {
+            copy.imageUrl = chosenImage;
+            copy.coverImage = chosenImage;
+            changed = true;
+          }
         }
-        if (!copy.date || copy.date.startsWith('2026-09-12')) {
+        // Only set default seed date if no date exists at all
+        if (!copy.date) {
           copy.date = '2026-09-19T19:00:00.000-05:00';
           copy.displayDate = 'Sábado, 19 de Septiembre de 2026';
+          copy.eventDate = '2026-09-19';
+          changed = true;
+        } else if (!copy.displayDate) {
+          copy.displayDate = formatFriendlySpanishDate(copy.date);
+          changed = true;
+        }
+      } else {
+        const chosenImage = copy.coverImage || copy.imageUrl;
+        if (chosenImage && (copy.imageUrl !== chosenImage || copy.coverImage !== chosenImage)) {
+          copy.imageUrl = chosenImage;
+          copy.coverImage = chosenImage;
+          changed = true;
+        }
+        if (copy.date && !copy.displayDate) {
+          copy.displayDate = formatFriendlySpanishDate(copy.date);
+          changed = true;
+        }
+      }
+      // Ensure eventDate matches the date without timezone shifts
+      if (copy.date) {
+        const dateOnly = getDateOnlyString(copy.date);
+        if (dateOnly && copy.eventDate !== dateOnly) {
+          copy.eventDate = dateOnly;
           changed = true;
         }
       }

@@ -445,9 +445,12 @@ async function startServer() {
       const weekLabel = step <= 2 ? 'Semanas 1-2' : step <= 4 ? 'Semanas 3-4' : step <= 6 ? 'Semanas 5-6' : step <= 8 ? 'Semanas 7-8' : step <= 10 ? 'Semanas 9-10' : 'Semanas 11-12';
 
       const candidate = list.find((n: any) => n.step === step) || list[i] || {};
-      const sessionTitle = isMilestone
-        ? '4- Cierre de Ciclo: Integración, Cosecha de Aprendizajes y Evolución del Ser'
-        : `${cycleStep}- Espacio de Indagación Autónoma y Construcción de Sentido`;
+      const fallbackTitle = isMilestone
+        ? 'Cierre de Ciclo: Integración, Cosecha de Aprendizajes y Evolución del Ser'
+        : 'Espacio de Indagación Autónoma y Construcción de Sentido';
+      const sessionTitle = candidate.sessionTitle && !candidate.sessionTitle.includes('Espacio de Indagación Autónoma')
+        ? candidate.sessionTitle
+        : (candidate.sessionTitle || fallbackTitle);
 
       return {
         ...candidate,

@@ -51,9 +51,13 @@ import {
 import { EventGeneralConfigSection } from './admin/events/EventGeneralConfigSection';
 import { EventContentSyllabusSection } from './admin/events/EventContentSyllabusSection';
 import { EventEvaluationAndTriggersSection } from './admin/events/EventEvaluationAndTriggersSection';
-import { PromotionalEventBanner } from './PromotionalEventBanner';
 import { PublicPortalMultiActionButton } from './admin/PublicPortalMultiActionButton';
 import promotionalEventBannerImg from '../assets/images/proximo_evento_banner_1788270380574.jpg';
+import {
+  formatFriendlySpanishDate,
+  getDateOnlyString,
+  buildSafeEventDateIso,
+} from '../utils/dateHelper';
 
 interface ProgramsAndEventsManagerProps {
   cronogramaEvents: CronogramaEvent[];
@@ -243,13 +247,19 @@ export const ProgramsAndEventsManager: React.FC<ProgramsAndEventsManagerProps> =
   const handleOpenCreateEvent = () => {
     setEditingEventId(null);
     setEditorActiveSection('general');
+    const nextDate = new Date(Date.now() + 1000 * 60 * 60 * 24 * 7);
+    const nextDateOnly = getDateOnlyString(nextDate);
+    const nextIso = buildSafeEventDateIso(nextDateOnly, '7:00 PM - 8:30 PM (GMT-5)');
+    const nextDisplay = formatFriendlySpanishDate(nextDateOnly);
+
     setEventFormData({
       title: '',
       subtitle: '',
       eventType: 'Taller',
       category: 'Primer Taller • En Vivo',
-      date: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7).toISOString(),
-      displayDate: 'Jueves Próximo (En Vivo)',
+      date: nextIso,
+      eventDate: nextDateOnly,
+      displayDate: nextDisplay,
       time: '7:00 PM - 8:30 PM (GMT-5)',
       mode: 'Online (Google Meet)',
       meetUrl: masterMeetUrl,
@@ -261,7 +271,7 @@ export const ProgramsAndEventsManager: React.FC<ProgramsAndEventsManagerProps> =
       capacity: 30,
       priceAmount: 180000,
       price: '$180.000 COP',
-      launchDate: new Date().toISOString().split('T')[0],
+      launchDate: getDateOnlyString(new Date()),
       facilitator: 'John Fredy Rengifo Basto (Master Coach Ontológico)',
       spotsLeft: 25,
       totalSpots: 30,
@@ -339,13 +349,20 @@ export const ProgramsAndEventsManager: React.FC<ProgramsAndEventsManagerProps> =
   const handleOpenEditEvent = (evt: CronogramaEvent) => {
     setEditingEventId(evt.id);
     setEditorActiveSection('general');
+    const safeDateOnly = getDateOnlyString(evt.date || evt.eventDate);
+    const safeDateIso = safeDateOnly ? buildSafeEventDateIso(safeDateOnly, evt.time) : (evt.date || '');
+    const safeDisplayDate = evt.displayDate || (safeDateOnly ? formatFriendlySpanishDate(safeDateOnly) : '');
+
     setEventFormData({
       ...evt,
+      date: safeDateIso,
+      eventDate: safeDateOnly,
+      displayDate: safeDisplayDate,
       showOnHome: evt.showOnHome ?? true,
       capacityType: evt.capacityType || (evt.totalSpots === 1 ? 'individual' : 'grupal'),
       capacity: evt.capacity || evt.totalSpots || 25,
       priceAmount: evt.priceAmount !== undefined ? evt.priceAmount : 180000,
-      launchDate: evt.launchDate || (evt.date ? evt.date.split('T')[0] : ''),
+      launchDate: getDateOnlyString(evt.launchDate),
       googleFormsUrl: evt.googleFormsUrl || 'https://docs.google.com/forms/d/e/1FAIpQLSc-rbc-evaluacion-post-taller/viewform',
       googleSheetsUrl: evt.googleSheetsUrl || 'https://docs.google.com/spreadsheets/d/1rbc-master-database-coachees/edit#gid=0',
       googleDriveFolderUrl: evt.googleDriveFolderUrl || 'https://drive.google.com/drive/folders/rbc-taller-materiales',
@@ -372,8 +389,20 @@ export const ProgramsAndEventsManager: React.FC<ProgramsAndEventsManagerProps> =
     }
 
     const isVisibleOnHome = eventFormData.showOnHome !== false;
+    const finalDateOnly = getDateOnlyString(eventFormData.date || eventFormData.eventDate);
+    const finalIso = finalDateOnly
+      ? buildSafeEventDateIso(finalDateOnly, eventFormData.time)
+      : (eventFormData.date || '');
+    const finalDisplayDate = eventFormData.displayDate?.trim()
+      ? eventFormData.displayDate.trim()
+      : (finalDateOnly ? formatFriendlySpanishDate(finalDateOnly) : '');
+
     const payload: Partial<CronogramaEvent> = {
       ...eventFormData,
+      date: finalIso,
+      eventDate: finalDateOnly,
+      displayDate: finalDisplayDate,
+      launchDate: getDateOnlyString(eventFormData.launchDate),
       showOnHome: isVisibleOnHome,
       featured: isVisibleOnHome,
       totalSpots: eventFormData.capacity || eventFormData.totalSpots || 25,
@@ -490,9 +519,6 @@ export const ProgramsAndEventsManager: React.FC<ProgramsAndEventsManagerProps> =
       {/* ========================================================================= */}
       {activeSubTab === 'events' && (
         <div className="space-y-5">
-          {/* AFICHE PROMOCIONAL DEL PRÓXIMO TALLER - AL INICIO DIRECTO TRAS LOS BOTONES PRINCIPALES */}
-          <PromotionalEventBanner variant="participant" />
-
           {/* Barra de Búsqueda, Filtros y Botón Crear Taller / Evento */}
           <div className="bg-white/90 dark:bg-neutral-900/90 backdrop-blur-md p-3.5 sm:p-4 rounded-2xl border border-gray-200/80 dark:border-neutral-800 shadow-xs flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3.5">
             <div className="relative flex-1 min-w-[240px]">
@@ -549,14 +575,10 @@ export const ProgramsAndEventsManager: React.FC<ProgramsAndEventsManagerProps> =
                 const capacity = evt.capacity || evt.totalSpots || 25;
                 const capacityType = evt.capacityType || (capacity === 1 ? 'individual' : 'grupal');
                 const priceFormatted = evt.price || (evt.priceAmount ? `$${evt.priceAmount.toLocaleString()} COP` : 'Acceso Libre');
-                const isRaiz = evt.id === 'taller-1-raiz' ||
-                  evt.id?.toLowerCase().includes('raiz') ||
-                  evt.title?.toLowerCase().includes('raíz') ||
-                  evt.title?.toLowerCase().includes('raiz');
-                const rawCover = evt.coverImage || evt.imageUrl;
-                const cover = (isRaiz || !rawCover || rawCover.includes('unsplash') || rawCover.toLowerCase().includes('masterclass'))
-                  ? promotionalEventBannerImg
-                  : rawCover;
+                const rawCover = (evt.coverImage && evt.coverImage.trim()) || (evt.imageUrl && evt.imageUrl.trim());
+                const cover = (rawCover && !rawCover.startsWith('blob:') && !rawCover.toLowerCase().includes('masterclass'))
+                  ? rawCover
+                  : promotionalEventBannerImg;
                 const submissionsCount = evt.workbookSubmissions?.length || 0;
 
                 return (

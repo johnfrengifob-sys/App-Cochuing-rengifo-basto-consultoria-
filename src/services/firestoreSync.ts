@@ -564,6 +564,85 @@ export class FirestoreSyncService {
     }
   }
 
+  // Purge all obsolete workshops, orphaned sessions, and legacy drafts from Firestore
+  static async purgeObsoleteDataAndSynchronizeActive(): Promise<{
+    deletedObsoleteCount: number;
+    officialWorkshopsCount: number;
+    officialSessionsCount: number;
+    officialNodesCount: number;
+  }> {
+    let deletedObsoleteCount = 0;
+
+    // 1. Purge obsolete or draft cronogramaEvents from Firestore
+    try {
+      const snap = await getDocs(collection(db, 'cronogramaEvents'));
+      const officialIds = ['taller-1-raiz', 'taller-2-tallo', 'taller-3-florecimiento'];
+      for (const d of snap.docs) {
+        if (!officialIds.includes(d.id)) {
+          try {
+            await deleteDoc(doc(db, 'cronogramaEvents', d.id));
+            deletedObsoleteCount++;
+          } catch (e) {
+            console.warn(`Could not delete obsolete workshop ${d.id}:`, e);
+          }
+        }
+      }
+    } catch (e) {
+      console.warn('Notice querying cronogramaEvents for purge:', e);
+    }
+
+    // Explicitly delete known legacy test IDs
+    try {
+      await deleteDoc(doc(db, 'cronogramaEvents', 'event-1790125282554'));
+    } catch {}
+
+    // 2. Purge orphaned or corrupted sessions
+    try {
+      const sessSnap = await getDocs(collection(db, 'sessions'));
+      const activeClientIds = ['client-legadobarber2026', 'coach-1'];
+      for (const d of sessSnap.docs) {
+        const data = d.data() as Session;
+        if (!activeClientIds.includes(data.clientId) || d.id.includes('dummy') || d.id.includes('test')) {
+          try {
+            await deleteDoc(doc(db, 'sessions', d.id));
+            deletedObsoleteCount++;
+          } catch {}
+        }
+      }
+    } catch (e) {
+      console.warn('Notice querying sessions for purge:', e);
+    }
+
+    // 3. Purge invalid programNodes
+    try {
+      const nodesSnap = await getDocs(collection(db, 'programNodes'));
+      const validSteps = new Set([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
+      for (const d of nodesSnap.docs) {
+        const data = d.data();
+        if (!data.step || !validSteps.has(data.step) || !data.sessionTitle) {
+          try {
+            await deleteDoc(doc(db, 'programNodes', d.id));
+            deletedObsoleteCount++;
+          } catch {}
+        }
+      }
+    } catch (e) {
+      console.warn('Notice querying programNodes for purge:', e);
+    }
+
+    // 4. Purge dummy test users
+    try {
+      await this.cleanOldDummyUsersFromFirestore();
+    } catch {}
+
+    return {
+      deletedObsoleteCount,
+      officialWorkshopsCount: 3,
+      officialSessionsCount: 12,
+      officialNodesCount: 12,
+    };
+  }
+
   // Wipe all clients, sessions, forms, payments and registrations from Firestore
   static async wipeAllFirestoreData(): Promise<{ success: boolean; deletedCount: number }> {
     let deletedCount = 0;
@@ -1099,6 +1178,7 @@ export class FirestoreSyncService {
     bitacorasSesionesB2B?: BitacoraSesionB2BEntry[];
     bitacorasTalleres?: BitacoraTallerEntry[];
     formsSheetsIntegrations?: FormsSheetsIntegrationPair[];
+    programNodes?: ProgramNodeInfo[];
   }): Promise<{ syncedCount: number; errors: number }> {
     let syncedCount = 0;
     let errors = 0;
@@ -1216,6 +1296,17 @@ export class FirestoreSyncService {
       for (const pair of params.formsSheetsIntegrations) {
         try {
           await this.syncFormsSheetsIntegration(pair);
+          syncedCount++;
+        } catch {
+          errors++;
+        }
+      }
+    }
+
+    if (params.programNodes && params.programNodes.length > 0) {
+      for (const node of params.programNodes) {
+        try {
+          await this.syncProgramNode(node);
           syncedCount++;
         } catch {
           errors++;

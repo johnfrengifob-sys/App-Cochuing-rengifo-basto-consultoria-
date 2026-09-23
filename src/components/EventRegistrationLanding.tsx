@@ -5,6 +5,7 @@ import { INITIAL_CRONOGRAMA_EVENTS } from '../data/raizBalanceWorkshops';
 import { safeCopyToClipboard } from '../utils/clipboard';
 import { getPublicPortalUrl } from '../utils/urlHelper';
 import { signInWithGoogle, auth } from '../services/firebase';
+import { formatFriendlySpanishDate, getDateOnlyString } from '../utils/dateHelper';
 import coachAvatarImg from '../assets/images/regenerated_image_1788287101599.jpg';
 import promotionalEventBannerImg from '../assets/images/proximo_evento_banner_1788270380574.jpg';
 import { LiquidGlassButton } from './LiquidGlassButton';
@@ -102,14 +103,10 @@ export const EventRegistrationLanding: React.FC<EventRegistrationLandingProps> =
       supportMaterials: [],
     });
 
-    const isRaiz = raw.id === 'taller-1-raiz' ||
-      raw.id?.toLowerCase().includes('raiz') ||
-      raw.title?.toLowerCase().includes('raíz') ||
-      raw.title?.toLowerCase().includes('raiz');
-
-    const sanitizedImage = (isRaiz || !raw.imageUrl || raw.imageUrl.includes('unsplash') || raw.imageUrl.includes('masterclass'))
-      ? promotionalEventBannerImg
-      : raw.imageUrl;
+    const customImage = (raw.coverImage && raw.coverImage.trim()) || (raw.imageUrl && raw.imageUrl.trim());
+    const sanitizedImage = (customImage && !customImage.startsWith('blob:') && !customImage.toLowerCase().includes('masterclass'))
+      ? customImage
+      : promotionalEventBannerImg;
 
     return {
       ...raw,
@@ -160,13 +157,26 @@ export const EventRegistrationLanding: React.FC<EventRegistrationLandingProps> =
   const [copiedMeet, setCopiedMeet] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
 
-  // Live countdown timer
-  const [timeLeft, setTimeLeft] = useState({
-    days: 3,
-    hours: 8,
-    minutes: 42,
-    seconds: 15,
-  });
+  // Live countdown timer calculation based on actual event date
+  const getTimeRemaining = (targetDateStr?: string) => {
+    if (!targetDateStr) {
+      return { days: 0, hours: 0, minutes: 0, seconds: 0, isLive: false };
+    }
+    const target = new Date(targetDateStr).getTime();
+    if (isNaN(target)) {
+      return { days: 0, hours: 0, minutes: 0, seconds: 0, isLive: false };
+    }
+    const diff = Math.max(0, target - Date.now());
+    return {
+      days: Math.floor(diff / (1000 * 60 * 60 * 24)),
+      hours: Math.floor((diff / (1000 * 60 * 60)) % 24),
+      minutes: Math.floor((diff / (1000 * 60)) % 60),
+      seconds: Math.floor((diff / 1000) % 60),
+      isLive: diff === 0,
+    };
+  };
+
+  const [timeLeft, setTimeLeft] = useState(() => getTimeRemaining(safeEvent.date));
 
   // Auto-detect active Firebase session if user already authenticated with Google
   useEffect(() => {
@@ -190,23 +200,13 @@ export const EventRegistrationLanding: React.FC<EventRegistrationLandingProps> =
   }, []);
 
   useEffect(() => {
+    setTimeLeft(getTimeRemaining(safeEvent.date));
     const timer = setInterval(() => {
-      setTimeLeft((prev) => {
-        if (prev.seconds > 0) {
-          return { ...prev, seconds: prev.seconds - 1 };
-        } else if (prev.minutes > 0) {
-          return { ...prev, minutes: 59, seconds: 59 };
-        } else if (prev.hours > 0) {
-          return { ...prev, hours: prev.hours - 1, minutes: 59, seconds: 59 };
-        } else if (prev.days > 0) {
-          return { ...prev, days: prev.days - 1, hours: 23, minutes: 59, seconds: 59 };
-        }
-        return prev;
-      });
+      setTimeLeft(getTimeRemaining(safeEvent.date));
     }, 1000);
 
     return () => clearInterval(timer);
-  }, []);
+  }, [safeEvent.date]);
 
   // Master Google Workspace profile reference
   const PRIMARY_GOOGLE_ACCOUNT = {

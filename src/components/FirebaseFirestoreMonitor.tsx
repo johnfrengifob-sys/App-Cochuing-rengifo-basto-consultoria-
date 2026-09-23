@@ -144,6 +144,13 @@ service cloud.firestore {
         prospects,
         payments,
         eventRegistrations,
+        cronogramaEvents: OntologicalStore.getCronogramaEvents(),
+        formsSheetsIntegrations: OntologicalStore.getFormsSheetsIntegrations(),
+        programNodes: OntologicalStore.getProgramNodes(),
+        tallerRegistros: OntologicalStore.getTallerRegistros(),
+        sesionIndividualAcuerdos: OntologicalStore.getSesionIndividualAcuerdos(),
+        bitacorasSesionesB2B: OntologicalStore.getBitacorasSesionesB2B(),
+        bitacorasTalleres: OntologicalStore.getBitacorasTalleres(),
       });
 
       const nowStr = new Date().toLocaleTimeString('es-ES', {
@@ -165,6 +172,63 @@ service cloud.firestore {
       setSyncStatusMsg({
         type: 'error',
         text: `Error durante la sincronización: ${err instanceof Error ? err.message : 'Verifica conexión a internet'}`,
+      });
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
+  const handleDeepCleanupAndSync = async () => {
+    setIsSyncing(true);
+    setSyncStatusMsg(null);
+
+    try {
+      // 1. Purge obsolete records and legacy drafts from Firestore
+      const purgeResult = await FirestoreSyncService.purgeObsoleteDataAndSynchronizeActive();
+
+      // 2. Full synchronization of official, active application data
+      const users = OntologicalStore.getUsers();
+      const sessions = OntologicalStore.getSessions();
+      const forms = OntologicalStore.getForms();
+      const prospects = OntologicalStore.getProspects();
+      const payments = OntologicalStore.getPaymentRequests();
+      const eventRegistrations = OntologicalStore.getEventRegistrations();
+
+      const result = await FirestoreSyncService.syncAllLocalToFirestore({
+        users,
+        sessions,
+        forms,
+        prospects,
+        payments,
+        eventRegistrations,
+        cronogramaEvents: OntologicalStore.getCronogramaEvents(),
+        formsSheetsIntegrations: OntologicalStore.getFormsSheetsIntegrations(),
+        programNodes: OntologicalStore.getProgramNodes(),
+        tallerRegistros: OntologicalStore.getTallerRegistros(),
+        sesionIndividualAcuerdos: OntologicalStore.getSesionIndividualAcuerdos(),
+        bitacorasSesionesB2B: OntologicalStore.getBitacorasSesionesB2B(),
+        bitacorasTalleres: OntologicalStore.getBitacorasTalleres(),
+      });
+
+      const nowStr = new Date().toLocaleTimeString('es-ES', {
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+      });
+      setLastSyncTime(nowStr);
+      localStorage.setItem('rbc_last_firestore_sync', nowStr);
+      setIsConnected(true);
+
+      setSyncStatusMsg({
+        type: 'success',
+        text: `Limpieza y Sincronización oficial exitosa: Se depuraron ${purgeResult.deletedObsoleteCount} registros obsoletos y se consolidaron ${result.syncedCount} elementos activos (3 Talleres oficiales, 12 Módulos curriculares, 12 Sesiones y Bitácoras).`,
+      });
+
+      if (onSyncCompleted) onSyncCompleted();
+    } catch (err) {
+      setSyncStatusMsg({
+        type: 'error',
+        text: `Error durante la depuración: ${err instanceof Error ? err.message : 'Error de sincronización'}`,
       });
     } finally {
       setIsSyncing(false);
@@ -201,6 +265,21 @@ service cloud.firestore {
           </div>
 
           <div className="flex items-center gap-2 shrink-0">
+            <button
+              type="button"
+              onClick={handleDeepCleanupAndSync}
+              disabled={isSyncing}
+              className={`px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition-all border ${
+                isSyncing
+                  ? 'bg-gray-100 dark:bg-neutral-800 text-gray-400 border-gray-200 dark:border-neutral-700 cursor-not-allowed'
+                  : 'bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 dark:text-amber-400 border-amber-500/30 active:scale-98'
+              }`}
+              title="Limpieza total de registros obsoletos, talleres anteriores y sincronización de datos oficiales"
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>Depurar y Consolidar</span>
+            </button>
+
             <button
               type="button"
               onClick={handleRunFullSync}

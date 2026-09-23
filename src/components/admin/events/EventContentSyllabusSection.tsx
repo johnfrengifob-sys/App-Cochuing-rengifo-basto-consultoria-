@@ -15,6 +15,8 @@ import {
   Clock,
   ChevronDown,
   ChevronUp,
+  MessageSquare,
+  HelpCircle,
 } from 'lucide-react';
 import {
   CronogramaEvent,
@@ -47,6 +49,25 @@ export const EventContentSyllabusSection: React.FC<EventContentSyllabusSectionPr
   const [newMatSize, setNewMatSize] = useState('');
   const [newMatDesc, setNewMatDesc] = useState('');
   const [isAddingMaterial, setIsAddingMaterial] = useState(false);
+
+  // Guiding questions state
+  const guidingQuestions = event.guidingQuestions || [];
+  const [newQuestion, setNewQuestion] = useState('');
+  const [isAddingQuestion, setIsAddingQuestion] = useState(false);
+
+  const handleAddQuestion = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newQuestion.trim()) return;
+    const updated = [...guidingQuestions, newQuestion.trim()];
+    onChange({ guidingQuestions: updated });
+    setNewQuestion('');
+    setIsAddingQuestion(false);
+  };
+
+  const handleDeleteQuestion = (index: number) => {
+    const updated = guidingQuestions.filter((_, i) => i !== index);
+    onChange({ guidingQuestions: updated });
+  };
 
   // --- SYLLABUS HANDLERS ---
   const handleAddOrUpdateBlock = (e: React.FormEvent) => {
@@ -513,6 +534,102 @@ export const EventContentSyllabusSection: React.FC<EventContentSyllabusSectionPr
                 className="px-4 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold cursor-pointer shadow-xs"
               >
                 Guardar Recurso
+              </button>
+            </div>
+          </form>
+        )}
+      </div>
+
+      {/* SECCIÓN C: PREGUNTAS GUÍA DE INDAGACIÓN SOMÁTICA & ONTOLÓGICA */}
+      <div className="p-5 rounded-2xl border border-gray-200 dark:border-neutral-800 bg-white dark:bg-neutral-900/60 space-y-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="w-6 h-6 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 font-mono text-xs font-bold flex items-center justify-center">
+              C
+            </span>
+            <h4 className="text-sm font-bold text-black dark:text-white">
+              Preguntas Guía de Indagación Somática & Ontológica
+            </h4>
+            <span className="text-xs text-gray-400 font-mono">
+              ({guidingQuestions.length} {guidingQuestions.length === 1 ? 'pregunta' : 'preguntas'})
+            </span>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setIsAddingQuestion(!isAddingQuestion)}
+            className="inline-flex items-center gap-1 text-xs px-3 py-1.5 rounded-xl bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300 font-semibold hover:bg-amber-100 dark:hover:bg-amber-900/50 transition-all cursor-pointer"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            <span>Agregar Pregunta</span>
+          </button>
+        </div>
+
+        <p className="text-xs text-gray-500 dark:text-neutral-400 font-light">
+          Preguntas reflexivas y somáticas para desarticular mandatos inconscientes durante el taller y el cuaderno de trabajo.
+        </p>
+
+        {guidingQuestions.length > 0 ? (
+          <div className="space-y-2">
+            {guidingQuestions.map((q, idx) => (
+              <div
+                key={idx}
+                className="p-3 rounded-xl border border-gray-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 flex items-start justify-between gap-3 shadow-2xs hover:border-amber-300 transition-all"
+              >
+                <div className="flex items-start gap-2.5 min-w-0">
+                  <span className="w-5 h-5 rounded-md bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-300 text-[10px] font-mono font-bold flex items-center justify-center shrink-0 mt-0.5">
+                    {idx + 1}
+                  </span>
+                  <p className="text-xs font-medium text-black dark:text-white break-words">
+                    {q}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => handleDeleteQuestion(idx)}
+                  className="p-1 text-gray-400 hover:text-rose-600 rounded-md cursor-pointer shrink-0"
+                  title="Eliminar pregunta"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="p-5 rounded-xl border border-dashed border-gray-200 dark:border-neutral-800 text-center text-xs text-gray-400">
+            No se han registrado preguntas guía para este taller aún.
+          </div>
+        )}
+
+        {isAddingQuestion && (
+          <form
+            onSubmit={handleAddQuestion}
+            className="p-4 rounded-2xl border border-amber-100 dark:border-neutral-800 bg-amber-50/40 dark:bg-neutral-900/50 space-y-3"
+          >
+            <span className="text-xs font-bold text-amber-900 dark:text-amber-300 block">
+              Nueva Pregunta Guía de Indagación
+            </span>
+            <textarea
+              rows={2}
+              required
+              value={newQuestion}
+              onChange={(e) => setNewQuestion(e.target.value)}
+              placeholder="Ej: ¿En qué áreas estás diciendo 'Sí' cuando tu cuerpo pide un límite?"
+              className="w-full px-3 py-2 text-xs rounded-xl border border-gray-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-black dark:text-white"
+            />
+            <div className="flex items-center justify-end gap-2 pt-1">
+              <button
+                type="button"
+                onClick={() => setIsAddingQuestion(false)}
+                className="px-3 py-1.5 text-xs text-gray-600 dark:text-neutral-400 hover:bg-gray-100 dark:hover:bg-neutral-800 rounded-lg cursor-pointer"
+              >
+                Cancelar
+              </button>
+              <button
+                type="submit"
+                className="px-4 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold cursor-pointer shadow-xs"
+              >
+                Guardar Pregunta
               </button>
             </div>
           </form>

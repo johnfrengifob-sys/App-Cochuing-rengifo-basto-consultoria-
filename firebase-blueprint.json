@@ -815,6 +815,14 @@
     "/formsSheetsIntegrations/{integrationId}": {
       "schema": "FormsSheetsIntegration",
       "description": "Configuración viva de enlaces y sincronización de Google Forms & Sheets"
+    },
+    "/programNodes/{nodeId}": {
+      "schema": "ProgramNode",
+      "description": "Nodos curriculares y temarios de los 12 pasos de transformación ontológica"
+    },
+    "/workspaceDocuments/{docId}": {
+      "schema": "WorkspaceDocument",
+      "description": "Documentos Google Workspace vinculados a la bitácora viva"
     }
   }
 }

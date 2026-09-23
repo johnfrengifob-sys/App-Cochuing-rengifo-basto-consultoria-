@@ -116,17 +116,12 @@ export const PromotionalEventBanner: React.FC<PromotionalEventBannerProps> = ({
   // Afiche gráfico oficial de alta resolución:
   // Desvincula cualquier caché residual de la Masterclass anterior o imagen placeholder de Unsplash
   const eventImageUrl = useMemo(() => {
-    if (
-      isRaizWorkshop ||
-      !event.imageUrl ||
-      event.imageUrl.includes('unsplash') ||
-      event.imageUrl.toLowerCase().includes('masterclass') ||
-      event.imageUrl.startsWith('blob:')
-    ) {
-      return promotionalEventBannerImg;
+    const raw = (event.coverImage && event.coverImage.trim()) || (event.imageUrl && event.imageUrl.trim());
+    if (raw && !raw.startsWith('blob:') && !raw.toLowerCase().includes('masterclass')) {
+      return raw;
     }
-    return event.imageUrl;
-  }, [event.imageUrl, isRaizWorkshop]);
+    return promotionalEventBannerImg;
+  }, [event.coverImage, event.imageUrl]);
 
   // Dynamic live countdown calculation
   const [timeLeft, setTimeLeft] = useState(() => {

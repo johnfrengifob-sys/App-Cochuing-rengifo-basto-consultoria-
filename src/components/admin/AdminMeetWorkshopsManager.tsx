@@ -18,10 +18,16 @@ import {
   UserCheck,
   UserX,
   Search,
+  RefreshCw,
 } from 'lucide-react';
 import { OntologicalStore } from '../../services/store';
 import { CronogramaEvent, EventRegistration } from '../../types';
 import { safeCopyToClipboard } from '../../utils/clipboard';
+import {
+  formatFriendlySpanishDate,
+  getDateOnlyString,
+  buildSafeEventDateIso,
+} from '../../utils/dateHelper';
 
 interface AdminMeetWorkshopsManagerProps {
   onRefresh?: () => void;
@@ -123,12 +129,18 @@ export const AdminMeetWorkshopsManager: React.FC<AdminMeetWorkshopsManagerProps>
 
   const handleOpenNewEvent = () => {
     setEditingEvent(null);
+    const nextDate = new Date(Date.now() + 1000 * 60 * 60 * 24 * 7);
+    const nextDateOnly = getDateOnlyString(nextDate);
+    const nextIso = buildSafeEventDateIso(nextDateOnly, '7:00 PM - 9:00 PM (GMT-5)');
+    const nextDisplay = formatFriendlySpanishDate(nextDateOnly);
+
     setEventForm({
       title: '',
       subtitle: '',
       category: 'Conversatorio Quincenal',
-      date: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7).toISOString(),
-      displayDate: '',
+      date: nextIso,
+      eventDate: nextDateOnly,
+      displayDate: nextDisplay,
       time: '7:00 PM - 9:00 PM (GMT-5)',
       mode: 'Online (Google Meet)',
       meetUrl: masterMeetUrl,
@@ -146,12 +158,17 @@ export const AdminMeetWorkshopsManager: React.FC<AdminMeetWorkshopsManagerProps>
 
   const handleOpenEditEvent = (evt: CronogramaEvent) => {
     setEditingEvent(evt);
+    const safeDateOnly = getDateOnlyString(evt.date || evt.eventDate);
+    const safeIso = safeDateOnly ? buildSafeEventDateIso(safeDateOnly, evt.time) : (evt.date || '');
+    const safeDisplay = evt.displayDate || (safeDateOnly ? formatFriendlySpanishDate(safeDateOnly) : '');
+
     setEventForm({
       title: evt.title,
       subtitle: evt.subtitle || '',
       category: evt.category,
-      date: evt.date,
-      displayDate: evt.displayDate || '',
+      date: safeIso,
+      eventDate: safeDateOnly,
+      displayDate: safeDisplay,
       time: evt.time,
       mode: evt.mode,
       meetUrl: evt.meetUrl || masterMeetUrl,
@@ -171,11 +188,26 @@ export const AdminMeetWorkshopsManager: React.FC<AdminMeetWorkshopsManagerProps>
     e.preventDefault();
     if (!eventForm.title.trim()) return;
 
+    const safeDateOnly = getDateOnlyString(eventForm.date || eventForm.eventDate);
+    const finalIso = safeDateOnly
+      ? buildSafeEventDateIso(safeDateOnly, eventForm.time)
+      : (eventForm.date || '');
+    const finalDisplay = eventForm.displayDate?.trim()
+      ? eventForm.displayDate.trim()
+      : (safeDateOnly ? formatFriendlySpanishDate(safeDateOnly) : '');
+
+    const finalPayload = {
+      ...eventForm,
+      date: finalIso,
+      eventDate: safeDateOnly,
+      displayDate: finalDisplay,
+    };
+
     if (editingEvent) {
-      OntologicalStore.updateCronogramaEvent(editingEvent.id, eventForm);
+      OntologicalStore.updateCronogramaEvent(editingEvent.id, finalPayload);
       showNotification(`Taller "${eventForm.title}" actualizado con éxito.`);
     } else {
-      OntologicalStore.addCronogramaEvent(eventForm);
+      OntologicalStore.addCronogramaEvent(finalPayload);
       showNotification(`Nuevo taller "${eventForm.title}" programado.`);
     }
 
@@ -711,9 +743,73 @@ export const AdminMeetWorkshopsManager: React.FC<AdminMeetWorkshopsManagerProps>
                   <input
                     type="text"
                     value={eventForm.time}
-                    onChange={(e) => setEventForm({ ...eventForm, time: e.target.value })}
+                    onChange={(e) => {
+                      const newTime = e.target.value;
+                      const dateOnly = getDateOnlyString(eventForm.date || (eventForm as any).eventDate);
+                      setEventForm({
+                        ...eventForm,
+                        time: newTime,
+                        date: dateOnly ? buildSafeEventDateIso(dateOnly, newTime) : eventForm.date,
+                      });
+                    }}
                     placeholder="Ej: 7:00 PM - 9:00 PM (GMT-5)"
                     className="w-full p-2.5 rounded-xl bg-gray-50 dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 text-black dark:text-white"
+                  />
+                </div>
+              </div>
+
+              {/* Fecha y texto visible */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="font-semibold text-black dark:text-white flex items-center gap-1.5">
+                    <Calendar className="w-3.5 h-3.5 text-indigo-500" />
+                    <span>Fecha de Realización *</span>
+                  </label>
+                  <input
+                    type="date"
+                    required
+                    value={getDateOnlyString(eventForm.date || (eventForm as any).eventDate)}
+                    onChange={(e) => {
+                      const newDateOnly = e.target.value;
+                      if (!newDateOnly) {
+                        setEventForm({ ...eventForm, date: '', displayDate: '' });
+                        return;
+                      }
+                      const safeIso = buildSafeEventDateIso(newDateOnly, eventForm.time);
+                      const friendly = formatFriendlySpanishDate(newDateOnly);
+                      setEventForm({
+                        ...eventForm,
+                        date: safeIso,
+                        displayDate: friendly,
+                      });
+                    }}
+                    className="w-full p-2.5 rounded-xl bg-gray-50 dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 text-black dark:text-white font-mono text-xs"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between">
+                    <label className="font-semibold text-black dark:text-white">Texto Visible Fecha</label>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const dOnly = getDateOnlyString(eventForm.date);
+                        if (dOnly) {
+                          setEventForm({ ...eventForm, displayDate: formatFriendlySpanishDate(dOnly) });
+                        }
+                      }}
+                      className="text-[10px] text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-1 cursor-pointer"
+                    >
+                      <RefreshCw className="w-2.5 h-2.5" />
+                      <span>Auto</span>
+                    </button>
+                  </div>
+                  <input
+                    type="text"
+                    value={eventForm.displayDate || ''}
+                    onChange={(e) => setEventForm({ ...eventForm, displayDate: e.target.value })}
+                    placeholder="Ej: Sábado, 26 de Septiembre"
+                    className="w-full p-2.5 rounded-xl bg-gray-50 dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 text-black dark:text-white text-xs"
                   />
                 </div>
               </div>
