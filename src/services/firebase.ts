@@ -1,5 +1,11 @@
 import { initializeApp, getApps, getApp } from 'firebase/app';
-import { getFirestore, Firestore, doc, getDocFromServer } from 'firebase/firestore';
+import {
+  initializeFirestore,
+  getFirestore,
+  Firestore,
+  doc,
+  getDocFromServer,
+} from 'firebase/firestore';
 import { getAuth, Auth, GoogleAuthProvider, signInWithPopup, signOut as firebaseSignOut } from 'firebase/auth';
 import config from '../../firebase-applet-config.json';
 
@@ -30,10 +36,27 @@ const firebaseConfig = {
 // Initialize Firebase client SDK safely
 export const firebaseApp = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 
-// Initialize Firestore with specific database ID from config if present
-export const db: Firestore = typedConfig.firestoreDatabaseId
-  ? getFirestore(firebaseApp, typedConfig.firestoreDatabaseId)
-  : getFirestore(firebaseApp);
+// Initialize Firestore with specific database ID from config and reliable HTTP long polling for iframe compatibility
+export const db: Firestore = (() => {
+  try {
+    if (typedConfig.firestoreDatabaseId) {
+      return initializeFirestore(
+        firebaseApp,
+        {
+          experimentalForceLongPolling: true,
+        },
+        typedConfig.firestoreDatabaseId
+      );
+    }
+    return initializeFirestore(firebaseApp, {
+      experimentalForceLongPolling: true,
+    });
+  } catch (_err) {
+    return typedConfig.firestoreDatabaseId
+      ? getFirestore(firebaseApp, typedConfig.firestoreDatabaseId)
+      : getFirestore(firebaseApp);
+  }
+})();
 
 // Initialize Firebase Auth
 export const auth: Auth = getAuth(firebaseApp);
@@ -102,9 +125,15 @@ export async function testFirestoreConnection(): Promise<boolean> {
     console.info('Firestore connection validated successfully.');
     return true;
   } catch (error) {
-    if (error instanceof Error && error.message.includes('the client is offline')) {
-      console.warn('Firestore is running in offline/cached mode.');
-      return false;
+    if (error instanceof Error) {
+      if (
+        error.message.includes('the client is offline') ||
+        error.message.includes('Could not reach Cloud Firestore') ||
+        (error as any).code === 'unavailable'
+      ) {
+        console.warn('Firestore is running in offline/cached mode or waiting for connection.');
+        return false;
+      }
     }
     // Not a fatal failure if the test doc does not exist
     return true;

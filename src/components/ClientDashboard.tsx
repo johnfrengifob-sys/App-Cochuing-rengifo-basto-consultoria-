@@ -833,8 +833,6 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
                         );
                         const dateLabel = matchingEvt?.date ? formatHumanDate(matchingEvt.date) : ws.defaultDate;
                         const formLink = ws.googleFormsUrl || ws.agreementFormUrl || OFFICIAL_FORMS_SHEETS_BASE_MAP.talleres_registro.formUrl;
-                        const sheetLink = ws.googleSheetsUrl || ws.agreementSheetUrl || OFFICIAL_FORMS_SHEETS_BASE_MAP.talleres_registro.sheetUrl;
-                        const autocratLink = ws.autocratFolderUrl || ws.autocratUrl || OFFICIAL_FORMS_SHEETS_BASE_MAP.talleres_registro.autocratFolderUrl;
 
                         return (
                           <div
@@ -886,7 +884,7 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
                                 <span className="shrink-0 font-medium">Facilitador: John Fredy Rengifo</span>
                               </div>
 
-                              {/* Accesos rápidos Workspace para cada Taller: Meet, Forms, Sheets, AutoCrat */}
+                              {/* Accesos rápidos protegidos: Meet, Forms, Expediente Extraído, Memoria PDF (CERO enlaces a Sheets compartidos) */}
                               <div className="grid grid-cols-2 gap-1.5 pt-1">
                                 <a
                                   href={ws.meetLink || 'https://meet.google.com/rbc-conversatorio-ontologico'}
@@ -910,34 +908,28 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
                                   <span>Google Forms</span>
                                 </a>
 
-                                <a
-                                  href={sheetLink}
-                                  target="_blank"
-                                  rel="noreferrer"
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setSelectedWorkshopTrackId(ws.id);
+                                    openSection('talleres');
+                                  }}
                                   className="px-2 py-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 text-[10px] font-semibold flex items-center justify-center gap-1 transition-colors border border-emerald-500/20 cursor-pointer"
-                                  title="Hoja de Cálculo en Google Sheets con Expediente y Respuestas"
+                                  title="Consultar expediente individual extraído con estricta privacidad"
                                 >
-                                  <FileSpreadsheet className="w-2.5 h-2.5 text-emerald-600 dark:text-emerald-400" />
-                                  <span>Google Sheets</span>
-                                </a>
+                                  <ShieldCheck className="w-2.5 h-2.5 text-emerald-600 dark:text-emerald-400" />
+                                  <span>Expediente Extraído</span>
+                                </button>
 
-                                {autocratLink ? (
-                                  <a
-                                    href={autocratLink}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    className="px-2 py-1.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 dark:text-amber-300 text-[10px] font-semibold flex items-center justify-center gap-1 transition-colors border border-amber-500/20 cursor-pointer"
-                                    title="Carpeta de Documentos y Automatizaciones de AutoCrat en Google Drive"
-                                  >
-                                    <Sparkles className="w-2.5 h-2.5 text-amber-600 dark:text-amber-400" />
-                                    <span>AutoCrat Drive</span>
-                                  </a>
-                                ) : (
-                                  <div className="px-2 py-1.5 rounded-lg bg-black/5 dark:bg-white/5 text-neutral-400 text-[10px] font-medium flex items-center justify-center gap-1">
-                                    <Sparkles className="w-2.5 h-2.5 opacity-40" />
-                                    <span>AutoCrat Auto</span>
-                                  </div>
-                                )}
+                                <button
+                                  type="button"
+                                  onClick={() => handleDownloadWorkshopMemory(ws)}
+                                  className="px-2 py-1.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 dark:text-amber-300 text-[10px] font-semibold flex items-center justify-center gap-1 transition-colors border border-amber-500/20 cursor-pointer"
+                                  title="Descargar Memoria Individual Extraída en PDF"
+                                >
+                                  <Download className="w-2.5 h-2.5 text-amber-600 dark:text-amber-400" />
+                                  <span>Memoria PDF</span>
+                                </button>
                               </div>
                             </div>
                           </div>
@@ -1077,24 +1069,13 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
                         <span className="font-semibold text-black dark:text-white">Estación activa:</span> #{currentSessionNumber} ({currentNodeInfo.sessionTitle})
                       </div>
                       <div className="flex items-center gap-2 flex-wrap">
-                        <a
-                          href={OFFICIAL_FORMS_SHEETS_BASE_MAP.bitacora_sesiones_b2b.formUrl}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="px-3.5 py-1.5 rounded-xl border border-black/10 dark:border-white/10 bg-white/70 dark:bg-neutral-800/80 hover:bg-white dark:hover:bg-neutral-700 text-neutral-800 dark:text-neutral-200 text-xs font-semibold transition-colors flex items-center gap-1.5 cursor-pointer shadow-2xs"
-                          title="Abrir Formulario Oficial de Bitácora Coach"
-                        >
-                          <FileText className="w-3.5 h-3.5 text-indigo-500" />
-                          <span>Bitácora Coach</span>
-                          <ExternalLink className="w-3 h-3 opacity-60" />
-                        </a>
                         <button
                           type="button"
                           onClick={() => openSection('sesiones')}
                           className="px-4 py-2 rounded-xl border border-black/15 dark:border-white/15 bg-white/70 dark:bg-neutral-800/80 hover:bg-white dark:hover:bg-neutral-700 text-xs font-semibold text-black dark:text-white transition-colors flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs"
                         >
                           <Calendar className="w-3.5 h-3.5" />
-                          <span>Consultar Sesiones & Expediente</span>
+                          <span>Consultar Sesiones & Expediente Privado</span>
                           <ArrowRight className="w-3.5 h-3.5" />
                         </button>
                       </div>

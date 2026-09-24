@@ -116,8 +116,8 @@ export const ConsultoriaSessionCreationModal: React.FC<ConsultoriaSessionCreatio
   });
 
   // 2. Enfoque Ontológico y Preguntas
-  const defaultOpeningNormal = '¿Qué te gustaría trabajar el día de hoy? / ¿Cuál es el quiebre que trae tu atención?';
-  const defaultOpeningCycle = 'Sesión de Cierre de Ciclo: Revisión del estado actual, aprendizajes consolidados y rediseño del siguiente tramo.';
+  const defaultOpeningNormal = '¿Qué aspecto de tu realidad requiere hoy una indagación profunda para construir un sentido renovado?';
+  const defaultOpeningCycle = '¿Qué nuevo observador emerge en ti al reconocer tu evolución y qué compromisos eliges proyectar?';
 
   const [sessionGoal, setSessionGoal] = useState<string>(initialSession?.sessionGoal || '');
   const [openingQuestion, setOpeningQuestion] = useState<string>(() => {
@@ -216,11 +216,14 @@ export const ConsultoriaSessionCreationModal: React.FC<ConsultoriaSessionCreatio
         ? OntologicalStore.getSessions().filter((s) => s.clientId === targetClientId)
         : [];
       const nextNumber = clientSessions.length + 1;
+      const isCierre = nextNumber % 4 === 0;
       setSessionNumber(nextNumber);
-      setSessionType('sesion');
-      setTitle(`Sesión #${nextNumber}: Consultoría Ontológica 1 a 1`);
-      setSessionGoal('Acompañamiento ontológico no direccional y exploración libre del quiebre.');
-      setOpeningQuestion(defaultOpeningNormal);
+      setSessionType(isCierre ? 'cierre_ciclo' : 'sesion');
+      setTitle(`Sesión ${nextNumber}: ${isCierre ? 'Cierre de Ciclo: Integración, Cosecha de Aprendizajes y Evolución del Ser' : 'Espacio de Indagación Autónoma y Construcción de Sentido'}`);
+      setSessionGoal(isCierre
+        ? 'Acompañar al cliente en la integración reflexiva del proceso recorrido, facilitando un espacio de autoconocimiento donde reconozca sus propias transformaciones, consolide los aprendizajes clave derivados de su experiencia y proyecte con autonomía sus siguientes pasos y compromisos de desarrollo.'
+        : 'Facilitar un espacio de reflexión profunda donde el cliente explore su propia realidad, identifique nuevas distinciones y potencie su aprendizaje autónomo.');
+      setOpeningQuestion(isCierre ? defaultOpeningCycle : defaultOpeningNormal);
       const d = new Date(Date.now() + 1000 * 60 * 60 * 24 * 2);
       setScheduledDate(d.toISOString().split('T')[0]);
       setScheduledTime('10:00');

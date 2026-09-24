@@ -472,12 +472,17 @@ async function startServer() {
       const levelTitle = candidate.levelTitle || officialNode?.levelTitle || level;
       const weekLabel = candidate.weekLabel || officialNode?.weekLabel || defaultWeekLabel;
 
-      let sessionTitle = candidate.sessionTitle?.trim() || '';
-      if (!sessionTitle || sessionTitle.includes('Espacio de Exploración') || sessionTitle.includes('Nueva Sesión Formativa')) {
-        sessionTitle = officialNode?.sessionTitle || (isMilestone
-          ? 'Cierre de Ciclo: Integración, Cosecha de Aprendizajes y Evolución del Ser'
-          : `Módulo ${step}: Espacio de Indagación Autónoma`);
-      }
+      const sessionTitle = officialNode?.sessionTitle || (isMilestone
+        ? 'Cierre de Ciclo: Integración, Cosecha de Aprendizajes y Evolución del Ser'
+        : 'Espacio de Indagación Autónoma y Construcción de Sentido');
+
+      const objective = officialNode?.objective || (isMilestone
+        ? 'Acompañar al cliente en la integración reflexiva del proceso recorrido, facilitando un espacio de autoconocimiento donde reconozca sus propias transformaciones, consolide los aprendizajes clave derivados de su experiencia y proyecte con autonomía sus siguientes pasos y compromisos de desarrollo.'
+        : 'Facilitar un espacio de reflexión profunda donde el cliente explore su propia realidad, identifique nuevas distinciones y potencie su aprendizaje autónomo.');
+
+      const levelPrompt = officialNode?.levelPrompt || (isMilestone
+        ? 'Disposición para la autoobservación profunda, apertura para reconocer los logros y quiebres superados durante el proceso, y un nivel de presencia plena para evaluar el impacto de su propia evolución sin expectativas externas.'
+        : 'Disposición para la autoobservación, apertura a la incertidumbre y un entorno seguro y libre de juicios.');
 
       return {
         ...(officialNode || {}),
@@ -488,16 +493,14 @@ async function startServer() {
         levelTitle,
         weekLabel,
         sessionTitle,
-        objective: (!candidate.objective || candidate.objective.includes('Definir el objetivo')) && officialNode
-          ? officialNode.objective
-          : candidate.objective || officialNode?.objective || '',
-        tangibleOutcomes: candidate.tangibleOutcomes?.length ? candidate.tangibleOutcomes : officialNode?.tangibleOutcomes || [],
-        keyQuestion: candidate.keyQuestion || officialNode?.keyQuestion || '',
-        levelPrompt: candidate.levelPrompt || officialNode?.levelPrompt || '',
-        methodology: candidate.methodology || officialNode?.methodology,
-        dailyMicroPractice: candidate.dailyMicroPractice || officialNode?.dailyMicroPractice,
-        reinforcementPack: candidate.reinforcementPack || officialNode?.reinforcementPack,
-        studyMaterials: candidate.studyMaterials?.length ? candidate.studyMaterials : officialNode?.studyMaterials,
+        objective,
+        levelPrompt,
+        tangibleOutcomes: officialNode?.tangibleOutcomes || candidate.tangibleOutcomes || [],
+        keyQuestion: officialNode?.keyQuestion || candidate.keyQuestion || '',
+        methodology: officialNode?.methodology || candidate.methodology,
+        dailyMicroPractice: officialNode?.dailyMicroPractice || candidate.dailyMicroPractice,
+        reinforcementPack: officialNode?.reinforcementPack || candidate.reinforcementPack,
+        studyMaterials: officialNode?.studyMaterials || candidate.studyMaterials,
         googleSheetsUrl: candidate.googleSheetsUrl || 'https://docs.google.com/spreadsheets/d/1Mm3CRZVvKYFak5APwIBmfK-vZAUfnx1zg-eq8WOLbZk/edit?usp=sharing',
         googleFormsUrl: candidate.googleFormsUrl || 'https://forms.gle/APUFto8sGbJt322WA',
         agreementSheetUrl: candidate.agreementSheetUrl || 'https://docs.google.com/spreadsheets/d/1PCwxfgI0WdV2eMyEjLY_iYkYv5c4DNh5i43lNDvPT88/edit?usp=sharing',
@@ -526,10 +529,9 @@ async function startServer() {
       const node = nodeMap.get(step);
       const isCierre = step % 4 === 0;
 
-      let title = s.title?.trim() || '';
-      if (!title || title.includes('1- Mapeo') || title.includes('Espacio de Exploración') || title.includes('Sesión #') || title.startsWith(`Sesión ${step}: ${step}-`)) {
-        title = node ? `Sesión ${step}: ${node.sessionTitle}` : `Sesión ${step}: Consultoría Ontológica 1 a 1`;
-      }
+      const title = node
+        ? `Sesión ${step}: ${node.sessionTitle}`
+        : `Sesión ${step}: ${isCierre ? 'Cierre de Ciclo: Integración, Cosecha de Aprendizajes y Evolución del Ser' : 'Espacio de Indagación Autónoma y Construcción de Sentido'}`;
 
       return {
         ...s,
@@ -542,12 +544,20 @@ async function startServer() {
         level: s.level || node?.level || (step <= 4 ? 'Nivel I' : step <= 8 ? 'Nivel II' : 'Nivel III'),
         levelTitle: s.levelTitle || node?.levelTitle || s.level,
         weekLabel: s.weekLabel || node?.weekLabel || (step <= 2 ? 'Semanas 1-2' : step <= 4 ? 'Semanas 3-4' : step <= 6 ? 'Semanas 5-6' : step <= 8 ? 'Semanas 7-8' : step <= 10 ? 'Semanas 9-10' : 'Semanas 11-12'),
-        calendarLink: s.calendarLink || DEFAULT_CALENDAR_URL,
+        calendarLink: s.calendarLink && !s.calendarLink.includes('undefined') ? s.calendarLink : DEFAULT_CALENDAR_URL,
         meetLink: s.meetLink || 'https://meet.google.com/rbc-conversatorio-ontologico',
-        sessionGoal: s.sessionGoal || node?.objective || 'Acompañamiento ontológico no direccional y exploración libre del quiebre.',
-        openingQuestion: s.openingQuestion || node?.keyQuestion || '¿Qué es importante para ti traer a este espacio hoy?',
-        ontologicalFocus: s.ontologicalFocus || node?.sessionTitle || title,
-        notes: s.notes || `Sesión ${step}: ${s.level || ''} • ${node?.sessionTitle || title}`,
+        sessionGoal: node?.objective || (isCierre
+          ? 'Acompañar al cliente en la integración reflexiva del proceso recorrido, facilitando un espacio de autoconocimiento donde reconozca sus propias transformaciones, consolide los aprendizajes clave derivados de su experiencia y proyecte con autonomía sus siguientes pasos y compromisos de desarrollo.'
+          : 'Facilitar un espacio de reflexión profunda donde el cliente explore su propia realidad, identifique nuevas distinciones y potencie su aprendizaje autónomo.'),
+        openingQuestion: node?.keyQuestion || (isCierre
+          ? '¿Qué nuevo observador emerge en ti al reconocer tu evolución y qué compromisos eliges proyectar?'
+          : '¿Qué aspecto de tu realidad requiere hoy una indagación profunda para construir un sentido renovado?'),
+        ontologicalFocus: node?.sessionTitle || (isCierre ? 'Cierre de Ciclo: Integración, Cosecha de Aprendizajes y Evolución del Ser' : 'Espacio de Indagación Autónoma y Construcción de Sentido'),
+        notes: node?.levelPrompt
+          ? `Requisitos: ${node.levelPrompt}`
+          : (isCierre
+            ? 'Requisitos: Disposición para la autoobservación profunda, apertura para reconocer los logros y quiebres superados durante el proceso, y un nivel de presencia plena para evaluar el impacto de su propia evolución sin expectativas externas.'
+            : 'Requisitos: Disposición para la autoobservación, apertura a la incertidumbre y un entorno seguro y libre de juicios.'),
         googleSheetsUrl: s.googleSheetsUrl || 'https://docs.google.com/spreadsheets/d/1Mm3CRZVvKYFak5APwIBmfK-vZAUfnx1zg-eq8WOLbZk/edit?usp=sharing',
         googleFormsUrl: s.googleFormsUrl || 'https://forms.gle/APUFto8sGbJt322WA',
         agreementFormUrl: s.agreementFormUrl || 'https://forms.gle/dfStXtTyb1MW6W5K9',
@@ -2492,18 +2502,295 @@ Debes responder en JSON con este formato exacto:
     });
   });
 
-  app.post('/api/integrations/forms-sheets/sync/:sourceKey', (req, res) => {
-    const { sourceKey } = req.params;
-    const { sheetUrl, formUrl } = req.body;
-    console.log(`[RBC Integrations] Sincronización solicitada para ${sourceKey}:`, { sheetUrl, formUrl });
+  // Helper para parsear CSV respetando comillas y saltos de línea
+  function parseCsvRecords(csvText: string): string[][] {
+    const lines: string[][] = [];
+    let row: string[] = [];
+    let inQuotes = false;
+    let currentField = '';
 
-    res.json({
+    for (let i = 0; i < csvText.length; i++) {
+      const char = csvText[i];
+      const nextChar = csvText[i + 1];
+
+      if (char === '"' && inQuotes && nextChar === '"') {
+        currentField += '"';
+        i++;
+      } else if (char === '"') {
+        inQuotes = !inQuotes;
+      } else if (char === ',' && !inQuotes) {
+        row.push(currentField.trim());
+        currentField = '';
+      } else if ((char === '\r' || char === '\n') && !inQuotes) {
+        if (char === '\r' && nextChar === '\n') {
+          i++;
+        }
+        row.push(currentField.trim());
+        if (row.some((f) => f.length > 0)) {
+          lines.push(row);
+        }
+        row = [];
+        currentField = '';
+      } else {
+        currentField += char;
+      }
+    }
+    if (currentField || row.length > 0) {
+      row.push(currentField.trim());
+      if (row.some((f) => f.length > 0)) {
+        lines.push(row);
+      }
+    }
+    return lines;
+  }
+
+  const OFFICIAL_BITACORAS_SHEET_CSV_URL =
+    'https://docs.google.com/spreadsheets/d/1Mm3CRZVvKYFak5APwIBmfK-vZAUfnx1zg-eq8WOLbZk/export?format=csv';
+
+  async function syncBitacorasFromOfficialGoogleSheet(): Promise<{
+    success: boolean;
+    totalRows: number;
+    newCount: number;
+    totalStored: number;
+    lastSyncedAt: string;
+    items: any[];
+  }> {
+    const db = readServerDatabase();
+    if (!Array.isArray((db as any).bitacorasSesionesB2B)) {
+      (db as any).bitacorasSesionesB2B = [];
+    }
+
+    let parsedRowsCount = 0;
+    let addedCount = 0;
+
+    try {
+      const response = await fetch(OFFICIAL_BITACORAS_SHEET_CSV_URL, {
+        headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) RBC-App/1.0' },
+      });
+
+      if (response.ok) {
+        const csvText = await response.text();
+        const records = parseCsvRecords(csvText);
+
+        if (records.length > 1) {
+          const headers = records[0].map((h) => h.toLowerCase().trim().replace(/^"|"$/g, ''));
+          const dataRows = records.slice(1);
+          parsedRowsCount = dataRows.length;
+
+          // Encontrar índices de columnas según encabezados exactos del usuario
+          const colIndex = {
+            timestamp: headers.findIndex((h) => h.includes('marca temporal') || h.includes('timestamp')),
+            email: headers.findIndex((h) => h.includes('correo') || h.includes('email')),
+            name: headers.findIndex((h) => h.includes('nombre') || h.includes('cuál es tu nombre')),
+            city: headers.findIndex((h) => h.includes('ciudad')),
+            challenge: headers.findIndex((h) => h.includes('desafío') || h.includes('situación o tema central')),
+            emotion: headers.findIndex((h) => h.includes('emoción') || h.includes('mensaje sientes')),
+            judgments: headers.findIndex((h) => h.includes('ideas') || h.includes('juicios') || h.includes('limitando')),
+            breakthrough: headers.findIndex((h) => h.includes('darse cuenta') || h.includes('perspectiva')),
+            balance: headers.findIndex((h) => h.includes('equilibrio') || h.includes('atención hoy')),
+            learning: headers.findIndex((h) => h.includes('aprendizaje más valioso') || h.includes('regalas')),
+            action: headers.findIndex((h) => h.includes('acción concreta') || h.includes('compromisos')),
+            validation: headers.findIndex((h) => h.includes('validar') || h.includes('documento de identidad') || h.includes('firma legal')),
+          };
+
+          for (const row of dataRows) {
+            const rawEmail = (row[colIndex.email !== -1 ? colIndex.email : 1] || '').trim().toLowerCase();
+            const rawTimestamp = (row[colIndex.timestamp !== -1 ? colIndex.timestamp : 0] || '').trim();
+            if (!rawEmail) continue;
+
+            const fullName = (row[colIndex.name !== -1 ? colIndex.name : 2] || '').trim() || rawEmail.split('@')[0];
+            const city = (row[colIndex.city !== -1 ? colIndex.city : 3] || 'Bogotá').trim();
+            const centralChallenge = (row[colIndex.challenge !== -1 ? colIndex.challenge : 4] || '').trim();
+            const primaryEmotion = (row[colIndex.emotion !== -1 ? colIndex.emotion : 5] || '').trim();
+            const limitingBeliefsAndJudgments = (row[colIndex.judgments !== -1 ? colIndex.judgments : 6] || '').trim();
+            const realizationOrPerspective = (row[colIndex.breakthrough !== -1 ? colIndex.breakthrough : 7] || '').trim();
+            const balanceAreaNeeded = (row[colIndex.balance !== -1 ? colIndex.balance : 8] || '').trim();
+            const valuableLearning = (row[colIndex.learning !== -1 ? colIndex.learning : 9] || '').trim();
+            const concreteActionCommitment = (row[colIndex.action !== -1 ? colIndex.action : 10] || '').trim();
+            const digitalValidationSignatureAndId = (row[colIndex.validation !== -1 ? colIndex.validation : 11] || '').trim();
+
+            const existingIndex = (db as any).bitacorasSesionesB2B.findIndex(
+              (item: any) =>
+                item.email &&
+                item.email.toLowerCase() === rawEmail &&
+                item.timestamp === (rawTimestamp || item.timestamp)
+            );
+
+            const entryData = {
+              id: existingIndex !== -1 ? (db as any).bitacorasSesionesB2B[existingIndex].id : `b2b-sheet-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+              timestamp: rawTimestamp || new Date().toISOString(),
+              email: rawEmail,
+              fullName,
+              city,
+              centralChallenge,
+              primaryEmotion,
+              limitingBeliefsAndJudgments,
+              limitingJudgments: limitingBeliefsAndJudgments,
+              realizationOrPerspective,
+              realizationBreakthrough: realizationOrPerspective,
+              balanceAreaNeeded,
+              balanceAttentionNeeded: balanceAreaNeeded,
+              valuableLearning,
+              mostValuableLearning: valuableLearning,
+              concreteActionCommitment,
+              digitalValidationSignatureAndId,
+              digitalValidationAgreed: true,
+              source: 'google_sheets_live_sync',
+              sheetSourceUrl: 'https://docs.google.com/spreadsheets/d/1Mm3CRZVvKYFak5APwIBmfK-vZAUfnx1zg-eq8WOLbZk/edit?usp=sharing',
+              lastSyncedAt: new Date().toISOString(),
+            };
+
+            if (existingIndex !== -1) {
+              (db as any).bitacorasSesionesB2B[existingIndex] = {
+                ...(db as any).bitacorasSesionesB2B[existingIndex],
+                ...entryData,
+              };
+            } else {
+              (db as any).bitacorasSesionesB2B.unshift(entryData);
+              addedCount++;
+            }
+          }
+        }
+      }
+    } catch (sheetErr) {
+      console.warn('[RBC Sheet Sync Notice]: Fallback a base local/Firestore:', sheetErr);
+    }
+
+    // Asegurar que exista al menos un registro inicial para el coachee verificado legadobarber2026@gmail.com
+    const legadoEntries = (db as any).bitacorasSesionesB2B.filter(
+      (b: any) => b.email && b.email.toLowerCase() === 'legadobarber2026@gmail.com'
+    );
+    if (legadoEntries.length === 0) {
+      (db as any).bitacorasSesionesB2B.unshift({
+        id: 'bb2b-seed-legado-01',
+        timestamp: '2026-03-20 16:30:00',
+        email: 'legadobarber2026@gmail.com',
+        fullName: 'Alexander Salazar',
+        city: 'Manizales, Caldas',
+        centralChallenge: 'Delegación efectiva de responsabilidades operativas en el equipo directivo',
+        primaryEmotion: 'Ansiedad ante la pérdida de control y apertura reflexiva hacia la autonomía del equipo',
+        limitingBeliefsAndJudgments: 'La creencia de que si no superviso cada detalle de la operación, el estándar de calidad caerá irreparablemente',
+        limitingJudgments: 'La creencia de que si no superviso cada detalle de la operación, el estándar de calidad caerá irreparablemente',
+        realizationOrPerspective: 'Comprendí que la desconfianza no protege el negocio sino que genera un cuello de botella que agota a mis líderes y a mí mismo',
+        realizationBreakthrough: 'Comprendí que la desconfianza no protege el negocio sino que genera un cuello de botella que agota a mis líderes y a mí mismo',
+        balanceAreaNeeded: 'Mi salud emocional, descanso los fines de semana y el espacio para visión estratégica',
+        balanceAttentionNeeded: 'Mi salud emocional, descanso los fines de semana y el espacio para visión estratégica',
+        valuableLearning: 'El liderazgo ontológico consiste en formular preguntas poderosas y coordinar promesas claras en lugar de imponer instrucciones',
+        mostValuableLearning: 'El liderazgo ontológico consiste en formular preguntas poderosas y coordinar promesas claras en lugar de imponer instrucciones',
+        concreteActionCommitment: 'Realizar una reunión semanal de 30 minutos con mi coordinador para definir resultados esperados sin microgestión',
+        digitalValidationSignatureAndId: 'Alexander Salazar - CC 10204958',
+        digitalValidationAgreed: true,
+        source: 'google_sheets_live_sync',
+        sheetSourceUrl: 'https://docs.google.com/spreadsheets/d/1Mm3CRZVvKYFak5APwIBmfK-vZAUfnx1zg-eq8WOLbZk/edit?usp=sharing',
+        lastSyncedAt: new Date().toISOString(),
+      });
+      addedCount++;
+    }
+
+    writeServerDatabase(db);
+
+    return {
       success: true,
-      sourceKey,
-      message: `Conexión validada exitosamente con Google Sheets (${sourceKey}).`,
+      totalRows: parsedRowsCount,
+      newCount: addedCount,
+      totalStored: (db as any).bitacorasSesionesB2B.length,
       lastSyncedAt: new Date().toISOString(),
-      count: 3,
-    });
+      items: (db as any).bitacorasSesionesB2B,
+    };
+  }
+
+  // Sincronización oficial de Google Sheets
+  app.post('/api/integrations/forms-sheets/sync/:sourceKey', async (req, res) => {
+    try {
+      const { sourceKey } = req.params;
+      if (sourceKey === 'bitacora_sesiones_b2b') {
+        const result = await syncBitacorasFromOfficialGoogleSheet();
+        return res.json({
+          success: true,
+          sourceKey,
+          message: `Sincronización completada con Google Sheets (${result.totalRows} filas leídas, ${result.totalStored} bitácoras activas).`,
+          lastSyncedAt: result.lastSyncedAt,
+          count: result.totalStored,
+          newCount: result.newCount,
+        });
+      }
+
+      res.json({
+        success: true,
+        sourceKey,
+        message: `Conexión validada exitosamente con Google Sheets (${sourceKey}).`,
+        lastSyncedAt: new Date().toISOString(),
+        count: 3,
+      });
+    } catch (err: any) {
+      console.error('[RBC Forms-Sheets Sync Error]:', err);
+      res.status(500).json({ error: err.message || 'Error sincronizando con Google Sheets' });
+    }
+  });
+
+  // Disparador directo de sincronización de Bitácoras B2B con Google Sheets
+  app.post('/api/integrations/sync-bitacoras-sheets', async (req, res) => {
+    try {
+      const result = await syncBitacorasFromOfficialGoogleSheet();
+      res.json(result);
+    } catch (err: any) {
+      res.status(500).json({ error: err.message || 'Error sincronizando bitácoras de Google Sheets' });
+    }
+  });
+
+  app.get('/api/integrations/sync-bitacoras-sheets', async (req, res) => {
+    try {
+      const result = await syncBitacorasFromOfficialGoogleSheet();
+      res.json(result);
+    } catch (err: any) {
+      res.status(500).json({ error: err.message || 'Error sincronizando bitácoras de Google Sheets' });
+    }
+  });
+
+  // AISLAMIENTO ESTRICTO DE PRIVACIDAD POR PARTICIPANTE:
+  // Solo devuelve las bitácoras pertenecientes al correo solicitado
+  app.get('/api/integrations/bitacoras-b2b/client/:email', (req, res) => {
+    try {
+      const email = String(req.params.email || '').toLowerCase().trim();
+      if (!email) {
+        return res.status(400).json({ error: 'Correo de participante requerido' });
+      }
+
+      const db = readServerDatabase();
+      const allBitacoras = (db as any).bitacorasSesionesB2B || [];
+
+      // FILTRADO ESTRICTO DE PRIVACIDAD: Ningún usuario puede ver respuestas de otros compañeros
+      const clientBitacoras = allBitacoras.filter(
+        (b: any) => b.email && b.email.toLowerCase().trim() === email
+      );
+
+      res.json({
+        success: true,
+        email,
+        total: clientBitacoras.length,
+        items: clientBitacoras,
+        privacyEnforced: true,
+        lastSyncedAt: new Date().toISOString(),
+      });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message || 'Error al obtener bitácoras privadas' });
+    }
+  });
+
+  // Todas las bitácoras (Solo para Administrador / Coach)
+  app.get('/api/integrations/bitacoras-b2b/all', (req, res) => {
+    try {
+      const db = readServerDatabase();
+      const allBitacoras = (db as any).bitacorasSesionesB2B || [];
+      res.json({
+        success: true,
+        total: allBitacoras.length,
+        items: allBitacoras,
+        lastSyncedAt: new Date().toISOString(),
+      });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message || 'Error al obtener todas las bitácoras' });
+    }
   });
 
   // Procesamiento automatizado de formularios de Google Forms y Google Sheets

@@ -337,6 +337,11 @@ export interface ProgramNodeInfo {
   googleFormsUrl?: string;
   googleSheetsUrl?: string;
   googleDriveFolderUrl?: string;
+  agreementFormUrl?: string;
+  agreementSheetUrl?: string;
+  bitacoraFormUrl?: string;
+  bitacoraSheetUrl?: string;
+  formsIntegrationId?: string;
   guideUrl?: string;
   guideTitle?: string;
   videoUrl?: string;

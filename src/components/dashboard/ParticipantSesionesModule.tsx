@@ -16,9 +16,15 @@ import {
   Layers,
   FileCheck,
   UserCheck,
+  RefreshCw,
+  FileSpreadsheet,
+  Eye,
+  X,
+  Award,
 } from 'lucide-react';
-import { Session, PostSessionForm, User, ProgramNodeInfo } from '../../types';
+import { Session, PostSessionForm, User, ProgramNodeInfo, BitacoraSesionB2BEntry } from '../../types';
 import { OntologicalStore, COMPANY_INFO } from '../../services/store';
+import { FirestoreSyncService } from '../../services/firestoreSync';
 import { OFFICIAL_FORMS_SHEETS_BASE_MAP } from '../../data/officialFormsSheetsBase';
 
 interface ParticipantSesionesModuleProps {
@@ -48,26 +54,69 @@ export const ParticipantSesionesModule: React.FC<ParticipantSesionesModuleProps>
     OntologicalStore.getSessionsForClient(activeUser.uid)
   );
 
-  // Escuchar cambios reactivos en vivo provenientes del Panel de Administración
+  // Bitácoras oficiales de Google Sheets con aislamiento estricto por correo de participante
+  const [participantBitacoras, setParticipantBitacoras] = useState<BitacoraSesionB2BEntry[]>(() =>
+    OntologicalStore.getBitacorasSesionesB2BForClient(activeUser.email)
+  );
+  const [isSyncingSheets, setIsSyncingSheets] = useState(false);
+  const [sheetsSyncMsg, setSheetsSyncMsg] = useState<string | null>(null);
+  const [selectedBitacoraDetail, setSelectedBitacoraDetail] = useState<BitacoraSesionB2BEntry | null>(null);
+
+  // Escuchar cambios reactivos en vivo provenientes del Panel de Administración y Google Sheets
   useEffect(() => {
     const handleSync = () => {
       setLiveNodes(OntologicalStore.getProgramNodes());
       setLiveLevelConfigs(OntologicalStore.getLevelConfigs());
       setLiveStoreSessions(OntologicalStore.getSessionsForClient(activeUser.uid));
+      setParticipantBitacoras(OntologicalStore.getBitacorasSesionesB2BForClient(activeUser.email));
     };
 
     window.addEventListener('rbc-sessions-updated', handleSync);
     window.addEventListener('rbc-program-nodes-updated', handleSync);
     window.addEventListener('rbc-levels-updated', handleSync);
     window.addEventListener('rbc-clients-updated', handleSync);
+    window.addEventListener('rbc-forms-sheets-data-updated', handleSync);
+    window.addEventListener('rbc-bitacoras-sheets-synced', handleSync);
+
+    // Suscripción reactiva en tiempo real a Firestore con filtro exclusivo de email para este cliente
+    const unsubscribeFirestore = FirestoreSyncService.subscribeToClientBitacorasSesionesB2B(
+      activeUser.email,
+      (liveBitacoras) => {
+        if (Array.isArray(liveBitacoras) && liveBitacoras.length > 0) {
+          setParticipantBitacoras(liveBitacoras);
+        }
+      }
+    );
 
     return () => {
       window.removeEventListener('rbc-sessions-updated', handleSync);
       window.removeEventListener('rbc-program-nodes-updated', handleSync);
       window.removeEventListener('rbc-levels-updated', handleSync);
       window.removeEventListener('rbc-clients-updated', handleSync);
+      window.removeEventListener('rbc-forms-sheets-data-updated', handleSync);
+      window.removeEventListener('rbc-bitacoras-sheets-synced', handleSync);
+      unsubscribeFirestore();
     };
-  }, [activeUser.uid]);
+  }, [activeUser.uid, activeUser.email]);
+
+  const handleSyncSheets = async () => {
+    setIsSyncingSheets(true);
+    try {
+      await OntologicalStore.syncBitacorasFromGoogleSheets();
+      const fresh = OntologicalStore.getBitacorasSesionesB2BForClient(activeUser.email);
+      setParticipantBitacoras(fresh);
+      setSheetsSyncMsg(
+        `Tus avances y bitácoras se sincronizaron con Google Sheets (${fresh.length} registro(s) encontrado(s)).`
+      );
+      setTimeout(() => setSheetsSyncMsg(null), 4000);
+    } catch (err) {
+      console.error('Error syncing Google Sheets:', err);
+      setSheetsSyncMsg('Error al conectar con Google Sheets.');
+      setTimeout(() => setSheetsSyncMsg(null), 3000);
+    } finally {
+      setIsSyncingSheets(false);
+    }
+  };
 
   // Filtro de bloque: 0 = Todas las 12 sesiones, 1 = Bloque 1 (1-4), 2 = Bloque 2 (5-8), 3 = Bloque 3 (9-12)
   const [selectedCycleFilter, setSelectedCycleFilter] = useState<number>(0);
@@ -283,10 +332,10 @@ export const ParticipantSesionesModule: React.FC<ParticipantSesionesModuleProps>
               </strong>
             </div>
 
-            <div className="px-3.5 py-2 rounded-2xl bg-white/70 dark:bg-neutral-900/70 border border-black/10 dark:border-white/10 text-xs shadow-2xs">
-              <span className="text-neutral-500 dark:text-neutral-400 text-[10px] block font-medium">Bitácoras Extraídas</span>
+            <div className="px-3.5 py-2 rounded-2xl bg-white/70 dark:bg-neutral-900/70 border border-emerald-500/20 text-xs shadow-2xs">
+              <span className="text-emerald-700 dark:text-emerald-400 text-[10px] block font-medium">Google Sheets</span>
               <strong className="text-emerald-600 dark:text-emerald-400 font-bold text-sm">
-                {formsFilledCount} <span className="text-neutral-400 font-normal text-xs">privadas</span>
+                {participantBitacoras.length} <span className="text-neutral-400 font-normal text-xs">sincronizadas</span>
               </strong>
             </div>
 
@@ -336,14 +385,53 @@ export const ParticipantSesionesModule: React.FC<ParticipantSesionesModuleProps>
           {/* Sello de Confidencialidad y Privacidad Total (CERO Enlaces a Sheets) */}
           <div className="flex items-center gap-2">
             <div
-              className="px-3.5 py-1.5 rounded-xl border border-black/10 dark:border-white/10 bg-white/60 dark:bg-neutral-900/60 text-black dark:text-white text-xs font-medium inline-flex items-center gap-2 shadow-2xs"
+              className="px-3.5 py-1.5 rounded-xl border border-emerald-500/20 bg-emerald-50/50 dark:bg-emerald-950/30 text-emerald-800 dark:text-emerald-300 text-xs font-medium inline-flex items-center gap-2 shadow-2xs"
               title="Tu información de bitácoras, respuestas y acuerdos es 100% privada y solo accesible por ti y tu coach"
             >
-              <ShieldCheck className="w-4 h-4 text-emerald-500 shrink-0" />
-              <span>Privacidad & Confidencialidad Estricta</span>
+              <ShieldCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+              <span>Aislamiento & Privacidad Estricta por Participante</span>
             </div>
           </div>
         </div>
+
+        {/* Banner de Sincronización Oficial con Google Sheets */}
+        <div className="p-4 rounded-2xl bg-linear-to-r from-emerald-500/10 via-emerald-600/5 to-transparent border border-emerald-500/25 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-xl bg-emerald-500 text-black shrink-0">
+              <FileSpreadsheet className="w-4 h-4" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-xs font-bold text-black dark:text-white">
+                  Bitácoras Oficiales Extraídas de Google Sheets
+                </span>
+                <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-800 dark:text-emerald-300 border border-emerald-500/20">
+                  {participantBitacoras.length} registro(s) para {activeUser.email}
+                </span>
+              </div>
+              <p className="text-[11px] text-neutral-600 dark:text-neutral-400 font-light mt-0.5">
+                Tus reflexiones, quiebres y compromisos se sincronizan automáticamente con la fuente oficial asegurando que ningún compañero acceda a tu expediente.
+              </p>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={handleSyncSheets}
+            disabled={isSyncingSheets}
+            className="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-xs inline-flex items-center justify-center gap-1.5 cursor-pointer transition-all active:scale-[0.98] disabled:opacity-50 shrink-0"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${isSyncingSheets ? 'animate-spin' : ''}`} />
+            <span>{isSyncingSheets ? 'Sincronizando...' : 'Sincronizar Mis Avances'}</span>
+          </button>
+        </div>
+
+        {sheetsSyncMsg && (
+          <div className="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-300 text-emerald-800 dark:text-emerald-200 text-xs font-medium flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+            <span>{sheetsSyncMsg}</span>
+          </div>
+        )}
 
         {/* Advertencia elegante si se selecciona un bloque pendiente de desbloqueo */}
         {selectedCycleFilter > 0 && !isBlockUnlocked(selectedCycleFilter) && (
@@ -384,7 +472,24 @@ export const ParticipantSesionesModule: React.FC<ParticipantSesionesModuleProps>
           const isCurrent = num === currentSessionNumber;
           const isMilestone = num === 4 || num === 8 || num === 12;
 
-          // Extracción privada de la bitácora individual del cliente
+          // Extracción privada de la bitácora individual del cliente desde Google Sheets (Aislamiento Estricto)
+          const sheetBitacora =
+            participantBitacoras.find(
+              (b, bIdx) =>
+                bIdx === num - 1 ||
+                (b.rawSource?.sessionNumber && Number(b.rawSource.sessionNumber) === num)
+            ) ||
+            (num === 1 && participantBitacoras.length > 0 ? participantBitacoras[0] : null);
+
+          const hasSheetExtraction = Boolean(
+            sheetBitacora &&
+              (sheetBitacora.centralChallenge ||
+                sheetBitacora.primaryEmotion ||
+                sheetBitacora.realizationOrPerspective ||
+                sheetBitacora.concreteActionCommitment)
+          );
+
+          // Extracción privada de la bitácora individual local
           const postForm = postForms.find(
             (f) => f.sessionNumber === num || f.sessionId === session.id
           );
@@ -392,6 +497,7 @@ export const ParticipantSesionesModule: React.FC<ParticipantSesionesModuleProps>
 
           // Has private extraction data?
           const hasPrivateExtraction =
+            hasSheetExtraction ||
             Boolean(
               postForm?.emergentTopic ||
                 postForm?.actionStep ||
@@ -504,7 +610,141 @@ export const ParticipantSesionesModule: React.FC<ParticipantSesionesModuleProps>
                 {/* ========================================================================= */}
                 {/* 3. EXTRACCIÓN PRIVADA DE RESPUESTAS DE BITÁCORA Y ACUERDOS ESPECÍFICOS    */}
                 {/* ========================================================================= */}
-                {isUnlocked && hasPrivateExtraction && (
+                {isUnlocked && hasSheetExtraction && sheetBitacora && (
+                  <div className="rounded-2xl border border-emerald-500/30 bg-emerald-50/30 dark:bg-emerald-950/20 p-3.5 space-y-2.5 text-xs">
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-1.5 text-emerald-800 dark:text-emerald-300 font-bold text-[11px]">
+                        <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                        <span>Bitácora Oficial Sincronizada</span>
+                        <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 font-medium">
+                          Sheets
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setSelectedBitacoraDetail(sheetBitacora)}
+                          className="text-[10px] font-bold text-emerald-700 dark:text-emerald-300 hover:underline cursor-pointer inline-flex items-center gap-1"
+                        >
+                          <Eye className="w-3 h-3" />
+                          <span>Ficha Completa</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setExpandedBitacoraSessionId(isBitacoraExpanded ? null : session.id)
+                          }
+                          className="text-[10px] font-semibold text-neutral-500 hover:text-black dark:hover:text-white transition-colors cursor-pointer inline-flex items-center gap-0.5"
+                        >
+                          <span>{isBitacoraExpanded ? 'Menos' : 'Detalle'}</span>
+                          {isBitacoraExpanded ? (
+                            <ChevronUp className="w-3 h-3" />
+                          ) : (
+                            <ChevronDown className="w-3 h-3" />
+                          )}
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Desafío Central */}
+                    {sheetBitacora.centralChallenge && (
+                      <p className="text-neutral-900 dark:text-neutral-100 text-xs font-semibold line-clamp-2">
+                        <strong className="text-emerald-800 dark:text-emerald-300 font-bold">Desafío central:</strong>{' '}
+                        {sheetBitacora.centralChallenge}
+                      </p>
+                    )}
+
+                    {/* Emoción presente */}
+                    {sheetBitacora.primaryEmotion && (
+                      <p className="text-neutral-700 dark:text-neutral-300 text-[11px] font-medium line-clamp-1">
+                        <strong className="text-amber-700 dark:text-amber-400 font-bold">Emoción:</strong>{' '}
+                        {sheetBitacora.primaryEmotion}
+                      </p>
+                    )}
+
+                    {/* Compromiso de Acción */}
+                    {sheetBitacora.concreteActionCommitment && (
+                      <p className="text-neutral-800 dark:text-neutral-200 text-[11px] font-medium line-clamp-2">
+                        <strong className="text-black dark:text-white font-bold">Compromiso:</strong>{' '}
+                        {sheetBitacora.concreteActionCommitment}
+                      </p>
+                    )}
+
+                    {/* Detalle Desplegable con Todos los Campos Ontológicos */}
+                    {isBitacoraExpanded && (
+                      <div className="pt-2.5 border-t border-emerald-500/20 space-y-2 text-[11px] animate-fadeIn">
+                        {sheetBitacora.limitingBeliefsAndJudgments && (
+                          <div className="p-2 rounded-xl bg-rose-50/50 dark:bg-rose-950/20 border border-rose-200/50 dark:border-rose-900/30">
+                            <span className="text-[10px] font-bold text-rose-700 dark:text-rose-400 block uppercase">
+                              Juicios o historias limitantes:
+                            </span>
+                            <p className="text-neutral-800 dark:text-neutral-200 mt-0.5">
+                              {sheetBitacora.limitingBeliefsAndJudgments}
+                            </p>
+                          </div>
+                        )}
+
+                        {(sheetBitacora.realizationOrPerspective || sheetBitacora.realizationMoment) && (
+                          <div className="p-2 rounded-xl bg-indigo-50/60 dark:bg-indigo-950/30 border border-indigo-200/60 dark:border-indigo-900/40">
+                            <span className="text-[10px] font-bold text-indigo-700 dark:text-indigo-400 block uppercase">
+                              "Darse cuenta" (Insight ontológico):
+                            </span>
+                            <p className="text-indigo-950 dark:text-indigo-200 font-medium mt-0.5">
+                              {sheetBitacora.realizationOrPerspective || sheetBitacora.realizationMoment}
+                            </p>
+                          </div>
+                        )}
+
+                        {sheetBitacora.balanceAreaNeeded && (
+                          <div>
+                            <span className="text-cyan-700 dark:text-cyan-400 font-bold block text-[10px] uppercase">
+                              Llamado al equilibrio:
+                            </span>
+                            <p className="text-neutral-700 dark:text-neutral-300 mt-0.5">
+                              {sheetBitacora.balanceAreaNeeded}
+                            </p>
+                          </div>
+                        )}
+
+                        {sheetBitacora.valuableLearning && (
+                          <div>
+                            <span className="text-emerald-700 dark:text-emerald-400 font-bold block text-[10px] uppercase">
+                              Aprendizaje más valioso:
+                            </span>
+                            <p className="text-neutral-800 dark:text-neutral-200 font-medium mt-0.5">
+                              {sheetBitacora.valuableLearning}
+                            </p>
+                          </div>
+                        )}
+
+                        {sheetBitacora.digitalValidationSignatureAndId && (
+                          <div className="pt-1 text-[10px] text-neutral-500 font-mono">
+                            <span>Firma digital: {sheetBitacora.digitalValidationSignatureAndId}</span>
+                          </div>
+                        )}
+
+                        <div className="pt-1 flex items-center justify-between text-[10px] text-emerald-700 dark:text-emerald-400">
+                          <span className="inline-flex items-center gap-1 font-semibold">
+                            <ShieldCheck className="w-3 h-3" />
+                            <span>Confidencial • Solo visible por ti</span>
+                          </span>
+                          {sheetBitacora.timestamp && (
+                            <span>
+                              {new Date(sheetBitacora.timestamp).toLocaleDateString('es-CO', {
+                                day: 'numeric',
+                                month: 'short',
+                                year: 'numeric',
+                              })}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Si no hay extracción de Sheets, pero sí local */}
+                {isUnlocked && !hasSheetExtraction && hasPrivateExtraction && (
                   <div className="rounded-2xl border border-black/10 dark:border-white/10 bg-white/50 dark:bg-neutral-900/50 p-3.5 space-y-2.5 text-xs">
                     <div className="flex items-center justify-between gap-2">
                       <div className="flex items-center gap-1.5 text-black dark:text-white font-bold text-[11px]">
@@ -573,6 +813,27 @@ export const ParticipantSesionesModule: React.FC<ParticipantSesionesModuleProps>
                         </div>
                       </div>
                     )}
+                  </div>
+                )}
+
+                {/* Si la sesión está desbloqueada pero no tiene bitácora registrada aún */}
+                {isUnlocked && !hasSheetExtraction && !hasPrivateExtraction && (
+                  <div className="rounded-2xl border border-dashed border-gray-300 dark:border-neutral-700 p-3 bg-gray-50/50 dark:bg-neutral-900/30 flex items-center justify-between gap-2 text-xs">
+                    <div className="flex items-center gap-2">
+                      <FileSpreadsheet className="w-4 h-4 text-gray-400 shrink-0" />
+                      <span className="text-[11px] text-gray-500 dark:text-neutral-400">
+                        Bitácora pendiente de registro para esta sesión.
+                      </span>
+                    </div>
+                    <a
+                      href={session.bitacoraFormUrl || OFFICIAL_FORMS_SHEETS_BASE_MAP.bitacora_sesiones_b2b.formUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-bold inline-flex items-center gap-1 cursor-pointer transition-colors shadow-2xs shrink-0"
+                    >
+                      <span>Llenar en Forms</span>
+                      <ExternalLink className="w-2.5 h-2.5" />
+                    </a>
                   </div>
                 )}
               </div>
@@ -663,64 +924,157 @@ export const ParticipantSesionesModule: React.FC<ParticipantSesionesModuleProps>
       </div>
 
       {/* ========================================================================= */}
-      {/* 4. TARJETA DE PERFIL FIJA EN EL PIE DE PÁGINA (COACH ONTOLÓGICO)          */}
+      {/* 4. MODAL VISOR DETALLADO DE BITÁCORA ONTOLÓGICA (GOOGLE SHEETS)           */}
       {/* ========================================================================= */}
-      <div className="mt-8 p-6 rounded-3xl border border-black/10 dark:border-white/10 bg-white/40 dark:bg-neutral-950/40 backdrop-blur-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-5 shadow-xs">
-        <div className="flex items-center gap-4">
-          <div className="relative shrink-0">
-            <img
-              src="/src/assets/images/regenerated_image_1788287101599.jpg"
-              alt="John Fredy Rengifo Basto"
-              className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl object-cover border border-black/15 dark:border-white/15 shadow-sm"
-              onError={(e) => {
-                // Fallback elegante a logo si la imagen de retrato no carga
-                (e.target as HTMLImageElement).src = '/src/assets/images/rengifo_basto_logo_1788288004105.jpg';
-              }}
-            />
-            <span className="absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-white dark:border-neutral-950 shadow-xs" />
-          </div>
-
-          <div className="space-y-0.5">
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-[10px] uppercase tracking-wider text-emerald-600 dark:text-emerald-400 font-bold">
-                Canal de Acompañamiento Activo
-              </span>
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
+      {selectedBitacoraDetail && (
+        <div className="fixed inset-0 z-[70] bg-black/80 backdrop-blur-xs flex items-center justify-center p-3 sm:p-5">
+          <div className="bg-white dark:bg-neutral-900 rounded-3xl border border-emerald-500/30 w-full max-w-3xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden animate-scale-up">
+            {/* Cabecera */}
+            <div className="p-4 sm:p-5 border-b border-gray-100 dark:border-neutral-800 flex items-center justify-between bg-emerald-950/20 shrink-0">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-xl bg-emerald-500 text-black">
+                  <FileSpreadsheet className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-black dark:text-white">
+                    Memoria de Bitácora Ontológica Sincronizada
+                  </h3>
+                  <p className="text-xs text-neutral-500 dark:text-neutral-400">
+                    Expediente individual y confidencial de {selectedBitacoraDetail.fullName || activeUser.name}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSelectedBitacoraDetail(null)}
+                className="p-2 rounded-xl text-neutral-400 hover:text-black dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
             </div>
-            <h3 className="text-base sm:text-lg font-bold text-black dark:text-white tracking-tight">
-              John Fredy Rengifo Basto
-            </h3>
-            <p className="text-xs font-semibold text-neutral-800 dark:text-neutral-200">
-              Coach Ontológico
-            </p>
-            <p className="text-[11px] text-neutral-500 dark:text-neutral-400 font-medium">
-              Rengifo Basto Consultoría Ontológica
-            </p>
+
+            {/* Contenido Completo del Registro */}
+            <div className="p-5 sm:p-6 overflow-y-auto flex-1 space-y-4 text-xs">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-3.5 rounded-2xl bg-neutral-50 dark:bg-neutral-800/60 border border-black/5 dark:border-white/5">
+                <div>
+                  <span className="text-[10px] text-neutral-400 uppercase font-bold block">Participante:</span>
+                  <span className="font-bold text-black dark:text-white">{selectedBitacoraDetail.fullName || activeUser.name}</span>
+                </div>
+                <div>
+                  <span className="text-[10px] text-neutral-400 uppercase font-bold block">Correo Registrado:</span>
+                  <span className="font-mono text-black dark:text-white">{selectedBitacoraDetail.email || activeUser.email}</span>
+                </div>
+                <div>
+                  <span className="text-[10px] text-neutral-400 uppercase font-bold block">Fecha & Ciudad:</span>
+                  <span className="text-black dark:text-white">
+                    {selectedBitacoraDetail.timestamp ? new Date(selectedBitacoraDetail.timestamp).toLocaleString('es-CO') : 'Al día'}
+                    {selectedBitacoraDetail.city ? ` • ${selectedBitacoraDetail.city}` : ''}
+                  </span>
+                </div>
+              </div>
+
+              {/* 1. Desafío Central */}
+              <div className="p-4 rounded-2xl bg-white dark:bg-neutral-900 border border-black/10 dark:border-white/10 space-y-1">
+                <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider block">
+                  📌 1. Situación o Desafío Central Trabajado:
+                </span>
+                <p className="text-sm font-semibold text-black dark:text-white leading-relaxed">
+                  {selectedBitacoraDetail.centralChallenge || 'No registrado'}
+                </p>
+              </div>
+
+              {/* 2. Emoción Presente */}
+              <div className="p-4 rounded-2xl bg-amber-50/50 dark:bg-amber-950/20 border border-amber-200/60 dark:border-amber-900/40 space-y-1">
+                <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider block">
+                  🎭 2. Emoción Principal Presente & Mensaje que Trae:
+                </span>
+                <p className="text-xs text-neutral-800 dark:text-neutral-200 leading-relaxed font-medium">
+                  {selectedBitacoraDetail.primaryEmotion || 'No registrado'}
+                </p>
+              </div>
+
+              {/* 3. Juicios e Historias Limitantes */}
+              <div className="p-4 rounded-2xl bg-rose-50/50 dark:bg-rose-950/20 border border-rose-200/60 dark:border-rose-900/40 space-y-1">
+                <span className="text-[10px] font-bold text-rose-600 dark:text-rose-400 uppercase tracking-wider block">
+                  🧠 3. Ideas, Juicios o Historias Repetitivas Descubiertas:
+                </span>
+                <p className="text-xs text-neutral-800 dark:text-neutral-200 leading-relaxed">
+                  {selectedBitacoraDetail.limitingBeliefsAndJudgments || 'No registrado'}
+                </p>
+              </div>
+
+              {/* 4. Darse Cuenta */}
+              <div className="p-4 rounded-2xl bg-indigo-50/70 dark:bg-indigo-950/40 border border-indigo-200/70 dark:border-indigo-900/50 space-y-1">
+                <span className="text-[10px] font-bold text-indigo-700 dark:text-indigo-400 uppercase tracking-wider block">
+                  💡 4. "Darse Cuenta" (Nueva Perspectiva Ontológica / Insight):
+                </span>
+                <p className="text-xs font-semibold text-indigo-950 dark:text-indigo-200 leading-relaxed">
+                  {selectedBitacoraDetail.realizationOrPerspective || selectedBitacoraDetail.realizationMoment || 'No registrado'}
+                </p>
+              </div>
+
+              {/* 5. Área de Equilibrio */}
+              <div className="p-4 rounded-2xl bg-cyan-50/50 dark:bg-cyan-950/20 border border-cyan-200/60 dark:border-cyan-900/40 space-y-1">
+                <span className="text-[10px] font-bold text-cyan-700 dark:text-cyan-400 uppercase tracking-wider block">
+                  ⚖️ 5. Llamado al Equilibrio (Área o Entorno con Mayor Atención):
+                </span>
+                <p className="text-xs text-neutral-800 dark:text-neutral-200 leading-relaxed">
+                  {selectedBitacoraDetail.balanceAreaNeeded || 'No registrado'}
+                </p>
+              </div>
+
+              {/* 6. Aprendizaje Más Valioso */}
+              <div className="p-4 rounded-2xl bg-emerald-50/60 dark:bg-emerald-950/30 border border-emerald-200/60 dark:border-emerald-900/40 space-y-1">
+                <span className="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider block">
+                  🎁 6. Aprendizaje Más Valioso que te Regalas:
+                </span>
+                <p className="text-xs text-neutral-900 dark:text-neutral-100 font-medium leading-relaxed">
+                  {selectedBitacoraDetail.valuableLearning || 'No registrado'}
+                </p>
+              </div>
+
+              {/* 7. Acción Concreta y Compromisos */}
+              <div className="p-4 rounded-2xl bg-neutral-950 text-white dark:bg-white dark:text-black space-y-1 shadow-sm">
+                <span className="text-[10px] font-bold text-emerald-400 dark:text-emerald-600 uppercase tracking-wider block">
+                  🎯 7. Acción Concreta & Compromiso para la Próxima Sesión:
+                </span>
+                <p className="text-xs font-semibold leading-relaxed">
+                  {selectedBitacoraDetail.concreteActionCommitment || 'No registrado'}
+                </p>
+              </div>
+
+              {/* Firma y Validación Digital */}
+              {selectedBitacoraDetail.digitalValidationSignatureAndId && (
+                <div className="p-3.5 rounded-2xl bg-neutral-50 dark:bg-neutral-800/60 border border-black/5 dark:border-white/5 flex items-center justify-between text-[11px]">
+                  <div className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 font-bold">
+                    <ShieldCheck className="w-4 h-4" />
+                    <span>Validación Digital Registrada:</span>
+                  </div>
+                  <span className="font-mono font-bold text-black dark:text-white">
+                    {selectedBitacoraDetail.digitalValidationSignatureAndId}
+                  </span>
+                </div>
+              )}
+            </div>
+
+            {/* Pie de Modal */}
+            <div className="p-4 border-t border-gray-100 dark:border-neutral-800 flex items-center justify-between bg-neutral-50/50 dark:bg-neutral-900/50 shrink-0">
+              <span className="text-[11px] text-neutral-500 flex items-center gap-1.5">
+                <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
+                <span>Documento Confidencial • Expediente RBC</span>
+              </span>
+
+              <button
+                type="button"
+                onClick={() => setSelectedBitacoraDetail(null)}
+                className="px-4 py-2 rounded-xl bg-neutral-900 text-white dark:bg-white dark:text-black text-xs font-bold hover:opacity-90 cursor-pointer transition-all"
+              >
+                Cerrar Visor
+              </button>
+            </div>
           </div>
         </div>
-
-        <div className="flex flex-wrap items-center gap-2.5 pt-1 sm:pt-0">
-          <a
-            href={COMPANY_INFO.whatsappUrl}
-            target="_blank"
-            rel="noreferrer"
-            className="flex-1 sm:flex-initial px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold transition-all duration-200 flex items-center justify-center gap-2 shadow-xs cursor-pointer hover:shadow-md active:scale-[0.99]"
-          >
-            <MessageCircle className="w-4 h-4 text-emerald-100" />
-            <span>WhatsApp Directo</span>
-          </a>
-
-          <a
-            href={full12Sessions[currentSessionNumber - 1]?.meetLink || 'https://meet.google.com/new'}
-            target="_blank"
-            rel="noreferrer"
-            className="px-4 py-2.5 rounded-xl border border-black/15 dark:border-white/15 bg-white/70 dark:bg-neutral-900/70 hover:bg-white dark:hover:bg-neutral-800 text-black dark:text-white text-xs font-semibold transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer shadow-xs"
-          >
-            <Video className="w-4 h-4 text-indigo-500" />
-            <span>Sala Meet 1 a 1</span>
-          </a>
-        </div>
-      </div>
+      )}
     </div>
   );
 };

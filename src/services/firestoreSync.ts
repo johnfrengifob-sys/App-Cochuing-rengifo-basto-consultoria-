@@ -1626,6 +1626,37 @@ export class FirestoreSyncService {
     }
   }
 
+  // AISLAMIENTO ESTRICTO EN TIEMPO REAL: Suscripción a bitácoras del cliente activo
+  static subscribeToClientBitacorasSesionesB2B(
+    clientEmail: string,
+    callback: (entries: BitacoraSesionB2BEntry[]) => void
+  ): () => void {
+    const normEmail = (clientEmail || '').toLowerCase().trim();
+    if (!normEmail) {
+      callback([]);
+      return () => {};
+    }
+    const collectionPath = 'bitacorasSesionesB2B';
+    try {
+      const q = query(collection(db, collectionPath), where('email', '==', normEmail));
+      const unsubscribe = onSnapshot(
+        q,
+        (snap) => {
+          const items = snap.docs.map((d) => d.data() as BitacoraSesionB2BEntry);
+          callback(items);
+        },
+        (error) => {
+          console.warn('Firestore subscribeToClientBitacorasSesionesB2B notice:', error);
+          callback([]);
+        }
+      );
+      return unsubscribe;
+    } catch (e) {
+      console.warn('Firestore subscription setup notice:', e);
+      return () => {};
+    }
+  }
+
   // 4. Bitácora de Talleres
   static async syncBitacoraTaller(entry: BitacoraTallerEntry): Promise<void> {
     const collectionPath = 'bitacorasTalleres';

@@ -60,6 +60,7 @@ import {
   User,
   FormsSheetsIntegrationSourceKey,
   CronogramaEvent,
+  BitacoraSesionB2BEntry,
 } from '../../types';
 import { OntologicalStore } from '../../services/store';
 import { FirestoreSyncService } from '../../services/firestoreSync';
@@ -142,7 +143,10 @@ export const AdminSessionsManager: React.FC<AdminSessionsManagerProps> = ({
   // Sub-pestaña de visualización en el panel
   // 'modules': Malla Curricular y Módulos de Sesión (12 Semanas)
   // 'scheduled': Agenda de Sesiones 1 a 1 de Coachees
-  const [catalogSubTab, setCatalogSubTab] = useState<'modules' | 'scheduled'>('modules');
+  // 'bitacoras_sheets': Bitácoras y avances oficiales de Google Sheets (Hoja 1Mm3CRZVvKYFak5APwIBmfK-vZAUfnx1zg-eq8WOLbZk)
+  const [catalogSubTab, setCatalogSubTab] = useState<'modules' | 'scheduled' | 'bitacoras_sheets'>('modules');
+  const [isSyncingSheets, setIsSyncingSheets] = useState(false);
+  const [selectedBitacoraForModal, setSelectedBitacoraForModal] = useState<BitacoraSesionB2BEntry | null>(null);
 
   // Organización de sesiones por nivel o por semanas:
   // 'none' (cuadrícula corrida) | 'by_level' (agrupado por nivel) | 'by_week' (agrupado por semanas)
@@ -460,6 +464,24 @@ export const AdminSessionsManager: React.FC<AdminSessionsManagerProps> = ({
     }
   };
 
+  // Sincronizar bitácoras en tiempo real con Google Sheets (Hoja Oficial 1Mm3CRZVvKYFak5APwIBmfK-vZAUfnx1zg-eq8WOLbZk)
+  const handleSyncGoogleSheets = async () => {
+    setIsSyncingSheets(true);
+    try {
+      const res = await OntologicalStore.syncBitacorasFromGoogleSheets();
+      const freshBitacoras = OntologicalStore.getBitacorasSesionesB2B();
+      setBitacorasB2B(freshBitacoras);
+      showNotification(
+        `Google Sheets sincronizado exitosamente (${freshBitacoras.length} bitácoras activas vinculadas).`
+      );
+    } catch (e) {
+      console.error('Error syncing bitacoras with Google Sheets:', e);
+      showNotification('Error al sincronizar bitácoras con Google Sheets.');
+    } finally {
+      setIsSyncingSheets(false);
+    }
+  };
+
   // Guardar cambios del Editor de Niveles en todas las sesiones y sincronizar
   const handleSaveLevels = () => {
     OntologicalStore.saveLevelConfigs(editingLevels as any);
@@ -505,9 +527,17 @@ export const AdminSessionsManager: React.FC<AdminSessionsManagerProps> = ({
   const handleAddNewModule = () => {
     const currentNodes = OntologicalStore.getProgramNodes();
     const nextStep = currentNodes.length + 1;
+    const isCierre = nextStep % 4 === 0;
     const added = OntologicalStore.addProgramNode({
-      sessionTitle: `Módulo ${nextStep}: Nueva Sesión Formativa`,
-      objective: 'Definir el objetivo ontológico de transformación para este módulo.',
+      sessionTitle: isCierre
+        ? 'Cierre de Ciclo: Integración, Cosecha de Aprendizajes y Evolución del Ser'
+        : 'Espacio de Indagación Autónoma y Construcción de Sentido',
+      objective: isCierre
+        ? 'Acompañar al cliente en la integración reflexiva del proceso recorrido, facilitando un espacio de autoconocimiento donde reconozca sus propias transformaciones, consolide los aprendizajes clave derivados de su experiencia y proyecte con autonomía sus siguientes pasos y compromisos de desarrollo.'
+        : 'Facilitar un espacio de reflexión profunda donde el cliente explore su propia realidad, identifique nuevas distinciones y potencie su aprendizaje autónomo.',
+      levelPrompt: isCierre
+        ? 'Disposición para la autoobservación profunda, apertura para reconocer los logros y quiebres superados durante el proceso, y un nivel de presencia plena para evaluar el impacto de su propia evolución sin expectativas externas.'
+        : 'Disposición para la autoobservación, apertura a la incertidumbre y un entorno seguro y libre de juicios.',
       level: nextStep <= 4 ? 'Nivel I' : nextStep <= 8 ? 'Nivel II' : 'Nivel III',
       weekLabel: nextStep <= 2 ? 'Semanas 1-2' : nextStep <= 4 ? 'Semanas 3-4' : nextStep <= 6 ? 'Semanas 5-6' : nextStep <= 8 ? 'Semanas 7-8' : nextStep <= 10 ? 'Semanas 9-10' : 'Semanas 11-12',
     });
@@ -1024,6 +1054,13 @@ export const AdminSessionsManager: React.FC<AdminSessionsManagerProps> = ({
     const sessLevel = getSessionLevel(sess);
     const sessWeek = getSessionWeek(sess);
 
+    // Obtener la bitácora correspondiente de Google Sheets para este coachee
+    const clientBitacoras = bitacorasB2B.filter(
+      (b) => b.email && clientEmail && b.email.toLowerCase().trim() === clientEmail.toLowerCase().trim()
+    );
+    const sessionIdx = (sess.sessionNumber || 1) - 1;
+    const matchingBitacora = clientBitacoras[sessionIdx] || (sessionIdx === 0 ? clientBitacoras[0] : null);
+
     return (
       <div
         key={sess.id}
@@ -1197,13 +1234,69 @@ export const AdminSessionsManager: React.FC<AdminSessionsManagerProps> = ({
             </div>
           )}
 
-          {/* Ecosistema Google Forms & Sheets */}
-          {(sess.googleFormsUrl || sess.formsIntegrationId) && (
-            <div className="flex items-center gap-1.5 text-[10px] text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/30 px-2.5 py-1 rounded-xl border border-emerald-200/60 dark:border-emerald-800/40">
-              <FileSpreadsheet className="w-3 h-3 shrink-0" />
-              <span className="font-medium truncate">
-                Bitácora vinculada a Google Sheets en tiempo real
+          {/* Ecosistema Google Forms & Sheets: Estado Sincronizado en Tiempo Real */}
+          {matchingBitacora ? (
+            <div className="p-3 rounded-2xl bg-emerald-50/90 dark:bg-emerald-950/40 border border-emerald-300/80 dark:border-emerald-800 space-y-2 text-xs">
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-1.5 text-emerald-800 dark:text-emerald-300 font-bold text-[11px]">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                  <span>Bitácora Google Sheets Sincronizada</span>
+                </div>
+                <span className="text-[10px] text-emerald-700 dark:text-emerald-400 font-mono">
+                  {matchingBitacora.timestamp ? new Date(matchingBitacora.timestamp).toLocaleDateString('es-CO') : 'Al día'}
+                </span>
+              </div>
+
+              {matchingBitacora.centralChallenge && (
+                <p className="text-[11px] text-neutral-800 dark:text-neutral-200 line-clamp-1">
+                  <strong className="text-emerald-950 dark:text-emerald-200 font-bold">Desafío:</strong>{' '}
+                  {matchingBitacora.centralChallenge}
+                </p>
+              )}
+
+              {(matchingBitacora.realizationOrPerspective || matchingBitacora.realizationMoment) && (
+                <p className="text-[11px] text-neutral-700 dark:text-neutral-300 line-clamp-1">
+                  <strong className="text-indigo-950 dark:text-indigo-200 font-bold">Darse cuenta:</strong>{' '}
+                  {matchingBitacora.realizationOrPerspective || matchingBitacora.realizationMoment}
+                </p>
+              )}
+
+              <div className="pt-1 flex items-center justify-between gap-2">
+                <button
+                  type="button"
+                  onClick={() => setSelectedBitacoraForModal(matchingBitacora)}
+                  className="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[10px] inline-flex items-center gap-1 cursor-pointer transition-all shadow-2xs"
+                >
+                  <Eye className="w-3 h-3" />
+                  <span>Ver Bitácora Sheets</span>
+                </button>
+
+                <a
+                  href="https://docs.google.com/spreadsheets/d/1Mm3CRZVvKYFak5APwIBmfK-vZAUfnx1zg-eq8WOLbZk/edit?usp=sharing"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-[10px] text-emerald-700 dark:text-emerald-400 hover:underline inline-flex items-center gap-0.5"
+                >
+                  <span>Abrir Sheet</span>
+                  <ExternalLink className="w-2.5 h-2.5" />
+                </a>
+              </div>
+            </div>
+          ) : (
+            <div className="p-2.5 rounded-xl bg-gray-50 dark:bg-neutral-800/50 border border-dashed border-gray-200 dark:border-neutral-700 flex items-center justify-between gap-2 text-[10px]">
+              <span className="text-gray-500 dark:text-neutral-400 flex items-center gap-1">
+                <Clock className="w-3 h-3 text-amber-500" />
+                <span>Bitácora Google Sheets pendiente</span>
               </span>
+              <button
+                type="button"
+                onClick={handleSyncGoogleSheets}
+                disabled={isSyncingSheets}
+                className="text-indigo-600 dark:text-indigo-400 font-bold hover:underline cursor-pointer inline-flex items-center gap-1"
+              >
+                <RefreshCw className={`w-2.5 h-2.5 ${isSyncingSheets ? 'animate-spin' : ''}`} />
+                <span>Sincronizar</span>
+              </button>
             </div>
           )}
         </div>
@@ -1294,10 +1387,40 @@ export const AdminSessionsManager: React.FC<AdminSessionsManagerProps> = ({
                   {sessions.length}
                 </span>
               </button>
+
+              <button
+                type="button"
+                onClick={() => setCatalogSubTab('bitacoras_sheets')}
+                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${
+                  catalogSubTab === 'bitacoras_sheets'
+                    ? 'bg-white dark:bg-neutral-800 text-neutral-950 dark:text-white shadow-xs border border-emerald-500/40 ring-1 ring-emerald-500/20'
+                    : 'bg-gray-100 dark:bg-neutral-800/80 text-gray-600 dark:text-neutral-400 hover:text-black dark:hover:text-white'
+                }`}
+              >
+                <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                <span>Bitácoras Google Sheets</span>
+                <span className="text-[10px] px-1.5 py-0.2 rounded-full font-mono bg-emerald-500/20 text-emerald-700 dark:text-emerald-300">
+                  {bitacorasB2B.length}
+                </span>
+              </button>
             </div>
 
             {/* Acciones Rápidas */}
             <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={handleSyncGoogleSheets}
+                disabled={isSyncingSheets}
+                className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-emerald-500 text-white hover:bg-emerald-600 text-xs font-bold shadow-xs cursor-pointer transition-all active:scale-[0.98] disabled:opacity-50"
+                title="Sincronizar bitácoras en tiempo real desde la hoja oficial de Google Sheets (1Mm3CRZVvKYFak5APwIBmfK-vZAUfnx1zg-eq8WOLbZk)"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 ${isSyncingSheets ? 'animate-spin' : ''}`} />
+                <span>{isSyncingSheets ? 'Sincronizando Sheets...' : 'Sincronizar Google Sheets'}</span>
+                <span className="text-[10px] px-1.5 py-0.2 rounded-full font-mono bg-white/20 text-white font-bold">
+                  {bitacorasB2B.length}
+                </span>
+              </button>
+
               <button
                 type="button"
                 onClick={() => {
@@ -1778,6 +1901,235 @@ export const AdminSessionsManager: React.FC<AdminSessionsManagerProps> = ({
                       </button>
                     )}
                   </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ========================================================================= */}
+          {/* SUB-PESTAÑA 3: BITÁCORAS & AVANCES EN TIEMPO REAL CON GOOGLE SHEETS        */}
+          {/* ========================================================================= */}
+          {catalogSubTab === 'bitacoras_sheets' && (
+            <div className="space-y-6 animate-fadeIn">
+              {/* Encabezado y Conexión con Google Sheets */}
+              <div className="p-5 sm:p-6 rounded-3xl bg-linear-to-r from-emerald-950 via-neutral-900 to-black text-white border border-emerald-500/30 shadow-xl space-y-4">
+                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                  <div className="space-y-1.5">
+                    <div className="flex items-center gap-2">
+                      <div className="p-2 rounded-xl bg-emerald-500/20 text-emerald-400">
+                        <FileSpreadsheet className="w-5 h-5" />
+                      </div>
+                      <h3 className="text-lg font-bold text-white">
+                        Base de Datos Oficial de Bitácoras de Sesión (Google Sheets)
+                      </h3>
+                      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500 text-black">
+                        EN VIVO
+                      </span>
+                    </div>
+                    <p className="text-xs text-neutral-300 max-w-2xl leading-relaxed">
+                      Sincronización bidireccional y monitoreo ontológico en tiempo real vinculado a la hoja oficial de Google Sheets. Cada registro contiene el quiebre, la emocionalidad, los juicios limitantes, el darse cuenta y los acuerdos de acción del participante.
+                    </p>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-2.5">
+                    <button
+                      type="button"
+                      onClick={handleSyncGoogleSheets}
+                      disabled={isSyncingSheets}
+                      className="px-4 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black font-bold text-xs shadow-md inline-flex items-center gap-2 cursor-pointer transition-all active:scale-[0.98] disabled:opacity-50"
+                    >
+                      <RefreshCw className={`w-4 h-4 ${isSyncingSheets ? 'animate-spin' : ''}`} />
+                      <span>{isSyncingSheets ? 'Sincronizando...' : 'Sincronizar Ahora'}</span>
+                    </button>
+
+                    <a
+                      href="https://docs.google.com/spreadsheets/d/1Mm3CRZVvKYFak5APwIBmfK-vZAUfnx1zg-eq8WOLbZk/edit?usp=sharing"
+                      target="_blank"
+                      rel="noreferrer"
+                      className="px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-semibold text-xs border border-white/20 inline-flex items-center gap-1.5 cursor-pointer transition-all"
+                    >
+                      <span>Abrir Hoja Google Sheets</span>
+                      <ExternalLink className="w-3.5 h-3.5" />
+                    </a>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-3 border-t border-white/10 text-xs">
+                  <div className="p-3 rounded-2xl bg-white/5 border border-white/10">
+                    <span className="text-[10px] text-neutral-400 block uppercase font-bold tracking-wider">Bitácoras Totales</span>
+                    <span className="text-xl font-bold font-mono text-emerald-400">{bitacorasB2B.length}</span>
+                  </div>
+                  <div className="p-3 rounded-2xl bg-white/5 border border-white/10">
+                    <span className="text-[10px] text-neutral-400 block uppercase font-bold tracking-wider">Participantes Únicos</span>
+                    <span className="text-xl font-bold font-mono text-indigo-400">
+                      {new Set(bitacorasB2B.map((b) => b.email?.toLowerCase().trim()).filter(Boolean)).size}
+                    </span>
+                  </div>
+                  <div className="p-3 rounded-2xl bg-white/5 border border-white/10">
+                    <span className="text-[10px] text-neutral-400 block uppercase font-bold tracking-wider">Aislamiento de Privacidad</span>
+                    <span className="text-xs font-bold text-emerald-300 flex items-center gap-1 mt-1">
+                      <ShieldCheck className="w-3.5 h-3.5" />
+                      <span>Activo & Estricto</span>
+                    </span>
+                  </div>
+                  <div className="p-3 rounded-2xl bg-white/5 border border-white/10">
+                    <span className="text-[10px] text-neutral-400 block uppercase font-bold tracking-wider">Fuente Oficial</span>
+                    <span className="text-[11px] font-mono text-neutral-200 truncate block mt-1">
+                      1Mm3CRZV...
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Lista y Tarjetas de Bitácoras de Participantes */}
+              {bitacorasB2B.length > 0 ? (
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                  {bitacorasB2B
+                    .filter((b) => {
+                      if (!searchQuery) return true;
+                      const q = searchQuery.toLowerCase();
+                      return (
+                        (b.fullName && b.fullName.toLowerCase().includes(q)) ||
+                        (b.email && b.email.toLowerCase().includes(q)) ||
+                        (b.city && b.city.toLowerCase().includes(q)) ||
+                        (b.centralChallenge && b.centralChallenge.toLowerCase().includes(q)) ||
+                        (b.primaryEmotion && b.primaryEmotion.toLowerCase().includes(q)) ||
+                        (b.realizationOrPerspective && b.realizationOrPerspective.toLowerCase().includes(q))
+                      );
+                    })
+                    .map((item, index) => (
+                      <div
+                        key={item.id || index}
+                        className="p-5 rounded-3xl bg-white dark:bg-neutral-900 border border-gray-200/80 dark:border-neutral-800 shadow-xs flex flex-col justify-between space-y-4 hover:border-emerald-300 dark:hover:border-emerald-800 transition-all group"
+                      >
+                        <div className="space-y-3.5">
+                          {/* Cabecera del Participante y Fecha */}
+                          <div className="flex items-center justify-between gap-2 border-b border-gray-100 dark:border-neutral-800 pb-3">
+                            <div className="flex items-center gap-2.5">
+                              <div className="w-9 h-9 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 font-bold text-xs flex items-center justify-center shrink-0">
+                                {item.fullName ? item.fullName.charAt(0).toUpperCase() : 'P'}
+                              </div>
+                              <div className="min-w-0">
+                                <h4 className="text-sm font-bold text-black dark:text-white truncate">
+                                  {item.fullName || 'Participante'}
+                                </h4>
+                                <p className="text-[11px] text-gray-500 dark:text-neutral-400 truncate">
+                                  {item.email} {item.city ? `• ${item.city}` : ''}
+                                </p>
+                              </div>
+                            </div>
+
+                            <div className="text-right shrink-0">
+                              <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
+                                {item.timestamp ? new Date(item.timestamp).toLocaleDateString('es-CO') : 'Al día'}
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Quiebre / Desafío Central */}
+                          {item.centralChallenge && (
+                            <div className="p-3 rounded-2xl bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-100 dark:border-neutral-800 space-y-1">
+                              <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider block">
+                                Desafío / Tema Central:
+                              </span>
+                              <p className="text-xs font-semibold text-black dark:text-white leading-relaxed">
+                                {item.centralChallenge}
+                              </p>
+                            </div>
+                          )}
+
+                          {/* Emoción Principal & Mensaje */}
+                          {item.primaryEmotion && (
+                            <div className="text-xs space-y-1">
+                              <span className="text-[10px] font-bold text-amber-500 uppercase tracking-wider block">
+                                Emoción Presente & Mensaje:
+                              </span>
+                              <p className="text-[11px] text-neutral-700 dark:text-neutral-300 leading-relaxed font-light">
+                                {item.primaryEmotion}
+                              </p>
+                            </div>
+                          )}
+
+                          {/* "Darse Cuenta" / Nueva Perspectiva */}
+                          {(item.realizationOrPerspective || item.realizationMoment) && (
+                            <div className="p-3 rounded-2xl bg-indigo-50/70 dark:bg-indigo-950/30 border border-indigo-200/60 dark:border-indigo-900/40 text-xs space-y-1">
+                              <span className="text-[10px] font-bold text-indigo-700 dark:text-indigo-400 uppercase tracking-wider block">
+                                "Darse Cuenta" (Nueva Perspectiva Ontológica):
+                              </span>
+                              <p className="text-xs font-medium text-indigo-950 dark:text-indigo-200 leading-relaxed">
+                                {item.realizationOrPerspective || item.realizationMoment}
+                              </p>
+                            </div>
+                          )}
+
+                          {/* Acción Concreta y Compromisos */}
+                          {item.concreteActionCommitment && (
+                            <div className="text-xs space-y-1">
+                              <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider block">
+                                Compromiso de Acción:
+                              </span>
+                              <p className="text-[11px] text-neutral-800 dark:text-neutral-200 font-medium">
+                                {item.concreteActionCommitment}
+                              </p>
+                            </div>
+                          )}
+
+                          {/* Firma Legal y Validación de Identidad */}
+                          {item.digitalValidationSignatureAndId && (
+                            <div className="pt-2 border-t border-gray-100 dark:border-neutral-800 flex items-center justify-between text-[10px] text-gray-500 dark:text-neutral-400">
+                              <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-semibold">
+                                <ShieldCheck className="w-3 h-3" />
+                                <span>Firma & Identificación Validada</span>
+                              </span>
+                              <span className="font-mono truncate max-w-[200px]">
+                                {item.digitalValidationSignatureAndId}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Botón de Acción para Ver Detalle Completo */}
+                        <div className="pt-3 border-t border-gray-100 dark:border-neutral-800 flex items-center justify-between gap-2">
+                          <button
+                            type="button"
+                            onClick={() => setSelectedBitacoraForModal(item)}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-neutral-950 dark:bg-white text-white dark:text-neutral-950 hover:bg-neutral-800 dark:hover:bg-neutral-100 text-xs font-bold cursor-pointer transition-all active:scale-[0.98]"
+                          >
+                            <Eye className="w-3.5 h-3.5" />
+                            <span>Ver Registro Completo</span>
+                          </button>
+
+                          <a
+                            href="https://docs.google.com/spreadsheets/d/1Mm3CRZVvKYFak5APwIBmfK-vZAUfnx1zg-eq8WOLbZk/edit?usp=sharing"
+                            target="_blank"
+                            rel="noreferrer"
+                            className="text-xs text-gray-500 hover:text-black dark:hover:text-white inline-flex items-center gap-1"
+                          >
+                            <span>Fila en Google Sheets</span>
+                            <ExternalLink className="w-3 h-3" />
+                          </a>
+                        </div>
+                      </div>
+                    ))}
+                </div>
+              ) : (
+                <div className="p-12 text-center bg-white dark:bg-neutral-900 rounded-3xl border border-dashed border-gray-200 dark:border-neutral-800 space-y-3">
+                  <FileSpreadsheet className="w-8 h-8 text-emerald-500 mx-auto" />
+                  <h4 className="text-sm font-bold text-black dark:text-white">
+                    No hay bitácoras sincronizadas todavía
+                  </h4>
+                  <p className="text-xs text-gray-500 max-w-sm mx-auto">
+                    Haz clic en "Sincronizar Ahora" para importar las bitácoras registradas por los participantes en la hoja oficial de Google Sheets.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={handleSyncGoogleSheets}
+                    disabled={isSyncingSheets}
+                    className="px-4 py-2 text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl shadow-xs transition-all cursor-pointer inline-flex items-center gap-1.5"
+                  >
+                    <RefreshCw className={`w-3.5 h-3.5 ${isSyncingSheets ? 'animate-spin' : ''}`} />
+                    <span>Sincronizar Google Sheets</span>
+                  </button>
                 </div>
               )}
             </div>
@@ -2619,6 +2971,163 @@ export const AdminSessionsManager: React.FC<AdminSessionsManagerProps> = ({
           }
         }}
       />
+
+      {/* MODAL: VISOR DE BITÁCORA COMPLETA DE GOOGLE SHEETS */}
+      {selectedBitacoraForModal && (
+        <div className="fixed inset-0 z-[75] bg-black/80 backdrop-blur-xs flex items-center justify-center p-3 sm:p-5">
+          <div className="bg-white dark:bg-neutral-900 rounded-3xl border border-emerald-500/30 w-full max-w-3xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden animate-scale-up">
+            {/* Cabecera */}
+            <div className="p-4 sm:p-5 border-b border-gray-100 dark:border-neutral-800 flex items-center justify-between bg-emerald-950/20 shrink-0">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-xl bg-emerald-500 text-black">
+                  <FileSpreadsheet className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-black dark:text-white">
+                    Bitácora Ontológica Extraída de Google Sheets
+                  </h3>
+                  <p className="text-xs text-gray-500 dark:text-neutral-400">
+                    Registro confidencial de {selectedBitacoraForModal.fullName} ({selectedBitacoraForModal.email})
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSelectedBitacoraForModal(null)}
+                className="p-2 rounded-xl text-gray-400 hover:text-black dark:hover:text-white hover:bg-gray-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Contenido Completo del Registro */}
+            <div className="p-5 sm:p-6 overflow-y-auto flex-1 space-y-4 text-xs">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-3.5 rounded-2xl bg-gray-50 dark:bg-neutral-800/60 border border-gray-100 dark:border-neutral-800">
+                <div>
+                  <span className="text-[10px] text-gray-400 uppercase font-bold block">Participante:</span>
+                  <span className="font-bold text-black dark:text-white">{selectedBitacoraForModal.fullName || 'No especificado'}</span>
+                </div>
+                <div>
+                  <span className="text-[10px] text-gray-400 uppercase font-bold block">Correo Electrónico:</span>
+                  <span className="font-mono text-black dark:text-white">{selectedBitacoraForModal.email || 'Sin correo'}</span>
+                </div>
+                <div>
+                  <span className="text-[10px] text-gray-400 uppercase font-bold block">Fecha & Ciudad:</span>
+                  <span className="text-black dark:text-white">
+                    {selectedBitacoraForModal.timestamp ? new Date(selectedBitacoraForModal.timestamp).toLocaleString('es-CO') : 'Al día'}
+                    {selectedBitacoraForModal.city ? ` • ${selectedBitacoraForModal.city}` : ''}
+                  </span>
+                </div>
+              </div>
+
+              {/* 1. Desafío Central */}
+              <div className="p-4 rounded-2xl bg-white dark:bg-neutral-900 border border-gray-200 dark:border-neutral-800 space-y-1">
+                <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider block">
+                  📌 1. Situación o Desafío Central Trabajado:
+                </span>
+                <p className="text-sm font-semibold text-black dark:text-white leading-relaxed">
+                  {selectedBitacoraForModal.centralChallenge || 'No registrado'}
+                </p>
+              </div>
+
+              {/* 2. Emoción Presente */}
+              <div className="p-4 rounded-2xl bg-amber-50/50 dark:bg-amber-950/20 border border-amber-200/60 dark:border-amber-900/40 space-y-1">
+                <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider block">
+                  🎭 2. Emoción Principal Presente & Qué Mensaje Trae:
+                </span>
+                <p className="text-xs text-neutral-800 dark:text-neutral-200 leading-relaxed font-medium">
+                  {selectedBitacoraForModal.primaryEmotion || 'No registrado'}
+                </p>
+              </div>
+
+              {/* 3. Juicios e Historias Limitantes */}
+              <div className="p-4 rounded-2xl bg-rose-50/50 dark:bg-rose-950/20 border border-rose-200/60 dark:border-rose-900/40 space-y-1">
+                <span className="text-[10px] font-bold text-rose-600 dark:text-rose-400 uppercase tracking-wider block">
+                  🧠 3. Ideas, Juicios o Historias Repetitivas que Limitaban el Avance:
+                </span>
+                <p className="text-xs text-neutral-800 dark:text-neutral-200 leading-relaxed">
+                  {selectedBitacoraForModal.limitingBeliefsAndJudgments || 'No registrado'}
+                </p>
+              </div>
+
+              {/* 4. Darse Cuenta */}
+              <div className="p-4 rounded-2xl bg-indigo-50/70 dark:bg-indigo-950/40 border border-indigo-200/70 dark:border-indigo-900/50 space-y-1">
+                <span className="text-[10px] font-bold text-indigo-700 dark:text-indigo-400 uppercase tracking-wider block">
+                  💡 4. "Darse Cuenta" (Nueva Perspectiva Ontológica / Insight):
+                </span>
+                <p className="text-xs font-semibold text-indigo-950 dark:text-indigo-200 leading-relaxed">
+                  {selectedBitacoraForModal.realizationOrPerspective || selectedBitacoraForModal.realizationMoment || 'No registrado'}
+                </p>
+              </div>
+
+              {/* 5. Área de Equilibrio */}
+              <div className="p-4 rounded-2xl bg-cyan-50/50 dark:bg-cyan-950/20 border border-cyan-200/60 dark:border-cyan-900/40 space-y-1">
+                <span className="text-[10px] font-bold text-cyan-700 dark:text-cyan-400 uppercase tracking-wider block">
+                  ⚖️ 5. Llamado al Equilibrio (Área o Hábito que Requiere Mayor Atención):
+                </span>
+                <p className="text-xs text-neutral-800 dark:text-neutral-200 leading-relaxed">
+                  {selectedBitacoraForModal.balanceAreaNeeded || 'No registrado'}
+                </p>
+              </div>
+
+              {/* 6. Aprendizaje Más Valioso */}
+              <div className="p-4 rounded-2xl bg-emerald-50/60 dark:bg-emerald-950/30 border border-emerald-200/60 dark:border-emerald-900/40 space-y-1">
+                <span className="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider block">
+                  🎁 6. Aprendizaje Más Valioso de la Sesión:
+                </span>
+                <p className="text-xs text-neutral-900 dark:text-neutral-100 font-medium leading-relaxed">
+                  {selectedBitacoraForModal.valuableLearning || 'No registrado'}
+                </p>
+              </div>
+
+              {/* 7. Acción Concreta y Compromisos */}
+              <div className="p-4 rounded-2xl bg-neutral-950 text-white dark:bg-white dark:text-black space-y-1 shadow-sm">
+                <span className="text-[10px] font-bold text-emerald-400 dark:text-emerald-600 uppercase tracking-wider block">
+                  🎯 7. Acción Concreta & Compromisos Asumidos:
+                </span>
+                <p className="text-xs font-semibold leading-relaxed">
+                  {selectedBitacoraForModal.concreteActionCommitment || 'No registrado'}
+                </p>
+              </div>
+
+              {/* Firma y Validación Digital */}
+              {selectedBitacoraForModal.digitalValidationSignatureAndId && (
+                <div className="p-3.5 rounded-2xl bg-gray-50 dark:bg-neutral-800/60 border border-gray-100 dark:border-neutral-800 flex items-center justify-between text-[11px]">
+                  <div className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 font-bold">
+                    <ShieldCheck className="w-4 h-4" />
+                    <span>Firma Digital & Documento de Identidad Registrado:</span>
+                  </div>
+                  <span className="font-mono font-bold text-black dark:text-white">
+                    {selectedBitacoraForModal.digitalValidationSignatureAndId}
+                  </span>
+                </div>
+              )}
+            </div>
+
+            {/* Pie de Modal */}
+            <div className="p-4 border-t border-gray-100 dark:border-neutral-800 flex items-center justify-between bg-gray-50/50 dark:bg-neutral-900/50 shrink-0">
+              <a
+                href="https://docs.google.com/spreadsheets/d/1Mm3CRZVvKYFak5APwIBmfK-vZAUfnx1zg-eq8WOLbZk/edit?usp=sharing"
+                target="_blank"
+                rel="noreferrer"
+                className="text-xs text-emerald-600 dark:text-emerald-400 hover:underline inline-flex items-center gap-1 font-semibold"
+              >
+                <FileSpreadsheet className="w-4 h-4" />
+                <span>Abrir en Google Sheets Oficial</span>
+                <ExternalLink className="w-3 h-3" />
+              </a>
+
+              <button
+                type="button"
+                onClick={() => setSelectedBitacoraForModal(null)}
+                className="px-4 py-2 rounded-xl bg-neutral-900 text-white dark:bg-white dark:text-black text-xs font-bold hover:opacity-90 cursor-pointer transition-all"
+              >
+                Cerrar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* MODAL: CENTRO GLOBAL DE AUTOMATIZACIONES MAKE.COM & WEBHOOKS */}
       {isAutomationsModalOpen && (

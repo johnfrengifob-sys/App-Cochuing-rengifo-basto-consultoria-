@@ -324,29 +324,13 @@ export const ParticipantTalleresModule: React.FC<ParticipantTalleresModuleProps>
                 <ExternalLink className="w-3 h-3 opacity-60" />
               </a>
 
-              <a
-                href={activeWorkshop.googleSheetsUrl || activeWorkshop.bitacoraSheetUrl || OFFICIAL_FORMS_SHEETS_BASE_MAP.bitacora_talleres.sheetUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="px-3.5 py-2.5 rounded-xl border border-black/15 dark:border-white/15 bg-white/70 dark:bg-neutral-800/70 hover:bg-white dark:hover:bg-neutral-700 text-neutral-800 dark:text-neutral-200 text-xs font-semibold transition-colors inline-flex items-center gap-1.5 cursor-pointer shadow-2xs"
-                title="Consultar Respuestas y Expedientes en Google Sheets"
+              <div
+                className="px-3.5 py-2.5 rounded-xl border border-emerald-500/30 bg-emerald-500/10 text-emerald-800 dark:text-emerald-300 text-xs font-semibold inline-flex items-center gap-2 shadow-2xs"
+                title="Tus respuestas y quiebres se extraen de forma privada sin exponer datos de otros participantes"
               >
-                <Table className="w-4 h-4 text-emerald-600" />
-                <span>Google Sheets</span>
-                <ExternalLink className="w-3 h-3 opacity-60" />
-              </a>
-
-              <a
-                href={activeWorkshop.autocratFolderUrl || OFFICIAL_FORMS_SHEETS_BASE_MAP.bitacora_talleres.driveFolderUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="px-3.5 py-2.5 rounded-xl border border-black/15 dark:border-white/15 bg-white/70 dark:bg-neutral-800/70 hover:bg-white dark:hover:bg-neutral-700 text-neutral-800 dark:text-neutral-200 text-xs font-semibold transition-colors inline-flex items-center gap-1.5 cursor-pointer shadow-2xs"
-                title="Acceder a Automatizaciones y Expedientes Generados con AutoCrat en Google Drive"
-              >
-                <Sparkles className="w-4 h-4 text-amber-500" />
-                <span>AutoCrat Expedientes</span>
-                <ExternalLink className="w-3 h-3 opacity-60" />
-              </a>
+                <ShieldCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                <span>Expediente Extraído Privado</span>
+              </div>
 
               <button
                 type="button"
@@ -391,7 +375,7 @@ export const ParticipantTalleresModule: React.FC<ParticipantTalleresModuleProps>
 
               <div className="text-neutral-500 dark:text-neutral-400 inline-flex items-center gap-1 text-[10px] select-none font-medium">
                 <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
-                <span>Expediente Confidencial RBC & AutoCrat</span>
+                <span>Expediente Confidencial RBC • Aislamiento Estricto</span>
               </div>
             </div>
           </div>
