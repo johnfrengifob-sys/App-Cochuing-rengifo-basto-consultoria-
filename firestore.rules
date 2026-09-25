@@ -122,8 +122,12 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
-    // Documento de verificación de conexión
+    // Documento de verificación de conexión y auditoría
     match /test/{docId} {
+      allow read, write: if true;
+    }
+
+    match /system/{docId} {
       allow read, write: if true;
     }
   }

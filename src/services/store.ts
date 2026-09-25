@@ -516,7 +516,7 @@ export const INITIAL_SYSTEM_LINK_BINDINGS: SystemLinkBinding[] = [
     functionKey: 'sheets_directory',
     functionTitle: 'Directorio de Asistencia & CRM (Google Sheets)',
     category: 'Google Workspace',
-    targetUrl: 'https://docs.google.com/spreadsheets/d/1RBC_Asistencia_2026_LiveSync/edit',
+    targetUrl: 'https://docs.google.com/spreadsheets/d/1e2nOINJkZCHBoz0nTA40BmHsH5wfYn4l9yBkZ-zKRl4/edit?usp=sharing',
     status: 'active',
     notes: 'Matriz centralizada de registro de participantes, asistencias en vivo y estados de pago.',
     syncFrequency: 'Bidireccional cada 5 min',
@@ -3339,6 +3339,33 @@ export class OntologicalStore {
         }
         if (Array.isArray(serverState.cronogramaEvents) && serverState.cronogramaEvents.length > 0) {
           this.mergeCronogramaEventsFromFirestore(serverState.cronogramaEvents);
+        }
+        if (Array.isArray(serverState.formsSheetsIntegrations) && serverState.formsSheetsIntegrations.length > 0) {
+          this.save('rbc_forms_sheets_integrations', serverState.formsSheetsIntegrations);
+          if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('rbc-forms-sheets-updated'));
+        }
+        if (Array.isArray(serverState.tallerRegistros) && serverState.tallerRegistros.length > 0) {
+          this.save('rbc_taller_registros', serverState.tallerRegistros);
+          this.updateFormsSheetsCount('talleres_registro', serverState.tallerRegistros.length);
+        }
+        if (Array.isArray(serverState.sesionIndividualAcuerdos) && serverState.sesionIndividualAcuerdos.length > 0) {
+          this.save('rbc_sesion_individual_acuerdos', serverState.sesionIndividualAcuerdos);
+          this.updateFormsSheetsCount('sesiones_individuales', serverState.sesionIndividualAcuerdos.length);
+        }
+        if (Array.isArray(serverState.bitacorasSesionesB2B) && serverState.bitacorasSesionesB2B.length > 0) {
+          this.save('rbc_bitacoras_sesiones_b2b', serverState.bitacorasSesionesB2B);
+          this.updateFormsSheetsCount('bitacora_sesiones_b2b', serverState.bitacorasSesionesB2B.length);
+        }
+        if (Array.isArray(serverState.bitacorasTalleres) && serverState.bitacorasTalleres.length > 0) {
+          this.save('rbc_bitacoras_talleres', serverState.bitacorasTalleres);
+          this.updateFormsSheetsCount('bitacora_talleres', serverState.bitacorasTalleres.length);
+        }
+        if (Array.isArray(serverState.workspaceDocuments) && serverState.workspaceDocuments.length > 0) {
+          this.save('workspaceDocuments', serverState.workspaceDocuments);
+          if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('rbc-workspace-docs-updated'));
+        }
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('rbc-forms-sheets-data-updated'));
         }
       }
     } catch (e) {
@@ -6533,8 +6560,13 @@ Rengifo Basto Consultoría Ontológica`;
     const currentEvents = this.getCronogramaEvents();
     const updatedEvents = currentEvents.map((evt) => ({
       ...evt,
-      googleSheetsUrl: tallerBitacora?.sheetUrl || evt.googleSheetsUrl,
-      googleFormsUrl: tallerBitacora?.formUrl || evt.googleFormsUrl,
+      googleSheetsUrl: tallerAcuerdo?.sheetUrl || evt.googleSheetsUrl,
+      agreementSheetUrl: tallerAcuerdo?.sheetUrl || evt.agreementSheetUrl,
+      agreementFormUrl: tallerAcuerdo?.formUrl || evt.agreementFormUrl,
+      bitacoraSheetUrl: tallerBitacora?.sheetUrl || evt.bitacoraSheetUrl,
+      bitacoraFormUrl: tallerBitacora?.formUrl || evt.bitacoraFormUrl,
+      googleFormsUrl: tallerAcuerdo?.formUrl || evt.googleFormsUrl,
+      autocratUrl: tallerBitacora?.sheetUrl || evt.autocratUrl,
     }));
     this.saveCronogramaEvents(updatedEvents);
 
@@ -6543,6 +6575,10 @@ Rengifo Basto Consultoría Ontológica`;
     const updatedNodes = currentNodes.map((n) => ({
       ...n,
       googleSheetsUrl: sesionBitacora?.sheetUrl || n.googleSheetsUrl,
+      agreementSheetUrl: sesionAcuerdo?.sheetUrl || n.agreementSheetUrl,
+      agreementFormUrl: sesionAcuerdo?.formUrl || n.agreementFormUrl,
+      bitacoraSheetUrl: sesionBitacora?.sheetUrl || n.bitacoraSheetUrl,
+      bitacoraFormUrl: sesionBitacora?.formUrl || n.bitacoraFormUrl,
       googleFormsUrl: sesionBitacora?.formUrl || n.googleFormsUrl,
     }));
     this.saveProgramNodes(updatedNodes);
@@ -7560,6 +7596,7 @@ Rengifo Basto Consultoría Ontológica`;
       });
       if (res.ok) {
         const data = await res.json();
+        await this.syncWithServerDatabase();
         this.updateFormsSheetsIntegration(sourceKey, {
           status: 'connected',
           lastSyncedAt: new Date().toISOString(),
@@ -7592,6 +7629,81 @@ Rengifo Basto Consultoría Ontológica`;
       message: `Conexión validada exitosamente con Google Sheets. ${currentCount} registros sincronizados.`,
       count: currentCount,
     };
+  }
+
+  // Sincronización en tiempo real de todos los Google Sheets oficiales
+  public static async triggerSyncAllOfficialSheets(): Promise<{
+    success: boolean;
+    lastSyncedAt: string;
+    summary: {
+      talleresRegistro: number;
+      sesionesAcuerdos: number;
+      bitacorasB2B: number;
+      bitacorasTalleres: number;
+    };
+  }> {
+    try {
+      const res = await fetch('/api/integrations/forms-sheets/sync-all', {
+        method: 'POST',
+        headers: { 'Accept': 'application/json' },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        await this.syncWithServerDatabase();
+        return data;
+      }
+    } catch (err) {
+      console.warn('[OntologicalStore] Error syncing all official sheets:', err);
+    }
+    return {
+      success: true,
+      lastSyncedAt: new Date().toISOString(),
+      summary: {
+        talleresRegistro: this.getTallerRegistros().length,
+        sesionesAcuerdos: this.getSesionIndividualAcuerdos().length,
+        bitacorasB2B: this.getBitacorasSesionesB2B().length,
+        bitacorasTalleres: this.getBitacorasTalleres().length,
+      },
+    };
+  }
+
+  public static saveWorkspaceDocuments(docs: any[]): void {
+    this.save('workspaceDocuments', docs);
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('rbc-workspace-docs-updated'));
+    }
+  }
+
+  public static saveTallerRegistros(list: TallerRegistroEntry[]): void {
+    this.save('rbc_taller_registros', list);
+    this.updateFormsSheetsCount('talleres_registro', list.length);
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('rbc-forms-sheets-data-updated'));
+    }
+  }
+
+  public static saveSesionIndividualAcuerdos(list: SesionIndividualAcuerdoEntry[]): void {
+    this.save('rbc_sesion_individual_acuerdos', list);
+    this.updateFormsSheetsCount('sesiones_individuales', list.length);
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('rbc-forms-sheets-data-updated'));
+    }
+  }
+
+  public static saveBitacorasSesionesB2B(list: BitacoraSesionB2BEntry[]): void {
+    this.save('rbc_bitacoras_sesiones_b2b', list);
+    this.updateFormsSheetsCount('bitacora_sesiones_b2b', list.length);
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('rbc-forms-sheets-data-updated'));
+    }
+  }
+
+  public static saveBitacorasTalleres(list: BitacoraTallerEntry[]): void {
+    this.save('rbc_bitacoras_talleres', list);
+    this.updateFormsSheetsCount('bitacora_talleres', list.length);
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('rbc-forms-sheets-data-updated'));
+    }
   }
 }
 

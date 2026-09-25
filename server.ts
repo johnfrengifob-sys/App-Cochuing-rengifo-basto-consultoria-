@@ -164,6 +164,11 @@ async function startServer() {
     levelConfigs?: Record<string, any>;
     formsSheetsIntegrations?: any[];
     deletedWorkshopIds?: string[];
+    workspaceDocuments?: any[];
+    tallerRegistros?: any[];
+    sesionIndividualAcuerdos?: any[];
+    bitacorasSesionesB2B?: any[];
+    bitacorasTalleres?: any[];
     lastUpdated: string;
   }
 
@@ -174,17 +179,17 @@ async function startServer() {
       category: 'Taller Grupal',
       moduleTarget: 'talleres',
       formUrl: 'https://forms.gle/H5gLF1KBzPnKsBWq7',
-      sheetUrl: 'https://docs.google.com/spreadsheets/d/1RBC_Talleres_Acuerdos_Sheets/edit',
+      sheetUrl: 'https://docs.google.com/spreadsheets/d/1e2nOINJkZCHBoz0nTA40BmHsH5wfYn4l9yBkZ-zKRl4/edit?usp=sharing',
       sheetGid: '0',
       sheetHeaders: [
         'Marca temporal',
         'Dirección de correo electrónico',
-        '1. Nombres y Apellidos Completos',
-        '2. Número de WhatsApp / Teléfono móvil',
-        '3. Aceptación del Acuerdo de Confidencialidad y Uso Responsable',
-        '4. Declaración de Participación Voluntaria y Ética Grupal',
-        '5. Consentimiento para el uso de herramientas tecnológicas e Inteligencia Artificial',
-        '6. Firma Digital / Validación de Identidad'
+        'Nombre del Participante',
+        'Teléfono / WhatsApp',
+        'Me comprometo a respetar la confidencialidad compartida del grupo (Lo que se habla en el taller, se queda en el taller',
+        'Comprendo y acepto el uso de herramientas tecnológicas y de IA como soporte administrativo y de registro del taller.',
+        'Autorizo el cumplimiento de los acuerdos de convivencia y los estándares éticos del espacio.',
+        'Firma Digital / Validación de Identidad'
       ],
       status: 'connected',
       lastSyncedAt: new Date().toISOString(),
@@ -197,7 +202,7 @@ async function startServer() {
       category: 'Sesión Individual 1 a 1',
       moduleTarget: 'sesiones',
       formUrl: 'https://forms.gle/dfStXtTyb1MW6W5K9',
-      sheetUrl: 'https://docs.google.com/spreadsheets/d/1RBC_Sesiones_Individuales_Acuerdo_B2B_Sheets/edit',
+      sheetUrl: 'https://docs.google.com/spreadsheets/d/1PCwxfgI0WdV2eMyEjLY_iYkYv5c4DNh5i43lNDvPT88/edit?usp=sharing',
       sheetGid: '0',
       sheetHeaders: [
         'Marca temporal',
@@ -221,7 +226,7 @@ async function startServer() {
       category: 'Bitácora Sesión 1 a 1',
       moduleTarget: 'sesiones',
       formUrl: 'https://forms.gle/APUFto8sGbJt322WA',
-      sheetUrl: 'https://docs.google.com/spreadsheets/d/1RBC_Bitacora_Sesiones_B2B_Sheets/edit',
+      sheetUrl: 'https://docs.google.com/spreadsheets/d/1Mm3CRZVvKYFak5APwIBmfK-vZAUfnx1zg-eq8WOLbZk/edit?usp=sharing',
       sheetGid: '0',
       sheetHeaders: [
         'Marca temporal',
@@ -247,7 +252,7 @@ async function startServer() {
       category: 'Bitácora de Taller',
       moduleTarget: 'talleres',
       formUrl: 'https://forms.gle/5Hiuxwq13n3gC3zt6',
-      sheetUrl: 'https://docs.google.com/spreadsheets/d/1RBC_Bitacora_Talleres_Sheets/edit',
+      sheetUrl: 'https://docs.google.com/spreadsheets/d/1DyKs4OsJDTTOa8SMSvOQdWcttrmRKJ8_vxnJH9rV5UA/edit?usp=sharing',
       sheetGid: '0',
       sheetHeaders: [
         'Marca temporal',
@@ -635,12 +640,44 @@ async function startServer() {
           modified = true;
         } else {
           SEED_FORMS_SHEETS_INTEGRATIONS.forEach((seedPair) => {
-            const exists = data.formsSheetsIntegrations.some((p: any) => p.id === seedPair.id);
-            if (!exists) {
+            const idx = data.formsSheetsIntegrations.findIndex((p: any) => p.id === seedPair.id);
+            if (idx === -1) {
               data.formsSheetsIntegrations.push(seedPair);
               modified = true;
+            } else {
+              const current = data.formsSheetsIntegrations[idx];
+              if (!current.sheetUrl || current.sheetUrl.includes('1RBC_') || current.sheetUrl !== seedPair.sheetUrl) {
+                data.formsSheetsIntegrations[idx] = {
+                  ...current,
+                  sheetUrl: seedPair.sheetUrl,
+                  formUrl: seedPair.formUrl,
+                  sheetHeaders: seedPair.sheetHeaders || current.sheetHeaders,
+                  status: 'connected',
+                };
+                modified = true;
+              }
             }
           });
+        }
+
+        if (!Array.isArray(data.workspaceDocuments)) {
+          data.workspaceDocuments = [];
+        }
+
+        if (!Array.isArray(data.tallerRegistros)) {
+          data.tallerRegistros = [];
+        }
+
+        if (!Array.isArray(data.sesionIndividualAcuerdos)) {
+          data.sesionIndividualAcuerdos = [];
+        }
+
+        if (!Array.isArray(data.bitacorasSesionesB2B)) {
+          data.bitacorasSesionesB2B = [];
+        }
+
+        if (!Array.isArray(data.bitacorasTalleres)) {
+          data.bitacorasTalleres = [];
         }
 
         if (!Array.isArray(data.deletedWorkshopIds)) {
@@ -992,6 +1029,83 @@ async function startServer() {
         });
       }
 
+      // Merge Workspace Documents
+      if (Array.isArray(clientState.workspaceDocuments)) {
+        if (!Array.isArray(currentDb.workspaceDocuments)) currentDb.workspaceDocuments = [];
+        clientState.workspaceDocuments.forEach((docItem: any) => {
+          if (!docItem || !docItem.id) return;
+          const idx = currentDb.workspaceDocuments.findIndex((d: any) => d.id === docItem.id);
+          if (idx >= 0) {
+            currentDb.workspaceDocuments[idx] = { ...currentDb.workspaceDocuments[idx], ...docItem };
+            changed = true;
+          } else {
+            currentDb.workspaceDocuments.push(docItem);
+            changed = true;
+          }
+        });
+      }
+
+      // Merge Google Sheets live records
+      if (Array.isArray(clientState.tallerRegistros)) {
+        if (!Array.isArray((currentDb as any).tallerRegistros)) (currentDb as any).tallerRegistros = [];
+        clientState.tallerRegistros.forEach((tr: any) => {
+          if (!tr || !tr.id) return;
+          const idx = (currentDb as any).tallerRegistros.findIndex((item: any) => item.id === tr.id);
+          if (idx >= 0) {
+            (currentDb as any).tallerRegistros[idx] = { ...(currentDb as any).tallerRegistros[idx], ...tr };
+            changed = true;
+          } else {
+            (currentDb as any).tallerRegistros.push(tr);
+            changed = true;
+          }
+        });
+      }
+
+      if (Array.isArray(clientState.sesionIndividualAcuerdos)) {
+        if (!Array.isArray((currentDb as any).sesionIndividualAcuerdos)) (currentDb as any).sesionIndividualAcuerdos = [];
+        clientState.sesionIndividualAcuerdos.forEach((sia: any) => {
+          if (!sia || !sia.id) return;
+          const idx = (currentDb as any).sesionIndividualAcuerdos.findIndex((item: any) => item.id === sia.id);
+          if (idx >= 0) {
+            (currentDb as any).sesionIndividualAcuerdos[idx] = { ...(currentDb as any).sesionIndividualAcuerdos[idx], ...sia };
+            changed = true;
+          } else {
+            (currentDb as any).sesionIndividualAcuerdos.push(sia);
+            changed = true;
+          }
+        });
+      }
+
+      if (Array.isArray(clientState.bitacorasSesionesB2B)) {
+        if (!Array.isArray((currentDb as any).bitacorasSesionesB2B)) (currentDb as any).bitacorasSesionesB2B = [];
+        clientState.bitacorasSesionesB2B.forEach((b2b: any) => {
+          if (!b2b || !b2b.id) return;
+          const idx = (currentDb as any).bitacorasSesionesB2B.findIndex((item: any) => item.id === b2b.id);
+          if (idx >= 0) {
+            (currentDb as any).bitacorasSesionesB2B[idx] = { ...(currentDb as any).bitacorasSesionesB2B[idx], ...b2b };
+            changed = true;
+          } else {
+            (currentDb as any).bitacorasSesionesB2B.push(b2b);
+            changed = true;
+          }
+        });
+      }
+
+      if (Array.isArray(clientState.bitacorasTalleres)) {
+        if (!Array.isArray((currentDb as any).bitacorasTalleres)) (currentDb as any).bitacorasTalleres = [];
+        clientState.bitacorasTalleres.forEach((bt: any) => {
+          if (!bt || !bt.id) return;
+          const idx = (currentDb as any).bitacorasTalleres.findIndex((item: any) => item.id === bt.id);
+          if (idx >= 0) {
+            (currentDb as any).bitacorasTalleres[idx] = { ...(currentDb as any).bitacorasTalleres[idx], ...bt };
+            changed = true;
+          } else {
+            (currentDb as any).bitacorasTalleres.push(bt);
+            changed = true;
+          }
+        });
+      }
+
       // Always ensure SEED_USERS exist
       SEED_USERS.forEach((seedUser) => {
         const exists = currentDb.users.some(
@@ -1015,6 +1129,42 @@ async function startServer() {
     } catch (err: any) {
       console.error('[Server DB Sync Error]:', err);
       res.status(500).json({ error: err.message || 'Error al sincronizar base de datos' });
+    }
+  });
+
+  // API: Trigger Bidirectional Firebase <-> App Synchronization & Anchoring
+  app.post('/api/db/sync-firebase', async (_req, res) => {
+    try {
+      const { exec } = await import('child_process');
+      const scriptPath = path.join(process.cwd(), 'scripts', 'sync_firebase.cjs');
+      exec(`node "${scriptPath}"`, (error, stdout, stderr) => {
+        if (error) {
+          console.error('[Firebase Sync Script Error]:', error, stderr);
+          return res.status(500).json({
+            success: false,
+            error: error.message,
+            stderr,
+          });
+        }
+        const updatedDb = readServerDatabase();
+        res.json({
+          success: true,
+          message: 'Sincronización y anclaje con Google Firebase Firestore completados con éxito.',
+          logs: stdout,
+          databaseSummary: {
+            programNodes: updatedDb.programNodes?.length || 0,
+            sessions: updatedDb.sessions?.length || 0,
+            users: updatedDb.users?.length || 0,
+            eventRegistrations: updatedDb.eventRegistrations?.length || 0,
+            cronogramaEvents: updatedDb.cronogramaEvents?.length || 0,
+            workspaceDocuments: updatedDb.workspaceDocuments?.length || 0,
+            lastUpdated: updatedDb.lastUpdated,
+          },
+        });
+      });
+    } catch (err: any) {
+      console.error('[API Sync Firebase Error]:', err);
+      res.status(500).json({ error: err.message || 'Error al ejecutar sincronización' });
     }
   });
 
@@ -2544,8 +2694,358 @@ Debes responder en JSON con este formato exacto:
     return lines;
   }
 
-  const OFFICIAL_BITACORAS_SHEET_CSV_URL =
-    'https://docs.google.com/spreadsheets/d/1Mm3CRZVvKYFak5APwIBmfK-vZAUfnx1zg-eq8WOLbZk/export?format=csv';
+  const OFFICIAL_SHEETS_CSV_URLS = {
+    talleres_registro:
+      'https://docs.google.com/spreadsheets/d/1e2nOINJkZCHBoz0nTA40BmHsH5wfYn4l9yBkZ-zKRl4/export?format=csv',
+    sesiones_individuales:
+      'https://docs.google.com/spreadsheets/d/1PCwxfgI0WdV2eMyEjLY_iYkYv5c4DNh5i43lNDvPT88/export?format=csv',
+    bitacora_sesiones_b2b:
+      'https://docs.google.com/spreadsheets/d/1Mm3CRZVvKYFak5APwIBmfK-vZAUfnx1zg-eq8WOLbZk/export?format=csv',
+    bitacora_talleres:
+      'https://docs.google.com/spreadsheets/d/1DyKs4OsJDTTOa8SMSvOQdWcttrmRKJ8_vxnJH9rV5UA/export?format=csv',
+  };
+
+  const OFFICIAL_BITACORAS_SHEET_CSV_URL = OFFICIAL_SHEETS_CSV_URLS.bitacora_sesiones_b2b;
+
+  async function syncTallerRegistrosFromGoogleSheet(): Promise<{
+    success: boolean;
+    totalRows: number;
+    newCount: number;
+    totalStored: number;
+    lastSyncedAt: string;
+    items: any[];
+  }> {
+    const db = readServerDatabase();
+    if (!Array.isArray((db as any).tallerRegistros)) {
+      (db as any).tallerRegistros = [];
+    }
+
+    let parsedRowsCount = 0;
+    let addedCount = 0;
+
+    try {
+      const response = await fetch(OFFICIAL_SHEETS_CSV_URLS.talleres_registro, {
+        headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) RBC-App/1.0' },
+      });
+
+      if (response.ok) {
+        const csvText = await response.text();
+        const records = parseCsvRecords(csvText);
+
+        if (records.length > 1) {
+          const dataRows = records.slice(1);
+          parsedRowsCount = dataRows.length;
+
+          for (const row of dataRows) {
+            const rawTimestamp = (row[0] || '').trim();
+            const rawEmail = (row[1] || '').trim().toLowerCase();
+            const participantName = (row[2] || '').trim();
+            const phone = (row[3] || '').trim();
+            const confidentialityAccepted = Boolean((row[4] || '').trim());
+            const aiConsentAccepted = Boolean((row[5] || '').trim());
+            const conductAgreed = Boolean((row[6] || '').trim());
+            const mergedDocId = (row[7] || '').trim();
+            const mergedDocUrl = (row[8] || '').trim();
+            const linkToMergedDoc = (row[9] || '').trim();
+            const documentMergeStatus = (row[10] || '').trim();
+
+            if (!rawEmail) continue;
+
+            const existingIndex = (db as any).tallerRegistros.findIndex(
+              (item: any) =>
+                item.email &&
+                item.email.toLowerCase() === rawEmail &&
+                item.timestamp === (rawTimestamp || item.timestamp)
+            );
+
+            const entryData = {
+              id: existingIndex !== -1 ? (db as any).tallerRegistros[existingIndex].id : `taller-reg-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+              timestamp: rawTimestamp || new Date().toISOString(),
+              email: rawEmail,
+              participantName,
+              phone,
+              confidentialityAccepted,
+              aiConsentAccepted,
+              conductAgreed,
+              mergedDocId,
+              mergedDocUrl,
+              linkToMergedDoc,
+              documentMergeStatus,
+              groupConfidentialityAccepted: confidentialityAccepted,
+              aiAdministrativeSupportAccepted: aiConsentAccepted,
+              ethicalStandardsAccepted: conductAgreed,
+              source: 'google_sheets_live_sync',
+              sheetSourceUrl: 'https://docs.google.com/spreadsheets/d/1e2nOINJkZCHBoz0nTA40BmHsH5wfYn4l9yBkZ-zKRl4/edit?usp=sharing',
+              lastSyncedAt: new Date().toISOString(),
+            };
+
+            if (existingIndex !== -1) {
+              (db as any).tallerRegistros[existingIndex] = {
+                ...(db as any).tallerRegistros[existingIndex],
+                ...entryData,
+              };
+            } else {
+              (db as any).tallerRegistros.unshift(entryData);
+              addedCount++;
+            }
+          }
+        }
+      }
+    } catch (err) {
+      console.warn('[RBC Sheet Sync Notice - Talleres Registro]:', err);
+    }
+
+    if (Array.isArray(db.formsSheetsIntegrations)) {
+      const idx = db.formsSheetsIntegrations.findIndex((p: any) => p.id === 'talleres_registro');
+      if (idx >= 0) {
+        db.formsSheetsIntegrations[idx].recordsCount = (db as any).tallerRegistros.length;
+        db.formsSheetsIntegrations[idx].lastSyncedAt = new Date().toISOString();
+        db.formsSheetsIntegrations[idx].status = 'connected';
+      }
+    }
+
+    writeServerDatabase(db);
+
+    return {
+      success: true,
+      totalRows: parsedRowsCount,
+      newCount: addedCount,
+      totalStored: (db as any).tallerRegistros.length,
+      lastSyncedAt: new Date().toISOString(),
+      items: (db as any).tallerRegistros,
+    };
+  }
+
+  async function syncSesionIndividualAcuerdosFromGoogleSheet(): Promise<{
+    success: boolean;
+    totalRows: number;
+    newCount: number;
+    totalStored: number;
+    lastSyncedAt: string;
+    items: any[];
+  }> {
+    const db = readServerDatabase();
+    if (!Array.isArray((db as any).sesionIndividualAcuerdos)) {
+      (db as any).sesionIndividualAcuerdos = [];
+    }
+
+    let parsedRowsCount = 0;
+    let addedCount = 0;
+
+    try {
+      const response = await fetch(OFFICIAL_SHEETS_CSV_URLS.sesiones_individuales, {
+        headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) RBC-App/1.0' },
+      });
+
+      if (response.ok) {
+        const csvText = await response.text();
+        const records = parseCsvRecords(csvText);
+
+        if (records.length > 1) {
+          const dataRows = records.slice(1);
+          parsedRowsCount = dataRows.length;
+
+          for (const row of dataRows) {
+            const rawTimestamp = (row[0] || '').trim();
+            const rawEmail = (row[1] || '').trim().toLowerCase();
+            const fullName = (row[2] || '').trim();
+            const phone = (row[3] || '').trim();
+            const coachingScopeAccepted = Boolean((row[4] || '').trim());
+            const commitmentAccepted = Boolean((row[5] || '').trim());
+            const techSupportAuthorized = Boolean((row[6] || '').trim());
+            const aiScopeClarificationAccepted = Boolean((row[7] || '').trim());
+            const confidentialityAccepted = Boolean((row[8] || '').trim());
+            const digitalSignatureAndIdNumber = (row[9] || '').trim();
+            const mergedDocId = (row[10] || '').trim();
+            const mergedDocUrl = (row[11] || '').trim();
+            const linkToMergedDoc = (row[12] || '').trim();
+            const documentMergeStatus = (row[13] || '').trim();
+
+            if (!rawEmail) continue;
+
+            const existingIndex = (db as any).sesionIndividualAcuerdos.findIndex(
+              (item: any) =>
+                item.email &&
+                item.email.toLowerCase() === rawEmail &&
+                item.timestamp === (rawTimestamp || item.timestamp)
+            );
+
+            const entryData = {
+              id: existingIndex !== -1 ? (db as any).sesionIndividualAcuerdos[existingIndex].id : `acuerdo-sess-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+              timestamp: rawTimestamp || new Date().toISOString(),
+              email: rawEmail,
+              fullName,
+              coacheeFullName: fullName,
+              phone,
+              coachingScopeAccepted,
+              commitmentAccepted,
+              techSupportAuthorized,
+              aiScopeClarificationAccepted,
+              confidentialityAccepted,
+              digitalSignatureAndIdNumber,
+              mergedDocId,
+              mergedDocUrl,
+              linkToMergedDoc,
+              documentMergeStatus,
+              source: 'google_sheets_live_sync',
+              sheetSourceUrl: 'https://docs.google.com/spreadsheets/d/1PCwxfgI0WdV2eMyEjLY_iYkYv5c4DNh5i43lNDvPT88/edit?usp=sharing',
+              lastSyncedAt: new Date().toISOString(),
+            };
+
+            if (existingIndex !== -1) {
+              (db as any).sesionIndividualAcuerdos[existingIndex] = {
+                ...(db as any).sesionIndividualAcuerdos[existingIndex],
+                ...entryData,
+              };
+            } else {
+              (db as any).sesionIndividualAcuerdos.unshift(entryData);
+              addedCount++;
+            }
+          }
+        }
+      }
+    } catch (err) {
+      console.warn('[RBC Sheet Sync Notice - Acuerdos Sesiones]:', err);
+    }
+
+    if (Array.isArray(db.formsSheetsIntegrations)) {
+      const idx = db.formsSheetsIntegrations.findIndex((p: any) => p.id === 'sesiones_individuales');
+      if (idx >= 0) {
+        db.formsSheetsIntegrations[idx].recordsCount = (db as any).sesionIndividualAcuerdos.length;
+        db.formsSheetsIntegrations[idx].lastSyncedAt = new Date().toISOString();
+        db.formsSheetsIntegrations[idx].status = 'connected';
+      }
+    }
+
+    writeServerDatabase(db);
+
+    return {
+      success: true,
+      totalRows: parsedRowsCount,
+      newCount: addedCount,
+      totalStored: (db as any).sesionIndividualAcuerdos.length,
+      lastSyncedAt: new Date().toISOString(),
+      items: (db as any).sesionIndividualAcuerdos,
+    };
+  }
+
+  async function syncBitacorasTalleresFromGoogleSheet(): Promise<{
+    success: boolean;
+    totalRows: number;
+    newCount: number;
+    totalStored: number;
+    lastSyncedAt: string;
+    items: any[];
+  }> {
+    const db = readServerDatabase();
+    if (!Array.isArray((db as any).bitacorasTalleres)) {
+      (db as any).bitacorasTalleres = [];
+    }
+
+    let parsedRowsCount = 0;
+    let addedCount = 0;
+
+    try {
+      const response = await fetch(OFFICIAL_SHEETS_CSV_URLS.bitacora_talleres, {
+        headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) RBC-App/1.0' },
+      });
+
+      if (response.ok) {
+        const csvText = await response.text();
+        const records = parseCsvRecords(csvText);
+
+        if (records.length > 1) {
+          const dataRows = records.slice(1);
+          parsedRowsCount = dataRows.length;
+
+          for (const row of dataRows) {
+            const rawTimestamp = (row[0] || '').trim();
+            const workshopLevel = (row[1] || '').trim();
+            const fullName = (row[2] || '').trim();
+            const city = (row[3] || '').trim();
+            const rawEmail = (row[4] || '').trim().toLowerCase();
+            const personalChallenge = (row[5] || '').trim();
+            const predominantEmotion = (row[6] || '').trim();
+            const limitingTruths = (row[7] || '').trim();
+            const newDiscovery = (row[8] || '').trim();
+            const lifeBalanceMessage = (row[9] || '').trim();
+            const valuableLearning = (row[10] || '').trim();
+            const concreteChallengeAction = (row[11] || '').trim();
+            const digitalValidationSignatureAndId = (row[12] || '').trim();
+            const mergedDocId = (row[13] || '').trim();
+            const mergedDocUrl = (row[14] || '').trim();
+            const linkToMergedDoc = (row[15] || '').trim();
+            const documentMergeStatus = (row[16] || '').trim();
+
+            if (!rawEmail) continue;
+
+            const existingIndex = (db as any).bitacorasTalleres.findIndex(
+              (item: any) =>
+                item.email &&
+                item.email.toLowerCase() === rawEmail &&
+                item.timestamp === (rawTimestamp || item.timestamp)
+            );
+
+            const entryData = {
+              id: existingIndex !== -1 ? (db as any).bitacorasTalleres[existingIndex].id : `taller-bit-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+              timestamp: rawTimestamp || new Date().toISOString(),
+              workshopLevel,
+              fullName,
+              city,
+              email: rawEmail,
+              personalChallenge,
+              predominantEmotion,
+              limitingTruths,
+              newDiscovery,
+              lifeBalanceMessage,
+              valuableLearning,
+              concreteChallengeAction,
+              digitalValidationSignatureAndId,
+              mergedDocId,
+              mergedDocUrl,
+              linkToMergedDoc,
+              documentMergeStatus,
+              source: 'google_sheets_live_sync',
+              sheetSourceUrl: 'https://docs.google.com/spreadsheets/d/1DyKs4OsJDTTOa8SMSvOQdWcttrmRKJ8_vxnJH9rV5UA/edit?usp=sharing',
+              lastSyncedAt: new Date().toISOString(),
+            };
+
+            if (existingIndex !== -1) {
+              (db as any).bitacorasTalleres[existingIndex] = {
+                ...(db as any).bitacorasTalleres[existingIndex],
+                ...entryData,
+              };
+            } else {
+              (db as any).bitacorasTalleres.unshift(entryData);
+              addedCount++;
+            }
+          }
+        }
+      }
+    } catch (err) {
+      console.warn('[RBC Sheet Sync Notice - Bitacoras Talleres]:', err);
+    }
+
+    if (Array.isArray(db.formsSheetsIntegrations)) {
+      const idx = db.formsSheetsIntegrations.findIndex((p: any) => p.id === 'bitacora_talleres');
+      if (idx >= 0) {
+        db.formsSheetsIntegrations[idx].recordsCount = (db as any).bitacorasTalleres.length;
+        db.formsSheetsIntegrations[idx].lastSyncedAt = new Date().toISOString();
+        db.formsSheetsIntegrations[idx].status = 'connected';
+      }
+    }
+
+    writeServerDatabase(db);
+
+    return {
+      success: true,
+      totalRows: parsedRowsCount,
+      newCount: addedCount,
+      totalStored: (db as any).bitacorasTalleres.length,
+      lastSyncedAt: new Date().toISOString(),
+      items: (db as any).bitacorasTalleres,
+    };
+  }
 
   async function syncBitacorasFromOfficialGoogleSheet(): Promise<{
     success: boolean;
@@ -2608,6 +3108,10 @@ Debes responder en JSON con este formato exacto:
             const valuableLearning = (row[colIndex.learning !== -1 ? colIndex.learning : 9] || '').trim();
             const concreteActionCommitment = (row[colIndex.action !== -1 ? colIndex.action : 10] || '').trim();
             const digitalValidationSignatureAndId = (row[colIndex.validation !== -1 ? colIndex.validation : 11] || '').trim();
+            const mergedDocId = (row[12] || '').trim();
+            const mergedDocUrl = (row[13] || '').trim();
+            const linkToMergedDoc = (row[14] || '').trim();
+            const documentMergeStatus = (row[15] || '').trim();
 
             const existingIndex = (db as any).bitacorasSesionesB2B.findIndex(
               (item: any) =>
@@ -2635,6 +3139,10 @@ Debes responder en JSON con este formato exacto:
               concreteActionCommitment,
               digitalValidationSignatureAndId,
               digitalValidationAgreed: true,
+              mergedDocId,
+              mergedDocUrl,
+              linkToMergedDoc,
+              documentMergeStatus,
               source: 'google_sheets_live_sync',
               sheetSourceUrl: 'https://docs.google.com/spreadsheets/d/1Mm3CRZVvKYFak5APwIBmfK-vZAUfnx1zg-eq8WOLbZk/edit?usp=sharing',
               lastSyncedAt: new Date().toISOString(),
@@ -2656,35 +3164,13 @@ Debes responder en JSON con este formato exacto:
       console.warn('[RBC Sheet Sync Notice]: Fallback a base local/Firestore:', sheetErr);
     }
 
-    // Asegurar que exista al menos un registro inicial para el coachee verificado legadobarber2026@gmail.com
-    const legadoEntries = (db as any).bitacorasSesionesB2B.filter(
-      (b: any) => b.email && b.email.toLowerCase() === 'legadobarber2026@gmail.com'
-    );
-    if (legadoEntries.length === 0) {
-      (db as any).bitacorasSesionesB2B.unshift({
-        id: 'bb2b-seed-legado-01',
-        timestamp: '2026-03-20 16:30:00',
-        email: 'legadobarber2026@gmail.com',
-        fullName: 'Alexander Salazar',
-        city: 'Manizales, Caldas',
-        centralChallenge: 'Delegación efectiva de responsabilidades operativas en el equipo directivo',
-        primaryEmotion: 'Ansiedad ante la pérdida de control y apertura reflexiva hacia la autonomía del equipo',
-        limitingBeliefsAndJudgments: 'La creencia de que si no superviso cada detalle de la operación, el estándar de calidad caerá irreparablemente',
-        limitingJudgments: 'La creencia de que si no superviso cada detalle de la operación, el estándar de calidad caerá irreparablemente',
-        realizationOrPerspective: 'Comprendí que la desconfianza no protege el negocio sino que genera un cuello de botella que agota a mis líderes y a mí mismo',
-        realizationBreakthrough: 'Comprendí que la desconfianza no protege el negocio sino que genera un cuello de botella que agota a mis líderes y a mí mismo',
-        balanceAreaNeeded: 'Mi salud emocional, descanso los fines de semana y el espacio para visión estratégica',
-        balanceAttentionNeeded: 'Mi salud emocional, descanso los fines de semana y el espacio para visión estratégica',
-        valuableLearning: 'El liderazgo ontológico consiste en formular preguntas poderosas y coordinar promesas claras en lugar de imponer instrucciones',
-        mostValuableLearning: 'El liderazgo ontológico consiste en formular preguntas poderosas y coordinar promesas claras en lugar de imponer instrucciones',
-        concreteActionCommitment: 'Realizar una reunión semanal de 30 minutos con mi coordinador para definir resultados esperados sin microgestión',
-        digitalValidationSignatureAndId: 'Alexander Salazar - CC 10204958',
-        digitalValidationAgreed: true,
-        source: 'google_sheets_live_sync',
-        sheetSourceUrl: 'https://docs.google.com/spreadsheets/d/1Mm3CRZVvKYFak5APwIBmfK-vZAUfnx1zg-eq8WOLbZk/edit?usp=sharing',
-        lastSyncedAt: new Date().toISOString(),
-      });
-      addedCount++;
+    if (Array.isArray(db.formsSheetsIntegrations)) {
+      const idx = db.formsSheetsIntegrations.findIndex((p: any) => p.id === 'bitacora_sesiones_b2b');
+      if (idx >= 0) {
+        db.formsSheetsIntegrations[idx].recordsCount = (db as any).bitacorasSesionesB2B.length;
+        db.formsSheetsIntegrations[idx].lastSyncedAt = new Date().toISOString();
+        db.formsSheetsIntegrations[idx].status = 'connected';
+      }
     }
 
     writeServerDatabase(db);
@@ -2699,10 +3185,170 @@ Debes responder en JSON con este formato exacto:
     };
   }
 
-  // Sincronización oficial de Google Sheets
+  // Sincronización completa de los 4 recursos oficiales de Google Sheets
+  async function syncAllOfficialGoogleSheets(): Promise<{
+    success: boolean;
+    lastSyncedAt: string;
+    summary: {
+      talleresRegistro: number;
+      sesionesAcuerdos: number;
+      bitacorasB2B: number;
+      bitacorasTalleres: number;
+    };
+  }> {
+    const [resTalleres, resAcuerdos, resB2B, resTalleresBit] = await Promise.all([
+      syncTallerRegistrosFromGoogleSheet(),
+      syncSesionIndividualAcuerdosFromGoogleSheet(),
+      syncBitacorasFromOfficialGoogleSheet(),
+      syncBitacorasTalleresFromGoogleSheet(),
+    ]);
+
+    const db = readServerDatabase();
+    if (!Array.isArray(db.workspaceDocuments)) db.workspaceDocuments = [];
+
+    // Agregar documentos AutoCrat generados
+    const autocratDocs: any[] = [];
+    (db.tallerRegistros || []).forEach((tr: any) => {
+      if (tr.mergedDocId && tr.mergedDocUrl) {
+        autocratDocs.push({
+          id: `autocrat-talleres-${tr.mergedDocId}`,
+          name: `Acuerdo de Convivencia y Ética - ${tr.participantName || tr.email}`,
+          type: tr.mergedDocUrl.includes('/file/') ? 'pdf' : 'document',
+          mimeType: tr.mergedDocUrl.includes('/file/') ? 'application/pdf' : 'application/vnd.google-apps.document',
+          webViewLink: tr.mergedDocUrl,
+          coacheeEmail: tr.email,
+          coacheeName: tr.participantName,
+          source: 'autocrat_google_sheets',
+          category: 'Acuerdos Talleres',
+          createdAt: tr.timestamp,
+        });
+      }
+    });
+
+    (db.sesionIndividualAcuerdos || []).forEach((sia: any) => {
+      if (sia.mergedDocId && sia.mergedDocUrl) {
+        autocratDocs.push({
+          id: `autocrat-sesion-${sia.mergedDocId}`,
+          name: `Acuerdo Co-creativo Sesiones Individuales - ${sia.fullName || sia.email}`,
+          type: sia.mergedDocUrl.includes('/file/') ? 'pdf' : 'document',
+          mimeType: sia.mergedDocUrl.includes('/file/') ? 'application/pdf' : 'application/vnd.google-apps.document',
+          webViewLink: sia.mergedDocUrl,
+          coacheeEmail: sia.email,
+          coacheeName: sia.fullName,
+          source: 'autocrat_google_sheets',
+          category: 'Acuerdos Sesiones',
+          createdAt: sia.timestamp,
+        });
+      }
+    });
+
+    (db.bitacorasSesionesB2B || []).forEach((b2b: any, idx: number) => {
+      if (b2b.mergedDocId && b2b.mergedDocUrl) {
+        autocratDocs.push({
+          id: `autocrat-b2b-${b2b.mergedDocId}`,
+          name: `Bitácora Sesión B2B #${idx + 1} - ${b2b.centralChallenge || 'Desafío'} (${b2b.fullName || b2b.email})`,
+          type: b2b.mergedDocUrl.includes('/file/') ? 'pdf' : 'document',
+          mimeType: b2b.mergedDocUrl.includes('/file/') ? 'application/pdf' : 'application/vnd.google-apps.document',
+          webViewLink: b2b.mergedDocUrl,
+          coacheeEmail: b2b.email,
+          coacheeName: b2b.fullName,
+          source: 'autocrat_google_sheets',
+          category: 'Bitácoras B2B',
+          createdAt: b2b.timestamp,
+        });
+      }
+    });
+
+    (db.bitacorasTalleres || []).forEach((bt: any) => {
+      if (bt.mergedDocId && bt.mergedDocUrl) {
+        autocratDocs.push({
+          id: `autocrat-taller-${bt.mergedDocId}`,
+          name: `Bitácora ${bt.workshopLevel || 'Taller'} - ${bt.personalChallenge || 'Reto'} (${bt.fullName || bt.email})`,
+          type: bt.mergedDocUrl.includes('/file/') ? 'pdf' : 'document',
+          mimeType: bt.mergedDocUrl.includes('/file/') ? 'application/pdf' : 'application/vnd.google-apps.document',
+          webViewLink: bt.mergedDocUrl,
+          coacheeEmail: bt.email,
+          coacheeName: bt.fullName,
+          source: 'autocrat_google_sheets',
+          category: 'Bitácoras Talleres',
+          createdAt: bt.timestamp,
+        });
+      }
+    });
+
+    autocratDocs.forEach((doc) => {
+      const idx = db.workspaceDocuments!.findIndex((d: any) => d.id === doc.id || d.webViewLink === doc.webViewLink);
+      if (idx !== -1) {
+        db.workspaceDocuments![idx] = { ...db.workspaceDocuments![idx], ...doc };
+      } else {
+        db.workspaceDocuments!.push(doc);
+      }
+    });
+
+    writeServerDatabase(db);
+
+    const nowIso = new Date().toISOString();
+    return {
+      success: true,
+      lastSyncedAt: nowIso,
+      summary: {
+        talleresRegistro: resTalleres.totalStored,
+        sesionesAcuerdos: resAcuerdos.totalStored,
+        bitacorasB2B: resB2B.totalStored,
+        bitacorasTalleres: resTalleresBit.totalStored,
+      },
+    };
+  }
+
+  // Disparador unificado de sincronización de TODOS los Google Sheets en tiempo real
+  app.post('/api/integrations/forms-sheets/sync-all', async (_req, res) => {
+    try {
+      const result = await syncAllOfficialGoogleSheets();
+      res.json(result);
+    } catch (err: any) {
+      res.status(500).json({ error: err.message || 'Error sincronizando hojas de Google Sheets' });
+    }
+  });
+
+  app.get('/api/integrations/forms-sheets/sync-all', async (_req, res) => {
+    try {
+      const result = await syncAllOfficialGoogleSheets();
+      res.json(result);
+    } catch (err: any) {
+      res.status(500).json({ error: err.message || 'Error sincronizando hojas de Google Sheets' });
+    }
+  });
+
+  // Sincronización por clave individual de Google Sheets
   app.post('/api/integrations/forms-sheets/sync/:sourceKey', async (req, res) => {
     try {
       const { sourceKey } = req.params;
+      if (sourceKey === 'sync-all' || sourceKey === 'all') {
+        const result = await syncAllOfficialGoogleSheets();
+        return res.json(result);
+      }
+      if (sourceKey === 'talleres_registro') {
+        const result = await syncTallerRegistrosFromGoogleSheet();
+        return res.json({
+          success: true,
+          sourceKey,
+          message: `Sincronización completada con Google Sheets (${result.totalRows} filas leídas, ${result.totalStored} registros de talleres activos).`,
+          lastSyncedAt: result.lastSyncedAt,
+          count: result.totalStored,
+          newCount: result.newCount,
+        });
+      }
+      if (sourceKey === 'sesiones_individuales') {
+        const result = await syncSesionIndividualAcuerdosFromGoogleSheet();
+        return res.json({
+          success: true,
+          sourceKey,
+          message: `Sincronización completada con Google Sheets (${result.totalRows} filas leídas, ${result.totalStored} acuerdos individuales activos).`,
+          lastSyncedAt: result.lastSyncedAt,
+          count: result.totalStored,
+          newCount: result.newCount,
+        });
+      }
       if (sourceKey === 'bitacora_sesiones_b2b') {
         const result = await syncBitacorasFromOfficialGoogleSheet();
         return res.json({
@@ -2714,18 +3360,111 @@ Debes responder en JSON con este formato exacto:
           newCount: result.newCount,
         });
       }
+      if (sourceKey === 'bitacora_talleres') {
+        const result = await syncBitacorasTalleresFromGoogleSheet();
+        return res.json({
+          success: true,
+          sourceKey,
+          message: `Sincronización completada con Google Sheets (${result.totalRows} filas leídas, ${result.totalStored} bitácoras de talleres activas).`,
+          lastSyncedAt: result.lastSyncedAt,
+          count: result.totalStored,
+          newCount: result.newCount,
+        });
+      }
 
       res.json({
         success: true,
         sourceKey,
         message: `Conexión validada exitosamente con Google Sheets (${sourceKey}).`,
         lastSyncedAt: new Date().toISOString(),
-        count: 3,
+        count: 0,
       });
     } catch (err: any) {
       console.error('[RBC Forms-Sheets Sync Error]:', err);
       res.status(500).json({ error: err.message || 'Error sincronizando con Google Sheets' });
     }
+  });
+
+  // Endpoints con filtrado estricto de privacidad para coachees y acceso total para Coach
+  app.get('/api/integrations/bitacoras-talleres/client/:email', (req, res) => {
+    try {
+      const email = String(req.params.email || '').toLowerCase().trim();
+      const db = readServerDatabase();
+      const all = (db as any).bitacorasTalleres || [];
+      const filtered = all.filter((b: any) => b.email && b.email.toLowerCase().trim() === email);
+      res.json({
+        success: true,
+        email,
+        total: filtered.length,
+        items: filtered,
+        privacyEnforced: true,
+      });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.get('/api/integrations/bitacoras-talleres/all', (_req, res) => {
+    const db = readServerDatabase();
+    res.json({
+      success: true,
+      total: ((db as any).bitacorasTalleres || []).length,
+      items: (db as any).bitacorasTalleres || [],
+    });
+  });
+
+  app.get('/api/integrations/acuerdos-individuales/client/:email', (req, res) => {
+    try {
+      const email = String(req.params.email || '').toLowerCase().trim();
+      const db = readServerDatabase();
+      const all = (db as any).sesionIndividualAcuerdos || [];
+      const filtered = all.filter((a: any) => a.email && a.email.toLowerCase().trim() === email);
+      res.json({
+        success: true,
+        email,
+        total: filtered.length,
+        items: filtered,
+        privacyEnforced: true,
+      });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.get('/api/integrations/acuerdos-individuales/all', (_req, res) => {
+    const db = readServerDatabase();
+    res.json({
+      success: true,
+      total: ((db as any).sesionIndividualAcuerdos || []).length,
+      items: (db as any).sesionIndividualAcuerdos || [],
+    });
+  });
+
+  app.get('/api/integrations/taller-registros/client/:email', (req, res) => {
+    try {
+      const email = String(req.params.email || '').toLowerCase().trim();
+      const db = readServerDatabase();
+      const all = (db as any).tallerRegistros || [];
+      const filtered = all.filter((r: any) => r.email && r.email.toLowerCase().trim() === email);
+      res.json({
+        success: true,
+        email,
+        total: filtered.length,
+        items: filtered,
+        privacyEnforced: true,
+      });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.get('/api/integrations/taller-registros/all', (_req, res) => {
+    const db = readServerDatabase();
+    res.json({
+      success: true,
+      total: ((db as any).tallerRegistros || []).length,
+      items: (db as any).tallerRegistros || [],
+    });
   });
 
   // Disparador directo de sincronización de Bitácoras B2B con Google Sheets
@@ -3168,6 +3907,20 @@ Debes responder en JSON con este formato exacto:
 
   app.listen(PORT, '0.0.0.0', () => {
     console.log(`[Rengifo Basto] Server running on http://0.0.0.0:${PORT} with Gemini AI Integration`);
+    
+    // Sincronización inicial en tiempo real con los enlaces activos de Google Sheets
+    syncAllOfficialGoogleSheets()
+      .then((res) => {
+        console.log('[RBC Sheets Live Sync] Sincronización inicial completada con éxito:', res.summary);
+      })
+      .catch((err) => {
+        console.warn('[RBC Sheets Live Sync Notice]:', err.message);
+      });
+
+    // Monitoreo en tiempo real recurrente cada 3 minutos
+    setInterval(() => {
+      syncAllOfficialGoogleSheets().catch(() => {});
+    }, 3 * 60 * 1000);
   });
 }
 

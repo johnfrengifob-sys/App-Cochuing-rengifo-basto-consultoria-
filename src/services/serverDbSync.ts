@@ -29,6 +29,11 @@ export interface ServerDbState {
   levelConfigs?: Record<string, any>;
   formsSheetsIntegrations?: FormsSheetsIntegrationPair[];
   deletedWorkshopIds?: string[];
+  workspaceDocuments?: any[];
+  tallerRegistros?: any[];
+  sesionIndividualAcuerdos?: any[];
+  bitacorasSesionesB2B?: any[];
+  bitacorasTalleres?: any[];
   lastUpdated: string;
 }
 
@@ -83,6 +88,11 @@ export class ServerDbSyncService {
     formsSheetsIntegrations?: FormsSheetsIntegrationPair[];
     deletedWorkshopIds?: string[];
     deletedSessionIds?: string[];
+    workspaceDocuments?: any[];
+    tallerRegistros?: any[];
+    sesionIndividualAcuerdos?: any[];
+    bitacorasSesionesB2B?: any[];
+    bitacorasTalleres?: any[];
     replaceSessions?: boolean;
     replaceProgramNodes?: boolean;
   }): Promise<ServerDbState | null> {
